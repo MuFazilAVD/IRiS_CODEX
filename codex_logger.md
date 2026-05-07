@@ -752,6 +752,34 @@ Follow Agents.md and build plan and tracker (it is well explained in Agents.md) 
 ### Status
 ✅ Completed / 🧪 Mocked
 
+## [2026-05-07 05:34:52 UTC]
+
+### Prompt
+create a git ignore file and push the code to the connected repo.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - frontend/.gitignore
+  - venv/.gitignore
+  - codex_logger.md
+
+### Actions Taken
+- Created a repo-root `.gitignore` covering Python caches, virtualenv folders, frontend build artifacts, environment files, logs, local SQLite/DB files, and the prior root `image.png` workspace artifact
+- Reviewed the staged repository contents to confirm only source, documentation, screenshots, and intended assets were included
+- Created the initial Git commit for the repository snapshot with commit `1a6e927`
+- Pushed `main` to the connected `origin` remote at `https://github.com/MuFazilAVD/IRiS_CODEX.git` and set upstream tracking
+
+### Files Modified
+- .gitignore
+- codex_logger.md
+
+### Issues / Deviations
+- The workspace contained previously generated logs, Python cache folders, local database files, the virtualenv, and a root `image.png`; these were intentionally excluded from version control as local artifacts rather than application source
+
+### Status
+✅ Completed
+
 ## [2026-05-07 05:24:00 UTC]
 
 ### Prompt
