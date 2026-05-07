@@ -1,0 +1,45 @@
+{
+  "summary": {
+    "my_critical": 0,
+    "overdue": 1,
+    "pending_approvals": 2,
+    "compliance_holds": 1,
+    "ai_exception_queue": 1,
+    "team_backlog": 4,
+    "awaiting_review": 2
+  },
+  "total": 4,
+  "items": [
+    {
+      "wl_id": "WL-8101",
+      "title": "Contract amendment review - LSC-2024-019",
+      "category": "Settlement Approval",
+      "priority": "high",
+      "status": "pending_review",
+      "assigned_role": "underwriter",
+      "source": "Human",
+      "ai_generated": false,
+      "compliance_hold": false,
+      "elapsed_display": "Overdue 1h 15m",
+      "is_approaching": false,
+      "is_overdue": true,
+      "breadcrumb": "Contracts · Amendment Approval"
+    },
+    {
+      "wl_id": "WL-8102",
+      "title": "OFAC escalation review - Atlas Corporate Pensions",
+      "category": "OFAC Match",
+      "priority": "critical",
+      "status": "open",
+      "assigned_role": "underwriter",
+      "source": "AI Agent",
+      "ai_generated": true,
+      "compliance_hold": true,
+      "elapsed_display": "4h 45m",
+      "is_approaching": true,
+      "is_overdue": false,
+      "breadcrumb": "Compliance Hold · Review Required"
+    }
+  ]
+}
+

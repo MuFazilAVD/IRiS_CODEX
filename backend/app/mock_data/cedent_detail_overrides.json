@@ -1,0 +1,525 @@
+{
+  "CED-1042": {
+    "pension_scheme": {
+      "scheme_id": "PS-1042",
+      "scheme_name": "Northstar Pension Trust Defined Benefit Scheme",
+      "scheme_type": "Defined Benefit",
+      "trustee_name": "Northstar Pension Trust Trustee",
+      "scheme_registration_number": "REG-1042",
+      "scheme_country": "UK",
+      "scheme_currency": "GBP",
+      "benefit_type": "Final Salary",
+      "retirement_age_rules": "Normal Retirement Age 65",
+      "indexation_rules": "CPI capped at 5%",
+      "spouse_benefits": "50% spousal pension",
+      "guaranteed_period_rules": "5-year guarantee",
+      "deferred_member_rules": "Revaluation per statutory order"
+    },
+    "key_contacts": [
+      {
+        "category": "Executive Sponsor",
+        "full_name": "Alex Morgan",
+        "designation": "Chief Executive Officer",
+        "department": "",
+        "email": "exec@northstarpensiontrust.co.uk",
+        "phone": "",
+        "mobile": "",
+        "preferred_contact": "Email",
+        "language": "English"
+      },
+      {
+        "category": "Underwriting Contact",
+        "full_name": "Sam Reeves",
+        "designation": "Head of Risk",
+        "department": "",
+        "email": "underwriting@northstarpensiontrust.co.uk",
+        "phone": "",
+        "mobile": "",
+        "preferred_contact": "Email",
+        "language": "English"
+      }
+    ],
+    "financial_treasury": {
+      "bank_name": "MetLife Treasury Services",
+      "account_number": "00421578",
+      "sort_code": "20-44-18",
+      "iban": "GB29NWBK60161331926819",
+      "swift_bic": "NWBKGB2L",
+      "account_currency": "GBP",
+      "payment_method": "Wire",
+      "settlement_instructions": "Quarterly settlement by SWIFT MT103 subject to contract payment lag."
+    },
+    "contract_readiness": {
+      "isda_signed": true,
+      "isda_date": "2024-01-15",
+      "csa_signed": true,
+      "csa_date": "2024-01-15",
+      "nda_signed": true,
+      "nda_date": "2023-11-20",
+      "kyc_complete": true,
+      "aml_complete": true,
+      "data_sharing_agreed": true,
+      "file_format_agreed": true,
+      "sftp_configured_tested": true,
+      "notes": "Northstar file templates and connectivity completed during onboarding."
+    },
+    "population_exposure": {
+      "total_lives": 18420,
+      "average_age": 71,
+      "pct_male": 55,
+      "pct_female": 45,
+      "total_annuity_pa_amount": 451290000,
+      "currency": "GBP",
+      "avg_annuity_per_life": 24500,
+      "geographic_spread": "UK 92% / EU 6% / RoW 2%",
+      "age_distribution": "65-74: 44%, 75-84: 39%, 85+: 17%",
+      "mortality_table_used": "CMI S3"
+    },
+    "compliance_kyc": {
+      "kyc_status": "complete",
+      "kyc_completed_date": "2025-03-15",
+      "kyc_provider": "IRiS Compliance Hub",
+      "aml_status": "complete",
+      "pep_check_done": true,
+      "beneficial_owner_verified": true,
+      "high_risk_jurisdiction": false,
+      "risk_rating": "medium",
+      "review_frequency": "annual",
+      "next_review_date": "2026-03-15",
+      "notes": "No active PEP or AML alerts on the most recent review cycle."
+    },
+    "sanction_screening": {
+      "total_scans": 4,
+      "open_hits": 0,
+      "sources_monitored": 3,
+      "next_periodic_due": "2025-09-15",
+      "source_status": [
+        {
+          "source": "OFAC",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        },
+        {
+          "source": "FinCEN",
+          "status": "Cleared",
+          "last_scan": "2025-03-15",
+          "reference": "REF-50001",
+          "matches": 0
+        },
+        {
+          "source": "FINCEN",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        }
+      ],
+      "history": [
+        {
+          "id": "CED-1042-FINCEN-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "FINCEN",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1042-OFAC-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1042-OFAC-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-50000",
+          "matches": 0
+        },
+        {
+          "id": "CED-1042-FINCEN-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "FinCEN",
+          "result": "cleared",
+          "reference_id": "REF-50001",
+          "matches": 0
+        }
+      ]
+    },
+    "regulatory_docs": [
+      {
+        "doc_type": "annual_report",
+        "doc_name": "Northstar 2024 Annual Report.pdf",
+        "doc_date": "2024-12-31",
+        "expiry_date": "2025-12-31",
+        "regulator": "TPR",
+        "status": "current"
+      },
+      {
+        "doc_type": "actuarial_cert",
+        "doc_name": "Scheme Actuarial Certification.docx",
+        "doc_date": "2025-01-10",
+        "expiry_date": "2026-01-10",
+        "regulator": "TPR",
+        "status": "current"
+      }
+    ],
+    "operational_connectivity": {
+      "sftp_host": "northstar.iris.metlife.internal",
+      "sftp_port": 22,
+      "sftp_username": "northstar_ops",
+      "sftp_key_fingerprint": "SHA256:Northstar1042",
+      "sftp_status": "healthy",
+      "file_format": "CSV",
+      "file_encoding": "UTF-8",
+      "submission_frequency": "Quarterly",
+      "notification_email": "ops@northstarpensiontrust.co.uk"
+    },
+    "actuarial_preferences": {
+      "mortality_table": "CMI S3",
+      "improvement_scale": "CMI 2022",
+      "base_year": 2022,
+      "long_term_rate": 1.5,
+      "initial_rate": 7.0,
+      "convergence_period": 15,
+      "age_rating_adjustment": 0.0,
+      "loading_factor": 0.038,
+      "discount_rate": 3.2,
+      "discount_basis": "Gilts + 0.50%",
+      "valuation_method": "PV of expected cash flows",
+      "experience_study_frequency": "Annual",
+      "notes": "Northstar experience study refresh due after the next annual valuation."
+    },
+    "access_beneficiary_rules": [
+      {
+        "rule_type": "spousal",
+        "pct_benefit": 50,
+        "conditions": "Spousal pension subject to qualifying partner status.",
+        "rule_description": "50% spousal pension"
+      },
+      {
+        "rule_type": "dependant",
+        "pct_benefit": 100,
+        "conditions": "Paid only where dependent child eligibility is proven.",
+        "rule_description": "Dependent child continuation benefit"
+      }
+    ],
+    "audit_approval": [
+      {
+        "timestamp": "2026-05-06 10:24:56",
+        "actor": "IRiS Screening Engine",
+        "action": "Triggered sanction screening",
+        "detail": "OFAC, FinCEN"
+      },
+      {
+        "timestamp": "2025-03-15 09:20:00",
+        "actor": "Julia Santos",
+        "action": "Completed compliance review",
+        "detail": "KYC and screening package approved"
+      },
+      {
+        "timestamp": "2025-01-15 14:15:00",
+        "actor": "Mia Watanabe",
+        "action": "Updated pension scheme information",
+        "detail": "Aligned scheme terms with trustee pack"
+      }
+    ]
+  },
+  "CED-1087": {
+    "sanction_screening": {
+      "total_scans": 4,
+      "open_hits": 0,
+      "sources_monitored": 3,
+      "next_periodic_due": "2025-09-15",
+      "source_status": [
+        {
+          "source": "OFAC",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        },
+        {
+          "source": "FinCEN",
+          "status": "Cleared",
+          "last_scan": "2025-03-15",
+          "reference": "REF-50001",
+          "matches": 0
+        },
+        {
+          "source": "FINCEN",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        }
+      ],
+      "history": [
+        {
+          "id": "CED-1087-FINCEN-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "FINCEN",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1087-OFAC-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1087-OFAC-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-50000",
+          "matches": 0
+        },
+        {
+          "id": "CED-1087-FINCEN-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "FinCEN",
+          "result": "cleared",
+          "reference_id": "REF-50001",
+          "matches": 0
+        }
+      ]
+    },
+    "audit_approval": [
+      {
+        "timestamp": "2026-05-06 10:24:56",
+        "actor": "IRiS Screening Engine",
+        "action": "Triggered sanction screening",
+        "detail": "OFAC, FinCEN"
+      }
+    ]
+  },
+  "CED-1133": {
+    "sanction_screening": {
+      "total_scans": 4,
+      "open_hits": 1,
+      "sources_monitored": 3,
+      "next_periodic_due": "2025-09-15",
+      "source_status": [
+        {
+          "source": "OFAC",
+          "status": "Review",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 1
+        },
+        {
+          "source": "FinCEN",
+          "status": "Cleared",
+          "last_scan": "2025-03-15",
+          "reference": "REF-50001",
+          "matches": 0
+        },
+        {
+          "source": "FINCEN",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        }
+      ],
+      "history": [
+        {
+          "id": "CED-1133-FINCEN-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "FINCEN",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1133-OFAC-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "OFAC",
+          "result": "review",
+          "reference_id": "REF-102456",
+          "matches": 1
+        },
+        {
+          "id": "CED-1133-OFAC-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-50000",
+          "matches": 0
+        },
+        {
+          "id": "CED-1133-FINCEN-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "FinCEN",
+          "result": "cleared",
+          "reference_id": "REF-50001",
+          "matches": 0
+        }
+      ]
+    },
+    "audit_approval": [
+      {
+        "timestamp": "2026-05-06 10:24:56",
+        "actor": "IRiS Screening Engine",
+        "action": "Triggered sanction screening",
+        "detail": "OFAC, FinCEN"
+      }
+    ]
+  },
+  "CED-1156": {
+    "sanction_screening": {
+      "total_scans": 4,
+      "open_hits": 0,
+      "sources_monitored": 3,
+      "next_periodic_due": "2025-09-15",
+      "source_status": [
+        {
+          "source": "OFAC",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        },
+        {
+          "source": "FinCEN",
+          "status": "Cleared",
+          "last_scan": "2025-03-15",
+          "reference": "REF-50001",
+          "matches": 0
+        },
+        {
+          "source": "FINCEN",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        }
+      ],
+      "history": [
+        {
+          "id": "CED-1156-FINCEN-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "FINCEN",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1156-OFAC-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1156-OFAC-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-50000",
+          "matches": 0
+        },
+        {
+          "id": "CED-1156-FINCEN-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "FinCEN",
+          "result": "cleared",
+          "reference_id": "REF-50001",
+          "matches": 0
+        }
+      ]
+    },
+    "audit_approval": [
+      {
+        "timestamp": "2026-05-06 10:24:56",
+        "actor": "IRiS Screening Engine",
+        "action": "Triggered sanction screening",
+        "detail": "OFAC, FinCEN"
+      }
+    ]
+  },
+  "CED-1201": {
+    "sanction_screening": {
+      "total_scans": 4,
+      "open_hits": 1,
+      "sources_monitored": 3,
+      "next_periodic_due": "2025-09-15",
+      "source_status": [
+        {
+          "source": "OFAC",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        },
+        {
+          "source": "FinCEN",
+          "status": "Cleared",
+          "last_scan": "2025-03-15",
+          "reference": "REF-50001",
+          "matches": 0
+        },
+        {
+          "source": "FINCEN",
+          "status": "Cleared",
+          "last_scan": "2026-05-06",
+          "reference": "REF-102456",
+          "matches": 0
+        }
+      ],
+      "history": [
+        {
+          "id": "CED-1201-FINCEN-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "FINCEN",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1201-OFAC-20260506102456",
+          "screening_date": "2026-05-06T10:24:56Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-102456",
+          "matches": 0
+        },
+        {
+          "id": "CED-1201-OFAC-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "OFAC",
+          "result": "review",
+          "reference_id": "REF-50000",
+          "matches": 1
+        },
+        {
+          "id": "CED-1201-FINCEN-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "FinCEN",
+          "result": "cleared",
+          "reference_id": "REF-50001",
+          "matches": 0
+        }
+      ]
+    },
+    "audit_approval": [
+      {
+        "timestamp": "2026-05-06 10:24:56",
+        "actor": "IRiS Screening Engine",
+        "action": "Triggered sanction screening",
+        "detail": "OFAC, FinCEN"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+[
+  { "email": "admin@metlife-re.demo", "full_name": "Admin User", "role": "super_admin", "password": "demo1234" },
+  { "email": "m.patel@reinsure.io", "full_name": "Mia Patel", "role": "underwriter", "password": "demo1234" },
+  { "email": "a.chen@reinsure.io", "full_name": "Aaron Chen", "role": "claims_ops", "password": "demo1234" },
+  { "email": "j.morales@reinsure.io", "full_name": "Julia Morales", "role": "compliance", "password": "demo1234" },
+  { "email": "d.rhodes@reinsure.io", "full_name": "Devon Rhodes", "role": "admin", "password": "demo1234" },
+  { "email": "h.suzuki@reinsure.io", "full_name": "Hana Suzuki", "role": "underwriter", "password": "demo1234", "is_active": false }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "agent_name": "Cession Mapper",
+    "agent_version": "v3.2.1",
+    "module": "Cession",
+    "confidence": 0.81,
+    "below_threshold": true,
+    "decision": "Map 'Pensioner_Ref' to member_id; flag 'Annuity_Type_Code' and 'Spouse_Indicator' for human confirmation",
+    "prompt_summary": "Map columns of incoming cession file to canonical schema using historical patterns for the cedant.",
+    "input_ref": "sftp://atlas/in/CES-2026-04-118.xlsx",
+    "human_review_required": true,
+    "timestamp": "2026-04-29T10:48:09Z"
+  },
+  {
+    "agent_name": "Sanctions Screener",
+    "agent_version": "v2.4.0",
+    "module": "Compliance",
+    "confidence": 0.99,
+    "below_threshold": false,
+    "decision": "Clear - no matches above threshold",
+    "prompt_summary": "Screen entity against OFAC SDN and FinCEN 314(a) using conservative fuzzy thresholds.",
+    "input_ref": "ced:CED-1133",
+    "human_review_required": false,
+    "timestamp": "2026-04-28T09:27:14Z"
+  },
+  {
+    "agent_name": "Settlement Reconciliation Agent",
+    "agent_version": "v1.9.0",
+    "module": "Settlement",
+    "confidence": 0.93,
+    "below_threshold": false,
+    "decision": "Recommend approve settlement STL-2026-Q1-184 after variance and workflow checks",
+    "prompt_summary": "Evaluate settlement variance, supporting contributors, and control workflow state before recommending approval.",
+    "input_ref": "ops:IRIS-PRC-59206-A",
+    "human_review_required": false,
+    "timestamp": "2026-04-29T11:02:18Z"
+  }
+]

@@ -1,0 +1,5 @@
+[
+  { "req_id": "REQ-1101", "description": "Elevate u-205 to Underwriting Lead", "requester": "h.suzuki", "status": "pending" },
+  { "req_id": "REQ-1102", "description": "Approve mortality table CMI-2024 refresh", "requester": "system", "status": "pending" },
+  { "req_id": "REQ-1103", "description": "Reinstate locked cedant — Bavarian", "requester": "j.morales", "status": "pending" }
+]

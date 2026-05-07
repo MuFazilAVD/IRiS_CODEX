@@ -1,0 +1,131 @@
+{
+  "admin": [
+    {
+      "id": "intel-admin-001",
+      "module": "ADMIN",
+      "cedant": "Atlas Corporate Pensions",
+      "period": "Today",
+      "sla": "24h review",
+      "flag": "FYA",
+      "priority": "HIGH",
+      "contract_id": "LSC-2025-009",
+      "contract_type": "Role Request",
+      "message": "Atlas SFTP endpoint has degraded twice in the last 48 hours.",
+      "impact": "Claims Ops intake retries are likely until endpoint health stabilizes.",
+      "action_label": "Review Integrations",
+      "action": "navigate:/dashboard"
+    },
+    {
+      "id": "intel-admin-002",
+      "module": "ACCESS",
+      "cedant": "Platform",
+      "period": "Today",
+      "sla": "8h review",
+      "flag": "FYI",
+      "priority": "MEDIUM",
+      "contract_id": "REQ-1101",
+      "contract_type": "Entitlement",
+      "message": "4 user approval requests remain open, 2 with elevated entitlements.",
+      "impact": "Pending approvals are blocking team onboarding tasks.",
+      "action_label": "Open Queue",
+      "action": "navigate:/worklist"
+    }
+  ],
+  "underwriter": [
+    {
+      "id": "intel-uw-001",
+      "module": "UW",
+      "cedant": "Northstar Pension Trust",
+      "period": "Q1 2025",
+      "sla": "Review within 2d",
+      "flag": "FYA",
+      "priority": "HIGH",
+      "contract_id": "LSC-2024-019",
+      "contract_type": "Longevity Swap",
+      "message": "Mortality A/E is tracking at 102.0%, 1.18% above assumption.",
+      "impact": "Projected settlement impact is +£1.2M if current trend persists.",
+      "action_label": "Open Contract",
+      "action": "navigate:/underwriting/contracts/LSC-2024-019"
+    },
+    {
+      "id": "intel-uw-002",
+      "module": "UW",
+      "cedant": "Bavarian Industrial Fund",
+      "period": "90 day horizon",
+      "sla": "Renewal prep",
+      "flag": "FYI",
+      "priority": "MEDIUM",
+      "contract_id": "LSC-2025-002",
+      "contract_type": "Renewal",
+      "message": "A new renewal window opens in the next 90 days for 4 contracts.",
+      "impact": "Contract amendment and pricing resources should be reserved.",
+      "action_label": "View Contracts",
+      "action": "navigate:/underwriting/contracts"
+    }
+  ],
+  "claims_ops": [
+    {
+      "id": "intel-ops-001",
+      "module": "OPS",
+      "cedant": "Helvetia Retirement Fund",
+      "period": "Q1 2026",
+      "sla": "6h SLA",
+      "flag": "FYA",
+      "priority": "HIGH",
+      "contract_id": "LSC-2024-031",
+      "contract_type": "Cession File",
+      "message": "SFTP ingestion failed for the latest Helvetia cession file.",
+      "impact": "Settlement and validation timelines are at risk until retry succeeds.",
+      "action_label": "Open Worklist",
+      "action": "navigate:/worklist?filter=WL-9206"
+    },
+    {
+      "id": "intel-ops-002",
+      "module": "OPS",
+      "cedant": "Northstar Pension Trust",
+      "period": "Q1 2026",
+      "sla": "2h SLA",
+      "flag": "FYA",
+      "priority": "HIGH",
+      "contract_id": "LSC-2024-019",
+      "contract_type": "Settlement",
+      "message": "Settlement variance on Northstar Q1-2026 exceeds tolerance by 3.06%.",
+      "impact": "Payment release is blocked pending manual approval.",
+      "action_label": "Review Task",
+      "action": "navigate:/worklist?filter=WL-9202"
+    }
+  ],
+  "compliance": [
+    {
+      "id": "intel-comp-001",
+      "module": "COMP",
+      "cedant": "Atlas Corporate Pensions",
+      "period": "Current cycle",
+      "sla": "Immediate review",
+      "flag": "FYA",
+      "priority": "HIGH",
+      "contract_id": "CED-1133",
+      "contract_type": "Sanctions",
+      "message": "OFAC SDN confidence 0.88 screening result has been escalated.",
+      "impact": "Compliance hold remains active until analyst sign-off.",
+      "action_label": "Open Screening",
+      "action": "navigate:/compliance/sanctions"
+    },
+    {
+      "id": "intel-comp-002",
+      "module": "COMP",
+      "cedant": "Platform",
+      "period": "Last 7d",
+      "sla": "Daily review",
+      "flag": "FYI",
+      "priority": "MEDIUM",
+      "contract_id": "REQ-2201",
+      "contract_type": "Override",
+      "message": "3 overrides above $1M remain queued for Risk Committee approval.",
+      "impact": "Large-impact changes are pending before downstream settlement release.",
+      "action_label": "Open Worklist",
+      "action": "navigate:/worklist"
+    }
+  ]
+}
+

@@ -1,0 +1,60 @@
+{
+  "summary": {
+    "my_critical": 1,
+    "overdue": 2,
+    "pending_approvals": 3,
+    "compliance_holds": 2,
+    "ai_exception_queue": 1,
+    "team_backlog": 6,
+    "awaiting_review": 3
+  },
+  "total": 6,
+  "items": [
+    {
+      "wl_id": "WL-8001",
+      "title": "Access violation review - privileged role request",
+      "category": "Access Audit",
+      "priority": "critical",
+      "status": "open",
+      "assigned_role": "admin",
+      "source": "System Rule",
+      "ai_generated": false,
+      "compliance_hold": false,
+      "elapsed_display": "Overdue 4h 20m",
+      "is_approaching": false,
+      "is_overdue": true,
+      "breadcrumb": "Access Governance · Elevated Entitlement"
+    },
+    {
+      "wl_id": "WL-8002",
+      "title": "Pending ref data approval - mortality table refresh",
+      "category": "Override Approval",
+      "priority": "high",
+      "status": "pending_review",
+      "assigned_role": "admin",
+      "source": "Human",
+      "ai_generated": false,
+      "compliance_hold": false,
+      "elapsed_display": "5h 10m",
+      "is_approaching": true,
+      "is_overdue": false,
+      "breadcrumb": "Reference Data · Approval Queue"
+    },
+    {
+      "wl_id": "WL-8003",
+      "title": "Atlas SFTP degraded - platform monitoring",
+      "category": "SFTP Failure",
+      "priority": "high",
+      "status": "in_progress",
+      "assigned_role": "claims_ops",
+      "source": "System Rule",
+      "ai_generated": false,
+      "compliance_hold": false,
+      "elapsed_display": "2h 30m",
+      "is_approaching": false,
+      "is_overdue": false,
+      "breadcrumb": "Infrastructure · Endpoint Health"
+    }
+  ]
+}
+

@@ -1,0 +1,18 @@
+{
+  "process_id": "IRIS-PRC-59206-A",
+  "portfolio_variance_pct": 1.6,
+  "threshold_pct": 2.0,
+  "breach_status": "Within Limit",
+  "impact_amount": 7600000,
+  "impact_currency": "USD",
+  "breakdown": [
+    {"component": "Mortality Rate", "expected": 4.25, "observed": 4.38, "variance": 0.13},
+    {"component": "Avg Age", "expected": 63, "observed": 64, "variance": 1},
+    {"component": "Claims Count", "expected": 1220, "observed": 1310, "variance": 90}
+  ],
+  "insights": [
+    "Variance driven primarily by higher-than-expected mortality",
+    "Age distribution shift contributes secondary impact"
+  ],
+  "actions": ["flag_for_review", "send_to_underwriter"]
+}

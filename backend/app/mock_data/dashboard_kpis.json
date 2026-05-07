@@ -1,0 +1,101 @@
+{
+  "admin": {
+    "title": "Admin Command Center",
+    "subtitle": "Operational control tower · live data · 16 events in last 24h · 8 IRiS actions · 3 critical",
+    "insight": "Atlas SFTP integration degraded (last 2 cycles). 4 user provisioning requests pending; 2 require elevated entitlement review.",
+    "quick_actions": [
+      { "label": "Assign Role", "action": "navigate:/dashboard" },
+      { "label": "Approve Ref Data", "action": "navigate:/dashboard" },
+      { "label": "Failed Integration", "action": "navigate:/dashboard" },
+      { "label": "+ Create User", "action": "navigate:/dashboard", "variant": "primary" },
+      { "label": "Review Access Change", "action": "navigate:/dashboard", "variant": "primary" }
+    ],
+    "kpis": [
+      { "label": "Active Users", "value": "184", "trend": "up", "trend_value": "+12 MTD", "subtitle": "Active platform users", "border_color": "green" },
+      { "label": "Pending User Approval", "value": "4", "trend": "neutral", "trend_value": "2 elevated", "subtitle": "Awaiting action", "border_color": "amber" },
+      { "label": "Role Change Requests", "value": "6", "trend": "neutral", "trend_value": "Awaiting", "subtitle": "Queued requests", "border_color": "blue" },
+      { "label": "Access Violations (24h)", "value": "2", "trend": "up", "trend_value": "Investigating", "subtitle": "Security review", "border_color": "red" },
+      { "label": "Failed Logins (24h)", "value": "37", "trend": "up", "trend_value": "5 IPs flagged", "subtitle": "Observed failures", "border_color": "red" },
+      { "label": "Privileged Access Reviews", "value": "3", "trend": "neutral", "trend_value": "Quarterly cycle", "subtitle": "Open reviews", "border_color": "blue" },
+      { "label": "Workflow Failures", "value": "1", "trend": "neutral", "trend_value": "Settlement post", "subtitle": "Operations alert", "border_color": "amber" },
+      { "label": "Batch Job Failures", "value": "2", "trend": "neutral", "trend_value": "Last 24h", "subtitle": "Automation health", "border_color": "amber" },
+      { "label": "Ref Data Updates Pending", "value": "5", "trend": "neutral", "trend_value": "Mortality, Curves", "subtitle": "Approvals needed", "border_color": "amber" },
+      { "label": "Integration Health", "value": "9 / 10", "trend": "neutral", "trend_value": "1 degraded", "subtitle": "Connected endpoints", "border_color": "green" },
+      { "label": "SFTP Failures (24h)", "value": "1", "trend": "neutral", "trend_value": "Atlas endpoint", "subtitle": "Latest issue", "border_color": "red" },
+      { "label": "API Failure Alerts", "value": "0", "trend": "neutral", "trend_value": "All healthy", "subtitle": "No active incidents", "border_color": "green" },
+      { "label": "System Performance", "value": "Nominal", "trend": "neutral", "trend_value": "p95 < 800ms", "subtitle": "Latency healthy", "border_color": "green" },
+      { "label": "Pending Admin Approvals", "value": "8", "trend": "neutral", "trend_value": "Cross-team", "subtitle": "Approvals open", "border_color": "blue" }
+    ]
+  },
+  "underwriter": {
+    "title": "Underwriting Command Center",
+    "subtitle": "Portfolio monitoring · live contract book · mortality insights",
+    "insight": "Mortality experience exceeds assumption by 1.18% across 5 contracts. Largest impact on LSC-2024-019 (+£1.2M).",
+    "quick_actions": [
+      { "label": "Upload Population", "action": "navigate:/underwriting/population" },
+      { "label": "Review Amendment", "action": "navigate:/underwriting/contracts" },
+      { "label": "Run Experience Analysis", "action": "navigate:/dashboard" },
+      { "label": "+ New Cedant", "action": "navigate:/underwriting/cedants", "variant": "primary" },
+      { "label": "+ New Contract", "action": "navigate:/underwriting/contracts", "variant": "primary" }
+    ],
+    "kpis": [
+      { "label": "Active Cedants", "value": "42", "trend": "up", "trend_value": "+2 QTD", "subtitle": "Counterparties ceding risk", "border_color": "green" },
+      { "label": "Active Contracts", "value": "47", "trend": "up", "trend_value": "+1 MTD", "subtitle": "In-force agreements", "border_color": "green" },
+      { "label": "Pending Approval", "value": "5", "trend": "neutral", "trend_value": "Awaiting sign-off", "subtitle": "Open submissions", "border_color": "amber" },
+      { "label": "Total Covered Lives", "value": "612,840", "trend": "up", "trend_value": "+4.2k", "subtitle": "Across active book", "border_color": "teal" },
+      { "label": "Mortality Deviation", "value": "+1.18%", "trend": "up", "trend_value": "Adverse", "subtitle": "Vs assumption", "border_color": "red" },
+      { "label": "Exposure at Risk", "value": "$24.8B", "trend": "up", "trend_value": "+0.6B", "subtitle": "Portfolio exposure", "border_color": "blue" },
+      { "label": "Near Renewal (90d)", "value": "4", "trend": "neutral", "trend_value": "Within 90d", "subtitle": "Renewal watchlist", "border_color": "amber" }
+    ]
+  },
+  "claims_ops": {
+    "title": "Claims Ops Command Center",
+    "subtitle": "Pipeline control tower · validation exceptions · settlement flow",
+    "insight": "3 cession files have validation errors. Atlas SFTP endpoint degraded; 2 files queued for retry.",
+    "quick_actions": [
+      { "label": "Reprocess File", "action": "navigate:/claims/cession-files" },
+      { "label": "Trigger Reconciliation", "action": "navigate:/claims/cession-files" },
+      { "label": "Exception Report", "action": "navigate:/worklist" },
+      { "label": "Review Failed File", "action": "navigate:/claims/cession-files", "variant": "primary" },
+      { "label": "Settlement Exceptions", "action": "navigate:/claims/settlements", "variant": "primary" }
+    ],
+    "kpis": [
+      { "label": "Files Received Today", "value": "24", "trend": "up", "trend_value": "+3", "subtitle": "Daily intake", "border_color": "green" },
+      { "label": "Files Pending", "value": "12", "trend": "neutral", "trend_value": "In queue", "subtitle": "Awaiting action", "border_color": "amber" },
+      { "label": "Failed Validations", "value": "3", "trend": "up", "trend_value": "Need review", "subtitle": "Validation blockers", "border_color": "red" },
+      { "label": "Mapping Exceptions", "value": "18", "trend": "neutral", "trend_value": "Open", "subtitle": "Field mapping issues", "border_color": "amber" },
+      { "label": "Settlement Pending", "value": "8", "trend": "neutral", "trend_value": "Awaiting approval", "subtitle": "Payment readiness", "border_color": "blue" },
+      { "label": "Reconciliation Breaks", "value": "11", "trend": "up", "trend_value": "+2 d/d", "subtitle": "Tolerance breaches", "border_color": "red" },
+      { "label": "Batch Success Rate", "value": "97.4%", "trend": "neutral", "trend_value": "Stable", "subtitle": "Processing success", "border_color": "teal" }
+    ]
+  },
+  "compliance": {
+    "title": "Compliance Command Center",
+    "subtitle": "Watchlist oversight · override approvals · audit risk controls",
+    "insight": "OFAC SDN match (0.88 confidence) on PEN-0104012 escalated. 3 overrides > $1M await Risk Committee approval.",
+    "quick_actions": [
+      { "label": "Investigate Audit Exception", "action": "navigate:/compliance/sanctions" },
+      { "label": "Review Access Alert", "action": "navigate:/worklist" },
+      { "label": "Trigger Manual Screening", "action": "navigate:/compliance/sanctions" },
+      { "label": "Review Screening Hit", "action": "navigate:/compliance/sanctions", "variant": "primary" },
+      { "label": "Approve Override", "action": "navigate:/worklist", "variant": "primary" }
+    ],
+    "kpis": [
+      { "label": "Monthly Screening Pending", "value": "9", "trend": "neutral", "trend_value": "Cycle Apr-25", "subtitle": "Outstanding scans", "border_color": "blue" },
+      { "label": "OFAC Matches", "value": "4", "trend": "up", "trend_value": "1 escalated", "subtitle": "Potential hits", "border_color": "red" },
+      { "label": "FinCEN Matches", "value": "2", "trend": "neutral", "trend_value": "Analyst review", "subtitle": "Needs triage", "border_color": "amber" },
+      { "label": "False Positives Pending", "value": "11", "trend": "neutral", "trend_value": "Awaiting closure", "subtitle": "Open reviews", "border_color": "blue" },
+      { "label": "Overrides Awaiting Approval", "value": "3", "trend": "up", "trend_value": "2 > $1M impact", "subtitle": "Escalated items", "border_color": "red" },
+      { "label": "High Impact Changes", "value": "5", "trend": "neutral", "trend_value": "Require 4-eyes", "subtitle": "Control events", "border_color": "amber" },
+      { "label": "Audit Exceptions Open", "value": "7", "trend": "up", "trend_value": "2 SLA breach", "subtitle": "Investigation queue", "border_color": "red" },
+      { "label": "Sensitive Export Alerts", "value": "4", "trend": "neutral", "trend_value": "Last 7d", "subtitle": "Data handling alerts", "border_color": "amber" },
+      { "label": "Access Violations", "value": "1", "trend": "neutral", "trend_value": "u-205 locked", "subtitle": "Privilege issue", "border_color": "red" },
+      { "label": "Ref Data Changes", "value": "3", "trend": "neutral", "trend_value": "Mortality, FX", "subtitle": "Pending oversight", "border_color": "blue" },
+      { "label": "Compliance Holds Active", "value": "2", "trend": "neutral", "trend_value": "Atlas, Markov", "subtitle": "Book restrictions", "border_color": "red" },
+      { "label": "Escalated Tasks", "value": "4", "trend": "up", "trend_value": "Risk Committee", "subtitle": "Priority queue", "border_color": "red" },
+      { "label": "Contracts Under Review", "value": "2", "trend": "neutral", "trend_value": "Open review", "subtitle": "Watchlist contracts", "border_color": "amber" },
+      { "label": "Screening Coverage", "value": "98.7%", "trend": "neutral", "trend_value": "Compliant", "subtitle": "Coverage rate", "border_color": "green" }
+    ]
+  }
+}
+

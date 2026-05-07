@@ -1,0 +1,50 @@
+[
+  {
+    "wl_id": "WL-9202",
+    "title": "Settlement variance breach - Northstar Q1-2026",
+    "description": "Settlement variance of 3.06% exceeds contract threshold of 1.5%. Manual approval required before payment release.",
+    "category": "Reconciliation Mismatch",
+    "priority": "critical",
+    "status": "open",
+    "assigned_role": "claims_ops",
+    "contract_id": "LSC-2024-019",
+    "cedent_id": "CED-1042",
+    "source": "Tolerance Breach",
+    "ai_generated": false,
+    "sla_deadline": "2026-05-05T09:00:00Z",
+    "elapsed_minutes": -120,
+    "breadcrumb": "Settlement Approval · Variance > 0.5%"
+  },
+  {
+    "wl_id": "WL-9204",
+    "title": "AI mapping failure - CES-2026-04-118 (2 fields unresolved)",
+    "description": "Cession file has 2 fields that could not be mapped automatically. Manual review required.",
+    "category": "AI Mapping Failure",
+    "priority": "high",
+    "status": "open",
+    "assigned_role": "claims_ops",
+    "contract_id": "LSC-2024-031",
+    "cedent_id": "CED-1087",
+    "source": "AI Agent",
+    "ai_generated": true,
+    "sla_deadline": "2026-05-05T17:00:00Z",
+    "elapsed_minutes": 398,
+    "breadcrumb": "Cession Fields · Manual Review Required"
+  },
+  {
+    "wl_id": "WL-9206",
+    "title": "SFTP file ingestion failure - Helvetia Q1 cession",
+    "description": "SFTP connection to Helvetia endpoint failed. File not received. Retry required.",
+    "category": "SFTP Failure",
+    "priority": "high",
+    "status": "open",
+    "assigned_role": "claims_ops",
+    "contract_id": "LSC-2024-031",
+    "cedent_id": "CED-1087",
+    "source": "SFTP",
+    "ai_generated": false,
+    "sla_deadline": "2026-05-05T12:00:00Z",
+    "elapsed_minutes": -45,
+    "breadcrumb": "Intake · Reprocessing Required"
+  }
+]

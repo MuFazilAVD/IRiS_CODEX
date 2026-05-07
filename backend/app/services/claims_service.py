@@ -1,0 +1,2529 @@
+from __future__ import annotations
+
+import csv
+import io
+import json
+import logging
+import uuid
+from copy import deepcopy
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
+from pathlib import Path
+from typing import Any
+
+from fastapi import BackgroundTasks, UploadFile
+
+from app.errors import IrisAPIError
+from app.mock_data_loader import load_mock_data
+from app.models.cession_file import CessionFile
+from app.models.cession_file_exception import CessionFileException
+from app.models.cession_file_record import CessionFileRecord
+from app.models.contract import Contract
+from app.models.worklist import WorklistItem
+from app.repositories.claims_repository import ClaimsRepository
+
+
+logger = logging.getLogger(__name__)
+
+PIPELINE_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "cession_pipeline_overrides.json"
+SETTLEMENT_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "settlement_overrides.json"
+CREATED_SETTLEMENTS_KEY = "__created_rows__"
+
+PIPELINE_STEPS = [
+    "upload",
+    "detect",
+    "map-contract",
+    "clauses",
+    "validate",
+    "exceptions",
+    "process",
+    "summary",
+    "worklist",
+    "audit",
+]
+
+FILE_TYPE_OPTIONS = [
+    "Pension Status",
+    "Fixed Leg",
+    "Mortality Report",
+    "Spouse Events",
+    "Activity Report",
+    "Fee Schedule",
+]
+
+LIST_METRICS_BASELINE = {
+    "in_pipeline": 6,
+    "exceptions": 4,
+    "processed": 2,
+    "stp_pct": 94.2,
+    "pipeline_throughput": {
+        "records_ingested": 18976,
+        "files": 7,
+        "in_exception": 4,
+        "avg_processing_time": "2h 14m",
+    },
+}
+
+SETTLEMENT_METRICS_BASELINE = {
+    "pending_approval": 8,
+    "pending_amount": 42100000,
+    "paid_ytd": 24,
+    "dispute_count": 2,
+}
+
+SUPPORTED_CALCULATION_TYPES = {"settlement", "fixed_leg", "floating_leg", "ae_ratio"}
+
+
+class ClaimsService:
+    def __init__(self, repository: ClaimsRepository) -> None:
+        self.repository = repository
+
+    def list_cession_files(
+        self,
+        status: str,
+        file_type: str | None,
+        cedent_id: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        logger.info("Loading cession file queue")
+        logger.debug(
+            "Cession file queue filters status=%s file_type=%s cedent_id=%s page=%s page_size=%s",
+            status,
+            file_type,
+            cedent_id,
+            page,
+            page_size,
+        )
+        files, _ = self.repository.list_cession_files(status, file_type, cedent_id, page, page_size)
+        all_files = self.repository.list_all_cession_files()
+        return {
+            "metrics": self._build_list_metrics(all_files),
+            "items": [self._serialize_queue_item(item) for item in files],
+        }
+
+    async def upload_cession_file(
+        self,
+        file: UploadFile,
+        background_tasks: BackgroundTasks,
+        cedent_id: str | None,
+        contract_id: str | None,
+    ) -> dict[str, Any]:
+        logger.info("Uploading cession file into claims pipeline")
+        logger.debug(
+            "Claims upload filename=%s provided_cedent_id=%s provided_contract_id=%s",
+            file.filename,
+            cedent_id,
+            contract_id,
+        )
+        if not file.filename:
+            logger.error("Claims upload rejected because filename is empty")
+            raise IrisAPIError(400, "Invalid file", "Uploaded file must include a filename")
+
+        provided_contract = self.repository.get_contract(contract_id) if contract_id else None
+        if contract_id and provided_contract is None:
+            logger.error("Claims upload failed because contract_id=%s was not found", contract_id)
+            raise IrisAPIError(404, "Invalid contract ID", "Contract not found in DB")
+
+        provided_cedent = self.repository.get_cedent(cedent_id) if cedent_id else None
+        if cedent_id and provided_cedent is None:
+            logger.error("Claims upload failed because cedent_id=%s was not found", cedent_id)
+            raise IrisAPIError(404, "Invalid cedent ID", "Cedent not found in DB")
+
+        content = (await file.read()).decode("utf-8", errors="ignore")
+        now = datetime.now(UTC)
+        detection_seed = self._detect_file_profile(file.filename, content, provided_cedent, provided_contract)
+        effective_cedent_id = provided_contract.cedent_id if provided_contract else (cedent_id or detection_seed["cedent_id"])
+        effective_contract_id = contract_id or detection_seed["contract_id"]
+        record_count = self._count_records(file.filename, content) or detection_seed["record_count"]
+        file_id = self.repository.get_next_cession_file_id(now.year)
+
+        cession_file = CessionFile(
+            file_id=file_id,
+            contract_id=effective_contract_id,
+            cedent_id=effective_cedent_id,
+            filename=file.filename,
+            file_type=detection_seed["file_type"],
+            record_count=record_count,
+            received_at=now,
+            received_via="Manual Upload",
+            stage="uploaded",
+            ai_file_type_confidence=detection_seed["file_type_confidence"],
+            ai_cedent_confidence=detection_seed["cedent_confidence"],
+            error_count=0,
+            warning_count=0,
+            critical_count=0,
+            sla_deadline=now + timedelta(days=5),
+            created_at=now,
+            updated_at=now,
+        )
+        created = self.repository.create_cession_file(cession_file)
+        self._store_override(
+            created.file_id,
+            {
+                "pipeline_session_id": f"pipe-{uuid.uuid4()}",
+                "active_step": "detect",
+                "source_filename": file.filename,
+                "source_size_bytes": len(content.encode("utf-8")),
+                "manual_cedent_id": cedent_id,
+                "manual_contract_id": contract_id,
+                "detection_override": None,
+                "contract_override": None,
+                "audit_events": [
+                    {
+                        "timestamp": self._to_iso(now),
+                        "actor": "Claims Ops",
+                        "type": "Human",
+                        "action": "File uploaded manually",
+                        "detail": file.filename,
+                    }
+                ],
+                "stage_history": [{"stage": "uploaded", "completed_at": self._to_iso(now)}],
+            },
+        )
+        self._append_stage_log(created.file_id, "upload", "complete", now)
+        self._append_stage_log(created.file_id, "detect", "in_progress", now + timedelta(seconds=5))
+        self._ensure_records_and_exceptions(created, content)
+
+        background_tasks.add_task(self._mark_uploaded_file_detecting, created.file_id)
+        return {
+            "file_id": created.file_id,
+            "status": "uploaded",
+            "pipeline_session_id": self._get_override(created.file_id).get("pipeline_session_id"),
+            "next_stage": "detecting",
+        }
+
+    def get_cession_file_detail(self, file_id: str) -> dict[str, Any]:
+        logger.info("Loading cession file detail")
+        logger.debug("Cession file detail file_id=%s", file_id)
+        cession_file = self._get_cession_file_or_error(file_id)
+        self._ensure_records_and_exceptions(cession_file)
+        return self._build_file_detail(cession_file)
+
+    def advance_pipeline_stage(self, file_id: str, stage: str, payload: dict[str, Any]) -> dict[str, Any]:
+        logger.info("Advancing cession pipeline stage")
+        logger.debug("Cession pipeline stage file_id=%s stage=%s payload=%s", file_id, stage, payload)
+        cession_file = self._get_cession_file_or_error(file_id)
+
+        if stage == "detect":
+            return self._handle_detect(cession_file, payload)
+        if stage == "map-contract":
+            return self._handle_map_contract(cession_file, payload)
+        if stage == "clauses":
+            return self._handle_clauses(cession_file)
+        if stage == "validate":
+            return self._handle_validate(cession_file)
+        if stage == "process-exceptions":
+            return self._handle_process_exceptions(cession_file, payload)
+        if stage == "process":
+            return self._handle_process(cession_file)
+        if stage == "approve":
+            return self._handle_approve(cession_file)
+
+        logger.error("Unsupported cession pipeline stage requested stage=%s", stage)
+        raise IrisAPIError(400, "Invalid stage", f"{stage} is not supported")
+
+    def get_pipeline_status(self, file_id: str) -> dict[str, Any]:
+        logger.info("Loading cession pipeline status")
+        logger.debug("Cession pipeline status file_id=%s", file_id)
+        cession_file = self._get_cession_file_or_error(file_id)
+        detail = self._build_file_detail(cession_file)
+        current_step = detail["current_step"]
+        return {
+            "file_id": cession_file.file_id,
+            "current_stage": current_step.replace("-", "_"),
+            "pct_complete": self._step_completion_pct(current_step, cession_file.stage),
+            "stage_log": self._build_stage_log(cession_file),
+        }
+
+    def get_cession_file_summary(self, file_id: str) -> dict[str, Any]:
+        logger.info("Loading cession file processing summary")
+        logger.debug("Cession file summary file_id=%s", file_id)
+        cession_file = self._get_cession_file_or_error(file_id)
+        self._ensure_records_and_exceptions(cession_file)
+        return self._build_summary_payload(cession_file)
+
+    def list_settlements(
+        self,
+        status: str,
+        contract_id: str | None,
+        cedent_id: str | None,
+        period: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        logger.info("Loading settlements worklist")
+        logger.debug(
+            "Settlement queue filters status=%s contract_id=%s cedent_id=%s period=%s page=%s page_size=%s",
+            status,
+            contract_id,
+            cedent_id,
+            period,
+            page,
+            page_size,
+        )
+        settlements = self._load_settlements()
+        filtered = [
+            item
+            for item in settlements
+            if self._matches_settlement_filters(item, status, contract_id, cedent_id, period)
+        ]
+        filtered.sort(key=lambda item: (item.get("payment_due_date") or "", item["settlement_id"]))
+        start = max(page - 1, 0) * page_size
+        end = start + page_size
+        return {
+            "metrics": self._build_settlement_metrics(settlements),
+            "items": [self._serialize_settlement_list_item(item) for item in filtered[start:end]],
+        }
+
+    def get_settlement_detail(self, settlement_id: str) -> dict[str, Any]:
+        logger.info("Loading settlement detail")
+        logger.debug("Settlement detail settlement_id=%s", settlement_id)
+        settlement = self._get_settlement_or_error(settlement_id)
+        return self._build_settlement_detail(settlement)
+
+    def approve_settlement(self, settlement_id: str, notes: str | None) -> dict[str, Any]:
+        logger.info("Approving settlement for payment")
+        logger.debug("Settlement approval settlement_id=%s notes=%s", settlement_id, notes)
+        settlement = self._get_settlement_or_error(settlement_id)
+        if settlement["status"] == "approved":
+            logger.error("Settlement approval rejected because settlement_id=%s is already approved", settlement_id)
+            raise IrisAPIError(400, "Invalid settlement status", "Settlement is already approved")
+
+        approved_at = datetime.now(UTC)
+        self._store_settlement_override(
+            settlement_id,
+            {
+                "status": "approved",
+                "notes": notes,
+                "approved_at": self._to_iso(approved_at),
+                "dispute_reason": None,
+                "last_updated": self._to_iso(approved_at),
+            },
+        )
+        self._append_settlement_audit_event(
+            settlement_id,
+            {
+                "actor": "Claims Ops",
+                "type": "Human",
+                "action": "Settlement approved",
+                "detail": notes or "Approved after settlement review",
+                "timestamp": self._to_iso(approved_at),
+            },
+        )
+        return {
+            "settlement_id": settlement_id,
+            "status": "approved",
+            "approved_at": self._to_iso(approved_at),
+        }
+
+    def dispute_settlement(self, settlement_id: str, reason: str) -> dict[str, Any]:
+        logger.info("Raising settlement dispute")
+        logger.debug("Settlement dispute settlement_id=%s reason=%s", settlement_id, reason)
+        settlement = self._get_settlement_or_error(settlement_id)
+        if settlement["status"] == "disputed":
+            logger.error("Settlement dispute rejected because settlement_id=%s is already disputed", settlement_id)
+            raise IrisAPIError(400, "Invalid settlement status", "Settlement is already disputed")
+
+        disputed_at = datetime.now(UTC)
+        self._store_settlement_override(
+            settlement_id,
+            {
+                "status": "disputed",
+                "dispute_reason": reason,
+                "approved_at": None,
+                "last_updated": self._to_iso(disputed_at),
+            },
+        )
+        self._append_settlement_audit_event(
+            settlement_id,
+            {
+                "actor": "Claims Ops",
+                "type": "Human",
+                "action": "Settlement disputed",
+                "detail": reason,
+                "timestamp": self._to_iso(disputed_at),
+            },
+        )
+        self._create_settlement_worklist_item(
+            settlement,
+            priority="high",
+            status="pending_review",
+            title=f"Settlement dispute review - {settlement_id}",
+            description=reason,
+            breadcrumb="Settlement - Dispute Review",
+        )
+        return {
+            "settlement_id": settlement_id,
+            "status": "disputed",
+            "disputed_at": self._to_iso(disputed_at),
+        }
+
+    def hold_settlement(self, settlement_id: str, reason: str | None) -> dict[str, Any]:
+        logger.info("Holding settlement for manual review")
+        logger.debug("Settlement hold settlement_id=%s reason=%s", settlement_id, reason)
+        settlement = self._get_settlement_or_error(settlement_id)
+        if settlement["status"] == "held":
+            logger.error("Settlement hold rejected because settlement_id=%s is already held", settlement_id)
+            raise IrisAPIError(400, "Invalid settlement status", "Settlement is already held")
+
+        held_at = datetime.now(UTC)
+        hold_reason = reason or "Held for manual reconciliation review."
+        self._store_settlement_override(
+            settlement_id,
+            {
+                "status": "held",
+                "notes": hold_reason,
+                "approved_at": None,
+                "last_updated": self._to_iso(held_at),
+            },
+        )
+        self._append_settlement_audit_event(
+            settlement_id,
+            {
+                "actor": "Claims Ops",
+                "type": "Human",
+                "action": "Payment held",
+                "detail": hold_reason,
+                "timestamp": self._to_iso(held_at),
+            },
+        )
+        self._create_settlement_worklist_item(
+            settlement,
+            priority="high",
+            status="open",
+            title=f"Settlement payment hold - {settlement_id}",
+            description=hold_reason,
+            breadcrumb="Settlement - Payment Held",
+        )
+        return {
+            "settlement_id": settlement_id,
+            "status": "held",
+            "held_at": self._to_iso(held_at),
+        }
+
+    def upsert_mock_settlement(self, settlement_row: dict[str, Any]) -> dict[str, Any]:
+        logger.info("Upserting mock settlement row from pipeline outcome")
+        logger.debug("Mock settlement upsert payload=%s", settlement_row)
+        settlement_id = str(settlement_row["settlement_id"])
+        store = self._read_settlement_override_store()
+        created_rows = deepcopy(store.get(CREATED_SETTLEMENTS_KEY, {}))
+        created_rows[settlement_id] = settlement_row
+        store[CREATED_SETTLEMENTS_KEY] = created_rows
+        self._write_settlement_override_store(store)
+        return self._get_settlement_or_error(settlement_id)
+
+    def list_calculation_contracts(self) -> list[dict[str, Any]]:
+        logger.info("Loading calculation-engine contract options")
+        contracts = self.repository.list_all_contracts()
+        cedents = {item.cedent_id: item.legal_entity_name for item in self.repository.list_all_cedents()}
+        return [
+            {
+                "contract_id": contract.contract_id,
+                "contract_name": contract.contract_name,
+                "contract_version": contract.contract_version,
+                "cedent_id": contract.cedent_id,
+                "cedent_name": cedents.get(contract.cedent_id, "Unmapped cedent"),
+                "currency": contract.currency or "USD",
+                "status": contract.status or "active",
+                "valuation_date": self._to_date_string(contract.effective_date or contract.inception_date),
+                "assumption_snapshot": self._assumption_snapshot_label(contract.currency or "USD"),
+            }
+            for contract in contracts
+        ]
+
+    def run_calculation(self, payload: dict[str, Any]) -> dict[str, Any]:
+        logger.info("Running claims calculation engine")
+        logger.debug("Claims calculation payload=%s", payload)
+        contract_id = str(payload.get("contract_id") or "")
+        calculation_type = str(payload.get("calculation_type") or "").lower()
+        period_start = payload.get("period_start")
+        period_end = payload.get("period_end")
+
+        contract = self.repository.get_contract(contract_id)
+        if contract is None:
+            logger.error("Claims calculation failed because contract_id=%s was not found", contract_id)
+            raise IrisAPIError(404, "Invalid contract ID", "Contract not found in DB")
+        if calculation_type not in SUPPORTED_CALCULATION_TYPES:
+            logger.error("Claims calculation failed because calculation_type=%s is invalid", calculation_type)
+            raise IrisAPIError(400, "Invalid calculation type", f"{calculation_type} is not supported")
+        if not isinstance(period_start, date) or not isinstance(period_end, date):
+            logger.error("Claims calculation failed because period dates were not supplied")
+            raise IrisAPIError(400, "Invalid period", "period_start and period_end are required")
+        if period_end < period_start:
+            logger.error("Claims calculation failed because period_end=%s is before period_start=%s", period_end, period_start)
+            raise IrisAPIError(400, "Invalid period", "period_end must be on or after period_start")
+
+        return self._build_calculation_payload(contract, calculation_type, period_start, period_end)
+
+    def _handle_detect(self, cession_file: CessionFile, payload: dict[str, Any]) -> dict[str, Any]:
+        override_file_type = payload.get("override_file_type")
+        override_cedent_id = payload.get("override_cedent_id")
+        override_cedent = None
+        if override_cedent_id:
+            override_cedent = self.repository.get_cedent(override_cedent_id)
+            if override_cedent is None:
+                logger.error("Detect stage failed because cedent_id=%s was not found", override_cedent_id)
+                raise IrisAPIError(404, "Invalid cedent ID", "Cedent not found in DB")
+
+        detection = self._build_detection_payload(
+            cession_file,
+            override_file_type=override_file_type,
+            override_cedent=override_cedent,
+        )
+        cession_file.file_type = detection["file_type"]
+        cession_file.cedent_id = detection["cedent_id"]
+        cession_file.ai_file_type_confidence = detection["file_type_confidence"]
+        cession_file.ai_cedent_confidence = detection["cedent_confidence"]
+        cession_file.stage = "detected"
+        cession_file.updated_at = datetime.now(UTC)
+        self.repository.update_cession_file(cession_file)
+
+        self._store_override(
+            cession_file.file_id,
+            {
+                "active_step": "map-contract",
+                "detection_override": {
+                    "file_type": override_file_type,
+                    "cedent_id": override_cedent_id,
+                    "completed_at": self._to_iso(datetime.now(UTC)),
+                },
+            },
+        )
+        self._append_stage_history(cession_file.file_id, "detecting")
+        self._append_stage_history(cession_file.file_id, "detected")
+        self._append_stage_log(cession_file.file_id, "detect", "complete")
+        self._append_stage_log(cession_file.file_id, "map-contract", "in_progress")
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "AI Classifier v3.2",
+                "type": "AI Agent",
+                "action": f'Classified as "{detection["file_type"]}"',
+                "detail": f'confidence {int(detection["file_type_confidence"] * 100)}%',
+            },
+        )
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "AI Classifier v3.2",
+                "type": "AI Agent",
+                "action": f'Identified cedant {detection["cedent"]}',
+                "detail": f'confidence {int(detection["cedent_confidence"] * 100)}%',
+            },
+        )
+        return {"file_id": cession_file.file_id, "stage": "detected", "result": detection}
+
+    def _handle_map_contract(self, cession_file: CessionFile, payload: dict[str, Any]) -> dict[str, Any]:
+        override_contract_id = payload.get("override_contract_id")
+        mapping = self._build_contract_mapping_payload(cession_file, override_contract_id=override_contract_id)
+        cession_file.contract_id = mapping["contract_id"]
+        cession_file.stage = "mapped"
+        cession_file.updated_at = datetime.now(UTC)
+        self.repository.update_cession_file(cession_file)
+
+        self._store_override(
+            cession_file.file_id,
+            {
+                "active_step": "clauses",
+                "contract_override": {
+                    "contract_id": override_contract_id,
+                    "completed_at": self._to_iso(datetime.now(UTC)),
+                },
+            },
+        )
+        self._append_stage_history(cession_file.file_id, "mapped")
+        self._append_stage_log(cession_file.file_id, "map-contract", "complete")
+        self._append_stage_log(cession_file.file_id, "clauses", "in_progress")
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "Pipeline Orchestrator",
+                "type": "System",
+                "action": f'Mapped to {mapping["contract_id"]} {mapping["version"]}',
+                "detail": "Auto-mapped by cedant + period",
+            },
+        )
+        return {"file_id": cession_file.file_id, "stage": "mapped", "result": mapping}
+
+    def _handle_clauses(self, cession_file: CessionFile) -> dict[str, Any]:
+        clauses = self._build_clauses_payload(cession_file)
+        cession_file.stage = "clauses"
+        cession_file.updated_at = datetime.now(UTC)
+        self.repository.update_cession_file(cession_file)
+
+        self._store_override(cession_file.file_id, {"active_step": "validate"})
+        self._append_stage_history(cession_file.file_id, "clauses")
+        self._append_stage_log(cession_file.file_id, "clauses", "complete")
+        self._append_stage_log(cession_file.file_id, "validate", "in_progress")
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "Contract Rules Engine",
+                "type": "System",
+                "action": f'Checked {len(clauses["clauses_checked"])} clauses',
+                "detail": f'{clauses["flagged_count"]} flagged',
+            },
+        )
+        return {
+            "file_id": cession_file.file_id,
+            "stage": "clauses",
+            "clauses_checked": clauses["clauses_checked"],
+        }
+
+    def _handle_validate(self, cession_file: CessionFile) -> dict[str, Any]:
+        self._ensure_records_and_exceptions(cession_file)
+        validation = self._build_validation_payload(cession_file)
+        unresolved_critical = self._count_unresolved_by_severity(cession_file)["critical"]
+        cession_file.stage = "exceptions" if unresolved_critical else "validated"
+        cession_file.updated_at = datetime.now(UTC)
+        self._apply_exception_counts_to_file(cession_file)
+        self.repository.update_cession_file(cession_file)
+
+        self._store_override(
+            cession_file.file_id,
+            {"active_step": "exceptions" if validation["issues"] else "process"},
+        )
+        self._append_stage_history(cession_file.file_id, "validated")
+        self._append_stage_log(cession_file.file_id, "validate", "complete")
+        self._append_stage_log(
+            cession_file.file_id,
+            "exceptions" if validation["issues"] else "process",
+            "in_progress",
+        )
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "Validation Engine",
+                "type": "System",
+                "action": "Validation complete",
+                "detail": f'{validation["critical_errors"]} critical, {validation["warnings"]} warnings',
+            },
+        )
+        return {"file_id": cession_file.file_id, "stage": cession_file.stage, "result": validation}
+
+    def _handle_process_exceptions(self, cession_file: CessionFile, payload: dict[str, Any]) -> dict[str, Any]:
+        self._ensure_records_and_exceptions(cession_file)
+        resolutions = payload.get("exception_resolutions", [])
+        exceptions_by_id = {
+            exception.id: exception for exception in self.repository.list_file_exceptions(cession_file.id)
+        }
+        if not resolutions:
+            logger.error("Process exceptions stage rejected because no exception_resolutions were supplied")
+            raise IrisAPIError(400, "Invalid request", "exception_resolutions must contain at least one item")
+
+        now = datetime.now(UTC)
+        updated_exceptions: list[CessionFileException] = []
+        for item in resolutions:
+            exception_id = item.get("exception_id")
+            resolution = item.get("resolution")
+            override_value = item.get("override_value")
+            exception = exceptions_by_id.get(exception_id)
+            if exception is None:
+                logger.error("Exception resolution failed because exception_id=%s was not found", exception_id)
+                raise IrisAPIError(404, "Invalid exception ID", "Exception not found for this file")
+            if resolution not in {"accepted", "overridden", "rejected"}:
+                logger.error("Exception resolution failed because resolution=%s is invalid", resolution)
+                raise IrisAPIError(400, "Invalid resolution", f"{resolution} is not supported")
+
+            exception.resolution = resolution
+            exception.resolved_at = now
+            if resolution == "accepted" and exception.ai_suggestion:
+                exception.current_value = exception.ai_suggestion
+            if resolution == "overridden":
+                if not override_value:
+                    logger.error("Exception override failed because override_value was missing for exception_id=%s", exception_id)
+                    raise IrisAPIError(400, "Invalid resolution", "override_value is required for overridden exceptions")
+                exception.current_value = str(override_value)
+            updated_exceptions.append(exception)
+
+        self.repository.update_file_exceptions(updated_exceptions)
+        self._apply_exception_counts_to_file(cession_file)
+        pending = self._count_unresolved_by_severity(cession_file)
+        cession_file.stage = "validated" if sum(pending.values()) == 0 else "exceptions"
+        cession_file.updated_at = now
+        self.repository.update_cession_file(cession_file)
+
+        self._store_override(
+            cession_file.file_id,
+            {"active_step": "process" if sum(pending.values()) == 0 else "exceptions"},
+        )
+        self._append_stage_log(cession_file.file_id, "exceptions", "complete" if sum(pending.values()) == 0 else "in_progress")
+        if sum(pending.values()) == 0:
+            self._append_stage_history(cession_file.file_id, "exceptions")
+            self._append_stage_log(cession_file.file_id, "process", "in_progress")
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "Claims Ops",
+                "type": "Human",
+                "action": "Exception handling updated",
+                "detail": f'{len(updated_exceptions)} actions saved',
+            },
+        )
+        return {
+            "file_id": cession_file.file_id,
+            "stage": cession_file.stage,
+            "result": {
+                "resolved_count": sum(1 for item in updated_exceptions if item.resolution in {"accepted", "overridden"}),
+                "rejected_count": sum(1 for item in updated_exceptions if item.resolution == "rejected"),
+                "pending_count": sum(pending.values()),
+            },
+        }
+
+    def _handle_process(self, cession_file: CessionFile) -> dict[str, Any]:
+        self._ensure_records_and_exceptions(cession_file)
+        pending = self._count_unresolved_by_severity(cession_file)
+        if sum(pending.values()) > 0:
+            logger.error("Process stage rejected because unresolved exceptions remain file_id=%s", cession_file.file_id)
+            raise IrisAPIError(
+                409,
+                "Exceptions unresolved",
+                "Resolve all exceptions before processing the file",
+            )
+
+        cession_file.stage = "processed"
+        cession_file.updated_at = datetime.now(UTC)
+        self.repository.update_cession_file(cession_file)
+        worklist_items = self._ensure_processing_worklist_items(cession_file)
+        summary = self._build_summary_payload(cession_file)
+
+        self._store_override(cession_file.file_id, {"active_step": "summary"})
+        self._append_stage_history(cession_file.file_id, "processing")
+        self._append_stage_history(cession_file.file_id, "processed")
+        self._append_stage_log(cession_file.file_id, "process", "complete")
+        self._append_stage_log(cession_file.file_id, "summary", "in_progress")
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "Claims Engine",
+                "type": "System",
+                "action": "Processing complete",
+                "detail": f'{summary["records_processed"]} records applied',
+            },
+        )
+        if worklist_items:
+            self._append_audit_event(
+                cession_file.file_id,
+                {
+                    "actor": "Workflow Router",
+                    "type": "System",
+                    "action": f'Created {len(worklist_items)} worklist item(s)',
+                    "detail": ", ".join(item.wl_id for item in worklist_items),
+                },
+            )
+        return {"file_id": cession_file.file_id, "stage": "processed", "result": summary}
+
+    def _handle_approve(self, cession_file: CessionFile) -> dict[str, Any]:
+        cession_file.stage = "approved"
+        cession_file.updated_at = datetime.now(UTC)
+        self.repository.update_cession_file(cession_file)
+
+        self._store_override(cession_file.file_id, {"active_step": "audit"})
+        self._append_stage_history(cession_file.file_id, "approved")
+        self._append_stage_log(cession_file.file_id, "summary", "complete")
+        self._append_stage_log(cession_file.file_id, "worklist", "complete")
+        self._append_stage_log(cession_file.file_id, "audit", "complete")
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "Claims Ops",
+                "type": "Human",
+                "action": "Approved processing outcome",
+                "detail": cession_file.file_id,
+            },
+        )
+        return {
+            "file_id": cession_file.file_id,
+            "stage": "approved",
+            "result": {"approved": True},
+        }
+
+    def _build_file_detail(self, cession_file: CessionFile) -> dict[str, Any]:
+        detection = self._build_detection_payload(cession_file)
+        mapping = self._build_contract_mapping_payload(cession_file)
+        clauses = self._build_clauses_payload(cession_file)
+        validation = self._build_validation_payload(cession_file)
+        exceptions = self._build_exceptions_payload(cession_file)
+        summary = self._build_summary_payload(cession_file)
+        worklist = self._build_worklist_payload(cession_file)
+        audit = self._build_audit_payload(cession_file)
+        active_step = self._resolve_active_step(cession_file)
+
+        return {
+            "file_id": cession_file.file_id,
+            "filename": cession_file.filename,
+            "cedent": detection["cedent"],
+            "cedent_id": detection["cedent_id"],
+            "contract_id": mapping["contract_id"],
+            "file_type": detection["file_type"],
+            "records": cession_file.record_count or 0,
+            "stage": cession_file.stage,
+            "current_step": active_step,
+            "stage_history": self._build_stage_history(cession_file),
+            "detection": detection,
+            "contract_mapping": mapping,
+            "clauses": clauses,
+            "validation": validation,
+            "exceptions": exceptions,
+            "process": self._build_process_payload(cession_file),
+            "summary": summary,
+            "worklist": worklist,
+            "audit": audit,
+        }
+
+    def _serialize_queue_item(self, cession_file: CessionFile) -> dict[str, Any]:
+        cedent = self.repository.get_cedent(cession_file.cedent_id)
+        return {
+            "file_id": cession_file.file_id,
+            "filename": cession_file.filename,
+            "cedent": cedent.legal_entity_name if cedent else "Unmapped cedent",
+            "cedent_id": cession_file.cedent_id,
+            "file_type": cession_file.file_type or "Unclassified",
+            "contract_id": cession_file.contract_id,
+            "records": cession_file.record_count or 0,
+            "stage": cession_file.stage,
+            "critical_count": cession_file.critical_count or 0,
+            "received_at": self._to_iso(cession_file.received_at),
+            "sla_deadline": self._to_iso(cession_file.sla_deadline),
+        }
+
+    def _build_list_metrics(self, all_files: list[CessionFile]) -> dict[str, Any]:
+        metrics = deepcopy(LIST_METRICS_BASELINE)
+        seeded_ids = {record["file_id"] for record in load_mock_data("cession_files_seed.json")}
+        extra_files = [item for item in all_files if item.file_id not in seeded_ids]
+        if extra_files:
+            metrics["in_pipeline"] += sum(1 for item in extra_files if item.stage not in {"approved", "rejected"})
+            metrics["exceptions"] += sum(
+                1 for item in extra_files if item.stage == "exceptions" or (item.critical_count or 0) > 0
+            )
+            metrics["processed"] += sum(1 for item in extra_files if item.stage in {"processed", "approved"})
+            metrics["pipeline_throughput"]["records_ingested"] += sum(item.record_count or 0 for item in extra_files)
+            metrics["pipeline_throughput"]["files"] += len(extra_files)
+            metrics["pipeline_throughput"]["in_exception"] += sum(
+                1 for item in extra_files if item.stage == "exceptions" or (item.critical_count or 0) > 0
+            )
+        return metrics
+
+    def _build_detection_payload(
+        self,
+        cession_file: CessionFile,
+        override_file_type: str | None = None,
+        override_cedent: Any | None = None,
+    ) -> dict[str, Any]:
+        override_store = self._get_override(cession_file.file_id)
+        detection_seed = self._detect_file_profile(cession_file.filename, "")
+        stored_override = override_store.get("detection_override") or {}
+
+        file_type = override_file_type or stored_override.get("file_type") or cession_file.file_type or detection_seed["file_type"]
+        cedent_id = (
+            override_cedent.cedent_id
+            if override_cedent
+            else stored_override.get("cedent_id")
+            or cession_file.cedent_id
+            or detection_seed["cedent_id"]
+        )
+        cedent = self.repository.get_cedent(cedent_id)
+
+        if override_file_type or override_cedent:
+            file_type_confidence = 1.0 if override_file_type else detection_seed["file_type_confidence"]
+            cedent_confidence = 1.0 if override_cedent else detection_seed["cedent_confidence"]
+            reasoning = "Manual override applied by claims operator."
+        else:
+            file_type_confidence = self._to_float(cession_file.ai_file_type_confidence) or detection_seed["file_type_confidence"]
+            cedent_confidence = self._to_float(cession_file.ai_cedent_confidence) or detection_seed["cedent_confidence"]
+            reasoning = detection_seed["iris_reasoning"]
+
+        return {
+            "file_type": file_type,
+            "file_type_confidence": round(file_type_confidence, 2),
+            "cedent": cedent.legal_entity_name if cedent else detection_seed["cedent_name"],
+            "cedent_id": cedent_id,
+            "cedent_confidence": round(cedent_confidence, 2),
+            "iris_reasoning": reasoning,
+        }
+
+    def _build_contract_mapping_payload(
+        self,
+        cession_file: CessionFile,
+        override_contract_id: str | None = None,
+    ) -> dict[str, Any]:
+        detection = self._build_detection_payload(cession_file)
+        override_store = self._get_override(cession_file.file_id)
+        contract_override = (override_store.get("contract_override") or {}).get("contract_id")
+        selected_contract_id = override_contract_id or contract_override or cession_file.contract_id
+        contract = self.repository.get_contract(selected_contract_id)
+
+        if contract is None:
+            if detection["cedent_id"]:
+                contract = next(
+                    (
+                        item
+                        for item in self.repository.list_all_contracts()
+                        if item.cedent_id == detection["cedent_id"]
+                    ),
+                    None,
+                )
+            if contract is None:
+                logger.error("Unable to map cession file file_id=%s to a contract", cession_file.file_id)
+                raise IrisAPIError(404, "Invalid contract ID", "Contract not found in DB")
+
+        profile = self._detect_file_profile(cession_file.filename, "")
+        is_manual_override = bool(override_contract_id)
+        return {
+            "contract_id": contract.contract_id,
+            "contract_name": contract.contract_name,
+            "version": contract.contract_version or "v1.0",
+            "period": profile["period"],
+            "confidence": 1.0 if is_manual_override else profile["contract_confidence"],
+            "matching_basis": (
+                "Manual override selected by claims operator."
+                if is_manual_override
+                else f'Cedant {contract.cedent_id} + File Type "{detection["file_type"]}" + Period {profile["period"]}'
+            ),
+            "notional": round(float(contract.notional_amount or 0), 2),
+            "currency": contract.currency or "USD",
+            "lives_covered": contract.lives_count or 0,
+            "inception_date": contract.inception_date.isoformat() if contract.inception_date else "",
+            "maturity_date": contract.maturity_date.isoformat() if contract.maturity_date else "",
+            "status": contract.status or "active",
+            "fixed_leg_rate_pct": round(float(contract.fixed_leg_rate or 0) * 100, 2),
+            "floating_leg": contract.floating_leg_definition or "Realized mortality",
+            "expected_fixed_leg": self._expected_fixed_leg_amount(contract),
+        }
+
+    def _build_clauses_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        detection = self._build_detection_payload(cession_file)
+        file_type = detection["file_type"]
+        if file_type == "Fixed Leg":
+            clauses_checked = [
+                {
+                    "clause_id": "§6.2",
+                    "clause_title": "Fixed Leg Calculation",
+                    "category": "Calculation",
+                    "status": "matched",
+                    "description": "Fixed leg = Notional × FixedRate × DayCount(ACT/365).",
+                    "fields_affected": ["fixed_leg_amount"],
+                    "active": True,
+                },
+                {
+                    "clause_id": "§6.4",
+                    "clause_title": "Fee Schedule",
+                    "category": "Calculation",
+                    "status": "matched",
+                    "description": "Quarterly fee per agreed schedule; deviation > 0.5% triggers review.",
+                    "fields_affected": ["fee_amount"],
+                    "active": True,
+                },
+            ]
+            return {
+                "title": "Applicable Contract Clauses",
+                "subtitle": "2 clauses identified for Fixed Leg.",
+                "flagged_count": 0,
+                "clauses_checked": clauses_checked,
+            }
+
+        clauses_checked = [
+            {
+                "clause_id": "§4.1",
+                "clause_title": "Schema Compliance",
+                "category": "Operational",
+                "status": "matched",
+                "description": "Uploaded file must follow the agreed submission schema and required headers.",
+                "fields_affected": ["member_id", "status"],
+                "active": True,
+            },
+            {
+                "clause_id": "§7.3",
+                "clause_title": "Material Change Reporting",
+                "category": "Data",
+                "status": "check_required",
+                "description": "Status, mortality, or activity changes must be reported within the agreed tolerance window.",
+                "fields_affected": ["status", "date_of_death", "activity_code"],
+                "active": True,
+            },
+        ]
+        return {
+            "title": "Applicable Contract Clauses",
+            "subtitle": f'2 clauses identified for {file_type}.',
+            "flagged_count": 1,
+            "clauses_checked": clauses_checked,
+        }
+
+    def _build_validation_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        self._ensure_records_and_exceptions(cession_file)
+        records = self.repository.list_file_records(cession_file.id)
+        exceptions = self.repository.list_file_exceptions(cession_file.id)
+        issues = [self._serialize_issue(item) for item in exceptions]
+        return {
+            "records": cession_file.record_count or len(records),
+            "columns_mapped": self._columns_mapped_for_type(cession_file.file_type),
+            "critical_errors": sum(1 for item in exceptions if item.severity == "critical"),
+            "warnings": sum(1 for item in exceptions if item.severity == "warning"),
+            "informational": sum(1 for item in exceptions if item.severity == "info"),
+            "issues": issues,
+        }
+
+    def _build_exceptions_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        exceptions = self.repository.list_file_exceptions(cession_file.id)
+        unresolved_counts = self._count_unresolved_by_severity(cession_file)
+        return {
+            "title": "Exception Handling",
+            "subtitle": f'{sum(unresolved_counts.values())} unresolved · IRiS suggestions available · every action audited',
+            "critical": sum(1 for item in exceptions if item.severity == "critical"),
+            "warnings": sum(1 for item in exceptions if item.severity == "warning"),
+            "informational": sum(1 for item in exceptions if item.severity == "info"),
+            "unresolved": sum(unresolved_counts.values()),
+            "items": [
+                {
+                    **self._serialize_issue(item),
+                    "exception_id": item.id,
+                    "resolution": item.resolution or "pending",
+                }
+                for item in exceptions
+            ],
+        }
+
+    def _build_process_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        file_type = self._build_detection_payload(cession_file)["file_type"]
+        if file_type == "Fixed Leg":
+            plan = [
+                "Recompute fixed leg per §6.2 (ACT/365)",
+                "Compare to file values",
+                "Flag deviations > tolerance",
+            ]
+        elif file_type == "Pension Status":
+            plan = [
+                "Normalize pensioner status movements",
+                "Apply SCD2 population changes",
+                "Prepare downstream valuation deltas",
+            ]
+        elif file_type == "Mortality Report":
+            plan = [
+                "Validate mortality events against the reference pool",
+                "Apply confirmed death updates",
+                "Prepare experience impact output",
+            ]
+        else:
+            plan = [
+                "Normalize activity file structure",
+                "Apply contract tolerance rules",
+                "Prepare worklist actions for downstream review",
+            ]
+        return {
+            "title": f"Processing — {file_type}",
+            "subtitle": "Click Continue to execute. Engine logic depends on file type.",
+            "engine_plan": plan,
+            "iris_note": "IRiS will compute before/after population, financial impact and anomaly detection on the next step.",
+        }
+
+    def _build_summary_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        mapping = self._build_contract_mapping_payload(cession_file)
+        detection = self._build_detection_payload(cession_file)
+        exceptions = self.repository.list_file_exceptions(cession_file.id)
+        worklist_items = self.repository.list_worklist_items_for_file(cession_file.id)
+        settlement = self._mock_settlement_for_contract(mapping["contract_id"])
+        file_type = detection["file_type"]
+
+        resolved_critical = sum(
+            1
+            for item in exceptions
+            if item.severity == "critical" and item.resolution in {"accepted", "overridden"}
+        )
+        overridden_total = sum(1 for item in exceptions if item.resolution == "overridden")
+        summary: dict[str, Any] = {
+            "file_id": cession_file.file_id,
+            "contract_id": mapping["contract_id"],
+            "file_type": file_type,
+            "period": mapping["period"],
+            "records_processed": cession_file.record_count or 0,
+            "exceptions_resolved": resolved_critical,
+            "exceptions_overridden": overridden_total,
+            "worklist_items_created": len(worklist_items),
+            "audit_trail_id": self._get_override(cession_file.file_id).get("pipeline_session_id"),
+        }
+
+        if file_type == "Fixed Leg":
+            summary.update(
+                {
+                    "settlement_impact": {
+                        "fixed_leg_adjustment": -132145,
+                        "currency": mapping["currency"],
+                        "settlement_id_created": settlement["settlement_id"],
+                    },
+                    "population_changes": None,
+                    "liability_impact": 0,
+                    "fixed_leg_recomputed": 8782055,
+                    "net_settlement_amount": 8649910,
+                    "insight": "recommendation: 1 cell deviates from §6.2 calc by 1.5% — accept AI correction.",
+                }
+            )
+            return summary
+
+        if file_type == "Pension Status":
+            summary.update(
+                {
+                    "settlement_impact": None,
+                    "population_changes": {
+                        "new_deceased": 1,
+                        "new_deferred": 0,
+                        "new_active": 3,
+                    },
+                    "liability_impact": -2480000,
+                    "fixed_leg_recomputed": None,
+                    "net_settlement_amount": None,
+                    "insight": "recommendation: 1 deceased member update will reduce projected liability in the next cycle.",
+                }
+            )
+            return summary
+
+        if file_type == "Mortality Report":
+            summary.update(
+                {
+                    "settlement_impact": {
+                        "fixed_leg_adjustment": 0,
+                        "currency": mapping["currency"],
+                        "settlement_id_created": "EXP-2025-Q1-031",
+                    },
+                    "population_changes": {
+                        "confirmed_deaths": 12,
+                        "pending_manual_review": 1,
+                    },
+                    "liability_impact": -11200000,
+                    "fixed_leg_recomputed": None,
+                    "net_settlement_amount": None,
+                    "insight": "recommendation: 1 mortality event needs manual review before the experience report is published.",
+                }
+            )
+            return summary
+
+        summary.update(
+            {
+                "settlement_impact": None,
+                "population_changes": {
+                    "status_changes": 18,
+                    "manual_follow_up": 2,
+                },
+                "liability_impact": -640000,
+                "fixed_leg_recomputed": None,
+                "net_settlement_amount": None,
+                "insight": "recommendation: activity changes should route to Claims Ops for tolerance review before settlement refresh.",
+            }
+        )
+        return summary
+
+    def _build_worklist_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        items = self.repository.list_worklist_items_for_file(cession_file.id)
+        if items:
+            return {
+                "title": "Worklist Tasks Created",
+                "subtitle": "Routed to owning teams with SLA",
+                "items": [
+                    {
+                        "wl_id": item.wl_id,
+                        "task": item.title,
+                        "type": item.category or "Validation",
+                        "team": item.assigned_role or "claims_ops",
+                        "priority": item.priority,
+                        "sla": self._sla_display(item.sla_deadline),
+                        "description": item.description or "",
+                    }
+                    for item in items
+                ],
+            }
+
+        if cession_file.file_type == "Fixed Leg" or "fixed_leg" in cession_file.filename.lower():
+            return {
+                "title": "Worklist Tasks Created",
+                "subtitle": "Routed to owning teams with SLA",
+                "items": [
+                    {
+                        "wl_id": f"WL-{cession_file.file_id}-VAL",
+                        "task": "Resolve 2 critical validation errors",
+                        "type": "Validation",
+                        "team": "Claims Ops",
+                        "priority": "high",
+                        "sla": "2h",
+                        "description": "Mock task seeded from screenshot correction because no linked worklist row exists yet.",
+                    }
+                ],
+            }
+
+        return {
+            "title": "Worklist Tasks Created",
+            "subtitle": "Routed to owning teams with SLA",
+            "items": [],
+        }
+
+    def _build_audit_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        stored = self._get_override(cession_file.file_id)
+        seeded_events = stored.get("audit_events", [])
+        if seeded_events:
+            events = seeded_events
+        elif cession_file.file_type == "Fixed Leg" or "fixed_leg" in cession_file.filename.lower():
+            base_time = cession_file.received_at or datetime.now(UTC)
+            events = [
+                {
+                    "timestamp": self._to_iso(base_time),
+                    "actor": "SFTP Listener",
+                    "type": "System",
+                    "action": "File received via SFTP",
+                    "detail": "—",
+                },
+                {
+                    "timestamp": self._to_iso(base_time),
+                    "actor": "AI Classifier v3.2",
+                    "type": "AI Agent",
+                    "action": 'Classified as "Fixed Leg"',
+                    "detail": "confidence 94%",
+                },
+                {
+                    "timestamp": self._to_iso(base_time),
+                    "actor": "AI Classifier v3.2",
+                    "type": "AI Agent",
+                    "action": "Identified cedant Bavarian Industrial Fund",
+                    "detail": "confidence 99%",
+                },
+                {
+                    "timestamp": self._to_iso(base_time),
+                    "actor": "Pipeline Orchestrator",
+                    "type": "System",
+                    "action": "Mapped to LSC-2025-002 v1.0",
+                    "detail": "—",
+                },
+            ]
+        else:
+            events = stored.get("audit_events", [])
+
+        return {
+            "title": "Audit Trail",
+            "subtitle": f'{len(events)} events captured',
+            "items": events,
+        }
+
+    def _ensure_records_and_exceptions(self, cession_file: CessionFile, content: str | None = None) -> None:
+        current_records = self.repository.list_file_records(cession_file.id)
+        current_exceptions = self.repository.list_file_exceptions(cession_file.id)
+        if current_records and current_exceptions:
+            self._apply_exception_counts_to_file(cession_file)
+            return
+
+        detection = self._build_detection_payload(cession_file)
+        mapping = self._build_contract_mapping_payload(cession_file)
+        template_records = self._build_record_templates(cession_file, detection["file_type"], mapping["contract_id"], content or "")
+        template_exceptions = self._build_exception_templates(cession_file, detection["file_type"])
+
+        if not current_records:
+            self.repository.replace_file_records(
+                cession_file.id,
+                [
+                    CessionFileRecord(
+                        cession_file_id=cession_file.id,
+                        row_number=item["row_number"],
+                        member_id=item.get("member_id"),
+                        raw_data=json.dumps(item["raw_data"]),
+                        mapped_data=json.dumps(item["mapped_data"]),
+                        validation_status=item.get("validation_status"),
+                        validation_issues=json.dumps(item.get("validation_issues", [])),
+                    )
+                    for item in template_records
+                ],
+            )
+        if not current_exceptions and template_exceptions:
+            self.repository.replace_file_exceptions(
+                cession_file.id,
+                [
+                    CessionFileException(
+                        cession_file_id=cession_file.id,
+                        row_number=item["row_number"],
+                        field_name=item["field_name"],
+                        severity=item["severity"],
+                        issue_type=item["issue_type"],
+                        description=item["description"],
+                        current_value=item["current_value"],
+                        ai_suggestion=item["ai_suggestion"],
+                        ai_confidence=item["ai_confidence"],
+                        resolution=item["resolution"],
+                        resolved_at=datetime.now(UTC) if item["resolution"] in {"accepted", "overridden"} else None,
+                    )
+                    for item in template_exceptions
+                ],
+            )
+        if cession_file.record_count in {None, 0}:
+            cession_file.record_count = len(template_records)
+        self._apply_exception_counts_to_file(cession_file)
+        self.repository.update_cession_file(cession_file)
+
+    def _build_record_templates(
+        self,
+        cession_file: CessionFile,
+        file_type: str,
+        contract_id: str,
+        content: str,
+    ) -> list[dict[str, Any]]:
+        if file_type == "Fixed Leg":
+            parsed_rows = self._parse_csv_rows(content)
+            if not parsed_rows:
+                parsed_rows = [
+                    {
+                        "row_id": "100",
+                        "period": "Q1-2025",
+                        "fixed_leg_amount": "8914200",
+                        "currency": "EUR",
+                        "fee_amount": "412300",
+                        "value_date": "2025-03-30",
+                        "contract_id": contract_id,
+                    },
+                    {
+                        "row_id": "237",
+                        "period": "Q1-2025",
+                        "fixed_leg_amount": "8914200",
+                        "currency": "EUR",
+                        "fee_amount": "412300",
+                        "value_date": "2025-03-30",
+                        "contract_id": contract_id,
+                    },
+                    {
+                        "row_id": "374",
+                        "period": "Q1-2025",
+                        "fixed_leg_amount": "8914200",
+                        "currency": "EUR",
+                        "fee_amount": "412300",
+                        "value_date": "2025-03-30",
+                        "contract_id": contract_id,
+                    },
+                    {
+                        "row_id": "511",
+                        "period": "Q1-2025",
+                        "fixed_leg_amount": "8914200",
+                        "currency": "EUR",
+                        "fee_amount": "412300",
+                        "value_date": "2025-03-30",
+                        "contract_id": contract_id,
+                    },
+                ]
+            return [
+                {
+                    "row_number": int(item["row_id"]),
+                    "raw_data": item,
+                    "mapped_data": {
+                        "period": item["period"],
+                        "contract_id": contract_id,
+                        "fixed_leg_amount": item["fixed_leg_amount"],
+                        "currency": item["currency"],
+                    },
+                    "validation_status": "warning",
+                    "validation_issues": [],
+                }
+                for item in parsed_rows
+            ]
+
+        if file_type == "Pension Status":
+            return [
+                {
+                    "row_number": 1,
+                    "member_id": "PEN-0100234",
+                    "raw_data": {
+                        "member_id": "PEN-0100234",
+                        "date_of_birth": "1963-04-12",
+                        "gender": "F",
+                        "status": "active",
+                        "date_of_death": "",
+                        "annual_pension": "12000",
+                    },
+                    "mapped_data": {
+                        "contract_id": contract_id,
+                        "member_id": "PEN-0100234",
+                        "status": "active",
+                    },
+                    "validation_status": "valid",
+                    "validation_issues": [],
+                },
+                {
+                    "row_number": 2,
+                    "member_id": "PEN-0100236",
+                    "raw_data": {
+                        "member_id": "PEN-0100236",
+                        "date_of_birth": "1954-07-23",
+                        "gender": "F",
+                        "status": "active",
+                        "date_of_death": "",
+                        "annual_pension": "12774",
+                    },
+                    "mapped_data": {
+                        "contract_id": contract_id,
+                        "member_id": "PEN-0100236",
+                        "status": "active",
+                    },
+                    "validation_status": "valid",
+                    "validation_issues": [],
+                },
+                {
+                    "row_number": 3,
+                    "member_id": "PEN-0100238",
+                    "raw_data": {
+                        "member_id": "PEN-0100238",
+                        "date_of_birth": "1947-02-08",
+                        "gender": "F",
+                        "status": "deceased",
+                        "date_of_death": "2025-01-18",
+                        "annual_pension": "13548",
+                    },
+                    "mapped_data": {
+                        "contract_id": contract_id,
+                        "member_id": "PEN-0100238",
+                        "status": "deceased",
+                    },
+                    "validation_status": "warning",
+                    "validation_issues": [],
+                },
+                {
+                    "row_number": 4,
+                    "member_id": "PEN-0100240",
+                    "raw_data": {
+                        "member_id": "PEN-0100240",
+                        "date_of_birth": "1941-11-30",
+                        "gender": "F",
+                        "status": "active",
+                        "date_of_death": "",
+                        "annual_pension": "14322",
+                    },
+                    "mapped_data": {
+                        "contract_id": contract_id,
+                        "member_id": "PEN-0100240",
+                        "status": "active",
+                    },
+                    "validation_status": "valid",
+                    "validation_issues": [],
+                },
+            ]
+
+        if file_type == "Mortality Report":
+            return [
+                {
+                    "row_number": 101,
+                    "member_id": "HLV-000101",
+                    "raw_data": {
+                        "member_id": "HLV-000101",
+                        "death_date": "2025-03-04",
+                        "cause_code": "NAT",
+                        "verified_by": "Helvetia Admin",
+                    },
+                    "mapped_data": {
+                        "contract_id": contract_id,
+                        "member_id": "HLV-000101",
+                        "status": "deceased",
+                    },
+                    "validation_status": "valid",
+                    "validation_issues": [],
+                },
+                {
+                    "row_number": 245,
+                    "member_id": "HLV-000245",
+                    "raw_data": {
+                        "member_id": "HLV-000245",
+                        "death_date": "2025-03-18",
+                        "cause_code": "UNK",
+                        "verified_by": "",
+                    },
+                    "mapped_data": {
+                        "contract_id": contract_id,
+                        "member_id": "HLV-000245",
+                        "status": "deceased",
+                    },
+                    "validation_status": "warning",
+                    "validation_issues": [],
+                },
+                {
+                    "row_number": 317,
+                    "member_id": "HLV-000317",
+                    "raw_data": {
+                        "member_id": "HLV-000317",
+                        "death_date": "2025-03-20",
+                        "cause_code": "NAT",
+                        "verified_by": "Helvetia Admin",
+                    },
+                    "mapped_data": {
+                        "contract_id": contract_id,
+                        "member_id": "HLV-000317",
+                        "status": "deceased",
+                    },
+                    "validation_status": "valid",
+                    "validation_issues": [],
+                },
+            ]
+
+        return [
+            {
+                "row_number": 100,
+                "member_id": "MAP-000100",
+                "raw_data": {
+                    "member_id": "MAP-000100",
+                    "activity_code": "DEFER",
+                    "effective_date": "2025-03-31",
+                },
+                "mapped_data": {
+                    "contract_id": contract_id,
+                    "member_id": "MAP-000100",
+                    "activity_code": "DEFER",
+                },
+                "validation_status": "warning",
+                "validation_issues": [],
+            },
+            {
+                "row_number": 240,
+                "member_id": "MAP-000240",
+                "raw_data": {
+                    "member_id": "MAP-000240",
+                    "activity_code": "SPOUSE_CHANGE",
+                    "effective_date": "2025-03-31",
+                },
+                "mapped_data": {
+                    "contract_id": contract_id,
+                    "member_id": "MAP-000240",
+                    "activity_code": "SPOUSE_CHANGE",
+                },
+                "validation_status": "critical",
+                "validation_issues": [],
+            },
+        ]
+
+    def _build_exception_templates(self, cession_file: CessionFile, file_type: str) -> list[dict[str, Any]]:
+        if file_type == "Fixed Leg":
+            resolved_by_stage = cession_file.stage in {"processed", "approved"}
+            resolution = "accepted" if resolved_by_stage else "pending"
+            return [
+                {
+                    "row_number": 100,
+                    "field_name": "fixed_leg_amount",
+                    "severity": "critical",
+                    "issue_type": "variance",
+                    "description": "Variance vs contract calc > 1.5%",
+                    "current_value": "8914200",
+                    "ai_suggestion": "8782055",
+                    "ai_confidence": 0.97,
+                    "resolution": resolution,
+                },
+                {
+                    "row_number": 237,
+                    "field_name": "fee_amount",
+                    "severity": "warning",
+                    "issue_type": "schedule_deviation",
+                    "description": "Quarterly fee outside schedule by 0.7%",
+                    "current_value": "412300",
+                    "ai_suggestion": "409400",
+                    "ai_confidence": 0.90,
+                    "resolution": resolution,
+                },
+                {
+                    "row_number": 374,
+                    "field_name": "value_date",
+                    "severity": "info",
+                    "issue_type": "calendar_adjustment",
+                    "description": "Settlement date is non-business day",
+                    "current_value": "2025-03-30",
+                    "ai_suggestion": "2025-03-31",
+                    "ai_confidence": 0.99,
+                    "resolution": resolution,
+                },
+                {
+                    "row_number": 511,
+                    "field_name": "fixed_leg_amount",
+                    "severity": "critical",
+                    "issue_type": "variance",
+                    "description": "Variance vs contract calc > 1.5%",
+                    "current_value": "8914200",
+                    "ai_suggestion": "8782055",
+                    "ai_confidence": 0.97,
+                    "resolution": resolution,
+                },
+                {
+                    "row_number": 648,
+                    "field_name": "fee_amount",
+                    "severity": "warning",
+                    "issue_type": "schedule_deviation",
+                    "description": "Quarterly fee outside schedule by 0.7%",
+                    "current_value": "412300",
+                    "ai_suggestion": "409400",
+                    "ai_confidence": 0.90,
+                    "resolution": resolution,
+                },
+                {
+                    "row_number": 785,
+                    "field_name": "value_date",
+                    "severity": "info",
+                    "issue_type": "calendar_adjustment",
+                    "description": "Settlement date is non-business day",
+                    "current_value": "2025-03-30",
+                    "ai_suggestion": "2025-03-31",
+                    "ai_confidence": 0.99,
+                    "resolution": resolution,
+                },
+            ]
+
+        if file_type == "Pension Status":
+            return [
+                {
+                    "row_number": 3,
+                    "field_name": "date_of_death",
+                    "severity": "warning",
+                    "issue_type": "verification_gap",
+                    "description": "Death update requires administrator verification reference",
+                    "current_value": "2025-01-18",
+                    "ai_suggestion": "Attach verification reference",
+                    "ai_confidence": 0.84,
+                    "resolution": "pending" if cession_file.critical_count else "accepted",
+                }
+            ]
+
+        if file_type == "Mortality Report":
+            return [
+                {
+                    "row_number": 245,
+                    "field_name": "verified_by",
+                    "severity": "warning",
+                    "issue_type": "missing_verifier",
+                    "description": "Verifier is blank for a mortality event",
+                    "current_value": "",
+                    "ai_suggestion": "Helvetia Ops Review",
+                    "ai_confidence": 0.76,
+                    "resolution": "pending" if cession_file.stage == "exceptions" else "accepted",
+                }
+            ]
+
+        return [
+            {
+                "row_number": 240,
+                "field_name": "activity_code",
+                "severity": "critical",
+                "issue_type": "unsupported_transition",
+                "description": "Activity code could not be mapped to the current contract rule set",
+                "current_value": "SPOUSE_CHANGE",
+                "ai_suggestion": "Manual routing to claims ops",
+                "ai_confidence": 0.88,
+                "resolution": "pending",
+            }
+        ]
+
+    def _apply_exception_counts_to_file(self, cession_file: CessionFile) -> None:
+        unresolved = self._count_unresolved_by_severity(cession_file)
+        cession_file.critical_count = unresolved["critical"]
+        cession_file.warning_count = unresolved["warning"]
+        cession_file.error_count = unresolved["critical"]
+
+    def _count_unresolved_by_severity(self, cession_file: CessionFile) -> dict[str, int]:
+        counts = {"critical": 0, "warning": 0, "info": 0}
+        for item in self.repository.list_file_exceptions(cession_file.id):
+            if item.resolution not in {"accepted", "overridden"}:
+                counts[item.severity] = counts.get(item.severity, 0) + 1
+        return counts
+
+    def _serialize_issue(self, item: CessionFileException) -> dict[str, Any]:
+        clause_reference = {
+            "fixed_leg_amount": "§6.2 ACT/365",
+            "fee_amount": "§6.4 Fee Schedule",
+            "value_date": "§3.4 Payment Date Convention",
+            "date_of_death": "§7.3 Material Change Reporting",
+            "verified_by": "§7.3 Material Change Reporting",
+            "activity_code": "§7.3 Material Change Reporting",
+        }.get(item.field_name, "Operational rule")
+        return {
+            "severity": item.severity,
+            "row": item.row_number,
+            "field": item.field_name,
+            "issue": item.description,
+            "current_value": item.current_value,
+            "ai_suggestion": item.ai_suggestion,
+            "ai_confidence": round(self._to_float(item.ai_confidence), 2),
+            "clause_reference": clause_reference,
+        }
+
+    def _ensure_processing_worklist_items(self, cession_file: CessionFile) -> list[WorklistItem]:
+        existing = self.repository.list_worklist_items_for_file(cession_file.id)
+        if existing:
+            return existing
+
+        summary = self._build_summary_payload(cession_file)
+        detection = self._build_detection_payload(cession_file)
+        mapping = self._build_contract_mapping_payload(cession_file)
+        now = datetime.now(UTC)
+
+        item = WorklistItem(
+            wl_id=self.repository.get_next_worklist_id(),
+            title=(
+                "Resolve 2 critical validation errors"
+                if detection["file_type"] == "Fixed Leg"
+                else f"{detection['file_type']} review — {cession_file.file_id}"
+            ),
+            description=summary["insight"],
+            category="Validation",
+            priority="high",
+            status="open",
+            assigned_role="claims_ops",
+            contract_id=mapping["contract_id"],
+            cedent_id=detection["cedent_id"],
+            cession_file_id=cession_file.id,
+            source="AI Agent",
+            source_detail="Cession pipeline processing",
+            sla_deadline=now + timedelta(hours=2),
+            ai_generated=True,
+            breadcrumb="Cession File · Validation Review",
+            created_at=now,
+            updated_at=now,
+        )
+        created = self.repository.create_worklist_item(item)
+        return [created]
+
+    def _build_stage_history(self, cession_file: CessionFile) -> list[dict[str, Any]]:
+        stored = self._get_override(cession_file.file_id)
+        explicit = stored.get("stage_history")
+        if explicit:
+            return explicit
+
+        base_time = cession_file.received_at or datetime.now(UTC)
+        chain = self._default_stage_chain(cession_file.stage, cession_file.critical_count or 0)
+        return [
+            {
+                "stage": stage_name,
+                "completed_at": self._to_iso(base_time + timedelta(minutes=index)),
+            }
+            for index, stage_name in enumerate(chain)
+        ]
+
+    def _build_stage_log(self, cession_file: CessionFile) -> list[dict[str, Any]]:
+        stored = self._get_override(cession_file.file_id)
+        explicit = stored.get("stage_log")
+        if explicit:
+            return explicit
+
+        active_step = self._resolve_active_step(cession_file)
+        active_index = PIPELINE_STEPS.index(active_step)
+        base_time = cession_file.received_at or datetime.now(UTC)
+        stage_log = []
+        for index, step in enumerate(PIPELINE_STEPS):
+            if index < active_index:
+                status = "complete"
+            elif index == active_index and cession_file.stage != "approved":
+                status = "in_progress"
+            else:
+                status = "pending"
+            if cession_file.stage == "approved":
+                status = "complete"
+            stage_log.append(
+                {
+                    "stage": step.replace("-", "_"),
+                    "status": status,
+                    "timestamp": self._to_iso(base_time + timedelta(minutes=index)),
+                }
+            )
+        return stage_log
+
+    def _resolve_active_step(self, cession_file: CessionFile) -> str:
+        stored = self._get_override(cession_file.file_id)
+        active_step = stored.get("active_step")
+        if active_step in PIPELINE_STEPS:
+            return active_step
+
+        return {
+            "uploaded": "upload",
+            "detected": "detect",
+            "mapped": "map-contract",
+            "clauses": "clauses",
+            "validated": "exceptions" if (cession_file.critical_count or 0) > 0 else "process",
+            "exceptions": "exceptions",
+            "processing": "process",
+            "processed": "summary",
+            "approved": "audit",
+        }.get(cession_file.stage, "upload")
+
+    def _default_stage_chain(self, db_stage: str, critical_count: int) -> list[str]:
+        if db_stage == "uploaded":
+            return ["uploaded"]
+        if db_stage == "detected":
+            return ["uploaded", "detecting", "detected"]
+        if db_stage == "mapped":
+            return ["uploaded", "detecting", "detected", "mapped"]
+        if db_stage == "clauses":
+            return ["uploaded", "detecting", "detected", "mapped", "clauses"]
+        if db_stage in {"validated", "exceptions"}:
+            chain = ["uploaded", "detecting", "detected", "mapped", "clauses", "validated"]
+            if db_stage == "exceptions" or critical_count:
+                chain.append("exceptions")
+            return chain
+        if db_stage == "processing":
+            return ["uploaded", "detecting", "detected", "mapped", "clauses", "validated", "exceptions", "processing"]
+        if db_stage == "processed":
+            return [
+                "uploaded",
+                "detecting",
+                "detected",
+                "mapped",
+                "clauses",
+                "validated",
+                "exceptions",
+                "processing",
+                "processed",
+            ]
+        if db_stage == "approved":
+            return [
+                "uploaded",
+                "detecting",
+                "detected",
+                "mapped",
+                "clauses",
+                "validated",
+                "exceptions",
+                "processing",
+                "processed",
+                "approved",
+            ]
+        return ["uploaded"]
+
+    def _step_completion_pct(self, current_step: str, db_stage: str) -> int:
+        if db_stage == "approved":
+            return 100
+        index = PIPELINE_STEPS.index(current_step)
+        return round((index / (len(PIPELINE_STEPS) - 1)) * 100)
+
+    def _detect_file_profile(
+        self,
+        filename: str,
+        content: str,
+        provided_cedent: Any | None = None,
+        provided_contract: Contract | None = None,
+    ) -> dict[str, Any]:
+        lower_name = filename.lower()
+        lower_content = content.lower()
+
+        if "bavarian" in lower_name and "fixed_leg" in lower_name:
+            return {
+                "file_type": "Fixed Leg",
+                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1201"),
+                "cedent_name": "Bavarian Industrial Fund",
+                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2025-002",
+                "period": "2025 Q1",
+                "file_type_confidence": 0.94,
+                "cedent_confidence": 0.99,
+                "contract_confidence": 0.99,
+                "record_count": 4,
+                "iris_reasoning": "Filename token match (bavarian_fixed_leg_q1.csv) + column signature + cedant SFTP key matched.",
+            }
+
+        if "northstar" in lower_name and "status" in lower_name:
+            return {
+                "file_type": "Pension Status",
+                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1042"),
+                "cedent_name": "Northstar Pension Trust",
+                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2024-019",
+                "period": "2025 Q1",
+                "file_type_confidence": 0.97,
+                "cedent_confidence": 0.99,
+                "contract_confidence": 0.96,
+                "record_count": 18420 if not content else self._count_records(filename, content),
+                "iris_reasoning": "Filename token match + member-level schema signature + known Northstar endpoint fingerprint matched.",
+            }
+
+        if "helvetia" in lower_name and "mortality" in lower_name:
+            return {
+                "file_type": "Mortality Report",
+                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1087"),
+                "cedent_name": "Helvetia Retirement Fund",
+                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2024-031",
+                "period": "2025 Q1",
+                "file_type_confidence": 0.96,
+                "cedent_confidence": 0.98,
+                "contract_confidence": 0.95,
+                "record_count": 3200 if not content else self._count_records(filename, content),
+                "iris_reasoning": "Filename token match + mortality event headers + Helvetia contract roster matched.",
+            }
+
+        if "maple" in lower_name and "activity" in lower_name:
+            return {
+                "file_type": "Activity Report",
+                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1156"),
+                "cedent_name": "Maple Leaf Pension Plan",
+                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2024-044",
+                "period": "2025 Q1",
+                "file_type_confidence": 0.91,
+                "cedent_confidence": 0.97,
+                "contract_confidence": 0.9,
+                "record_count": 1850 if not content else self._count_records(filename, content),
+                "iris_reasoning": "Filename token match + activity file header pattern + Maple cedant mapping key matched.",
+            }
+
+        if "northstar" in lower_name and "spouse" in lower_name:
+            return {
+                "file_type": "Spouse Events",
+                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1042"),
+                "cedent_name": "Northstar Pension Trust",
+                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2024-019",
+                "period": "2025 Q1",
+                "file_type_confidence": 0.88,
+                "cedent_confidence": 0.97,
+                "contract_confidence": 0.91,
+                "record_count": self._count_records(filename, content),
+                "iris_reasoning": "Spouse event headers detected and matched to Northstar contract file templates.",
+            }
+
+        inferred_cedent = provided_cedent
+        if inferred_cedent is None:
+            inferred_cedent = next(
+                (
+                    item
+                    for item in self.repository.list_all_cedents()
+                    if item.legal_entity_name.lower().split()[0] in lower_name
+                ),
+                None,
+            )
+        inferred_contract = provided_contract
+        if inferred_contract is None and inferred_cedent is not None:
+            inferred_contract = next(
+                (
+                    item
+                    for item in self.repository.list_all_contracts()
+                    if item.cedent_id == inferred_cedent.cedent_id
+                ),
+                None,
+            )
+
+        file_type = "Unclassified"
+        if "fixed_leg_amount" in lower_content:
+            file_type = "Fixed Leg"
+        elif "date_of_death" in lower_content:
+            file_type = "Pension Status"
+        elif "death_date" in lower_content:
+            file_type = "Mortality Report"
+        elif "activity_code" in lower_content:
+            file_type = "Activity Report"
+
+        return {
+            "file_type": file_type,
+            "cedent_id": inferred_contract.cedent_id if inferred_contract else (inferred_cedent.cedent_id if inferred_cedent else None),
+            "cedent_name": inferred_cedent.legal_entity_name if inferred_cedent else "Unmapped cedent",
+            "contract_id": inferred_contract.contract_id if inferred_contract else None,
+            "period": "2025 Q1",
+            "file_type_confidence": 0.61,
+            "cedent_confidence": 0.64 if inferred_cedent else 0.22,
+            "contract_confidence": 0.55 if inferred_contract else 0.18,
+            "record_count": self._count_records(filename, content),
+            "iris_reasoning": "Low-confidence generic classifier result. Manual review recommended.",
+        }
+
+    def _mock_settlement_for_contract(self, contract_id: str) -> dict[str, Any]:
+        settlements = load_mock_data("settlements_seed.json")
+        settlement = next((item for item in settlements if item["contract_id"] == contract_id), None)
+        if settlement:
+            return settlement
+        return {
+            "settlement_id": f"SET-{contract_id[-4:]}-Q1",
+            "currency": "USD",
+            "net_amount": 0,
+        }
+
+    def _load_settlement_seed_rows(self) -> list[dict[str, Any]]:
+        return deepcopy(load_mock_data("settlements_seed.json"))
+
+    def _load_settlements(self) -> list[dict[str, Any]]:
+        settlement_rows = self._load_settlement_seed_rows()
+        overrides = self._read_settlement_override_store()
+        hydrated_rows: list[dict[str, Any]] = []
+        for item in settlement_rows:
+            hydrated_rows.append(self._hydrate_settlement_row(item, overrides))
+        created_rows = overrides.get(CREATED_SETTLEMENTS_KEY, {})
+        if isinstance(created_rows, dict):
+            for item in created_rows.values():
+                if isinstance(item, dict):
+                    hydrated_rows.append(self._hydrate_settlement_row(item, overrides))
+        return hydrated_rows
+
+    def _matches_settlement_filters(
+        self,
+        settlement: dict[str, Any],
+        status: str,
+        contract_id: str | None,
+        cedent_id: str | None,
+        period: str | None,
+    ) -> bool:
+        if status and status != "all" and settlement.get("status") != status:
+            return False
+        if contract_id and settlement.get("contract_id") != contract_id:
+            return False
+        if cedent_id and settlement.get("cedent_id") != cedent_id:
+            return False
+        if period and settlement.get("period_label") != period:
+            return False
+        return True
+
+    def _build_settlement_metrics(self, settlements: list[dict[str, Any]]) -> dict[str, Any]:
+        metrics = deepcopy(SETTLEMENT_METRICS_BASELINE)
+        seeded_rows = {item["settlement_id"]: item for item in self._load_settlement_seed_rows()}
+        for current in settlements:
+            seeded = seeded_rows.get(current["settlement_id"], current)
+            seeded_status = seeded.get("status")
+            current_status = current.get("status")
+            if seeded_status == current_status:
+                continue
+
+            amount_delta = round(abs(self._to_float(current.get("net_amount"))))
+            if seeded_status == "pending_approval":
+                metrics["pending_approval"] = max(metrics["pending_approval"] - 1, 0)
+                metrics["pending_amount"] = max(metrics["pending_amount"] - amount_delta, 0)
+            elif seeded_status == "disputed":
+                metrics["dispute_count"] = max(metrics["dispute_count"] - 1, 0)
+            elif seeded_status == "paid":
+                metrics["paid_ytd"] = max(metrics["paid_ytd"] - 1, 0)
+
+            if current_status == "pending_approval":
+                metrics["pending_approval"] += 1
+                metrics["pending_amount"] += amount_delta
+            elif current_status == "disputed":
+                metrics["dispute_count"] += 1
+            elif current_status == "paid":
+                metrics["paid_ytd"] += 1
+        return metrics
+
+    def _serialize_settlement_list_item(self, settlement: dict[str, Any]) -> dict[str, Any]:
+        contract = self.repository.get_contract(settlement.get("contract_id"))
+        cedent = self.repository.get_cedent(settlement.get("cedent_id")) or (
+            self.repository.get_cedent(contract.cedent_id) if contract and contract.cedent_id else None
+        )
+        cedent_name = settlement.get("cedent_name") or (cedent.legal_entity_name if cedent else "Unmapped cedent")
+        return {
+            "settlement_id": settlement["settlement_id"],
+            "contract_id": settlement.get("contract_id"),
+            "contract_name": settlement.get("contract_name") or (contract.contract_name if contract else "Unmapped contract"),
+            "cedent_id": settlement.get("cedent_id"),
+            "cedent_name": cedent_name,
+            "period_label": settlement.get("period_label"),
+            "fixed_leg": round(self._to_float(settlement.get("fixed_leg_amount")), 2),
+            "floating_leg": round(self._to_float(settlement.get("floating_leg_amount")), 2),
+            "net_amount": round(self._to_float(settlement.get("net_amount")), 2),
+            "currency": settlement.get("currency") or (contract.currency if contract else "USD"),
+            "direction": settlement.get("direction"),
+            "payment_due": settlement.get("payment_due_date"),
+            "status": settlement.get("status", "pending_approval"),
+        }
+
+    def _get_settlement_or_error(self, settlement_id: str) -> dict[str, Any]:
+        settlement = next((item for item in self._load_settlements() if item["settlement_id"] == settlement_id), None)
+        if settlement is None:
+            logger.error("Requested settlement was not found settlement_id=%s", settlement_id)
+            raise IrisAPIError(404, "Invalid settlement ID", "Settlement not found in mock register")
+        return settlement
+
+    def _build_settlement_detail(self, settlement: dict[str, Any]) -> dict[str, Any]:
+        contract = self.repository.get_contract(settlement.get("contract_id"))
+        cedent = self.repository.get_cedent(settlement.get("cedent_id")) or (
+            self.repository.get_cedent(contract.cedent_id) if contract and contract.cedent_id else None
+        )
+        cedent_name = settlement.get("cedent_name") or (cedent.legal_entity_name if cedent else "Unmapped cedent")
+        return {
+            "settlement_id": settlement["settlement_id"],
+            "contract_id": settlement.get("contract_id"),
+            "contract_name": settlement.get("contract_name") or (contract.contract_name if contract else "Unmapped contract"),
+            "contract_version": settlement.get("contract_version") or (contract.contract_version if contract else "v1.0"),
+            "cedent_id": settlement.get("cedent_id"),
+            "cedent_name": cedent_name,
+            "period_label": settlement.get("period_label"),
+            "period_start": settlement.get("period_start"),
+            "period_end": settlement.get("period_end"),
+            "currency": settlement.get("currency") or (contract.currency if contract else "USD"),
+            "direction": settlement.get("direction"),
+            "payment_due": settlement.get("payment_due_date"),
+            "status": settlement.get("status", "pending_approval"),
+            "source": settlement.get("source", "Claims cession pipeline"),
+            "last_updated": settlement.get("last_updated") or self._settlement_last_updated(settlement),
+            "fixed_leg": round(self._to_float(settlement.get("fixed_leg_amount")), 2),
+            "floating_leg": round(self._to_float(settlement.get("floating_leg_amount")), 2),
+            "net_amount": round(self._to_float(settlement.get("net_amount")), 2),
+            "variance_review": self._build_settlement_variance_review(settlement, cedent_name),
+            "contributors": self._build_settlement_contributors(settlement),
+            "approval_workflow": self._build_settlement_approval_workflow(settlement),
+            "audit_trail": settlement.get("audit_trail") or self._default_settlement_audit(settlement),
+            "notes": settlement.get("notes"),
+            "dispute_reason": settlement.get("dispute_reason"),
+            "approved_at": settlement.get("approved_at"),
+        }
+
+    def _build_settlement_variance_review(self, settlement: dict[str, Any], cedent_name: str) -> dict[str, Any]:
+        fixed_leg = max(self._to_float(settlement.get("fixed_leg_amount")), 1.0)
+        net_amount = self._to_float(settlement.get("net_amount"))
+        threshold = round(max(fixed_leg * 0.01, 50000), 2)
+        variance_pct = round((net_amount / fixed_leg) * 100, 3)
+        status = settlement.get("status")
+
+        if status == "disputed":
+            classification = "Variance Dispute"
+            recommendation = "Escalate to underwriting"
+        elif abs(net_amount) >= 150000:
+            classification = "Late Mortality Reporting" if net_amount >= 0 else "Premium True-up"
+            recommendation = "Recommend accept" if net_amount >= 0 else "Recommend review"
+        elif abs(net_amount) >= 75000:
+            classification = "Experience Drift"
+            recommendation = "Recommend accept"
+        else:
+            classification = "Expected Quarter-end Close"
+            recommendation = "Recommend accept"
+
+        root_causes = {
+            "LSC-2024-019": "Q4-2024 mortality updates arrived after period close, creating a one-quarter catch-up.",
+            "LSC-2024-031": "Expected mortality emerged slightly above pricing assumptions, offset by stable annuity runoff.",
+            "LSC-2025-002": "Fixed-leg accruals were restated after treaty lock-in, producing a cedant-to-reinsurer true-up.",
+        }
+        return {
+            "confidence": 0.91 if abs(net_amount) >= 150000 else 0.87,
+            "classification": classification,
+            "threshold": threshold,
+            "breach": abs(net_amount) >= threshold,
+            "variance_pct": variance_pct,
+            "root_cause": root_causes.get(
+                settlement.get("contract_id"),
+                f"{cedent_name} produced a routine quarter-end variance within the normal operating band.",
+            ),
+            "historical_comparison": (
+                f"Variance has remained within +/-1.2% for {cedent_name} across the last six quarters."
+                if abs(variance_pct) < 1.2
+                else f"Variance is above the recent operating band for {cedent_name} and requires an approval note."
+            ),
+            "rationale": (
+                "Variance is aligned with file timing and historical settlement drift."
+                if abs(net_amount) < threshold
+                else "Variance is above the control threshold and should be acknowledged before release."
+            ),
+            "recommendation": recommendation,
+        }
+
+    def _build_settlement_contributors(self, settlement: dict[str, Any]) -> list[dict[str, Any]]:
+        net_amount = self._to_float(settlement.get("net_amount"))
+        shares = [0.42, 0.27, 0.19, 0.12]
+        member_rows = [
+            ("PEN-0103221", "M. Whitcomb", "Late Notification", "2024-12-22"),
+            ("PEN-0104012", "S. Markov", "Death", "2025-01-08"),
+            ("PEN-0103998", "A. Richter", "New Spouse", "2025-02-19"),
+            ("PEN-0103118", "C. Hollis", "Benefit Adjustment", "2025-03-01"),
+        ]
+        if net_amount < 0:
+            member_rows = [
+                ("PEN-0201102", "R. Berger", "Premium True-up", "2025-01-11"),
+                ("PEN-0201844", "T. Muller", "Reserve Correction", "2025-02-02"),
+                ("PEN-0201905", "L. Werner", "Data Restatement", "2025-02-21"),
+                ("PEN-0202018", "J. Hoffman", "Interest Carry Forward", "2025-03-10"),
+            ]
+        return [
+            {
+                "member_id": member_id,
+                "member_name": member_name,
+                "event": event,
+                "event_date": event_date,
+                "impact": round(net_amount * share, 2),
+                "is_late": index == 0 and net_amount > 0,
+            }
+            for index, ((member_id, member_name, event, event_date), share) in enumerate(zip(member_rows, shares, strict=True))
+        ]
+
+    def _build_settlement_approval_workflow(self, settlement: dict[str, Any]) -> list[dict[str, Any]]:
+        status = settlement.get("status", "pending_approval")
+        approved_at = settlement.get("approved_at") or self._settlement_last_updated(settlement)
+        net_amount = abs(self._to_float(settlement.get("net_amount")))
+        underwriting_status = "in_progress" if status == "disputed" else ("complete" if status == "approved" else "pending_review")
+        compliance_status = (
+            "complete"
+            if status == "approved" and net_amount >= 500000
+            else ("in_progress" if status == "disputed" else ("pending_review" if net_amount >= 500000 else "pending"))
+        )
+        treasury_status = "complete" if status == "approved" else ("pending_review" if status == "pending_approval" else "pending")
+        return [
+            {
+                "stage": "Claims Ops",
+                "owner": "Claims Ops",
+                "rule": "All settlements",
+                "status": "complete",
+                "updated_at": self._settlement_last_updated(settlement),
+            },
+            {
+                "stage": "Underwriting",
+                "owner": "Underwriting",
+                "rule": "Variance > 0.5% of leg",
+                "status": underwriting_status,
+                "updated_at": self._settlement_last_updated(settlement),
+            },
+            {
+                "stage": "Compliance",
+                "owner": "Compliance",
+                "rule": "Variance > 500K",
+                "status": compliance_status,
+                "updated_at": self._settlement_last_updated(settlement),
+            },
+            {
+                "stage": "Treasury",
+                "owner": "Treasury",
+                "rule": "Final payment release",
+                "status": treasury_status,
+                "updated_at": approved_at,
+            },
+        ]
+
+    def _default_settlement_audit(self, settlement: dict[str, Any]) -> list[dict[str, Any]]:
+        period_end = self._parse_iso_date(str(settlement.get("period_end") or "")) or date.today()
+        base_timestamp = datetime.combine(period_end, datetime.min.time(), tzinfo=UTC) + timedelta(days=5)
+        confidence = "91%" if abs(self._to_float(settlement.get("net_amount"))) >= 150000 else "87%"
+        return [
+            {
+                "timestamp": self._to_iso(base_timestamp),
+                "actor": "Settlement Engine",
+                "type": "System",
+                "action": "Settlement assembled",
+                "detail": settlement["settlement_id"],
+            },
+            {
+                "timestamp": self._to_iso(base_timestamp + timedelta(hours=3)),
+                "actor": "Variance Review Agent",
+                "type": "AI Agent",
+                "action": "Variance analysis completed",
+                "detail": f"confidence {confidence}",
+            },
+            {
+                "timestamp": self._to_iso(base_timestamp + timedelta(hours=6)),
+                "actor": "Claims Ops",
+                "type": "Human",
+                "action": "Queued for settlement review",
+                "detail": settlement.get("period_label", ""),
+            },
+        ]
+
+    def _hydrate_settlement_row(self, settlement: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any]:
+        current = deepcopy(settlement)
+        override = overrides.get(current["settlement_id"], {})
+        for key in (
+            "status",
+            "notes",
+            "approved_at",
+            "dispute_reason",
+            "last_updated",
+            "source",
+            "cedent_name",
+            "contract_name",
+            "contract_version",
+            "period_label",
+            "period_start",
+            "period_end",
+            "payment_due_date",
+            "direction",
+            "currency",
+            "fixed_leg_amount",
+            "floating_leg_amount",
+            "net_amount",
+        ):
+            if key in override:
+                current[key] = override[key]
+        current["audit_trail"] = override.get("audit_trail") or self._default_settlement_audit(current)
+        return current
+
+    def _create_settlement_worklist_item(
+        self,
+        settlement: dict[str, Any],
+        *,
+        priority: str,
+        status: str,
+        title: str,
+        description: str,
+        breadcrumb: str,
+    ) -> None:
+        logger.info("Creating settlement follow-up worklist item")
+        logger.debug("Settlement worklist title=%s settlement_id=%s", title, settlement["settlement_id"])
+        worklist_item = WorklistItem(
+            wl_id=self.repository.get_next_worklist_id(),
+            title=title,
+            description=description,
+            category="Settlement Review",
+            priority=priority,
+            status=status,
+            assigned_role="claims_ops",
+            cedent_id=settlement.get("cedent_id"),
+            contract_id=settlement.get("contract_id"),
+            source="Human",
+            source_detail=settlement["settlement_id"],
+            breadcrumb=breadcrumb,
+        )
+        self.repository.create_worklist_item(worklist_item)
+
+    def _settlement_last_updated(self, settlement: dict[str, Any]) -> str:
+        approved_at = settlement.get("approved_at")
+        if isinstance(approved_at, str) and approved_at:
+            return approved_at
+        period_end = self._parse_iso_date(str(settlement.get("period_end") or "")) or date.today()
+        return self._to_iso(datetime.combine(period_end, datetime.min.time(), tzinfo=UTC) + timedelta(days=12))
+
+    def _read_settlement_override_store(self) -> dict[str, Any]:
+        if not SETTLEMENT_OVERRIDES_FILE.exists():
+            return {}
+        with SETTLEMENT_OVERRIDES_FILE.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        return payload if isinstance(payload, dict) else {}
+
+    def _write_settlement_override_store(self, store: dict[str, Any]) -> None:
+        SETTLEMENT_OVERRIDES_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with SETTLEMENT_OVERRIDES_FILE.open("w", encoding="utf-8") as handle:
+            json.dump(store, handle, indent=2)
+
+    def _store_settlement_override(self, settlement_id: str, patch: dict[str, Any]) -> None:
+        store = self._read_settlement_override_store()
+        current = deepcopy(store.get(settlement_id, {}))
+        current.update(patch)
+        store[settlement_id] = current
+        self._write_settlement_override_store(store)
+
+    def _append_settlement_audit_event(self, settlement_id: str, event: dict[str, Any]) -> None:
+        store = self._read_settlement_override_store()
+        current = deepcopy(store.get(settlement_id, {}))
+        base_settlement = next(
+            (item for item in self._load_settlement_seed_rows() if item["settlement_id"] == settlement_id),
+            {"settlement_id": settlement_id, "period_end": date.today().isoformat()},
+        )
+        audit_trail = list(current.get("audit_trail") or self._default_settlement_audit(base_settlement))
+        audit_trail.append(
+            {
+                "timestamp": event.get("timestamp", self._to_iso(datetime.now(UTC))),
+                "actor": event["actor"],
+                "type": event["type"],
+                "action": event["action"],
+                "detail": event["detail"],
+            }
+        )
+        current["audit_trail"] = audit_trail
+        store[settlement_id] = current
+        self._write_settlement_override_store(store)
+
+    def _assumption_snapshot_label(self, currency: str) -> str:
+        return f"{currency} assumptions v2025.Q2"
+
+    def _build_calculation_payload(
+        self,
+        contract: Contract,
+        calculation_type: str,
+        period_start: date,
+        period_end: date,
+    ) -> dict[str, Any]:
+        settlement = self._find_mock_settlement_for_period(contract.contract_id, period_start, period_end)
+        quarter_count = self._quarters_inclusive(period_start, period_end)
+        fixed_leg = self._to_float(settlement["fixed_leg_amount"]) if settlement else self._expected_fixed_leg_amount(contract) * quarter_count
+        factor = self._calculation_factor(contract.contract_id, calculation_type)
+
+        if settlement and calculation_type == "settlement":
+            floating_leg = self._to_float(settlement["floating_leg_amount"])
+        elif calculation_type == "fixed_leg":
+            floating_leg = round(fixed_leg * (1 + factor * 0.6), 2)
+        elif calculation_type == "floating_leg":
+            floating_leg = round(fixed_leg * (1 + factor * 1.35), 2)
+        elif calculation_type == "ae_ratio":
+            floating_leg = round(fixed_leg * (1 + factor * 0.95), 2)
+        else:
+            floating_leg = round(fixed_leg * (1 + factor), 2)
+
+        fixed_leg = round(fixed_leg, 2)
+        floating_leg = round(floating_leg, 2)
+        net = round(floating_leg - fixed_leg, 2)
+
+        lives_start = int(contract.lives_count or 0)
+        deaths_expected = round(max((lives_start or 12000) * 0.0022 * quarter_count, 0.4), 1)
+        ae_ratio = round(1 + (factor * (1.2 if calculation_type == "ae_ratio" else 0.9)), 3)
+        deaths_actual = max(int(round(deaths_expected * ae_ratio)), 1 if lives_start else 0)
+
+        notional = self._to_float(contract.notional_amount)
+        bel_previous = round(notional * 0.89, 2)
+        per_life_reserve = max((notional / max(lives_start, 1)) if lives_start else 0, 1000)
+        bel_change = round(-(deaths_actual - deaths_expected) * per_life_reserve * 0.4, 2)
+        bel_current = round(bel_previous + bel_change, 2)
+
+        return {
+            "calculation_id": str(uuid.uuid4()),
+            "contract_id": contract.contract_id,
+            "period": self._format_calculation_period(period_start, period_end),
+            "fixed_leg": fixed_leg,
+            "floating_leg": floating_leg,
+            "net": net,
+            "ae_ratio": ae_ratio,
+            "lives_start": lives_start,
+            "deaths_actual": deaths_actual,
+            "deaths_expected": deaths_expected,
+            "bel_current": bel_current,
+            "bel_previous": bel_previous,
+            "bel_change": bel_change,
+        }
+
+    def _find_mock_settlement_for_period(
+        self,
+        contract_id: str,
+        period_start: date,
+        period_end: date,
+    ) -> dict[str, Any] | None:
+        return next(
+            (
+                item
+                for item in self._load_settlements()
+                if item.get("contract_id") == contract_id
+                and item.get("period_start") == period_start.isoformat()
+                and item.get("period_end") == period_end.isoformat()
+            ),
+            None,
+        )
+
+    def _quarters_inclusive(self, period_start: date, period_end: date) -> int:
+        start_index = period_start.year * 4 + ((period_start.month - 1) // 3)
+        end_index = period_end.year * 4 + ((period_end.month - 1) // 3)
+        return max((end_index - start_index) + 1, 1)
+
+    def _format_calculation_period(self, period_start: date, period_end: date) -> str:
+        start_label = self._quarter_label(period_start)
+        end_label = self._quarter_label(period_end)
+        return start_label if start_label == end_label else f"{start_label} -> {end_label}"
+
+    def _quarter_label(self, value: date) -> str:
+        quarter = ((value.month - 1) // 3) + 1
+        return f"Q{quarter} {value.year}"
+
+    def _calculation_factor(self, contract_id: str, calculation_type: str) -> float:
+        digits = [int(char) for char in contract_id if char.isdigit()]
+        base_factor = 0.006 + ((sum(digits) % 6) * 0.0015)
+        if calculation_type == "fixed_leg":
+            return base_factor * 0.75
+        if calculation_type == "floating_leg":
+            return base_factor * 1.35
+        if calculation_type == "ae_ratio":
+            return base_factor * 1.1
+        return base_factor
+
+    def _parse_iso_date(self, value: str) -> date | None:
+        if not value:
+            return None
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+
+    def _to_date_string(self, value: date | None) -> str | None:
+        return value.isoformat() if value else None
+
+    def _columns_mapped_for_type(self, file_type: str | None) -> int:
+        return {
+            "Fixed Leg": 32,
+            "Pension Status": 18,
+            "Mortality Report": 12,
+            "Activity Report": 14,
+            "Spouse Events": 16,
+        }.get(file_type or "", 10)
+
+    def _expected_fixed_leg_amount(self, contract: Contract) -> float:
+        if contract.contract_id == "LSC-2025-002":
+            return 8782055
+        notional = float(contract.notional_amount or 0)
+        rate = float(contract.fixed_leg_rate or 0)
+        frequency_factor = 0.25 if (contract.fixed_leg_frequency or "").lower() == "quarterly" else 1.0
+        return round(notional * rate * frequency_factor, 2)
+
+    def _parse_csv_rows(self, content: str) -> list[dict[str, str]]:
+        if not content.strip():
+            return []
+        reader = csv.DictReader(io.StringIO(content))
+        return [dict(row) for row in reader]
+
+    def _count_records(self, filename: str, content: str) -> int:
+        if not content.strip():
+            return 0
+        if filename.lower().endswith(".csv"):
+            return len(self._parse_csv_rows(content))
+        return max(len([line for line in content.splitlines() if line.strip()]) - 1, 0)
+
+    def _sla_display(self, due_at: datetime | None) -> str:
+        if due_at is None:
+            return "—"
+        if due_at.tzinfo is None:
+            due_at = due_at.replace(tzinfo=UTC)
+        delta = due_at - datetime.now(UTC)
+        hours = max(int(delta.total_seconds() // 3600), 0)
+        return f"{hours}h"
+
+    def _mark_uploaded_file_detecting(self, file_id: str) -> None:
+        stored = self._get_override(file_id)
+        if stored.get("active_step") == "detect":
+            self._store_override(file_id, {"active_step": "detect"})
+
+    def _append_stage_history(self, file_id: str, stage: str) -> None:
+        stored = self._get_override(file_id)
+        history = list(stored.get("stage_history", []))
+        if any(item["stage"] == stage for item in history):
+            return
+        history.append({"stage": stage, "completed_at": self._to_iso(datetime.now(UTC))})
+        self._store_override(file_id, {"stage_history": history})
+
+    def _append_stage_log(self, file_id: str, stage: str, status: str, timestamp: datetime | None = None) -> None:
+        stored = self._get_override(file_id)
+        stage_log = list(stored.get("stage_log", []))
+        stage_key = stage.replace("-", "_")
+        event = {
+            "stage": stage_key,
+            "status": status,
+            "timestamp": self._to_iso(timestamp or datetime.now(UTC)),
+        }
+        stage_log = [item for item in stage_log if item["stage"] != stage_key]
+        stage_log.append(event)
+        stage_log.sort(key=lambda item: PIPELINE_STEPS.index(item["stage"].replace("_", "-")))
+        self._store_override(file_id, {"stage_log": stage_log})
+
+    def _append_audit_event(self, file_id: str, event: dict[str, Any]) -> None:
+        stored = self._get_override(file_id)
+        audit_events = list(stored.get("audit_events", []))
+        audit_events.append(
+            {
+                "timestamp": event.get("timestamp", self._to_iso(datetime.now(UTC))),
+                "actor": event["actor"],
+                "type": event["type"],
+                "action": event["action"],
+                "detail": event["detail"],
+            }
+        )
+        self._store_override(file_id, {"audit_events": audit_events})
+
+    def _get_cession_file_or_error(self, file_id: str) -> CessionFile:
+        cession_file = self.repository.get_cession_file(file_id)
+        if cession_file is None:
+            logger.error("Requested cession file was not found file_id=%s", file_id)
+            raise IrisAPIError(404, "Invalid file ID", "Cession file not found in DB")
+        return cession_file
+
+    def _get_override(self, file_id: str) -> dict[str, Any]:
+        store = self._read_override_store()
+        return deepcopy(store.get(file_id, {}))
+
+    def _store_override(self, file_id: str, patch: dict[str, Any]) -> None:
+        store = self._read_override_store()
+        current = deepcopy(store.get(file_id, {}))
+        current.update(patch)
+        store[file_id] = current
+        self._write_override_store(store)
+
+    def _read_override_store(self) -> dict[str, Any]:
+        if not PIPELINE_OVERRIDES_FILE.exists():
+            return {}
+        with PIPELINE_OVERRIDES_FILE.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        return payload if isinstance(payload, dict) else {}
+
+    def _write_override_store(self, store: dict[str, Any]) -> None:
+        PIPELINE_OVERRIDES_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with PIPELINE_OVERRIDES_FILE.open("w", encoding="utf-8") as handle:
+            json.dump(store, handle, indent=2)
+
+    def _to_iso(self, value: datetime | None) -> str:
+        if value is None:
+            return ""
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=UTC)
+        return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+    def _to_float(self, value: Any) -> float:
+        if value is None:
+            return 0.0
+        if isinstance(value, Decimal):
+            return float(value)
+        return float(value)

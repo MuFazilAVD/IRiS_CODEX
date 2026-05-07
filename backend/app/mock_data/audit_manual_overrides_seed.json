@@ -1,0 +1,17 @@
+[
+  {
+    "override_ref": "CALC-2026-Q1-918",
+    "module": "calculation",
+    "entity_id": "CALC-2026-Q1-918",
+    "field_name": "mortality_improvement_factor",
+    "original_value": "1.25",
+    "override_value": "1.18",
+    "reason": "CMI 2024 release expected within 7d; using interim calibrated value to avoid stale assumption.",
+    "financial_impact_amount": -3180000,
+    "financial_impact_currency": "GBP",
+    "approver_role": "compliance",
+    "approver_title": "Chief Actuary",
+    "approver_id": "j.morales@reinsure.io",
+    "approved_at": "2026-04-29T10:22:55Z"
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "IRIS-PRC-59206-A": {
+    "current_step_id": "outcome",
+    "step_statuses": {
+      "normalization": "in_progress",
+      "calculations": "pending",
+      "variance_analysis": "pending",
+      "screening": "pending",
+      "ai_decision": "pending",
+      "outcome": "complete"
+    },
+    "pipeline_health": "Optimal",
+    "last_action_at": "2026-05-06T20:55:47.271760Z",
+    "outcome": {
+      "final_status": "Approved",
+      "approval_required": false,
+      "sla_status": "Complete",
+      "summary": {
+        "contract": "Zurich Assurance Q1 2026",
+        "total_records": 15240,
+        "issues_resolved": true,
+        "compliance": "Cleared"
+      }
+    },
+    "action_log": [
+      {
+        "timestamp": "2026-05-06T20:55:47.271760Z",
+        "action": "advance",
+        "step": "outcome",
+        "decision": "approve_settlement",
+        "notes": "Approve from pipeline outcome smoke test"
+      }
+    ]
+  }
+}

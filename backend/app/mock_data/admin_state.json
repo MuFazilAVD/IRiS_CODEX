@@ -1,0 +1,611 @@
+{
+  "user_status_overrides": {
+    "admin@metlife-re.demo": {
+      "status": "active"
+    },
+    "m.patel@reinsure.io": {
+      "status": "active"
+    },
+    "a.chen@reinsure.io": {
+      "status": "active"
+    },
+    "j.morales@reinsure.io": {
+      "status": "active"
+    },
+    "d.rhodes@reinsure.io": {
+      "status": "active"
+    },
+    "h.suzuki@reinsure.io": {
+      "status": "invited"
+    },
+    "phase15.user@reinsure.io": {
+      "status": "suspended"
+    }
+  },
+  "access_logs": [
+    {
+      "timestamp": "2025-04-29T09:14:22Z",
+      "user": "j.morales",
+      "resource": "/compliance/screening/SHM-887",
+      "action": "VIEW",
+      "ip": "10.42.1.18"
+    },
+    {
+      "timestamp": "2025-04-29T09:01:54Z",
+      "user": "a.chen",
+      "resource": "/cession/CES-2025-09-018",
+      "action": "DOWNLOAD",
+      "ip": "10.42.2.04"
+    },
+    {
+      "timestamp": "2025-04-29T08:42:12Z",
+      "user": "m.patel",
+      "resource": "/contracts/LSC-2024-019",
+      "action": "EDIT",
+      "ip": "10.42.1.51"
+    },
+    {
+      "timestamp": "2025-04-29T07:55:40Z",
+      "user": "system",
+      "resource": "/library/mortality/CMI-2024-M",
+      "action": "VIEW",
+      "ip": "internal"
+    },
+    {
+      "timestamp": "2025-04-28T17:55:01Z",
+      "user": "d.rhodes",
+      "resource": "/admin/users",
+      "action": "CREATE",
+      "ip": "10.42.0.91"
+    }
+  ],
+  "permissions": [
+    {
+      "module": "Underwriting",
+      "view": [
+        "Underwriting",
+        "Admin"
+      ],
+      "edit": [
+        "Underwriting"
+      ],
+      "approve": [
+        "Underwriting"
+      ],
+      "override": [
+        "Admin"
+      ]
+    },
+    {
+      "module": "Cession Management",
+      "view": [
+        "Claims Ops",
+        "Admin"
+      ],
+      "edit": [
+        "Claims Ops"
+      ],
+      "approve": [
+        "Claims Ops"
+      ],
+      "override": [
+        "Admin"
+      ]
+    },
+    {
+      "module": "Compliance",
+      "view": [
+        "Compliance",
+        "Admin"
+      ],
+      "edit": [
+        "Compliance"
+      ],
+      "approve": [
+        "Compliance"
+      ],
+      "override": [
+        "Admin"
+      ]
+    },
+    {
+      "module": "Library",
+      "view": [
+        "Admin",
+        "Underwriting",
+        "Compliance"
+      ],
+      "edit": [
+        "Admin"
+      ],
+      "approve": [
+        "Admin"
+      ],
+      "override": [
+        "Admin"
+      ]
+    },
+    {
+      "module": "Settlements",
+      "view": [
+        "Claims Ops",
+        "Underwriting",
+        "Admin"
+      ],
+      "edit": [
+        "Claims Ops"
+      ],
+      "approve": [
+        "Underwriting"
+      ],
+      "override": [
+        "Admin"
+      ]
+    }
+  ],
+  "approval_matrix": [
+    {
+      "action": "Settlement payout",
+      "threshold": "< $10M",
+      "required_approvers": "1 \u00d7 Claims Ops Lead"
+    },
+    {
+      "action": "Settlement payout",
+      "threshold": "$10M \u2013 $50M",
+      "required_approvers": "1 \u00d7 Claims Ops Lead + 1 \u00d7 Underwriting"
+    },
+    {
+      "action": "Settlement payout",
+      "threshold": "> $50M",
+      "required_approvers": "1 \u00d7 Underwriting + 1 \u00d7 CFO"
+    },
+    {
+      "action": "Contract amendment",
+      "threshold": "Any",
+      "required_approvers": "2 \u00d7 Underwriting (4-eyes)"
+    },
+    {
+      "action": "Reference data change",
+      "threshold": "Any locked dataset",
+      "required_approvers": "1 \u00d7 Admin + 1 \u00d7 Compliance"
+    }
+  ],
+  "library_items": [
+    {
+      "ref_id": "FX-USD-v2025.04.29",
+      "data_type": "fx_rate",
+      "code": "USD",
+      "name": "US Dollar",
+      "fx_to_usd": 1.0,
+      "as_of": "2025-04-29",
+      "source": "Bloomberg",
+      "version": "v2025.04.29",
+      "data_payload": {
+        "history": [
+          {
+            "version": "v2025.04.29",
+            "as_of": "2025-04-29",
+            "fx_to_usd": 1.0,
+            "source": "Bloomberg"
+          },
+          {
+            "version": "v2025.04.28",
+            "as_of": "2025-04-28",
+            "fx_to_usd": 1.0,
+            "source": "Bloomberg"
+          }
+        ]
+      }
+    },
+    {
+      "ref_id": "FX-GBP-v2025.04.29",
+      "data_type": "fx_rate",
+      "code": "GBP",
+      "name": "British Pound",
+      "fx_to_usd": 1.252,
+      "as_of": "2025-04-29",
+      "source": "Bloomberg",
+      "version": "v2025.04.29",
+      "data_payload": {
+        "history": [
+          {
+            "version": "v2025.04.29",
+            "as_of": "2025-04-29",
+            "fx_to_usd": 1.252,
+            "source": "Bloomberg"
+          },
+          {
+            "version": "v2025.04.28",
+            "as_of": "2025-04-28",
+            "fx_to_usd": 1.247,
+            "source": "Bloomberg"
+          }
+        ]
+      }
+    },
+    {
+      "ref_id": "FX-EUR-v2025.04.29",
+      "data_type": "fx_rate",
+      "code": "EUR",
+      "name": "Euro",
+      "fx_to_usd": 1.071,
+      "as_of": "2025-04-29",
+      "source": "Bloomberg",
+      "version": "v2025.04.29",
+      "data_payload": {
+        "history": [
+          {
+            "version": "v2025.04.29",
+            "as_of": "2025-04-29",
+            "fx_to_usd": 1.071,
+            "source": "Bloomberg"
+          },
+          {
+            "version": "v2025.04.28",
+            "as_of": "2025-04-28",
+            "fx_to_usd": 1.069,
+            "source": "Bloomberg"
+          }
+        ]
+      }
+    },
+    {
+      "ref_id": "FX-CHF-v2025.04.29",
+      "data_type": "fx_rate",
+      "code": "CHF",
+      "name": "Swiss Franc",
+      "fx_to_usd": 1.108,
+      "as_of": "2025-04-29",
+      "source": "Bloomberg",
+      "version": "v2025.04.29",
+      "data_payload": {
+        "history": [
+          {
+            "version": "v2025.04.29",
+            "as_of": "2025-04-29",
+            "fx_to_usd": 1.108,
+            "source": "Bloomberg"
+          },
+          {
+            "version": "v2025.04.28",
+            "as_of": "2025-04-28",
+            "fx_to_usd": 1.104,
+            "source": "Bloomberg"
+          }
+        ]
+      }
+    },
+    {
+      "ref_id": "FX-CAD-v2025.04.29",
+      "data_type": "fx_rate",
+      "code": "CAD",
+      "name": "Canadian Dollar",
+      "fx_to_usd": 0.732,
+      "as_of": "2025-04-29",
+      "source": "Bloomberg",
+      "version": "v2025.04.29",
+      "data_payload": {
+        "history": [
+          {
+            "version": "v2025.04.29",
+            "as_of": "2025-04-29",
+            "fx_to_usd": 0.732,
+            "source": "Bloomberg"
+          },
+          {
+            "version": "v2025.04.28",
+            "as_of": "2025-04-28",
+            "fx_to_usd": 0.73,
+            "source": "Bloomberg"
+          }
+        ]
+      }
+    },
+    {
+      "ref_id": "CMI-2024-M",
+      "data_type": "mortality_table",
+      "name": "CMI Self-Administered Pension Schemes 2024 \u2014 Male",
+      "source": "CMI",
+      "version": "2024",
+      "effective_date": "2025-01-01",
+      "status": "active",
+      "contracts_using": 12,
+      "is_locked": false,
+      "data_payload": {
+        "description": "Male mortality base table used for UK pension portfolio pricing."
+      }
+    },
+    {
+      "ref_id": "CMI-2024-F",
+      "data_type": "mortality_table",
+      "name": "CMI Self-Administered Pension Schemes 2024 \u2014 Female",
+      "source": "CMI",
+      "version": "2024",
+      "effective_date": "2025-01-01",
+      "status": "active",
+      "contracts_using": 12,
+      "is_locked": false,
+      "data_payload": {
+        "description": "Female mortality base table used for UK pension portfolio pricing."
+      }
+    },
+    {
+      "ref_id": "SOA-2024-G2",
+      "data_type": "mortality_table",
+      "name": "SOA Pri-2012 with MP-2021 \u2014 Generational",
+      "source": "SOA",
+      "version": "2024.1",
+      "effective_date": "2024-04-01",
+      "status": "active",
+      "contracts_using": 8,
+      "is_locked": false,
+      "data_payload": {
+        "description": "North American generational mortality basis."
+      }
+    },
+    {
+      "ref_id": "BVS-DE-2018G",
+      "data_type": "mortality_table",
+      "name": "Heubeck Richttafeln 2018 G",
+      "source": "Heubeck",
+      "version": "2018G",
+      "effective_date": "2019-01-01",
+      "status": "active",
+      "contracts_using": 4,
+      "is_locked": true,
+      "data_payload": {
+        "description": "German market mortality basis locked for live contracts."
+      }
+    },
+    {
+      "ref_id": "YC-GBP-GILT",
+      "data_type": "yield_curve",
+      "currency": "GBP",
+      "source": "Bank of England",
+      "as_of": "2025-04-29",
+      "tenors": 30,
+      "status": "active",
+      "version": "v2025.04.29",
+      "data_payload": {
+        "curve_points": [
+          "1Y",
+          "5Y",
+          "10Y",
+          "20Y",
+          "30Y"
+        ]
+      }
+    },
+    {
+      "ref_id": "YC-USD-UST",
+      "data_type": "yield_curve",
+      "currency": "USD",
+      "source": "US Treasury H.15",
+      "as_of": "2025-04-29",
+      "tenors": 30,
+      "status": "active",
+      "version": "v2025.04.29",
+      "data_payload": {
+        "curve_points": [
+          "1Y",
+          "5Y",
+          "10Y",
+          "20Y",
+          "30Y"
+        ]
+      }
+    },
+    {
+      "ref_id": "YC-EUR-EIOPA",
+      "data_type": "yield_curve",
+      "currency": "EUR",
+      "source": "EIOPA RFR",
+      "as_of": "2025-03-31",
+      "tenors": 30,
+      "status": "active",
+      "version": "v2025.03.31",
+      "data_payload": {
+        "curve_points": [
+          "1Y",
+          "5Y",
+          "10Y",
+          "20Y",
+          "30Y"
+        ]
+      }
+    },
+    {
+      "ref_id": "YC-CHF-SARON",
+      "data_type": "yield_curve",
+      "currency": "CHF",
+      "source": "SIX SARON Curve",
+      "as_of": "2025-04-29",
+      "tenors": 30,
+      "status": "active",
+      "version": "v2025.04.29",
+      "data_payload": {
+        "curve_points": [
+          "1Y",
+          "5Y",
+          "10Y",
+          "20Y",
+          "30Y"
+        ]
+      }
+    },
+    {
+      "ref_id": "AS-2025-NS-019",
+      "data_type": "assumption_set",
+      "name": "Northstar 2025 Base",
+      "mortality": "CMI-2024-M/F",
+      "curve": "YC-GBP-GILT",
+      "inflation": "RPI 3.1%",
+      "used_by": "LSC-2024-019",
+      "is_locked": true,
+      "data_payload": {
+        "notes": "Live locked assumption set for Northstar."
+      }
+    },
+    {
+      "ref_id": "AS-2025-HV-031",
+      "data_type": "assumption_set",
+      "name": "Helvetia 2025 Base",
+      "mortality": "BVS-CH-2020",
+      "curve": "YC-CHF-SARON",
+      "inflation": "CPI 1.4%",
+      "used_by": "LSC-2024-031",
+      "is_locked": true,
+      "data_payload": {
+        "notes": "Locked production set."
+      }
+    },
+    {
+      "ref_id": "AS-2025-ML-044",
+      "data_type": "assumption_set",
+      "name": "Maple Leaf 2025 Base",
+      "mortality": "SOA-2024-G2",
+      "curve": "YC-CAD-GoC",
+      "inflation": "CPI 2.2%",
+      "used_by": "LSC-2024-044",
+      "is_locked": true,
+      "data_payload": {
+        "notes": "Locked production set."
+      }
+    },
+    {
+      "ref_id": "AS-2025-AT-007",
+      "data_type": "assumption_set",
+      "name": "Atlas 2025 Draft",
+      "mortality": "SOA-2024-G2",
+      "curve": "YC-USD-UST",
+      "inflation": "CPI 2.4%",
+      "used_by": "LSC-2025-007",
+      "is_locked": false,
+      "data_payload": {
+        "notes": "Editable draft set pending approval."
+      }
+    },
+    {
+      "ref_id": "TPL-NS-CES-v3",
+      "data_type": "file_template",
+      "template": "TPL-NS-CES-v3",
+      "cedant": "Northstar Pension Trust",
+      "fields": 84,
+      "format": "CSV",
+      "version": "v3.2",
+      "data_payload": {
+        "schema_fields": [
+          "member_id",
+          "dob",
+          "gender",
+          "annuity_amount",
+          "currency",
+          "status",
+          "last_payment_date",
+          "indexation_basis"
+        ],
+        "validation_rules": [
+          "member_id required",
+          "currency must be ISO 4217",
+          "status in active/deferred/deceased"
+        ]
+      }
+    },
+    {
+      "ref_id": "TPL-HV-CES-v2",
+      "data_type": "file_template",
+      "template": "TPL-HV-CES-v2",
+      "cedant": "Helvetia Retirement Fund",
+      "fields": 76,
+      "format": "CSV",
+      "version": "v2.1",
+      "data_payload": {
+        "schema_fields": [
+          "member_id",
+          "event_type",
+          "event_date",
+          "spouse_dob",
+          "spouse_gender",
+          "benefit_pct"
+        ],
+        "validation_rules": [
+          "event_date required for spouse events",
+          "benefit_pct must be numeric"
+        ]
+      }
+    },
+    {
+      "ref_id": "TPL-ML-CES-v1",
+      "data_type": "file_template",
+      "template": "TPL-ML-CES-v1",
+      "cedant": "Maple Leaf Pension Plan",
+      "fields": 71,
+      "format": "XML",
+      "version": "v1.4",
+      "data_payload": {
+        "schema_fields": [
+          "period",
+          "fee_amount",
+          "currency",
+          "due_date"
+        ],
+        "validation_rules": [
+          "period required",
+          "due_date must be valid date"
+        ]
+      }
+    },
+    {
+      "ref_id": "TPL-BV-CES-v2",
+      "data_type": "file_template",
+      "template": "TPL-BV-CES-v2",
+      "cedant": "Bavarian Industrial Fund",
+      "fields": 88,
+      "format": "CSV",
+      "version": "v2.0",
+      "data_payload": {
+        "schema_fields": [
+          "payment_date",
+          "notional",
+          "rate",
+          "amount",
+          "currency"
+        ],
+        "validation_rules": [
+          "rate must be decimal",
+          "amount must be positive"
+        ]
+      }
+    }
+  ],
+  "screening_cache": [
+    {
+      "list_name": "OFAC SDN",
+      "provider": "US Treasury",
+      "records": 12847,
+      "last_sync": "2025-04-29 04:00",
+      "status": "active"
+    },
+    {
+      "list_name": "FinCEN 314(a)",
+      "provider": "FinCEN",
+      "records": 4122,
+      "last_sync": "2025-04-29 04:05",
+      "status": "active"
+    },
+    {
+      "list_name": "EU Consolidated",
+      "provider": "European Council",
+      "records": 8490,
+      "last_sync": "2025-04-29 04:10",
+      "status": "active"
+    },
+    {
+      "list_name": "FIS Adverse Media",
+      "provider": "FIS",
+      "records": 2140882,
+      "last_sync": "2025-04-29 03:30",
+      "status": "active"
+    }
+  ]
+}

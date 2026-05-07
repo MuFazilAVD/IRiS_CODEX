@@ -1,0 +1,83 @@
+[
+  {
+    "cedent_id": "CED-0991",
+    "legal_entity_name": "Sterling Heritage Pensions",
+    "trading_name": "Sterling Heritage",
+    "country": "UK",
+    "aum_amount": 1200000000,
+    "aum_currency": "USD",
+    "status": "inactive",
+    "screening_status": "cleared",
+    "onboarded_date": "2018-09-01",
+    "contracts_count": 0,
+    "lei": "5299000991ABCD0000EF00",
+    "entity_type": "Pension Trust",
+    "jurisdiction": "UK",
+    "regulatory_status": "Regulated"
+  },
+  {
+    "cedent_id": "CED-1042",
+    "legal_entity_name": "Northstar Pension Trust",
+    "country": "UK",
+    "aum_amount": 12400000000,
+    "aum_currency": "USD",
+    "status": "active",
+    "screening_status": "cleared",
+    "onboarded_date": "2021-03-14",
+    "contracts_count": 4,
+    "lei": "5299001042ABCD1234EF56",
+    "entity_type": "Pension Trust",
+    "jurisdiction": "UK",
+    "regulatory_status": "Regulated",
+    "date_of_incorporation": "1998-06-12"
+  },
+  {
+    "cedent_id": "CED-1087",
+    "legal_entity_name": "Helvetia Retirement Fund",
+    "trading_name": "Helvetia Re Fund",
+    "country": "CH",
+    "aum_amount": 8700000000,
+    "aum_currency": "USD",
+    "status": "active",
+    "screening_status": "cleared",
+    "onboarded_date": "2022-07-02",
+    "contracts_count": 3,
+    "lei": "5299001087ABCD5678GH12"
+  },
+  {
+    "cedent_id": "CED-1133",
+    "legal_entity_name": "Atlas Corporate Pensions",
+    "trading_name": "Atlas Pensions",
+    "country": "US",
+    "aum_amount": 5300000000,
+    "aum_currency": "USD",
+    "status": "onboarding",
+    "screening_status": "pending",
+    "onboarded_date": "2025-01-19",
+    "contracts_count": 1
+  },
+  {
+    "cedent_id": "CED-1156",
+    "legal_entity_name": "Maple Leaf Pension Plan",
+    "country": "CA",
+    "aum_amount": 3900000000,
+    "aum_currency": "USD",
+    "status": "active",
+    "screening_status": "cleared",
+    "onboarded_date": "2023-11-08",
+    "contracts_count": 2
+  },
+  {
+    "cedent_id": "CED-1201",
+    "legal_entity_name": "Bavarian Industrial Fund",
+    "trading_name": "Bavarian IF",
+    "country": "DE",
+    "aum_amount": 6100000000,
+    "aum_currency": "USD",
+    "status": "active",
+    "screening_status": "review",
+    "onboarded_date": "2024-04-22",
+    "contracts_count": 2
+  }
+]
+

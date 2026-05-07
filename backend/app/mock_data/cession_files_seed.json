@@ -1,0 +1,59 @@
+[
+  {
+    "file_id": "CES-2025-015",
+    "filename": "northstar_status_2025.csv",
+    "cedent_id": "CED-1042",
+    "file_type": "Pension Status",
+    "contract_id": "LSC-2024-019",
+    "records": 18420,
+    "stage": "validated",
+    "critical_count": 2,
+    "error_count": 0,
+    "warning_count": 2,
+    "received_at": "2026-05-05T09:00:00Z",
+    "sla_deadline": "2026-05-10T17:00:00Z"
+  },
+  {
+    "file_id": "CES-2025-016",
+    "filename": "helvetia_mortality_apr2025.xlsx",
+    "cedent_id": "CED-1087",
+    "file_type": "Mortality Report",
+    "contract_id": "LSC-2024-031",
+    "records": 3200,
+    "stage": "processing",
+    "critical_count": 0,
+    "error_count": 0,
+    "warning_count": 0,
+    "received_at": "2026-05-05T08:20:00Z",
+    "sla_deadline": "2026-05-09T17:00:00Z"
+  },
+  {
+    "file_id": "CES-2025-017",
+    "filename": "maple_activity_2025Q1.csv",
+    "cedent_id": "CED-1156",
+    "file_type": "Activity Report",
+    "contract_id": "LSC-2024-044",
+    "records": 1850,
+    "stage": "exceptions",
+    "critical_count": 4,
+    "error_count": 1,
+    "warning_count": 2,
+    "received_at": "2026-05-04T17:45:00Z",
+    "sla_deadline": "2026-05-08T17:00:00Z"
+  },
+  {
+    "file_id": "CES-2025-018",
+    "filename": "bavarian_fixed_leg_q1.csv",
+    "cedent_id": "CED-1201",
+    "file_type": "Fixed Leg",
+    "contract_id": "LSC-2025-002",
+    "records": 4,
+    "stage": "approved",
+    "critical_count": 0,
+    "error_count": 0,
+    "warning_count": 0,
+    "received_at": "2026-05-03T11:10:00Z",
+    "sla_deadline": "2026-05-07T17:00:00Z"
+  }
+]
+

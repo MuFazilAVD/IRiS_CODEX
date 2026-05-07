@@ -1,0 +1,212 @@
+[
+  {
+    "report_id": "RPT-H-001",
+    "name": "Settlement Calculation Report",
+    "description": "Settlement generated for a contract over a reporting period including fixed/floating legs and adjustments.",
+    "category": "Historical",
+    "cadence": "Quarterly",
+    "distribution": ["Claims Ops", "Finance", "Cedant Relationship"],
+    "sensitivity": "Sensitive",
+    "roles_with_access": ["claims_ops", "underwriter", "admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-H-002",
+    "name": "Control Report",
+    "description": "Control checks and reconciliation breaks for financial accuracy.",
+    "category": "Historical",
+    "cadence": "Monthly",
+    "distribution": ["Claims Ops", "Internal Audit"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["claims_ops", "admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-H-003",
+    "name": "Collateral Exposure Calculation",
+    "description": "Collateral and reserve exposure visibility per cedant and contract.",
+    "category": "Historical",
+    "cadence": "Monthly",
+    "distribution": ["Risk", "Treasury"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["underwriter", "admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-H-004",
+    "name": "Cash Flows",
+    "description": "Projected and actual cashflow reporting per contract and year.",
+    "category": "Historical",
+    "cadence": "Quarterly",
+    "distribution": ["Treasury", "Finance"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["underwriter", "claims_ops", "admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-D-001",
+    "name": "Historical Fixed and Floating Legs",
+    "description": "Trend analysis of fixed vs floating payments with mortality impact.",
+    "category": "Dynamic",
+    "cadence": "Quarterly",
+    "distribution": ["Actuarial", "Risk"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["underwriter", "claims_ops", "super_admin"]
+  },
+  {
+    "report_id": "RPT-D-002",
+    "name": "Sanity Check Report",
+    "description": "Validation report for suspicious movements and unusual liability changes.",
+    "category": "Dynamic",
+    "cadence": "Monthly",
+    "distribution": ["Claims Ops", "Actuarial"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["claims_ops", "super_admin"]
+  },
+  {
+    "report_id": "RPT-M-001",
+    "name": "Pensioner Movement Summary",
+    "description": "Deaths, deferrals, transfers per period.",
+    "category": "Movement",
+    "cadence": "Monthly",
+    "distribution": ["Actuarial", "Claims Ops"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["claims_ops", "underwriter", "super_admin"]
+  },
+  {
+    "report_id": "RPT-M-002",
+    "name": "Population Delta Report",
+    "description": "Net change in covered population by age band.",
+    "category": "Movement",
+    "cadence": "Quarterly",
+    "distribution": ["Actuarial", "Underwriting"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["underwriter", "claims_ops", "super_admin"]
+  },
+  {
+    "report_id": "RPT-M-003",
+    "name": "Spouse & Dependant Events",
+    "description": "Spouse benefit triggers and survivor elections.",
+    "category": "Movement",
+    "cadence": "Monthly",
+    "distribution": ["Claims Ops"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["claims_ops", "super_admin"]
+  },
+  {
+    "report_id": "RPT-C-001",
+    "name": "Sanctions Screening Summary",
+    "description": "All screening runs, matches and dispositions.",
+    "category": "Compliance",
+    "cadence": "Monthly",
+    "distribution": ["Compliance", "Legal"],
+    "sensitivity": "Sensitive",
+    "roles_with_access": ["compliance", "super_admin"]
+  },
+  {
+    "report_id": "RPT-C-002",
+    "name": "Regulatory Submission Pack",
+    "description": "PRA/EIOPA/NAIC formatted quarterly pack.",
+    "category": "Compliance",
+    "cadence": "Quarterly",
+    "distribution": ["Compliance", "Regulator"],
+    "sensitivity": "Sensitive",
+    "roles_with_access": ["compliance", "super_admin"]
+  },
+  {
+    "report_id": "RPT-C-003",
+    "name": "KYC & AML Status Report",
+    "description": "AML and KYC expiry tracker per cedant.",
+    "category": "Compliance",
+    "cadence": "Annual",
+    "distribution": ["Compliance"],
+    "sensitivity": "Sensitive",
+    "roles_with_access": ["compliance", "admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-F-001",
+    "name": "BEL Valuation Report",
+    "description": "Best Estimate Liability across all contracts.",
+    "category": "Financial",
+    "cadence": "Quarterly",
+    "distribution": ["Actuarial", "Finance", "Risk"],
+    "sensitivity": "Sensitive",
+    "roles_with_access": ["underwriter", "admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-F-002",
+    "name": "Net Settlement P&L",
+    "description": "Net payout position across all cedants.",
+    "category": "Financial",
+    "cadence": "Quarterly",
+    "distribution": ["Finance", "Senior Management"],
+    "sensitivity": "Sensitive",
+    "roles_with_access": ["claims_ops", "admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-F-003",
+    "name": "FX Exposure Report",
+    "description": "Multi-currency exposure and hedging requirement.",
+    "category": "Financial",
+    "cadence": "Monthly",
+    "distribution": ["Treasury"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["claims_ops", "underwriter", "super_admin"]
+  },
+  {
+    "report_id": "RPT-F-004",
+    "name": "Collateral Adequacy",
+    "description": "Threshold monitoring and top-up triggers.",
+    "category": "Financial",
+    "cadence": "Monthly",
+    "distribution": ["Risk", "Treasury"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["underwriter", "admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-F-005",
+    "name": "Experience Study",
+    "description": "A/E mortality analysis vs CMI baseline.",
+    "category": "Financial",
+    "cadence": "Annual",
+    "distribution": ["Actuarial", "Underwriting"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["underwriter", "super_admin"]
+  },
+  {
+    "report_id": "RPT-A-001",
+    "name": "User Access Audit",
+    "description": "All access events, permission changes, failed logins.",
+    "category": "Admin",
+    "cadence": "Monthly",
+    "distribution": ["IT Admin", "Compliance"],
+    "sensitivity": "Sensitive",
+    "roles_with_access": ["admin", "compliance", "super_admin"]
+  },
+  {
+    "report_id": "RPT-A-002",
+    "name": "Role Change Log",
+    "description": "All role elevations and approvals.",
+    "category": "Admin",
+    "cadence": "Monthly",
+    "distribution": ["IT Admin"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-A-003",
+    "name": "System Performance Log",
+    "description": "Pipeline throughput, SLA adherence.",
+    "category": "Admin",
+    "cadence": "Weekly",
+    "distribution": ["IT Admin"],
+    "sensitivity": "Standard",
+    "roles_with_access": ["admin", "super_admin"]
+  },
+  {
+    "report_id": "RPT-A-004",
+    "name": "AI Override Governance",
+    "description": "All AI overrides with approver sign-off.",
+    "category": "Admin",
+    "cadence": "Monthly",
+    "distribution": ["Compliance", "Senior Management"],
+    "sensitivity": "Sensitive",
+    "roles_with_access": ["compliance", "admin", "super_admin"]
+  }
+]

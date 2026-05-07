@@ -1,0 +1,15 @@
+{
+  "process_id": "IRIS-PRC-59206-A",
+  "final_status": "Pending Approval",
+  "settlement_amount": 1149000,
+  "settlement_currency": "USD",
+  "approval_required": true,
+  "sla_status": "At Risk",
+  "summary": {
+    "contract": "Zurich Assurance Q1 2026",
+    "total_records": 15240,
+    "issues_resolved": true,
+    "compliance": "Pending 1 review"
+  },
+  "actions": ["approve_settlement", "hold_payment", "reject_case"]
+}

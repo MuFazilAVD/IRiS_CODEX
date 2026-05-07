@@ -1,0 +1,44 @@
+{
+  "process_id": "IRIS-PRC-59206-A",
+  "filename": "ZUR_MOVEMENT_Q1.csv",
+  "cedent": "Zurich Assurance",
+  "period": "Q1 2026",
+  "started_at": "2024-04-24T10:05:00Z",
+  "input_preview": {
+    "total_pages": 1016,
+    "columns": ["RED ID", "First Name", "Last Name", "DOB", "Monthly Pension", "Gender", "Spouse Flag", "Event Type", "Event Date"],
+    "rows": [
+      {"RED ID": "ZUR-8801", "First Name": "Hans", "Last Name": "Muller", "DOB": "15/03/1962", "Monthly Pension": "2,450.00", "Gender": "M", "Spouse Flag": "Y", "Event Type": "Death", "Event Date": "2026-03-01", "dob_issue": false},
+      {"RED ID": "ZUR-8802", "First Name": "Petra", "Last Name": "Schmidt", "DOB": "", "Monthly Pension": "3,120.50", "Gender": "F", "Spouse Flag": "N", "Event Type": "Death", "Event Date": "2026-03-02", "dob_issue": true},
+      {"RED ID": "ZUR-8803", "First Name": "Lukas", "Last Name": "Weber", "DOB": "22/11/1958", "Monthly Pension": "1,890.00", "Gender": "M", "Spouse Flag": "Y", "Event Type": "Death", "Event Date": "2026-03-01", "dob_issue": false},
+      {"RED ID": "ZUR-8804", "First Name": "Monika", "Last Name": "Wagner", "DOB": "", "Monthly Pension": "4,500.00", "Gender": "F", "Spouse Flag": "Y", "Event Type": "Death", "Event Date": "2026-03-05", "dob_issue": true},
+      {"RED ID": "ZUR-8805", "First Name": "Klaus", "Last Name": "Becker", "DOB": "05/09/1960", "Monthly Pension": "2,750.00", "Gender": "M", "Spouse Flag": "N", "Event Type": "Death", "Event Date": "2026-03-01", "dob_issue": false},
+      {"RED ID": "ZUR-8806", "First Name": "Renate", "Last Name": "Hoffmann", "DOB": "12/07/1955", "Monthly Pension": "3,400.00", "Gender": "F", "Spouse Flag": "Y", "Event Type": "Death", "Event Date": "2026-03-04", "dob_issue": false},
+      {"RED ID": "ZUR-8807", "First Name": "Andreas", "Last Name": "Schulz", "DOB": "", "Monthly Pension": "2,100.00", "Gender": "M", "Spouse Flag": "Y", "Event Type": "Death", "Event Date": "2026-03-01", "dob_issue": true},
+      {"RED ID": "ZUR-8808", "First Name": "Sabine", "Last Name": "Koch", "DOB": "28/02/1964", "Monthly Pension": "3,800.00", "Gender": "F", "Spouse Flag": "N", "Event Type": "Death", "Event Date": "2026-03-08", "dob_issue": false},
+      {"RED ID": "ZUR-8809", "First Name": "Stefan", "Last Name": "Richter", "DOB": "14/10/1959", "Monthly Pension": "2,950.00", "Gender": "M", "Spouse Flag": "Y", "Event Type": "Death", "Event Date": "2026-03-01", "dob_issue": false}
+    ]
+  },
+  "column_mapping": [
+    {"source_field": "RED ID", "target_field": "Member ID", "transformation": "Direct Mapping"},
+    {"source_field": "First Name + Last Name", "target_field": "Full Name", "transformation": "Concatenation & Title Casing"},
+    {"source_field": "DOB", "target_field": "DOB", "transformation": "ISO-8601 Standard (DD/MM/YYYY -> YYYY-MM-DD)"},
+    {"source_field": "DOB", "target_field": "Age", "transformation": "Actuarial Calculation (As of 2026-04-27)"},
+    {"source_field": "Monthly Pension", "target_field": "Monthly Pension", "transformation": "Numeric Conversion (Remove , and .)"},
+    {"source_field": "Gender", "target_field": "Gender", "transformation": "M/F Standardization"},
+    {"source_field": "Spouse Flag", "target_field": "Spouse Flag", "transformation": "Boolean Mapping (Y/N -> True/False)"},
+    {"source_field": "Event Type", "target_field": "Event Type", "transformation": "Enum Mapping"},
+    {"source_field": "Event Date", "target_field": "Event Date", "transformation": "ISO-8601 Standard"}
+  ],
+  "validation": {
+    "total_fields": 9,
+    "fields_with_issues": 2,
+    "fields_corrected": 1,
+    "fields_inferred": 2,
+    "field_validations": [
+      {"field_name": "DOB", "checked": 15240, "issues": 120, "corrected": 120, "inferred": 0, "status": "Fixed", "method_used": "Statistical Imputation"},
+      {"field_name": "Spouse Flag", "checked": 15240, "issues": 5, "corrected": 0, "inferred": 5, "status": "Inferred", "method_used": "Rule-Based Logic"}
+    ],
+    "risk_indicators": {"imputed_count": 120, "inferred_count": 5, "confidence": 0.994, "risk_level": "Moderate"}
+  }
+}

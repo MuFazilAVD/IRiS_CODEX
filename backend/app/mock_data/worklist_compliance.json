@@ -1,0 +1,45 @@
+{
+  "summary": {
+    "my_critical": 1,
+    "overdue": 2,
+    "pending_approvals": 1,
+    "compliance_holds": 2,
+    "ai_exception_queue": 1,
+    "team_backlog": 3,
+    "awaiting_review": 2
+  },
+  "total": 3,
+  "items": [
+    {
+      "wl_id": "WL-8201",
+      "title": "OFAC sanctions match - Atlas Corporate Pensions",
+      "category": "OFAC Match",
+      "priority": "critical",
+      "status": "open",
+      "assigned_role": "compliance",
+      "source": "AI Agent",
+      "ai_generated": true,
+      "compliance_hold": true,
+      "elapsed_display": "Overdue 8h 47m",
+      "is_approaching": false,
+      "is_overdue": true,
+      "breadcrumb": "Compliance Hold · Review Required"
+    },
+    {
+      "wl_id": "WL-8202",
+      "title": "Override approval pending - mortality table refresh",
+      "category": "Override Approval",
+      "priority": "high",
+      "status": "pending_review",
+      "assigned_role": "compliance",
+      "source": "Human",
+      "ai_generated": false,
+      "compliance_hold": false,
+      "elapsed_display": "3h 10m",
+      "is_approaching": true,
+      "is_overdue": false,
+      "breadcrumb": "Reference Data · Four-eyes Review"
+    }
+  ]
+}
+

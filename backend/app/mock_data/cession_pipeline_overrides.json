@@ -1,0 +1,246 @@
+{
+  "CES-2025-015": {
+    "active_step": "validate",
+    "detection_override": {
+      "file_type": "Pension Status",
+      "cedent_id": "CED-1042",
+      "completed_at": "2026-05-06T12:40:50.925854Z"
+    },
+    "stage_history": [
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-06T12:40:50.928491Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-06T12:40:50.930213Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-06T12:40:58.846429Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-06T12:40:59.268313Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:40:50.932029Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:40:58.848375Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:40:59.270429Z"
+      },
+      {
+        "stage": "validate",
+        "status": "in_progress",
+        "timestamp": "2026-05-06T12:40:59.272374Z"
+      }
+    ],
+    "audit_events": [
+      {
+        "timestamp": "2026-05-06T12:40:50.935604Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Pension Status\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-06T12:40:50.937542Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Northstar Pension Trust",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-06T12:40:58.852419Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-019 v1.2",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-06T12:40:59.274238Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 2 clauses",
+        "detail": "1 flagged"
+      }
+    ],
+    "contract_override": {
+      "contract_id": "LSC-2024-019",
+      "completed_at": "2026-05-06T12:40:58.843850Z"
+    }
+  },
+  "CES-2026-001": {
+    "pipeline_session_id": "pipe-cf3be869-7103-4eda-8c92-d151cac1cd73",
+    "active_step": "summary",
+    "source_filename": "northstar_status_2025Q1.csv",
+    "source_size_bytes": 312,
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "detection_override": {
+      "file_type": "Pension Status",
+      "cedent_id": "CED-1042",
+      "completed_at": "2026-05-06T12:41:27.771440Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-019",
+      "completed_at": "2026-05-06T12:41:29.694971Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-06T12:41:24.294341Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "northstar_status_2025Q1.csv"
+      },
+      {
+        "timestamp": "2026-05-06T12:41:27.782041Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Pension Status\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-06T12:41:27.784142Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Northstar Pension Trust",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-06T12:41:29.705032Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-019 v1.2",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-06T12:41:31.285447Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 2 clauses",
+        "detail": "1 flagged"
+      },
+      {
+        "timestamp": "2026-05-06T12:41:32.180831Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "0 critical, 1 warnings"
+      },
+      {
+        "timestamp": "2026-05-06T12:41:32.728379Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Exception handling updated",
+        "detail": "1 actions saved"
+      },
+      {
+        "timestamp": "2026-05-06T12:41:33.237499Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "4 records applied"
+      },
+      {
+        "timestamp": "2026-05-06T12:41:33.239809Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9208"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-06T12:41:24.294341Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-06T12:41:27.773962Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-06T12:41:27.776000Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-06T12:41:29.697184Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-06T12:41:31.278216Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-06T12:41:32.173016Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-06T12:41:32.724088Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-06T12:41:33.228003Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-06T12:41:33.230419Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:41:24.294341Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:41:27.777932Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:41:29.700224Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:41:31.280344Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:41:32.175900Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:41:32.721818Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-06T12:41:33.232718Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-06T12:41:33.235053Z"
+      }
+    ]
+  }
+}

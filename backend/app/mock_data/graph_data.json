@@ -1,0 +1,150 @@
+{
+  "admin": [
+    {
+      "id": "user_role_distribution",
+      "title": "User Role Distribution",
+      "type": "donut",
+      "data": {
+        "labels": ["Underwriting", "Claims Ops", "Compliance", "Admin", "Read-only"],
+        "datasets": [
+          { "data": [35, 40, 15, 5, 5], "colors": ["#0D1B2A", "#00BCD4", "#F39C12", "#2ECC71", "#90A4AE"] }
+        ]
+      }
+    },
+    {
+      "id": "access_audit_trend",
+      "title": "Access Audit Trend (7d)",
+      "type": "line",
+      "data": {
+        "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "datasets": [
+          { "label": "Events", "data": [550, 1650, 1650, 1650, 2200, 1100, 0], "color": "#0D1B2A" },
+          { "label": "Alerts", "data": [2, 4, 5, 7, 6, 2, 0], "color": "#E74C3C" }
+        ]
+      }
+    },
+    {
+      "id": "batch_job_trend",
+      "title": "Batch Job Trend",
+      "type": "bar",
+      "data": {
+        "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "datasets": [
+          { "label": "Success", "data": [130, 125, 135, 138, 150, 82, 80], "color": "#2ECC71" },
+          { "label": "Failed", "data": [5, 8, 10, 3, 0, 2, 1], "color": "#E74C3C" }
+        ]
+      }
+    }
+  ],
+  "underwriter": [
+    {
+      "id": "exposure_by_cedant",
+      "title": "Exposure by Cedant",
+      "subtitle": "USD bn",
+      "type": "bar_horizontal",
+      "data": {
+        "labels": ["Northstar", "Helvetia", "Bavarian", "Maple"],
+        "datasets": [
+          { "label": "Exposure", "data": [4.2, 3.1, 2.8, 1.9], "color": "#0D1B2A" }
+        ]
+      }
+    },
+    {
+      "id": "mortality_expected_vs_actual",
+      "title": "Mortality - Expected vs Actual",
+      "subtitle": "% rate",
+      "type": "line",
+      "data": {
+        "labels": ["Q1 2024", "Q2 2024", "Q3 2024", "Q4 2024", "Q1 2025"],
+        "datasets": [
+          { "label": "Expected", "data": [0.92, 0.92, 0.92, 0.92, 0.92], "color": "#90A4AE", "dashed": true },
+          { "label": "Actual", "data": [0.95, 0.98, 1.02, 1.1, 1.2], "color": "#E74C3C" }
+        ]
+      }
+    },
+    {
+      "id": "contract_status_distribution",
+      "title": "Contract Status Distribution",
+      "type": "donut",
+      "data": {
+        "labels": ["Active", "Pending", "Amendment", "Renewal", "Draft"],
+        "datasets": [
+          { "data": [38, 2, 2, 3, 4], "colors": ["#0D1B2A", "#1A6B9A", "#F39C12", "#2ECC71", "#E74C3C"] }
+        ]
+      }
+    }
+  ],
+  "claims_ops": [
+    {
+      "id": "file_processing_pipeline",
+      "title": "File Processing Pipeline",
+      "type": "bar",
+      "data": {
+        "labels": ["Validation", "Cleansing", "Output"],
+        "datasets": [
+          { "label": "Files", "data": [24, 7, 19], "color": "#0D1B2A" }
+        ]
+      }
+    },
+    {
+      "id": "reconciliation_exception_trend",
+      "title": "Reconciliation Exception Trend",
+      "type": "line",
+      "data": {
+        "labels": ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"],
+        "datasets": [
+          { "label": "Breaks", "data": [15, 8, 10, 16, 13, 11], "color": "#E74C3C" },
+          { "label": "Resolved", "data": [12, 9, 10, 14, 8, 8], "color": "#2ECC71" }
+        ]
+      }
+    },
+    {
+      "id": "settlement_approval_status",
+      "title": "Settlement Approval Status",
+      "type": "donut",
+      "data": {
+        "labels": ["Approved", "Awaiting Approval", "Reconciling", "Disputed"],
+        "datasets": [
+          { "data": [12, 8, 5, 2], "colors": ["#0D1B2A", "#1A6B9A", "#F39C12", "#2ECC71"] }
+        ]
+      }
+    }
+  ],
+  "compliance": [
+    {
+      "id": "screening_status_by_cedant",
+      "title": "Screening Status by Cedant",
+      "type": "bar",
+      "data": {
+        "labels": ["Northstar", "Helvetia", "Atlas", "Bavarian"],
+        "datasets": [
+          { "label": "Cleared", "data": [12, 10, 4, 7], "color": "#2ECC71" },
+          { "label": "Review", "data": [1, 0, 3, 2], "color": "#E74C3C" }
+        ]
+      }
+    },
+    {
+      "id": "override_trend",
+      "title": "Override Trend (6m)",
+      "type": "line",
+      "data": {
+        "labels": ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"],
+        "datasets": [
+          { "label": "Overrides", "data": [2, 4, 3, 5, 4, 6], "color": "#0D1B2A" }
+        ]
+      }
+    },
+    {
+      "id": "compliance_holds_summary",
+      "title": "Compliance Holds Summary",
+      "type": "bar",
+      "data": {
+        "labels": ["Sanctions", "AML", "PEP"],
+        "datasets": [
+          { "label": "Active Holds", "data": [2, 1, 1], "color": "#8E44AD" }
+        ]
+      }
+    }
+  ]
+}
+

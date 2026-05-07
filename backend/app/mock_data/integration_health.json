@@ -1,0 +1,12 @@
+[
+  { "name": "SFTP — Northstar", "status": "healthy" },
+  { "name": "SFTP — Helvetia", "status": "healthy" },
+  { "name": "SFTP — Atlas", "status": "degraded" },
+  { "name": "Bloomberg FX Feed", "status": "healthy" },
+  { "name": "CMI Mortality Sync", "status": "healthy" },
+  { "name": "OFAC SDN Sync", "status": "healthy" },
+  { "name": "Lovable AI Gateway", "status": "healthy" },
+  { "name": "Audit Warehouse", "status": "healthy" },
+  { "name": "FinCEN API", "status": "healthy" },
+  { "name": "Reporting Engine", "status": "healthy" }
+]

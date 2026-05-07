@@ -1,0 +1,640 @@
+{
+  "LSC-2024-019": {
+    "renewal_date": "2025-01-15",
+    "master_data": {
+      "parent_contract_id": "LSC-2024-019"
+    },
+    "reference_pool": {
+      "pool_name": "Northstar Pension Trust Reference Pool",
+      "lives_covered": 18420,
+      "average_age": 71,
+      "male_female_split": "55/45",
+      "average_pension_amount": 24500,
+      "pool_currency": "GBP",
+      "geographic_concentration": "UK 92% / EU 6% / RoW 2%",
+      "benefit_type": "Defined Benefit",
+      "indexation_basis": "CPI capped 5%",
+      "closed_open": "Closed",
+      "data_as_of": "2024-01-15",
+      "data_source_reference": ""
+    },
+    "actuarial_basis": {
+      "mortality_table_id": "CMI-2024-M",
+      "mortality_table_name": "CMI 2024 with 1.5% LTR",
+      "mortality_improvement_scale": "",
+      "discount_curve_id": "YC-GBP",
+      "discount_curve_source": "Bloomberg",
+      "inflation_assumption": "CPI 2.4%",
+      "longevity_loading_pct": 1.5,
+      "expense_loading_pct": 0.4,
+      "assumption_set_id": "AS-LSC-2024-019",
+      "last_revaluation": "2025-01-15",
+      "next_revaluation_due": "2026-01-15"
+    },
+    "risk_limits": {
+      "max_loss_limit": 187500000,
+      "aggregate_limit": 375000000,
+      "deductible": 6250000,
+      "catastrophe_cap": 250000000,
+      "rating_downgrade_trigger": "< A-",
+      "risk_committee_approval_required": true,
+      "early_termination_event": "",
+      "novation_rights": "",
+      "cedant_change_of_control": ""
+    },
+    "operational_terms": {
+      "settlement_calendar": "London",
+      "cession_file_format": "CSV",
+      "cession_file_frequency": "Quarterly",
+      "sftp_endpoint_id": "sftp-lsc-2024-019",
+      "encryption_method": "PGP",
+      "reporting_package": "Standard quarterly pack",
+      "lead_underwriter": "m.patel@reinsure.io",
+      "operations_contact": "a.chen@reinsure.io",
+      "legal_contact": "legal@reinsure.io"
+    },
+    "details_performance": {
+      "current_notional": 1250000000,
+      "lives_active": 18193,
+      "lives_deceased_ytd": 1127,
+      "ae_ratio_ytd": 1.02,
+      "bel": 892000000,
+      "mtm": 1205839,
+      "renewal_offset_days": -475,
+      "headline_metrics": [
+        {
+          "label": "Notional",
+          "value": "\u00a31,250,000,000",
+          "accent": "default"
+        },
+        {
+          "label": "Fixed Leg",
+          "value": "2.85% Quarterly",
+          "accent": "default"
+        },
+        {
+          "label": "Lives Covered",
+          "value": "18,420",
+          "accent": "default"
+        },
+        {
+          "label": "Renewal Date",
+          "value": "2025-01-15",
+          "subtitle": "-475 days",
+          "accent": "danger"
+        },
+        {
+          "label": "A/E Mortality",
+          "value": "102.0%",
+          "subtitle": "1127 / 1105 deaths",
+          "accent": "default"
+        }
+      ],
+      "summary_cards": [
+        {
+          "title": "Identification",
+          "items": [
+            {
+              "label": "Contract ID",
+              "value": "LSC-2024-019"
+            },
+            {
+              "label": "Cedant",
+              "value": "CED-1042 - Northstar Pension Trust"
+            },
+            {
+              "label": "Swap Type",
+              "value": "Indemnity"
+            },
+            {
+              "label": "Structure",
+              "value": "Single tranche"
+            },
+            {
+              "label": "Inception",
+              "value": "2024-01-15"
+            },
+            {
+              "label": "Maturity",
+              "value": "2054-01-15"
+            },
+            {
+              "label": "Duration",
+              "value": "30 yrs"
+            },
+            {
+              "label": "Version",
+              "value": "v1.2"
+            },
+            {
+              "label": "Governing Law",
+              "value": "English Law"
+            }
+          ]
+        },
+        {
+          "title": "Economic Terms",
+          "items": [
+            {
+              "label": "Notional",
+              "value": "\u00a31,250,000,000"
+            },
+            {
+              "label": "Fixed Leg",
+              "value": "2.85% ACT/365"
+            },
+            {
+              "label": "Floating Leg",
+              "value": "Realized mortality"
+            },
+            {
+              "label": "Payment Lag",
+              "value": "30 days"
+            },
+            {
+              "label": "Settlement Ccy",
+              "value": "GBP"
+            },
+            {
+              "label": "Collateral",
+              "value": "Threshold \u00a325,000,000"
+            }
+          ]
+        },
+        {
+          "title": "Reference Pool",
+          "items": [
+            {
+              "label": "Pool Name",
+              "value": "Northstar Pension Trust Reference Pool"
+            },
+            {
+              "label": "Lives",
+              "value": "18,420"
+            },
+            {
+              "label": "Avg Age",
+              "value": "71"
+            },
+            {
+              "label": "M/F Split",
+              "value": "55/45"
+            },
+            {
+              "label": "Avg Pension",
+              "value": "\u00a324,500"
+            },
+            {
+              "label": "Indexation",
+              "value": "CPI capped 5%"
+            },
+            {
+              "label": "Status",
+              "value": "Closed"
+            }
+          ]
+        },
+        {
+          "title": "Actuarial Basis",
+          "items": [
+            {
+              "label": "Mortality Table",
+              "value": "CMI 2024 with 1.5% LTR"
+            },
+            {
+              "label": "Improvement Scale",
+              "value": "-"
+            },
+            {
+              "label": "Discount Curve",
+              "value": "YC-GBP (Bloomberg)"
+            },
+            {
+              "label": "Inflation",
+              "value": "CPI 2.4%"
+            },
+            {
+              "label": "Longevity Loading",
+              "value": "1.5%"
+            },
+            {
+              "label": "Last Reval",
+              "value": "2025-01-15"
+            },
+            {
+              "label": "Next Reval",
+              "value": "2026-01-15"
+            }
+          ]
+        },
+        {
+          "title": "Risk & Limits",
+          "items": [
+            {
+              "label": "Max Loss",
+              "value": "\u00a3187,500,000"
+            },
+            {
+              "label": "Aggregate",
+              "value": "\u00a3375,000,000"
+            },
+            {
+              "label": "Deductible",
+              "value": "\u00a36,250,000"
+            },
+            {
+              "label": "Cat Cap",
+              "value": "\u00a3250,000,000"
+            }
+          ]
+        },
+        {
+          "title": "Operational",
+          "items": [
+            {
+              "label": "SFTP",
+              "value": "sftp-lsc-2024-019"
+            },
+            {
+              "label": "Format",
+              "value": "CSV"
+            },
+            {
+              "label": "Frequency",
+              "value": "Quarterly"
+            },
+            {
+              "label": "Calendar",
+              "value": "London"
+            },
+            {
+              "label": "Underwriter",
+              "value": "m.patel@reinsure.io"
+            },
+            {
+              "label": "Operations",
+              "value": "a.chen@reinsure.io"
+            }
+          ]
+        }
+      ],
+      "cumulative_net_variance": 1205839,
+      "settlement_history": [
+        {
+          "period": "Q1 2024",
+          "expected_deaths": 221,
+          "actual_deaths": 239,
+          "ae_ratio": 1.081,
+          "fixed_leg": 8906250,
+          "floating_leg": 9511369,
+          "net_settled": 605119,
+          "active_pensioners": 18397,
+          "status": "paid"
+        },
+        {
+          "period": "Q2 2024",
+          "expected_deaths": 221,
+          "actual_deaths": 209,
+          "ae_ratio": 0.946,
+          "fixed_leg": 8906250,
+          "floating_leg": 8695801,
+          "net_settled": -210449,
+          "active_pensioners": 18345,
+          "status": "paid"
+        },
+        {
+          "period": "Q3 2024",
+          "expected_deaths": 221,
+          "actual_deaths": 216,
+          "ae_ratio": 0.977,
+          "fixed_leg": 8906250,
+          "floating_leg": 8890982,
+          "net_settled": -15268,
+          "active_pensioners": 18264,
+          "status": "paid"
+        },
+        {
+          "period": "Q4 2024",
+          "expected_deaths": 221,
+          "actual_deaths": 222,
+          "ae_ratio": 1.005,
+          "fixed_leg": 8906250,
+          "floating_leg": 9064058,
+          "net_settled": 157808,
+          "active_pensioners": 18193,
+          "status": "paid"
+        }
+      ]
+    },
+    "amendments": [
+      {
+        "id": "AMD-001",
+        "version": "v1.1",
+        "type": "Operational",
+        "summary": "Operational schedule refresh following onboarding readiness review.",
+        "submitted": "2024-03-10",
+        "effective": "2024-03-15",
+        "status": "approved",
+        "changed_sections": [
+          "operational_terms"
+        ],
+        "changes": {
+          "cession_file_frequency": "Quarterly"
+        }
+      },
+      {
+        "id": "AMD-002",
+        "version": "v1.2",
+        "type": "Pool",
+        "summary": "Reference pool refresh approved after actuarial review.",
+        "submitted": "2024-09-15",
+        "effective": "2024-09-30",
+        "status": "approved",
+        "changed_sections": [
+          "reference_pool"
+        ],
+        "changes": {
+          "lives_covered": 18420
+        }
+      }
+    ],
+    "audit_compliance": {
+      "checklist": [
+        {
+          "control": "Risk committee approval required",
+          "status": "complete",
+          "owner": "Risk Committee",
+          "due_date": "2024-09-15",
+          "notes": "Approved with v1.2 amendment"
+        },
+        {
+          "control": "Collateral threshold verified",
+          "status": "complete",
+          "owner": "Treasury",
+          "due_date": "2024-01-15",
+          "notes": "\u00a325.0M threshold loaded"
+        },
+        {
+          "control": "Periodic sanctions refresh",
+          "status": "monitoring",
+          "owner": "Compliance",
+          "due_date": "2026-01-15",
+          "notes": "Annual refresh scheduled"
+        }
+      ],
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-05 01:12:48",
+          "actor": "SFTP Listener",
+          "type": "System",
+          "action": "File received via SFTP",
+          "detail": "-"
+        },
+        {
+          "timestamp": "2026-05-05 01:12:48",
+          "actor": "AI Classifier v3.2",
+          "type": "AI Agent",
+          "action": "Classified as \"Fixed Leg\"",
+          "detail": "confidence 94%"
+        },
+        {
+          "timestamp": "2026-05-05 01:12:48",
+          "actor": "Pipeline Orchestrator",
+          "type": "System",
+          "action": "Mapped to LSC-2024-019 v1.2",
+          "detail": "-"
+        }
+      ]
+    },
+    "member_population": {
+      "total_members": 94,
+      "active_members": 81,
+      "deferred_members": 8,
+      "spouse_members": 3,
+      "deceased_members": 2,
+      "currency": "GBP",
+      "last_verified_date": "2025-03-31"
+    }
+  },
+  "LSC-2024-031": {
+    "renewal_date": "2025-03-01",
+    "details_performance": {
+      "renewal_offset_days": -430,
+      "headline_metrics": [
+        {
+          "label": "Notional",
+          "value": "CHF 870,000,000",
+          "accent": "default"
+        },
+        {
+          "label": "Fixed Leg",
+          "value": "2.10% Quarterly",
+          "accent": "default"
+        },
+        {
+          "label": "Lives Covered",
+          "value": "12,150",
+          "accent": "default"
+        },
+        {
+          "label": "Renewal Date",
+          "value": "2025-03-01",
+          "subtitle": "-430 days",
+          "accent": "danger"
+        },
+        {
+          "label": "A/E Mortality",
+          "value": "101.8%",
+          "subtitle": "736 / 723 deaths",
+          "accent": "default"
+        }
+      ],
+      "cumulative_net_variance": 474031,
+      "settlement_history": [
+        {
+          "period": "Q1 2024",
+          "expected_deaths": 145,
+          "actual_deaths": 149,
+          "ae_ratio": 1.028,
+          "fixed_leg": 4567500,
+          "floating_leg": 4750142,
+          "net_settled": 182642,
+          "active_pensioners": 12108,
+          "status": "paid"
+        },
+        {
+          "period": "Q2 2024",
+          "expected_deaths": 145,
+          "actual_deaths": 142,
+          "ae_ratio": 0.979,
+          "fixed_leg": 4567500,
+          "floating_leg": 4661700,
+          "net_settled": 94200,
+          "active_pensioners": 12072,
+          "status": "paid"
+        },
+        {
+          "period": "Q3 2024",
+          "expected_deaths": 145,
+          "actual_deaths": 144,
+          "ae_ratio": 0.993,
+          "fixed_leg": 4567500,
+          "floating_leg": 4646400,
+          "net_settled": 78900,
+          "active_pensioners": 12031,
+          "status": "paid"
+        },
+        {
+          "period": "Q4 2024",
+          "expected_deaths": 145,
+          "actual_deaths": 145,
+          "ae_ratio": 1.0,
+          "fixed_leg": 4567500,
+          "floating_leg": 4629300,
+          "net_settled": 61800,
+          "active_pensioners": 11984,
+          "status": "paid"
+        },
+        {
+          "period": "Q1 2025",
+          "expected_deaths": 143,
+          "actual_deaths": 146,
+          "ae_ratio": 1.021,
+          "fixed_leg": 4567500,
+          "floating_leg": 4623989,
+          "net_settled": 56489,
+          "active_pensioners": 11940,
+          "status": "paid"
+        }
+      ]
+    },
+    "member_population": {
+      "total_members": 94,
+      "active_members": 81,
+      "deferred_members": 8,
+      "spouse_members": 3,
+      "deceased_members": 2,
+      "currency": "CHF",
+      "last_verified_date": "2025-03-31"
+    },
+    "audit_compliance": {
+      "checklist": [
+        {
+          "control": "Quarterly template certification",
+          "status": "complete",
+          "owner": "Claims Ops",
+          "due_date": "2025-03-31",
+          "notes": "All six templates approved"
+        },
+        {
+          "control": "Helvetia KYC refresh",
+          "status": "complete",
+          "owner": "Compliance",
+          "due_date": "2025-03-15",
+          "notes": "No open issues"
+        },
+        {
+          "control": "Annual actuarial revalidation",
+          "status": "monitoring",
+          "owner": "Chief Actuary",
+          "due_date": "2026-03-01",
+          "notes": "Next review pending"
+        }
+      ]
+    }
+  },
+  "LSC-2026-001": {
+    "master_data": {
+      "parent_contract_id": ""
+    },
+    "audit_approval": [
+      {
+        "timestamp": "2026-05-06 05:22:20",
+        "actor": "Underwriter",
+        "action": "Uploaded members file",
+        "detail": "members.csv"
+      },
+      {
+        "timestamp": "2026-05-06 05:22:20",
+        "actor": "Underwriter",
+        "action": "Submitted amendment v1.1",
+        "detail": "Verification amendment"
+      },
+      {
+        "timestamp": "2026-05-06 05:22:20",
+        "actor": "Underwriter",
+        "action": "Updated reference pool",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-06 05:22:20",
+        "actor": "Underwriter",
+        "action": "Created contract draft",
+        "detail": "Spec Verification Longevity Swap for Northstar Pension Trust"
+      }
+    ],
+    "audit_compliance": {
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-06 05:22:20",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Uploaded members file",
+          "detail": "members.csv"
+        },
+        {
+          "timestamp": "2026-05-06 05:22:20",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Submitted amendment for approval",
+          "detail": "AMD-001"
+        },
+        {
+          "timestamp": "2026-05-06 05:22:20",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Updated reference pool",
+          "detail": "LSC-2026-001"
+        },
+        {
+          "timestamp": "2026-05-06 05:22:20",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Created contract draft",
+          "detail": "LSC-2026-001"
+        }
+      ]
+    },
+    "reference_pool": {
+      "pool_name": "Verification Pool",
+      "lives_covered": 0,
+      "average_age": 0,
+      "male_female_split": "",
+      "average_pension_amount": 0,
+      "pool_currency": "GBP",
+      "geographic_concentration": "Primary domicile concentration",
+      "benefit_type": "Defined Benefit",
+      "indexation_basis": "CPI capped 5%",
+      "closed_open": "Closed",
+      "data_as_of": "2026-01-01",
+      "data_source_reference": ""
+    },
+    "amendments": [
+      {
+        "id": "AMD-001",
+        "version": "v1.1",
+        "type": "Pool",
+        "summary": "Verification amendment",
+        "submitted": "2026-05-06",
+        "effective": "2026-06-01",
+        "status": "pending_approval",
+        "changed_sections": [
+          "reference_pool"
+        ],
+        "changes": {
+          "pool_name": "Verification Pool"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "process_id": "IRIS-PRC-59206-A",
+  "fixed_leg_amount": 1115625,
+  "floating_leg_amount": 1149750,
+  "net_position": -34125,
+  "net_direction": "Loss",
+  "currency": "USD",
+  "pricing_basis": "Expected vs Observed",
+  "fixed_leg": {
+    "rate": 0.0425,
+    "notional": 105000000,
+    "day_count": "30/360",
+    "period": "Quarterly"
+  },
+  "floating_leg": {
+    "observed_mortality_rate": 0.0438,
+    "source": "Actual death records",
+    "notional": 105000000,
+    "period": "Quarterly"
+  },
+  "insights": [
+    "Observed mortality exceeds expected by 0.13%",
+    "Negative payout triggered"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "total": 7,
+  "items": [
+    {
+      "id": "act-001",
+      "source_type": "SFTP",
+      "tags": ["Cession", "FYI"],
+      "title": "Received cession file from Northstar SFTP endpoint",
+      "timestamp": "2026-05-05T06:02:00Z",
+      "cedant": "Northstar Pension Trust",
+      "wl_id": "WL-9206",
+      "actor": null
+    },
+    {
+      "id": "act-002",
+      "source_type": "Admin",
+      "tags": ["Admin", "FYI"],
+      "title": "Created new user account for h.suzuki (Underwriting)",
+      "timestamp": "2026-05-04T17:55:00Z",
+      "wl_id": "REQ-1101",
+      "actor": "Devon"
+    },
+    {
+      "id": "act-003",
+      "source_type": "AI",
+      "tags": ["IRiS AI", "FYA"],
+      "title": "Flagged variance on Northstar settlement above tolerance",
+      "timestamp": "2026-05-05T07:00:00Z",
+      "cedant": "Northstar Pension Trust",
+      "wl_id": "WL-9202",
+      "actor": null
+    },
+    {
+      "id": "act-004",
+      "source_type": "Security",
+      "tags": ["Escalation", "FYA"],
+      "title": "Locked user u-205 after access violation detection",
+      "timestamp": "2026-05-05T02:15:00Z",
+      "cedant": null,
+      "wl_id": "WL-7001",
+      "actor": "System"
+    }
+  ]
+}
+

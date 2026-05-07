@@ -1,0 +1,618 @@
+{
+  "RPT-H-001": {
+    "insight": "Northstar Q1 settlement remained inside the approved corridor after manual review of two floating-leg adjustments.",
+    "metrics": [
+      { "label": "Gross fixed leg", "value": "GBP 4.21M", "subtitle": "Q1 2025", "tone": "positive" },
+      { "label": "Gross floating leg", "value": "GBP 4.08M", "subtitle": "observed mortality", "tone": "warning" },
+      { "label": "Net settlement", "value": "+GBP 0.13M", "subtitle": "reinsurer to cedant", "tone": "positive" },
+      { "label": "Adjustments", "value": "2", "subtitle": "manual line items", "tone": "default" }
+    ],
+    "graph": {
+      "id": "settlement_calculation_trend",
+      "title": "Settlement Trend",
+      "subtitle": "Fixed vs floating legs",
+      "type": "line",
+      "data": {
+        "labels": ["2024 Q2", "2024 Q3", "2024 Q4", "2025 Q1"],
+        "datasets": [
+          { "label": "Fixed Leg", "data": [3900000, 4010000, 4090000, 4210000], "color": "#0D1B2A" },
+          { "label": "Floating Leg", "data": [3720000, 3980000, 4030000, 4080000], "color": "#00BCD4" }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Contract", "Period", "Fixed Leg", "Floating Leg", "Adjustments", "Net"],
+      "rows": [
+        { "Contract": "LSC-2024-019", "Period": "2025 Q1", "Fixed Leg": "GBP 4.21M", "Floating Leg": "GBP 4.08M", "Adjustments": "GBP 0.03M", "Net": "+GBP 0.13M" },
+        { "Contract": "LSC-2024-031", "Period": "2025 Q1", "Fixed Leg": "CHF 2.84M", "Floating Leg": "CHF 2.93M", "Adjustments": "CHF 0.01M", "Net": "-CHF 0.08M" },
+        { "Contract": "LSC-2025-009", "Period": "2025 Q1", "Fixed Leg": "USD 5.42M", "Floating Leg": "USD 5.27M", "Adjustments": "USD 0.04M", "Net": "+USD 0.11M" }
+      ]
+    },
+    "notes": ["Two manual adjustments were captured in the settlement workbench.", "Detail remains static mock data for the POC."]
+  },
+  "RPT-H-002": {
+    "insight": "Reconciliation breaks concentrated in Atlas inbound files and late approval chains.",
+    "metrics": [
+      { "label": "Checks passed", "value": "94", "subtitle": "current month", "tone": "positive" },
+      { "label": "Breaks open", "value": "6", "subtitle": "three high impact", "tone": "negative" },
+      { "label": "Auto-resolved", "value": "18", "subtitle": "rule-driven controls", "tone": "positive" },
+      { "label": "Oldest break", "value": "19h", "subtitle": "Atlas queue", "tone": "warning" }
+    ],
+    "graph": {
+      "id": "control_breaks_by_type",
+      "title": "Control Breaks by Type",
+      "subtitle": "Current month",
+      "type": "bar",
+      "data": {
+        "labels": ["Mapping", "Variance", "Approval", "FX", "Screening"],
+        "datasets": [{ "label": "Breaks", "data": [2, 3, 4, 1, 2], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Control ID", "Control", "Entity", "Severity", "Owner", "Status"],
+      "rows": [
+        { "Control ID": "CTRL-204", "Control": "Approval sequence mismatch", "Entity": "STL-2025-Q1-118", "Severity": "High", "Owner": "Claims Ops", "Status": "Open" },
+        { "Control ID": "CTRL-211", "Control": "Variance threshold breach", "Entity": "IRIS-PRC-59206-A", "Severity": "High", "Owner": "Underwriting", "Status": "Investigating" },
+        { "Control ID": "CTRL-233", "Control": "FX source stale", "Entity": "YC-GBP-GILT", "Severity": "Medium", "Owner": "Admin", "Status": "Resolved" }
+      ]
+    },
+    "notes": ["Control IDs are mock identifiers for the reporting POC."]
+  },
+  "RPT-H-003": {
+    "insight": "Collateral headroom remains strongest for Helvetia and narrowest for Atlas after Q1 exposure changes.",
+    "metrics": [
+      { "label": "Posted collateral", "value": "USD 148M", "subtitle": "all active contracts", "tone": "positive" },
+      { "label": "Exposure", "value": "USD 136M", "subtitle": "net reserve view", "tone": "warning" },
+      { "label": "Headroom", "value": "USD 12M", "subtitle": "remaining buffer", "tone": "positive" },
+      { "label": "Contracts reviewed", "value": "9", "subtitle": "monthly cycle", "tone": "default" }
+    ],
+    "graph": {
+      "id": "collateral_headroom",
+      "title": "Collateral vs Exposure",
+      "subtitle": "Top cedants",
+      "type": "bar",
+      "data": {
+        "labels": ["Northstar", "Helvetia", "Atlas", "Maple Leaf"],
+        "datasets": [
+          { "label": "Collateral", "data": [42, 36, 31, 39], "color": "#0D1B2A" },
+          { "label": "Exposure", "data": [38, 29, 30, 35], "color": "#00BCD4" }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Cedant", "Contract", "Collateral", "Exposure", "Threshold", "Headroom"],
+      "rows": [
+        { "Cedant": "Northstar", "Contract": "LSC-2024-019", "Collateral": "USD 42M", "Exposure": "USD 38M", "Threshold": "USD 5M", "Headroom": "USD 4M" },
+        { "Cedant": "Helvetia", "Contract": "LSC-2024-031", "Collateral": "USD 36M", "Exposure": "USD 29M", "Threshold": "USD 5M", "Headroom": "USD 7M" },
+        { "Cedant": "Atlas", "Contract": "LSC-2025-009", "Collateral": "USD 31M", "Exposure": "USD 30M", "Threshold": "USD 3M", "Headroom": "USD 1M" }
+      ]
+    },
+    "notes": ["Collateral values are mock USD equivalents for catalog preview only."]
+  },
+  "RPT-H-004": {
+    "insight": "Projected cash flows remain slightly above actuals through year-end, driven by deferred movement assumptions.",
+    "metrics": [
+      { "label": "Projected 2025", "value": "GBP 18.4M", "subtitle": "aggregate", "tone": "positive" },
+      { "label": "Actual YTD", "value": "GBP 13.9M", "subtitle": "through Q3", "tone": "default" },
+      { "label": "Variance", "value": "-GBP 0.7M", "subtitle": "vs projection", "tone": "warning" },
+      { "label": "Currencies", "value": "5", "subtitle": "rolled into base", "tone": "default" }
+    ],
+    "graph": {
+      "id": "cash_flow_projection",
+      "title": "Projected vs Actual Cash Flow",
+      "subtitle": "2025 monthly profile",
+      "type": "line",
+      "data": {
+        "labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+        "datasets": [
+          { "label": "Projected", "data": [2.9, 3.0, 3.1, 3.0, 3.2, 3.2], "color": "#0D1B2A" },
+          { "label": "Actual", "data": [2.8, 2.9, 3.0, 2.8, 3.0, 3.1], "color": "#00BCD4" }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Year", "Projected", "Actual", "Currency", "Variance"],
+      "rows": [
+        { "Year": "2024", "Projected": "GBP 17.2M", "Actual": "GBP 16.8M", "Currency": "GBP", "Variance": "-GBP 0.4M" },
+        { "Year": "2025", "Projected": "GBP 18.4M", "Actual": "GBP 17.7M", "Currency": "GBP", "Variance": "-GBP 0.7M" },
+        { "Year": "2026", "Projected": "GBP 19.1M", "Actual": "N/A", "Currency": "GBP", "Variance": "Forecast" }
+      ]
+    },
+    "notes": ["Future periods remain purely mock forecast rows."]
+  },
+  "RPT-D-001": {
+    "insight": "Floating legs widened against fixed legs after Q4 2024 due to elevated observed mortality in Atlas and Northstar books.",
+    "metrics": [
+      { "label": "Latest fixed leg", "value": "USD 11.2M", "subtitle": "Q1 2025", "tone": "default" },
+      { "label": "Latest floating leg", "value": "USD 11.6M", "subtitle": "Q1 2025", "tone": "warning" },
+      { "label": "Spread", "value": "-USD 0.4M", "subtitle": "fixed minus floating", "tone": "negative" },
+      { "label": "Observed A/E", "value": "102.1%", "subtitle": "grouped view", "tone": "warning" }
+    ],
+    "graph": {
+      "id": "fixed_vs_floating",
+      "title": "Fixed vs Floating Legs",
+      "subtitle": "Quarterly",
+      "type": "line",
+      "data": {
+        "labels": ["2024 Q1", "2024 Q2", "2024 Q3", "2024 Q4", "2025 Q1"],
+        "datasets": [
+          { "label": "Fixed", "data": [10.4, 10.6, 10.8, 11.0, 11.2], "color": "#0D1B2A" },
+          { "label": "Floating", "data": [10.1, 10.4, 10.7, 11.3, 11.6], "color": "#00BCD4" }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Quarter", "Fixed", "Floating", "Net", "Commentary"],
+      "rows": [
+        { "Quarter": "2024 Q3", "Fixed": "USD 10.8M", "Floating": "USD 10.7M", "Net": "+USD 0.1M", "Commentary": "Stable mortality" },
+        { "Quarter": "2024 Q4", "Fixed": "USD 11.0M", "Floating": "USD 11.3M", "Net": "-USD 0.3M", "Commentary": "Observed mortality picked up" },
+        { "Quarter": "2025 Q1", "Fixed": "USD 11.2M", "Floating": "USD 11.6M", "Net": "-USD 0.4M", "Commentary": "Atlas contributed most variance" }
+      ]
+    },
+    "notes": ["All trend lines are static mock outputs."]
+  },
+  "RPT-D-002": {
+    "insight": "Most suspicious movements were tied to late spouse-flag updates and cedant template drift.",
+    "metrics": [
+      { "label": "Suspicious rows", "value": "27", "subtitle": "current month", "tone": "warning" },
+      { "label": "Rejected files", "value": "2", "subtitle": "hard stops", "tone": "negative" },
+      { "label": "Auto-cleared", "value": "14", "subtitle": "rule pass", "tone": "positive" },
+      { "label": "Open reviews", "value": "11", "subtitle": "analyst queue", "tone": "default" }
+    ],
+    "graph": {
+      "id": "sanity_check_breaks",
+      "title": "Suspicious Movement Types",
+      "subtitle": "Current cycle",
+      "type": "bar_horizontal",
+      "data": {
+        "labels": ["Template drift", "Late death", "Spouse mismatch", "FX anomaly"],
+        "datasets": [{ "label": "Rows", "data": [9, 6, 8, 4], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Entity", "Issue", "Detected At", "Owner", "Status"],
+      "rows": [
+        { "Entity": "CES-2025-04-118", "Issue": "Cedant template drift", "Detected At": "2025-04-29 10:48", "Owner": "Claims Ops", "Status": "Open" },
+        { "Entity": "PEN-0104012", "Issue": "Spouse flag mismatch", "Detected At": "2025-04-29 11:05", "Owner": "Claims Ops", "Status": "Review" },
+        { "Entity": "LSC-2025-009", "Issue": "FX anomaly", "Detected At": "2025-04-29 11:18", "Owner": "Admin", "Status": "Resolved" }
+      ]
+    },
+    "notes": ["Issue rows are mock examples built for the report preview."]
+  },
+  "RPT-M-001": {
+    "insight": "Monthly death notices remained concentrated in Northstar and Maple Leaf blocks with limited transfer activity.",
+    "metrics": [
+      { "label": "Deaths", "value": "112", "subtitle": "reporting period", "tone": "warning" },
+      { "label": "Deferrals", "value": "18", "subtitle": "reported events", "tone": "default" },
+      { "label": "Transfers", "value": "7", "subtitle": "external moves", "tone": "default" },
+      { "label": "Spikes", "value": "1", "subtitle": "manual review", "tone": "negative" }
+    ],
+    "graph": {
+      "id": "pensioner_movement",
+      "title": "Movement by Month",
+      "subtitle": "Deaths, deferrals, transfers",
+      "type": "bar",
+      "data": {
+        "labels": ["Jan", "Feb", "Mar", "Apr"],
+        "datasets": [
+          { "label": "Deaths", "data": [24, 29, 31, 28], "color": "#0D1B2A" },
+          { "label": "Deferrals", "data": [4, 5, 3, 6], "color": "#00BCD4" },
+          { "label": "Transfers", "data": [2, 1, 3, 1], "color": "#4CAF50" }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Cedant", "Deaths", "Deferrals", "Transfers", "Status"],
+      "rows": [
+        { "Cedant": "Northstar", "Deaths": "37", "Deferrals": "6", "Transfers": "2", "Status": "Normal" },
+        { "Cedant": "Maple Leaf", "Deaths": "29", "Deferrals": "5", "Transfers": "3", "Status": "Monitor" },
+        { "Cedant": "Atlas", "Deaths": "19", "Deferrals": "4", "Transfers": "1", "Status": "Normal" }
+      ]
+    },
+    "notes": ["Movement report access for this category is derived from the UI-only spec rows because the schema sample omits them."]
+  },
+  "RPT-M-002": {
+    "insight": "Population contraction is strongest in the 75-84 band, while the 55-64 cohort remains broadly stable.",
+    "metrics": [
+      { "label": "Lives at start", "value": "61,420", "subtitle": "selected view", "tone": "default" },
+      { "label": "Net delta", "value": "-184", "subtitle": "quarterly", "tone": "warning" },
+      { "label": "Largest band move", "value": "-72", "subtitle": "75-84", "tone": "negative" },
+      { "label": "Average age", "value": "68.4", "subtitle": "weighted", "tone": "default" }
+    ],
+    "graph": {
+      "id": "population_delta",
+      "title": "Population Delta by Age Band",
+      "subtitle": "Quarterly movement",
+      "type": "bar",
+      "data": {
+        "labels": ["45-54", "55-64", "65-74", "75-84", "85+"],
+        "datasets": [{ "label": "Net Delta", "data": [6, 2, -28, -72, -92], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Age Band", "Opening", "Closing", "Net Delta", "Commentary"],
+      "rows": [
+        { "Age Band": "55-64", "Opening": "11,204", "Closing": "11,206", "Net Delta": "+2", "Commentary": "Stable active base" },
+        { "Age Band": "75-84", "Opening": "18,742", "Closing": "18,670", "Net Delta": "-72", "Commentary": "Expected pensioner attrition" },
+        { "Age Band": "85+", "Opening": "7,912", "Closing": "7,820", "Net Delta": "-92", "Commentary": "High mortality concentration" }
+      ]
+    },
+    "notes": ["This preview uses mock cohort snapshots rather than live population tables."]
+  },
+  "RPT-M-003": {
+    "insight": "Survivor elections trended up in Maple Leaf after March death notifications, but remained within expected tolerance.",
+    "metrics": [
+      { "label": "Spouse triggers", "value": "16", "subtitle": "period events", "tone": "warning" },
+      { "label": "Dependent cases", "value": "9", "subtitle": "open handling", "tone": "default" },
+      { "label": "Approved", "value": "21", "subtitle": "lifecycle complete", "tone": "positive" },
+      { "label": "Escalated", "value": "1", "subtitle": "manual interpretation", "tone": "negative" }
+    ],
+    "graph": {
+      "id": "spouse_events",
+      "title": "Spouse and Dependant Events",
+      "subtitle": "Monthly volume",
+      "type": "line",
+      "data": {
+        "labels": ["Jan", "Feb", "Mar", "Apr", "May"],
+        "datasets": [
+          { "label": "Spouse Triggers", "data": [2, 3, 5, 4, 2], "color": "#0D1B2A" },
+          { "label": "Dependant Elections", "data": [1, 2, 3, 2, 1], "color": "#00BCD4" }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Event Ref", "Cedant", "Event Type", "Benefit", "Status"],
+      "rows": [
+        { "Event Ref": "SPD-2041", "Cedant": "Maple Leaf", "Event Type": "Survivor election", "Benefit": "GBP 41K", "Status": "Approved" },
+        { "Event Ref": "SPD-2047", "Cedant": "Northstar", "Event Type": "Spouse trigger", "Benefit": "GBP 23K", "Status": "Pending" },
+        { "Event Ref": "SPD-2051", "Cedant": "Atlas", "Event Type": "Dependant claim", "Benefit": "USD 18K", "Status": "Escalated" }
+      ]
+    },
+    "notes": ["Survivor benefit rows are static and do not update from claims inputs."]
+  },
+  "RPT-C-001": {
+    "insight": "Three active review paths remain open, with Atlas still driving the only escalated sanctions case.",
+    "metrics": [
+      { "label": "Runs completed", "value": "148", "subtitle": "last 30 days", "tone": "positive" },
+      { "label": "Matches", "value": "9", "subtitle": "keyword and LLM", "tone": "warning" },
+      { "label": "Escalated", "value": "1", "subtitle": "active case", "tone": "negative" },
+      { "label": "False positives", "value": "5", "subtitle": "documented", "tone": "default" }
+    ],
+    "graph": {
+      "id": "screening_summary",
+      "title": "Screening Outcomes",
+      "subtitle": "Last 30 days",
+      "type": "bar",
+      "data": {
+        "labels": ["Cleared", "Review", "Escalated", "False Positive"],
+        "datasets": [{ "label": "Runs", "data": [139, 3, 1, 5], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Screening Ref", "Entity", "Cedant", "Result", "Confidence"],
+      "rows": [
+        { "Screening Ref": "SHM-887", "Entity": "Sergei V. Markov", "Cedant": "Northstar", "Result": "Escalated", "Confidence": "0.88" },
+        { "Screening Ref": "SHM-903", "Entity": "John A. Whitcomb", "Cedant": "Northstar", "Result": "Pending Review", "Confidence": "0.71" },
+        { "Screening Ref": "SHM-944", "Entity": "Atlas Corporate Pensions", "Cedant": "Atlas", "Result": "Under Review", "Confidence": "0.42" }
+      ]
+    },
+    "notes": ["This report mirrors the sanctions workspace but remains a static POC snapshot."]
+  },
+  "RPT-C-002": {
+    "insight": "The quarterly submission pack is prepared for PRA, EIOPA, and NAIC with one remaining compliance sign-off.",
+    "metrics": [
+      { "label": "Packs prepared", "value": "3", "subtitle": "regulators", "tone": "positive" },
+      { "label": "Pending sign-off", "value": "1", "subtitle": "NAIC annex", "tone": "warning" },
+      { "label": "Sensitive exhibits", "value": "6", "subtitle": "restricted export", "tone": "negative" },
+      { "label": "Delivery date", "value": "2025-04-30", "subtitle": "scheduled", "tone": "default" }
+    ],
+    "graph": {
+      "id": "regulatory_pack_status",
+      "title": "Regulatory Pack Status",
+      "subtitle": "Quarterly readiness",
+      "type": "donut",
+      "data": {
+        "labels": ["Ready", "Pending Approval", "Draft"],
+        "datasets": [{ "data": [2, 1, 1], "colors": ["#0D1B2A", "#F39C12", "#90A4AE"] }]
+      }
+    },
+    "table": {
+      "columns": ["Regulator", "Pack", "Status", "Owner", "Due Date"],
+      "rows": [
+        { "Regulator": "PRA", "Pack": "Q1 2025 PRA Pack", "Status": "Ready", "Owner": "Compliance", "Due Date": "2025-04-30" },
+        { "Regulator": "EIOPA", "Pack": "Q1 2025 EIOPA Pack", "Status": "Ready", "Owner": "Compliance", "Due Date": "2025-04-30" },
+        { "Regulator": "NAIC", "Pack": "Q1 2025 NAIC Pack", "Status": "Pending Approval", "Owner": "Compliance", "Due Date": "2025-04-30" }
+      ]
+    },
+    "notes": ["Regulator pack contents are not generated live in the POC."]
+  },
+  "RPT-C-003": {
+    "insight": "Two cedants move into review over the next 30 days due to upcoming KYC evidence expiry.",
+    "metrics": [
+      { "label": "Cedants clear", "value": "4", "subtitle": "current state", "tone": "positive" },
+      { "label": "Review due", "value": "2", "subtitle": "next 30 days", "tone": "warning" },
+      { "label": "Escalated", "value": "0", "subtitle": "none open", "tone": "positive" },
+      { "label": "AML complete", "value": "100%", "subtitle": "active book", "tone": "positive" }
+    ],
+    "graph": {
+      "id": "kyc_aml_status",
+      "title": "KYC and AML Status",
+      "subtitle": "Cedant overview",
+      "type": "bar",
+      "data": {
+        "labels": ["Clear", "Review", "Escalated"],
+        "datasets": [{ "label": "Cedants", "data": [4, 2, 0], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Cedant", "KYC Status", "AML Status", "Next Review", "Risk"],
+      "rows": [
+        { "Cedant": "Northstar", "KYC Status": "Clear", "AML Status": "Complete", "Next Review": "2025-08-30", "Risk": "Medium" },
+        { "Cedant": "Atlas", "KYC Status": "Review Due", "AML Status": "Complete", "Next Review": "2025-05-16", "Risk": "High" },
+        { "Cedant": "Maple Leaf", "KYC Status": "Review Due", "AML Status": "Complete", "Next Review": "2025-05-29", "Risk": "Medium" }
+      ]
+    },
+    "notes": ["Review dates are fixed mock values."]
+  },
+  "RPT-F-001": {
+    "insight": "BEL increased quarter on quarter as Atlas and Northstar longevity assumptions widened after refreshed experience review.",
+    "metrics": [
+      { "label": "Current BEL", "value": "GBP 1.92B", "subtitle": "all contracts", "tone": "warning" },
+      { "label": "QoQ change", "value": "+GBP 41M", "subtitle": "vs prior quarter", "tone": "negative" },
+      { "label": "Discount basis", "value": "GBP Gilt", "subtitle": "v2025.03.31", "tone": "default" },
+      { "label": "Contracts", "value": "14", "subtitle": "included", "tone": "default" }
+    ],
+    "graph": {
+      "id": "bel_trend",
+      "title": "BEL Trend",
+      "subtitle": "Quarterly base currency view",
+      "type": "line",
+      "data": {
+        "labels": ["2024 Q2", "2024 Q3", "2024 Q4", "2025 Q1"],
+        "datasets": [{ "label": "BEL", "data": [1810, 1846, 1879, 1920], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Cedant", "Contract", "BEL", "QoQ Change", "Currency"],
+      "rows": [
+        { "Cedant": "Northstar", "Contract": "LSC-2024-019", "BEL": "GBP 612M", "QoQ Change": "+GBP 18M", "Currency": "GBP" },
+        { "Cedant": "Helvetia", "Contract": "LSC-2024-031", "BEL": "CHF 488M", "QoQ Change": "+CHF 6M", "Currency": "CHF" },
+        { "Cedant": "Atlas", "Contract": "LSC-2025-009", "BEL": "USD 521M", "QoQ Change": "+USD 14M", "Currency": "USD" }
+      ]
+    },
+    "notes": ["BEL values are mock rounded figures for the report preview."]
+  },
+  "RPT-F-002": {
+    "insight": "Net settlement P&L remained positive overall, though Atlas moved the margin lower than planned in Q1.",
+    "metrics": [
+      { "label": "Net P&L", "value": "USD 12.8M", "subtitle": "YTD", "tone": "positive" },
+      { "label": "Worst quarter", "value": "2025 Q1", "subtitle": "Atlas drag", "tone": "negative" },
+      { "label": "Best quarter", "value": "2024 Q4", "subtitle": "strong releases", "tone": "positive" },
+      { "label": "Cedants profitable", "value": "4/5", "subtitle": "current view", "tone": "default" }
+    ],
+    "graph": {
+      "id": "net_settlement_pnl",
+      "title": "Net Settlement P&L by Cedant",
+      "subtitle": "Current quarter",
+      "type": "bar",
+      "data": {
+        "labels": ["Northstar", "Helvetia", "Maple Leaf", "Atlas"],
+        "datasets": [{ "label": "Net P&L", "data": [3.8, 2.7, 4.1, 2.2], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Cedant", "Quarter", "Gross", "Adjustments", "Net P&L"],
+      "rows": [
+        { "Cedant": "Northstar", "Quarter": "2025 Q1", "Gross": "USD 6.1M", "Adjustments": "USD 0.4M", "Net P&L": "USD 3.8M" },
+        { "Cedant": "Helvetia", "Quarter": "2025 Q1", "Gross": "USD 4.6M", "Adjustments": "USD 0.2M", "Net P&L": "USD 2.7M" },
+        { "Cedant": "Atlas", "Quarter": "2025 Q1", "Gross": "USD 3.5M", "Adjustments": "USD 0.6M", "Net P&L": "USD 2.2M" }
+      ]
+    },
+    "notes": ["P&L values are illustrative and not sourced from finance ledgers."]
+  },
+  "RPT-F-003": {
+    "insight": "GBP and USD remain the dominant exposures, with CHF hedging comfortably inside tolerance.",
+    "metrics": [
+      { "label": "Gross exposure", "value": "USD 884M", "subtitle": "FX translated", "tone": "default" },
+      { "label": "Hedge required", "value": "USD 61M", "subtitle": "top-up estimate", "tone": "warning" },
+      { "label": "Largest currency", "value": "GBP", "subtitle": "41% of total", "tone": "default" },
+      { "label": "At-risk book", "value": "Atlas", "subtitle": "USD-heavy", "tone": "negative" }
+    ],
+    "graph": {
+      "id": "fx_exposure_mix",
+      "title": "FX Exposure Mix",
+      "subtitle": "Base USD equivalent",
+      "type": "donut",
+      "data": {
+        "labels": ["GBP", "USD", "CHF", "CAD", "EUR"],
+        "datasets": [{ "data": [41, 28, 17, 9, 5], "colors": ["#0D1B2A", "#00BCD4", "#4CAF50", "#F39C12", "#7B7D7D"] }]
+      }
+    },
+    "table": {
+      "columns": ["Currency", "Exposure", "Hedge", "Residual", "Status"],
+      "rows": [
+        { "Currency": "GBP", "Exposure": "USD 362M", "Hedge": "USD 336M", "Residual": "USD 26M", "Status": "Monitor" },
+        { "Currency": "USD", "Exposure": "USD 248M", "Hedge": "USD 248M", "Residual": "USD 0M", "Status": "Covered" },
+        { "Currency": "CHF", "Exposure": "USD 150M", "Hedge": "USD 142M", "Residual": "USD 8M", "Status": "Covered" }
+      ]
+    },
+    "notes": ["Exposure values are static preview figures in base USD."]
+  },
+  "RPT-F-004": {
+    "insight": "Atlas is closest to its collateral threshold and remains the only contract flagged for top-up monitoring.",
+    "metrics": [
+      { "label": "Contracts monitored", "value": "8", "subtitle": "monthly cycle", "tone": "default" },
+      { "label": "Top-up flags", "value": "1", "subtitle": "Atlas", "tone": "negative" },
+      { "label": "Average headroom", "value": "6.4%", "subtitle": "across portfolio", "tone": "positive" },
+      { "label": "Locked thresholds", "value": "5", "subtitle": "governed", "tone": "default" }
+    ],
+    "graph": {
+      "id": "collateral_adequacy",
+      "title": "Collateral Threshold Monitoring",
+      "subtitle": "Posted vs threshold",
+      "type": "bar",
+      "data": {
+        "labels": ["Northstar", "Helvetia", "Atlas", "Maple Leaf"],
+        "datasets": [
+          { "label": "Posted", "data": [42, 36, 31, 39], "color": "#0D1B2A" },
+          { "label": "Threshold", "data": [38, 30, 30, 34], "color": "#00BCD4" }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Contract", "Posted", "Threshold", "Buffer", "Status"],
+      "rows": [
+        { "Contract": "LSC-2024-019", "Posted": "USD 42M", "Threshold": "USD 38M", "Buffer": "USD 4M", "Status": "Healthy" },
+        { "Contract": "LSC-2024-031", "Posted": "USD 36M", "Threshold": "USD 30M", "Buffer": "USD 6M", "Status": "Healthy" },
+        { "Contract": "LSC-2025-009", "Posted": "USD 31M", "Threshold": "USD 30M", "Buffer": "USD 1M", "Status": "Monitor" }
+      ]
+    },
+    "notes": ["This report shares static exposure assumptions with the collateral history preview."]
+  },
+  "RPT-F-005": {
+    "insight": "A/E remained above the CMI baseline for older male cohorts and broadly aligned elsewhere.",
+    "metrics": [
+      { "label": "A/E ratio", "value": "102.4%", "subtitle": "portfolio", "tone": "warning" },
+      { "label": "Best cohort", "value": "65-74 Female", "subtitle": "97.8%", "tone": "positive" },
+      { "label": "Worst cohort", "value": "85+ Male", "subtitle": "108.6%", "tone": "negative" },
+      { "label": "Baseline", "value": "CMI 2024", "subtitle": "reference", "tone": "default" }
+    ],
+    "graph": {
+      "id": "experience_study",
+      "title": "Expected vs Actual Mortality",
+      "subtitle": "Selected cohorts",
+      "type": "line",
+      "data": {
+        "labels": ["65-74", "75-84", "85+"],
+        "datasets": [
+          { "label": "Expected", "data": [100, 100, 100], "color": "#90A4AE", "dashed": true },
+          { "label": "Actual", "data": [98, 103, 109], "color": "#0D1B2A" }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Cohort", "Expected", "Actual", "A/E", "Status"],
+      "rows": [
+        { "Cohort": "65-74 Female", "Expected": "1,204", "Actual": "1,177", "A/E": "97.8%", "Status": "Favorable" },
+        { "Cohort": "75-84 Mixed", "Expected": "2,448", "Actual": "2,521", "A/E": "103.0%", "Status": "Monitor" },
+        { "Cohort": "85+ Male", "Expected": "1,114", "Actual": "1,210", "A/E": "108.6%", "Status": "Review" }
+      ]
+    },
+    "notes": ["Experience study rows are static mock cohorts rather than live actuarial extracts."]
+  },
+  "RPT-A-001": {
+    "insight": "Sensitive exports and failed login spikes remain the primary access themes this month.",
+    "metrics": [
+      { "label": "Access events", "value": "214", "subtitle": "monthly", "tone": "default" },
+      { "label": "Sensitive exports", "value": "7", "subtitle": "audited", "tone": "negative" },
+      { "label": "Permission changes", "value": "4", "subtitle": "approved", "tone": "warning" },
+      { "label": "Failed logins", "value": "13", "subtitle": "security rules", "tone": "warning" }
+    ],
+    "graph": {
+      "id": "access_audit",
+      "title": "Access Event Mix",
+      "subtitle": "Current month",
+      "type": "bar",
+      "data": {
+        "labels": ["Login", "Export", "Permission", "Failure"],
+        "datasets": [{ "label": "Events", "data": [190, 7, 4, 13], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Timestamp", "User", "Action", "Resource", "Outcome"],
+      "rows": [
+        { "Timestamp": "2025-04-29 07:55", "User": "a.lindqvist@reinsure.io", "Action": "Sensitive Export", "Resource": "RPT-FIN-IMPACT-Q1-2026", "Outcome": "Logged" },
+        { "Timestamp": "2025-04-28 16:08", "User": "p.okafor@reinsure.io", "Action": "Permission Change", "Resource": "USR-00284", "Outcome": "Approved" },
+        { "Timestamp": "2025-04-28 11:14", "User": "unknown@external", "Action": "Failed Login", "Resource": "sess_failed_44a", "Outcome": "Locked" }
+      ]
+    },
+    "notes": ["This preview aligns with the audit access log module but stays hardcoded for Phase 14."]
+  },
+  "RPT-A-002": {
+    "insight": "Role elevation volume stayed low, with compliance grants accounting for most approvals.",
+    "metrics": [
+      { "label": "Role changes", "value": "6", "subtitle": "monthly", "tone": "default" },
+      { "label": "Approved", "value": "5", "subtitle": "completed", "tone": "positive" },
+      { "label": "Pending", "value": "1", "subtitle": "waiting admin", "tone": "warning" },
+      { "label": "Elevated roles", "value": "2", "subtitle": "sensitive", "tone": "negative" }
+    ],
+    "graph": {
+      "id": "role_change_log",
+      "title": "Role Change Volume",
+      "subtitle": "Last six months",
+      "type": "line",
+      "data": {
+        "labels": ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"],
+        "datasets": [{ "label": "Changes", "data": [2, 1, 3, 2, 1, 6], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["User", "From", "To", "Approved By", "Status"],
+      "rows": [
+        { "User": "k.tanaka@reinsure.io", "From": "Claims Ops", "To": "Compliance", "Approved By": "p.okafor@reinsure.io", "Status": "Approved" },
+        { "User": "m.patel@reinsure.io", "From": "Underwriter", "To": "Senior Underwriter", "Approved By": "d.rhodes@reinsure.io", "Status": "Approved" },
+        { "User": "a.chen@reinsure.io", "From": "Claims Ops", "To": "Admin", "Approved By": "Pending", "Status": "Pending" }
+      ]
+    },
+    "notes": ["Role titles are illustrative and not enforced by the current auth model."]
+  },
+  "RPT-A-003": {
+    "insight": "Pipeline throughput stayed inside SLA except for Atlas late inbound files and one sanctions review hold.",
+    "metrics": [
+      { "label": "Pipelines completed", "value": "42", "subtitle": "weekly", "tone": "positive" },
+      { "label": "Avg processing time", "value": "17m", "subtitle": "end to end", "tone": "default" },
+      { "label": "SLA misses", "value": "2", "subtitle": "weekly", "tone": "negative" },
+      { "label": "Aborts", "value": "1", "subtitle": "manual", "tone": "warning" }
+    ],
+    "graph": {
+      "id": "system_performance",
+      "title": "Throughput vs SLA",
+      "subtitle": "Weekly operations",
+      "type": "line",
+      "data": {
+        "labels": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+        "datasets": [
+          { "label": "Throughput", "data": [8, 9, 10, 7, 8], "color": "#0D1B2A" },
+          { "label": "SLA Target", "data": [8, 8, 8, 8, 8], "color": "#00BCD4", "dashed": true }
+        ]
+      }
+    },
+    "table": {
+      "columns": ["Process ID", "Cedant", "Elapsed", "SLA", "Status"],
+      "rows": [
+        { "Process ID": "IRIS-PRC-59206-A", "Cedant": "Zurich Assurance", "Elapsed": "14m", "SLA": "20m", "Status": "Complete" },
+        { "Process ID": "IRIS-PRC-59205-A", "Cedant": "Phoenix Re", "Elapsed": "23m", "SLA": "20m", "Status": "SLA Miss" },
+        { "Process ID": "IRIS-PRC-59208-A", "Cedant": "Atlas", "Elapsed": "29m", "SLA": "20m", "Status": "Hold" }
+      ]
+    },
+    "notes": ["Processing times mirror existing mock pipeline themes but remain static."]
+  },
+  "RPT-A-004": {
+    "insight": "Override governance remains concentrated in calculation and cession-mapping decisions, with one high-impact actuarial adjustment still highlighted.",
+    "metrics": [
+      { "label": "Overrides logged", "value": "9", "subtitle": "30 days", "tone": "warning" },
+      { "label": "High impact", "value": "1", "subtitle": "GBP 3.18M", "tone": "negative" },
+      { "label": "Approver captured", "value": "100%", "subtitle": "mandatory", "tone": "positive" },
+      { "label": "AI modules", "value": "3", "subtitle": "contributing", "tone": "default" }
+    ],
+    "graph": {
+      "id": "ai_override_governance",
+      "title": "Overrides by Module",
+      "subtitle": "Last 30 days",
+      "type": "bar",
+      "data": {
+        "labels": ["Calculation", "Cession", "Compliance"],
+        "datasets": [{ "label": "Overrides", "data": [4, 3, 2], "color": "#0D1B2A" }]
+      }
+    },
+    "table": {
+      "columns": ["Override Ref", "Module", "Reason", "Approver", "Impact"],
+      "rows": [
+        { "Override Ref": "CALC-2026-Q1-918", "Module": "Calculation", "Reason": "Interim mortality factor", "Approver": "j.morales@reinsure.io", "Impact": "-GBP 3.18M" },
+        { "Override Ref": "MAP-2025-104", "Module": "Cession", "Reason": "Column override for spouse indicator", "Approver": "a.chen@reinsure.io", "Impact": "N/A" },
+        { "Override Ref": "CMP-2025-022", "Module": "Compliance", "Reason": "Manual false positive clearance", "Approver": "j.morales@reinsure.io", "Impact": "N/A" }
+      ]
+    },
+    "notes": ["Override references reuse the same mock governance narrative as the audit workspace."]
+  }
+}

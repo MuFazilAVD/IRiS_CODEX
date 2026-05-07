@@ -1,0 +1,17 @@
+{
+  "process_id": "IRIS-PRC-59206-A",
+  "confidence_score": 0.94,
+  "risk_level": "Medium",
+  "decision": "Conditional Approval",
+  "human_review_required": true,
+  "decision_panel": [
+    {"status": "approved", "text": "Proceed with settlement after resolving compliance flag"},
+    {"status": "approved", "text": "Variance within acceptable contract threshold"},
+    {"status": "approved", "text": "Data quality issues resolved via imputation"}
+  ],
+  "flags": [
+    {"severity": "warning", "text": "Compliance review pending"},
+    {"severity": "warning", "text": "Imputed DOB used for 120 records"}
+  ],
+  "actions": ["approve_and_proceed", "escalate", "request_manual_review"]
+}

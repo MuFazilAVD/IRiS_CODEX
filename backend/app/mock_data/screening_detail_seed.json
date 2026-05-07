@@ -1,0 +1,28 @@
+{
+  "process_id": "IRIS-PRC-59206-A",
+  "entities_screened": 15240,
+  "matches_found": 2,
+  "false_positives": 1,
+  "critical_alerts": 1,
+  "match_table": [
+    {
+      "entity_name": "Hans Muller",
+      "dob": "1962-03-15",
+      "member_id": "ZUR-8801",
+      "match_type": "OFAC",
+      "source": "OFAC DB",
+      "confidence": 0.92,
+      "status": "Review"
+    },
+    {
+      "entity_name": "Petra Schmidt",
+      "dob": null,
+      "member_id": "ZUR-8802",
+      "match_type": "FinCEN",
+      "source": "FinCEN",
+      "confidence": 0.88,
+      "status": "Cleared"
+    }
+  ],
+  "insight": "1 entity requires compliance review before settlement"
+}

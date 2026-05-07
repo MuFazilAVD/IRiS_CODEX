@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Audit Report",
+    "description": "Full audit log with filters applied.",
+    "formats": ["csv", "json"]
+  },
+  {
+    "name": "Regulatory Review Report",
+    "description": "Quarterly review pack for PRA / EIOPA / NAIC.",
+    "formats": ["csv", "json"]
+  },
+  {
+    "name": "Compliance Report",
+    "description": "Sanctions screenings, hits, escalations and sign-offs.",
+    "formats": ["csv", "json"]
+  },
+  {
+    "name": "Override Exception Report",
+    "description": "All manual overrides with reasons and approvers.",
+    "formats": ["csv", "json"]
+  },
+  {
+    "name": "AI Governance Report",
+    "description": "AI decisions, confidence and override rates.",
+    "formats": ["csv", "json"]
+  },
+  {
+    "name": "Financial Impact Report",
+    "description": "All events with financial impact, signed and netted.",
+    "formats": ["csv", "json"]
+  }
+]

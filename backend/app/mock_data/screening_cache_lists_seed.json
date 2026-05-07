@@ -1,0 +1,42 @@
+[
+  {
+    "list_name": "OFAC SDN",
+    "provider": "US Treasury",
+    "record_count": 12847,
+    "last_sync": "2025-04-29T04:00:00Z",
+    "status": "active",
+    "data_payload": {
+      "mock": true
+    }
+  },
+  {
+    "list_name": "FinCEN 314(a)",
+    "provider": "FinCEN",
+    "record_count": 4122,
+    "last_sync": "2025-04-29T04:05:00Z",
+    "status": "active",
+    "data_payload": {
+      "mock": true
+    }
+  },
+  {
+    "list_name": "EU Consolidated",
+    "provider": "European Council",
+    "record_count": 8490,
+    "last_sync": "2025-04-29T04:10:00Z",
+    "status": "active",
+    "data_payload": {
+      "mock": true
+    }
+  },
+  {
+    "list_name": "FIS Adverse Media",
+    "provider": "FIS",
+    "record_count": 2140882,
+    "last_sync": "2025-04-29T03:30:00Z",
+    "status": "active",
+    "data_payload": {
+      "mock": true
+    }
+  }
+]
