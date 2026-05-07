@@ -1,0 +1,61 @@
+{
+  "claims_ops": [
+    {
+      "module": "OPS",
+      "cedant": "Zurich Assurance",
+      "period": "Q1 2026",
+      "sla": "12m SLA",
+      "flag": "FYA",
+      "priority": "HIGH",
+      "contract_id": "CON-2026-120",
+      "contract_type": "Longevity Swap",
+      "message": "Normalization failed due to missing Date of Birth (DOB) values (120 records)",
+      "impact": "Mortality calculations cannot proceed. Settlement processing is blocked.",
+      "action_label": "Open Worklist",
+      "action": "navigate:/worklist?id=WL-9202"
+    }
+  ],
+  "underwriter": [
+    {
+      "module": "UNDERWRITING",
+      "cedant": "Phoenix Re",
+      "period": "Q1 2026",
+      "flag": "FYA",
+      "priority": "MEDIUM",
+      "contract_id": "CON-2024-001",
+      "contract_type": "Bulk Annuity",
+      "message": "Variance of 3.06% exceeds contract threshold",
+      "impact": "Settlement requires manual approval",
+      "action_label": "View Analysis",
+      "action": "navigate:/contracts/CON-2024-001"
+    }
+  ],
+  "compliance": [
+    {
+      "module": "RISK",
+      "cedant": "Zurich Assurance",
+      "period": "Q1 2026",
+      "flag": "FYI",
+      "priority": "LOW",
+      "contract_id": "CON-8821",
+      "contract_type": "Group Life",
+      "message": "All entities cleared against sanctions lists",
+      "impact": "No action required",
+      "action_label": "View Compliance Report",
+      "action": "navigate:/compliance/sanctions"
+    }
+  ],
+  "admin": [
+    {
+      "module": "ADMIN",
+      "cedant": null,
+      "period": null,
+      "flag": "FYA",
+      "priority": "HIGH",
+      "message": "Atlas SFTP integration degraded (last 2 cycles). 4 user provisioning requests pending.",
+      "impact": "2 require elevated entitlement review.",
+      "action_label": "Review",
+      "action": "navigate:/admin/users"
+    }
+  ]
+}

@@ -752,6 +752,126 @@ Follow Agents.md and build plan and tracker (it is well explained in Agents.md) 
 ### Status
 ✅ Completed / 🧪 Mocked
 
+## [2026-05-07 06:16:29 UTC]
+
+### Prompt
+Move on to the next task
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN_ADDITIONS.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/mock_data/MOCK_DATA_ADDITIONS.md
+  - docs/db/SCHEMA_ADDITIONS.md
+  - backend/app/mock_data/dashboard_kpis.json
+  - backend/app/mock_data/graph_data.json
+  - backend/app/mock_data/worklist_compliance.json
+  - backend/app/mock_data/worklist_admin.json
+  - backend/app/mock_data/audit_events_seed.json
+  - backend/app/mock_data/cedent_detail_overrides.json
+  - backend/app/mock_data/contract_detail_overrides.json
+  - backend/app/mock_data/cession_pipeline_overrides.json
+  - backend/app/mock_data/settlement_overrides.json
+  - backend/app/services/dashboard_service.py
+  - backend/app/services/underwriting_service.py
+  - backend/app/services/claims_service.py
+  - backend/app/services/chatbot_service.py
+  - backend/app/seed.py
+  - frontend/src/pages/dashboard/DashboardPage.tsx
+  - frontend/src/components/charts/LineChart.tsx
+  - frontend/src/components/common/IRiSInsightBanner.tsx
+  - frontend/src/components/common/IRiSChatbot.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Implemented Phase 17 dashboard polish by wiring the insight banner and intelligence cards to `intelligence_feeds_complete.json`
+- Added the missing underwriter `Population Movement` area chart and `Renewal Pipeline` grouped bar, plus the claims-ops `Cedant File Delivery (30d)` chart from the screenshot corrections
+- Added screenshot-backed `High-Risk Cedants` and `High-Impact Exceptions` dashboard panels and rendered them in the shared dashboard grid
+- Updated compliance and admin mock worklists with `WL-9208`, `WL-9211`, and `WL-9213`
+- Seeded `audit_events` from the dedicated audit seed plus the existing cedant, contract, cession, settlement, and admin audit trail sources
+- Wired cedant detail, contract detail, cession-file audit detail, settlement detail, and chatbot audit lookups to read seeded `audit_events` rows
+- Updated role-aware chatbot quick actions for admin/compliance and cleaned the touched dashboard/chatbot copy artifacts in the UI
+- Verified backend compile, frontend production build, and a fresh-seed FastAPI `TestClient` smoke covering dashboard payloads, worklist additions, `audit_events`-backed underwriting/claims detail reads, and chatbot audit navigation
+- Updated the tracker to mark Phase 17 complete and closed the strict-sequence build-plan queue
+
+### Files Modified
+- backend/app/mock_data/dashboard_kpis.json
+- backend/app/mock_data/graph_data.json
+- backend/app/mock_data/intelligence_feeds_complete.json
+- backend/app/mock_data/worklist_admin.json
+- backend/app/mock_data/worklist_compliance.json
+- backend/app/repositories/chatbot_repository.py
+- backend/app/repositories/claims_repository.py
+- backend/app/repositories/dashboard_repository.py
+- backend/app/repositories/underwriting_repository.py
+- backend/app/seed.py
+- backend/app/services/chatbot_service.py
+- backend/app/services/claims_service.py
+- backend/app/services/dashboard_service.py
+- backend/app/services/underwriting_service.py
+- frontend/src/components/charts/LineChart.tsx
+- frontend/src/components/common/IRiSChatbot.tsx
+- frontend/src/components/common/IRiSInsightBanner.tsx
+- frontend/src/pages/dashboard/DashboardPage.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- `docs/mock_data/MOCK_DATA_ADDITIONS.md` provides `intelligence_feeds_complete.json` in a legacy shape that omits some fields required by the current dashboard API contract and uses an old `/contracts/...` route; the backend now normalizes those feed rows into the existing dashboard payload and current route structure instead of inventing a new frontend contract
+- The Phase 17 audit requirement was applied to the module-level audit sections and chatbot lookups by seeding and reading `audit_events`; the central Audit & Traceability workspace itself remains on its earlier Phase 13b seed/mock path because the current SQLAlchemy `audit_events` model does not yet carry every extra UI-only field that workspace renders
+- The focused smoke used a fresh temp SQLite bootstrap and passed end-to-end; Windows held the temp database file open until process shutdown during cleanup, so the test script intentionally treated that trailing temp-file deletion warning as non-blocking
+
+### Status
+✅ Completed / 🧪 Mocked
+
+## [2026-05-07 05:43:00 UTC]
+
+### Prompt
+Proceed with the next task
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN_ADDITIONS.md
+  - docs/trackers/TRACKER.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - frontend/src/App.tsx
+  - frontend/src/components/layout/Sidebar.tsx
+  - frontend/src/components/common/IRiSChatbot.tsx
+  - frontend/src/pages/claims/cession/CessionFilesPage.tsx
+  - frontend/src/pages/operations/PipelinePage.tsx
+  - backend/app/services/chatbot_service.py
+
+### Actions Taken
+- Identified the next strict-sequence build unit as Phase 16: Navigation + Sidebar Updates
+- Updated the sidebar so the underwriter nav entry now reads `Contract Management` and still targets the contracts workspace
+- Added a new claims-ops `Operations` sidebar item with a dedicated `/operations` landing route that redirects into the first active pipeline when one exists
+- Preserved the existing cedants, population, cession-files, settlements, and calc-engine entries because the additions spec defines new nav items but does not explicitly retire those already-built module routes
+- Updated the chatbot drawer to align with the Phase 16 copy/label requirements, including the `IRiS Assist` header, simplified quick-actions label, and a route-aware location chip that renders `/` on the dashboard
+- Expanded chatbot navigation permissions for the new Phase 16 module structure and pointed audit quick-action responses at `/compliance/audit`
+- Verified backend compile, frontend production build, and a fresh-bootstrap chatbot API smoke for compliance audit navigation and claims-ops cession-file navigation
+- Updated the tracker and advanced the next build unit to Phase 17: Polish Pass
+
+### Files Modified
+- backend/app/services/chatbot_service.py
+- frontend/src/App.tsx
+- frontend/src/components/common/IRiSChatbot.tsx
+- frontend/src/components/layout/Sidebar.tsx
+- frontend/src/pages/operations/OperationsLandingPage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The Phase 16 additions specify a new underwriter `Contract Management` nav item and a claims-ops `Operations` nav item, but they do not explicitly deprecate the earlier Cedants, Population, Cession Files, Settlements, or Calc Engine entries; those existing links were preserved to avoid inventing removals not stated in the spec
+- The new `/operations` route is implemented as a landing/redirect page because the current app’s canonical full-page operations workflow remains `/operations/:processId`; this keeps the sidebar target stable without inventing a second operations detail format
+
+### Status
+✅ Completed / 🧪 Mocked
+
 ## [2026-05-07 05:34:52 UTC]
 
 ### Prompt

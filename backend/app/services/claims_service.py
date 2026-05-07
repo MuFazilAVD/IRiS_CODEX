@@ -15,6 +15,7 @@ from fastapi import BackgroundTasks, UploadFile
 
 from app.errors import IrisAPIError
 from app.mock_data_loader import load_mock_data
+from app.models.audit_event import AuditEvent
 from app.models.cession_file import CessionFile
 from app.models.cession_file_exception import CessionFileException
 from app.models.cession_file_record import CessionFileRecord
@@ -137,6 +138,13 @@ class ClaimsService:
         effective_contract_id = contract_id or detection_seed["contract_id"]
         record_count = self._count_records(file.filename, content) or detection_seed["record_count"]
         file_id = self.repository.get_next_cession_file_id(now.year)
+        upload_audit_event = {
+            "timestamp": self._to_iso(now),
+            "actor": "Claims Ops",
+            "type": "Human",
+            "action": "File uploaded manually",
+            "detail": file.filename,
+        }
 
         cession_file = CessionFile(
             file_id=file_id,
@@ -169,17 +177,18 @@ class ClaimsService:
                 "manual_contract_id": contract_id,
                 "detection_override": None,
                 "contract_override": None,
-                "audit_events": [
-                    {
-                        "timestamp": self._to_iso(now),
-                        "actor": "Claims Ops",
-                        "type": "Human",
-                        "action": "File uploaded manually",
-                        "detail": file.filename,
-                    }
-                ],
+                "audit_events": [upload_audit_event],
                 "stage_history": [{"stage": "uploaded", "completed_at": self._to_iso(now)}],
             },
+        )
+        self._persist_claims_audit_event(
+            module="cession",
+            entity_id=created.file_id,
+            entity_type="cession_file",
+            event=upload_audit_event,
+            contract_id=created.contract_id,
+            cedent_id=created.cedent_id,
+            cession_file_id=created.id,
         )
         self._append_stage_log(created.file_id, "upload", "complete", now)
         self._append_stage_log(created.file_id, "detect", "in_progress", now + timedelta(seconds=5))
@@ -1156,6 +1165,14 @@ class ClaimsService:
         }
 
     def _build_audit_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        db_events = self._load_cession_audit_events(cession_file)
+        if db_events:
+            return {
+                "title": "Audit Trail",
+                "subtitle": f"{len(db_events)} events captured",
+                "items": db_events,
+            }
+
         stored = self._get_override(cession_file.file_id)
         seeded_events = stored.get("audit_events", [])
         if seeded_events:
@@ -2039,7 +2056,7 @@ class ClaimsService:
             "variance_review": self._build_settlement_variance_review(settlement, cedent_name),
             "contributors": self._build_settlement_contributors(settlement),
             "approval_workflow": self._build_settlement_approval_workflow(settlement),
-            "audit_trail": settlement.get("audit_trail") or self._default_settlement_audit(settlement),
+            "audit_trail": self._load_settlement_audit_trail(settlement) or settlement.get("audit_trail") or self._default_settlement_audit(settlement),
             "notes": settlement.get("notes"),
             "dispute_reason": settlement.get("dispute_reason"),
             "approved_at": settlement.get("approved_at"),
@@ -2293,6 +2310,15 @@ class ClaimsService:
         current["audit_trail"] = audit_trail
         store[settlement_id] = current
         self._write_settlement_override_store(store)
+        self._persist_claims_audit_event(
+            module="settlement",
+            entity_id=settlement_id,
+            entity_type="settlement",
+            event=event,
+            contract_id=base_settlement.get("contract_id"),
+            cedent_id=base_settlement.get("cedent_id"),
+            settlement_id=settlement_id,
+        )
 
     def _assumption_snapshot_label(self, currency: str) -> str:
         return f"{currency} assumptions v2025.Q2"
@@ -2483,6 +2509,115 @@ class ClaimsService:
             }
         )
         self._store_override(file_id, {"audit_events": audit_events})
+        cession_file = self.repository.get_cession_file(file_id)
+        self._persist_claims_audit_event(
+            module="cession",
+            entity_id=file_id,
+            entity_type="cession_file",
+            event=event,
+            contract_id=cession_file.contract_id if cession_file else None,
+            cedent_id=cession_file.cedent_id if cession_file else None,
+            cession_file_id=cession_file.id if cession_file else None,
+        )
+
+    def _load_cession_audit_events(self, cession_file: CessionFile) -> list[dict[str, Any]]:
+        events = self.repository.list_audit_events_for_cession_file(cession_file.file_id, cession_file.id)
+        return [self._serialize_claims_audit_event(event) for event in events[:20]]
+
+    def _load_settlement_audit_trail(self, settlement: dict[str, Any]) -> list[dict[str, Any]]:
+        settlement_id = settlement.get("settlement_id")
+        if not settlement_id:
+            return []
+        events = self.repository.list_audit_events_for_settlement(settlement_id)
+        return [self._serialize_claims_audit_event(event) for event in events[:20]]
+
+    def _serialize_claims_audit_event(self, event: AuditEvent) -> dict[str, Any]:
+        return {
+            "timestamp": self._to_iso(event.timestamp),
+            "actor": event.actor_id or self._claims_actor_name(event.actor_type),
+            "type": self._claims_actor_label(event.actor_type),
+            "action": event.event_type,
+            "detail": event.description,
+        }
+
+    def _persist_claims_audit_event(
+        self,
+        *,
+        module: str,
+        entity_id: str,
+        entity_type: str,
+        event: dict[str, Any],
+        contract_id: str | None = None,
+        cedent_id: str | None = None,
+        cession_file_id: str | None = None,
+        settlement_id: str | None = None,
+    ) -> None:
+        timestamp = self._parse_claims_audit_timestamp(event.get("timestamp"))
+        logger.info("Persisting claims audit event")
+        logger.debug(
+            "Claims audit persist module=%s entity_id=%s contract_id=%s settlement_id=%s",
+            module,
+            entity_id,
+            contract_id,
+            settlement_id,
+        )
+        self.repository.create_audit_event(
+            AuditEvent(
+                audit_id=self.repository.get_next_audit_id(timestamp.astimezone(UTC).strftime("%Y-%m-%d")),
+                timestamp=timestamp,
+                module=module,
+                event_type=event.get("action") or "Audit Event",
+                actor_type=self._claims_actor_type(event),
+                actor_id=event.get("actor"),
+                entity_id=entity_id,
+                entity_type=entity_type,
+                description=event.get("detail") or event.get("action") or "Audit Event",
+                approval_status=self._claims_approval_status(event.get("action")),
+                contract_id=contract_id,
+                cedent_id=cedent_id,
+                cession_file_id=cession_file_id,
+                settlement_id=settlement_id,
+            )
+        )
+
+    def _parse_claims_audit_timestamp(self, value: Any) -> datetime:
+        if not isinstance(value, str) or not value:
+            return datetime.now(UTC)
+        normalized = value.replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(normalized)
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+    def _claims_actor_type(self, event: dict[str, Any]) -> str:
+        explicit_type = str(event.get("type") or "").strip().lower()
+        if explicit_type in {"human", "manual"}:
+            return "human"
+        if explicit_type in {"ai", "ai agent"}:
+            return "ai"
+        if explicit_type == "system":
+            return "system"
+
+        actor = str(event.get("actor") or "").lower()
+        if "agent" in actor or actor.startswith("ai "):
+            return "ai"
+        if any(keyword in actor for keyword in ["engine", "system", "listener", "orchestrator", "router"]):
+            return "system"
+        return "human"
+
+    def _claims_approval_status(self, action: Any) -> str:
+        normalized = str(action or "").lower()
+        if "approved" in normalized:
+            return "approved"
+        if "rejected" in normalized or "disputed" in normalized:
+            return "rejected"
+        if "review" in normalized or "hold" in normalized or "queued" in normalized:
+            return "pending"
+        return "n/a"
+
+    def _claims_actor_name(self, actor_type: str) -> str:
+        return {"human": "Claims Ops", "ai": "IRiS Agent", "system": "System"}.get(actor_type, "System")
+
+    def _claims_actor_label(self, actor_type: str) -> str:
+        return {"human": "Human", "ai": "AI Agent", "system": "System"}.get(actor_type, "System")
 
     def _get_cession_file_or_error(self, file_id: str) -> CessionFile:
         cession_file = self.repository.get_cession_file(file_id)

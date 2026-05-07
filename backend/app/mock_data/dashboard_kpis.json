@@ -46,6 +46,19 @@
       { "label": "Mortality Deviation", "value": "+1.18%", "trend": "up", "trend_value": "Adverse", "subtitle": "Vs assumption", "border_color": "red" },
       { "label": "Exposure at Risk", "value": "$24.8B", "trend": "up", "trend_value": "+0.6B", "subtitle": "Portfolio exposure", "border_color": "blue" },
       { "label": "Near Renewal (90d)", "value": "4", "trend": "neutral", "trend_value": "Within 90d", "subtitle": "Renewal watchlist", "border_color": "amber" }
+    ],
+    "supplementary_panels": [
+      {
+        "id": "high_risk_cedants",
+        "title": "High-Risk Cedants",
+        "action_label": "View all ->",
+        "action": "navigate:/underwriting/cedants",
+        "items": [
+          { "id": "CED-1133", "title": "Atlas Corporate Pensions", "badge": "Critical", "description": "OFAC review" },
+          { "id": "CED-1087", "title": "Bavarian Industrial Fund", "badge": "Review", "description": "Mortality variance > 15%" },
+          { "id": "CED-1042", "title": "Northstar Pension Trust", "badge": "Review", "description": "Concentration risk" }
+        ]
+      }
     ]
   },
   "claims_ops": {
@@ -67,6 +80,19 @@
       { "label": "Settlement Pending", "value": "8", "trend": "neutral", "trend_value": "Awaiting approval", "subtitle": "Payment readiness", "border_color": "blue" },
       { "label": "Reconciliation Breaks", "value": "11", "trend": "up", "trend_value": "+2 d/d", "subtitle": "Tolerance breaches", "border_color": "red" },
       { "label": "Batch Success Rate", "value": "97.4%", "trend": "neutral", "trend_value": "Stable", "subtitle": "Processing success", "border_color": "teal" }
+    ],
+    "supplementary_panels": [
+      {
+        "id": "high_impact_exceptions",
+        "title": "High-Impact Exceptions",
+        "action_label": "Open ->",
+        "action": "navigate:/worklist",
+        "items": [
+          { "id": "EXC-4421", "title": "EXC-4421", "metric": "$0.4M", "description": "Unmapped fields x 12 - Helvetia" },
+          { "id": "EXC-4422", "title": "EXC-4422", "metric": "CAD 540K", "description": "Recon break > tolerance - Maple Leaf" },
+          { "id": "EXC-4423", "title": "EXC-4423", "metric": "-", "description": "Late SFTP delivery - Atlas" }
+        ]
+      }
     ]
   },
   "compliance": {
@@ -98,4 +124,3 @@
     ]
   }
 }
-

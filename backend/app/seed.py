@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections import defaultdict
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -251,25 +253,333 @@ def seed_database(db: Session) -> None:
                 )
             )
 
-    if db.scalar(select(AuditEvent.id).limit(1)) is None:
-        logger.debug("Seeding audit_events table from admin access-log bootstrap data")
-        admin_state = load_mock_data("admin_state.json")
-        for index, record in enumerate(admin_state.get("access_logs", []), start=1):
-            timestamp = datetime.fromisoformat(record["timestamp"].replace("Z", "+00:00"))
-            db.add(
-                AuditEvent(
-                    audit_id=f"AUD-{timestamp.strftime('%Y-%m-%d')}-{index:03d}",
-                    timestamp=timestamp,
-                    module="access",
-                    event_type=record["action"],
-                    actor_type="system" if record.get("user") == "system" else "human",
-                    actor_id=record.get("user"),
-                    entity_id=record.get("resource"),
-                    entity_type="route",
-                    description=f'{record.get("action", "VIEW")} {record.get("resource", "")}'.strip(),
-                    approval_status="n/a",
-                    ip_address=record.get("ip"),
+    db.flush()
+    _seed_audit_events(db)
+
+    db.commit()
+
+
+def _seed_audit_events(db: Session) -> None:
+    logger.debug("Ensuring audit_events table is seeded from audit seed and module trails")
+    existing_ids = {value for value in db.scalars(select(AuditEvent.audit_id))}
+    for record in _build_audit_event_seed_records(db):
+        if record["audit_id"] in existing_ids:
+            continue
+        db.add(
+            AuditEvent(
+                audit_id=record["audit_id"],
+                timestamp=record["timestamp"],
+                module=record["module"],
+                event_type=record["event_type"],
+                actor_type=record["actor_type"],
+                actor_id=record.get("actor_id"),
+                entity_id=record.get("entity_id"),
+                entity_type=record.get("entity_type"),
+                description=record["description"],
+                financial_impact_amount=record.get("financial_impact_amount"),
+                financial_impact_currency=record.get("financial_impact_currency"),
+                is_high_impact=record.get("is_high_impact", False),
+                approval_status=record.get("approval_status", "n/a"),
+                is_sensitive=record.get("is_sensitive", False),
+                contract_id=record.get("contract_id"),
+                cedent_id=record.get("cedent_id"),
+                cession_file_id=record.get("cession_file_id"),
+                settlement_id=record.get("settlement_id"),
+                ip_address=record.get("ip_address"),
+                session_id=record.get("session_id"),
+            )
+        )
+        existing_ids.add(record["audit_id"])
+
+
+def _build_audit_event_seed_records(db: Session) -> list[dict[str, Any]]:
+    contracts_by_id = {item.contract_id: item for item in db.scalars(select(Contract))}
+    cedents_by_id = {item.cedent_id: item for item in db.scalars(select(Cedent))}
+    cession_files_by_file_id = {item.file_id: item for item in db.scalars(select(CessionFile))}
+    settlement_overrides = load_mock_data("settlement_overrides.json")
+    created_settlement_rows = settlement_overrides.get("__created_rows__", {})
+
+    deduped: dict[tuple[str, str, str, str, str, str], dict[str, Any]] = {}
+
+    def add_record(record: dict[str, Any]) -> None:
+        key = (
+            record["timestamp"].astimezone(UTC).isoformat(),
+            record["module"],
+            record["event_type"],
+            record.get("actor_id") or "",
+            record.get("entity_id") or "",
+            record["description"],
+        )
+        deduped.setdefault(key, record)
+
+    for record in load_mock_data("audit_events_seed.json"):
+        add_record(
+            _build_audit_record(
+                timestamp=record.get("timestamp"),
+                module=record.get("module") or "access",
+                event_type=record.get("event_type") or "Audit Event",
+                actor_type=record.get("actor_type"),
+                actor_id=record.get("actor_id"),
+                entity_id=record.get("entity_id"),
+                entity_type=record.get("entity_type"),
+                description=record.get("description") or record.get("event_type") or "Audit Event",
+                approval_status=record.get("approval_status"),
+                is_high_impact=record.get("is_high_impact", False),
+                financial_impact_amount=record.get("financial_impact_amount"),
+                financial_impact_currency=record.get("financial_impact_currency"),
+                is_sensitive=record.get("event_type") == "Sensitive Export",
+                contract_id=record.get("contract_id") or (_normalize_contract_id(record.get("entity_type"), record.get("entity_id"))),
+                cedent_id=record.get("cedent_id"),
+                cession_file_id=(cession_files_by_file_id.get(str(record.get("entity_id") or "")).id if record.get("entity_type") == "cession_file" and cession_files_by_file_id.get(str(record.get("entity_id") or "")) else None),
+                settlement_id=record.get("settlement_id") or (_normalize_settlement_id(record.get("entity_type"), record.get("entity_id"))),
+                audit_id=record.get("audit_id"),
+            )
+        )
+
+    admin_state = load_mock_data("admin_state.json")
+    for record in admin_state.get("access_logs", []):
+        add_record(
+            _build_audit_record(
+                timestamp=record.get("timestamp"),
+                module="access",
+                event_type=record.get("action") or "VIEW",
+                actor_type="system" if record.get("user") == "system" else "human",
+                actor_id=record.get("user"),
+                entity_id=record.get("resource"),
+                entity_type="route",
+                description=f'{record.get("action", "VIEW")} {record.get("resource", "")}'.strip(),
+                approval_status="n/a",
+                ip_address=record.get("ip"),
+            )
+        )
+
+    for cedent_id, detail in load_mock_data("cedent_detail_overrides.json").items():
+        if cedent_id not in cedents_by_id:
+            continue
+        for event in detail.get("audit_approval", []):
+            add_record(
+                _build_audit_record(
+                    timestamp=event.get("timestamp"),
+                    module="contract",
+                    event_type=event.get("action") or "Cedent Audit Event",
+                    actor_type=_infer_actor_type(event.get("type"), event.get("actor")),
+                    actor_id=event.get("actor"),
+                    entity_id=cedent_id,
+                    entity_type="cedent",
+                    description=event.get("detail") or event.get("action") or "",
+                    approval_status=_infer_approval_status(event.get("action")),
+                    cedent_id=cedent_id,
                 )
             )
 
-    db.commit()
+    for contract_id, detail in load_mock_data("contract_detail_overrides.json").items():
+        contract = contracts_by_id.get(contract_id)
+        cedent_id = contract.cedent_id if contract else None
+        for event in detail.get("audit_approval", []):
+            add_record(
+                _build_audit_record(
+                    timestamp=event.get("timestamp"),
+                    module="contract",
+                    event_type=event.get("action") or "Contract Audit Event",
+                    actor_type=_infer_actor_type(event.get("type"), event.get("actor")),
+                    actor_id=event.get("actor"),
+                    entity_id=contract_id,
+                    entity_type="contract",
+                    description=event.get("detail") or event.get("action") or "",
+                    approval_status=_infer_approval_status(event.get("action")),
+                    contract_id=contract_id,
+                    cedent_id=cedent_id,
+                )
+            )
+        for event in detail.get("audit_compliance", {}).get("audit_trail", []):
+            add_record(
+                _build_audit_record(
+                    timestamp=event.get("timestamp"),
+                    module="cession",
+                    event_type=event.get("action") or "Operational Audit Event",
+                    actor_type=_infer_actor_type(event.get("type"), event.get("actor")),
+                    actor_id=event.get("actor"),
+                    entity_id=contract_id,
+                    entity_type="contract",
+                    description=event.get("detail") or event.get("action") or "",
+                    approval_status="n/a",
+                    contract_id=contract_id,
+                    cedent_id=cedent_id,
+                )
+            )
+
+    for file_id, detail in load_mock_data("cession_pipeline_overrides.json").items():
+        cession_file = cession_files_by_file_id.get(file_id)
+        contract_id = ((detail.get("contract_override") or {}).get("contract_id")) or (cession_file.contract_id if cession_file else None)
+        cedent_id = ((detail.get("detection_override") or {}).get("cedent_id")) or (cession_file.cedent_id if cession_file else None)
+        cession_file_db_id = cession_file.id if cession_file else None
+        for event in detail.get("audit_events", []):
+            add_record(
+                _build_audit_record(
+                    timestamp=event.get("timestamp"),
+                    module="cession",
+                    event_type=event.get("action") or "Cession Audit Event",
+                    actor_type=_infer_actor_type(event.get("type"), event.get("actor")),
+                    actor_id=event.get("actor"),
+                    entity_id=file_id,
+                    entity_type="cession_file",
+                    description=event.get("detail") or event.get("action") or "",
+                    approval_status="n/a",
+                    contract_id=contract_id,
+                    cedent_id=cedent_id,
+                    cession_file_id=cession_file_db_id,
+                )
+            )
+
+    for settlement_id, detail in settlement_overrides.items():
+        if settlement_id == "__created_rows__":
+            continue
+        created_row = created_settlement_rows.get(settlement_id, {})
+        contract_id = detail.get("contract_id") or created_row.get("contract_id")
+        cedent_id = detail.get("cedent_id") or created_row.get("cedent_id")
+        for event in detail.get("audit_trail", []):
+            add_record(
+                _build_audit_record(
+                    timestamp=event.get("timestamp"),
+                    module="settlement",
+                    event_type=event.get("action") or "Settlement Audit Event",
+                    actor_type=_infer_actor_type(event.get("type"), event.get("actor")),
+                    actor_id=event.get("actor"),
+                    entity_id=settlement_id,
+                    entity_type="settlement",
+                    description=event.get("detail") or event.get("action") or "",
+                    approval_status=_infer_approval_status(event.get("action")),
+                    contract_id=contract_id,
+                    cedent_id=cedent_id,
+                    settlement_id=settlement_id,
+                )
+            )
+
+    records = sorted(
+        deduped.values(),
+        key=lambda item: (
+            item["timestamp"].astimezone(UTC).isoformat(),
+            item["module"],
+            item.get("entity_id") or "",
+            item["event_type"],
+        ),
+    )
+    _assign_generated_audit_ids(records)
+    return records
+
+
+def _build_audit_record(
+    *,
+    timestamp: str | None,
+    module: str,
+    event_type: str,
+    actor_type: str | None,
+    actor_id: str | None,
+    entity_id: str | None,
+    entity_type: str | None,
+    description: str,
+    approval_status: str | None,
+    is_high_impact: bool = False,
+    financial_impact_amount: Any | None = None,
+    financial_impact_currency: str | None = None,
+    is_sensitive: bool = False,
+    contract_id: str | None = None,
+    cedent_id: str | None = None,
+    cession_file_id: str | None = None,
+    settlement_id: str | None = None,
+    ip_address: str | None = None,
+    session_id: str | None = None,
+    audit_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "audit_id": audit_id,
+        "timestamp": _parse_timestamp(timestamp),
+        "module": module,
+        "event_type": event_type,
+        "actor_type": actor_type or "human",
+        "actor_id": actor_id,
+        "entity_id": entity_id,
+        "entity_type": entity_type,
+        "description": description,
+        "financial_impact_amount": financial_impact_amount,
+        "financial_impact_currency": financial_impact_currency,
+        "is_high_impact": is_high_impact,
+        "approval_status": approval_status or "n/a",
+        "is_sensitive": is_sensitive,
+        "contract_id": contract_id,
+        "cedent_id": cedent_id,
+        "cession_file_id": cession_file_id,
+        "settlement_id": settlement_id,
+        "ip_address": ip_address,
+        "session_id": session_id,
+    }
+
+
+def _assign_generated_audit_ids(records: list[dict[str, Any]]) -> None:
+    counters: dict[str, int] = defaultdict(int)
+    for record in records:
+        audit_id = record.get("audit_id")
+        if not audit_id:
+            continue
+        parts = audit_id.split("-")
+        if len(parts) >= 5:
+            date_key = "-".join(parts[1:4])
+            try:
+                counters[date_key] = max(counters[date_key], int(parts[4]))
+            except ValueError:
+                continue
+
+    for record in records:
+        if record.get("audit_id"):
+            continue
+        date_key = record["timestamp"].astimezone(UTC).strftime("%Y-%m-%d")
+        counters[date_key] += 1
+        record["audit_id"] = f"AUD-{date_key}-{counters[date_key]:03d}"
+
+
+def _parse_timestamp(value: str | None) -> datetime:
+    if not value:
+        return datetime.now(UTC)
+    normalized = value.replace("Z", "+00:00")
+    parsed = datetime.fromisoformat(normalized)
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _infer_actor_type(explicit_type: str | None, actor: str | None) -> str:
+    explicit = (explicit_type or "").strip().lower()
+    if explicit in {"human", "manual"}:
+        return "human"
+    if explicit in {"ai", "ai agent"}:
+        return "ai"
+    if explicit == "system":
+        return "system"
+
+    actor_text = (actor or "").lower()
+    if "agent" in actor_text or " ai" in actor_text or actor_text.startswith("ai "):
+        return "ai"
+    if any(keyword in actor_text for keyword in ["system", "engine", "listener", "orchestrator", "router"]):
+        return "system"
+    return "human"
+
+
+def _infer_approval_status(action: str | None) -> str:
+    normalized = (action or "").lower()
+    if "approved" in normalized or "completed compliance review" in normalized:
+        return "approved"
+    if "rejected" in normalized:
+        return "rejected"
+    if "pending" in normalized or "queued" in normalized or "review" in normalized:
+        return "pending"
+    return "n/a"
+
+
+def _normalize_contract_id(entity_type: str | None, entity_id: str | None) -> str | None:
+    if entity_type == "contract":
+        return entity_id
+    return None
+
+
+def _normalize_settlement_id(entity_type: str | None, entity_id: str | None) -> str | None:
+    if entity_type == "settlement":
+        return entity_id
+    return None

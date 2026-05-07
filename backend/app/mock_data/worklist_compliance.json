@@ -3,10 +3,10 @@
     "my_critical": 1,
     "overdue": 2,
     "pending_approvals": 1,
-    "compliance_holds": 2,
+    "compliance_holds": 1,
     "ai_exception_queue": 1,
     "team_backlog": 3,
-    "awaiting_review": 2
+    "awaiting_review": 1
   },
   "total": 3,
   "items": [
@@ -23,7 +23,7 @@
       "elapsed_display": "Overdue 8h 47m",
       "is_approaching": false,
       "is_overdue": true,
-      "breadcrumb": "Compliance Hold · Review Required"
+      "breadcrumb": "Compliance Hold - Review Required"
     },
     {
       "wl_id": "WL-8202",
@@ -38,8 +38,22 @@
       "elapsed_display": "3h 10m",
       "is_approaching": true,
       "is_overdue": false,
-      "breadcrumb": "Reference Data · Four-eyes Review"
+      "breadcrumb": "Reference Data - Four-eyes Review"
+    },
+    {
+      "wl_id": "WL-9208",
+      "title": "Sensitive export alert - Q1 financial impact report",
+      "category": "Sensitive Export",
+      "priority": "medium",
+      "status": "open",
+      "assigned_role": "compliance",
+      "source": "Audit Control",
+      "ai_generated": false,
+      "compliance_hold": false,
+      "elapsed_display": "15h 20m",
+      "is_approaching": false,
+      "is_overdue": true,
+      "breadcrumb": "Access Audit - Review Required"
     }
   ]
 }
-

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.models.audit_event import AuditEvent
 from app.models.cedent import Cedent
 from app.models.contract import Contract
 from app.models.population import PolicyRegister
@@ -231,3 +232,35 @@ class UnderwritingRepository:
         self.db.commit()
         self.db.refresh(item)
         return item
+
+    def list_audit_events_for_cedent(self, cedent_id: str) -> list[AuditEvent]:
+        statement = (
+            select(AuditEvent)
+            .where(
+                or_(
+                    AuditEvent.entity_id == cedent_id,
+                    and_(AuditEvent.cedent_id == cedent_id, AuditEvent.entity_type == "cedent"),
+                )
+            )
+            .order_by(AuditEvent.timestamp.desc(), AuditEvent.created_at.desc())
+        )
+        return list(self.db.scalars(statement))
+
+    def list_audit_events_for_contract(self, contract_id: str) -> list[AuditEvent]:
+        statement = (
+            select(AuditEvent)
+            .where(or_(AuditEvent.contract_id == contract_id, AuditEvent.entity_id == contract_id))
+            .order_by(AuditEvent.timestamp.desc(), AuditEvent.created_at.desc())
+        )
+        return list(self.db.scalars(statement))
+
+    def create_audit_event(self, event: AuditEvent) -> AuditEvent:
+        self.db.add(event)
+        self.db.commit()
+        self.db.refresh(event)
+        return event
+
+    def get_next_audit_id(self, timestamp_prefix: str) -> str:
+        statement = select(func.count(AuditEvent.id)).where(AuditEvent.audit_id.like(f"AUD-{timestamp_prefix}-%"))
+        count = self.db.scalar(statement) or 0
+        return f"AUD-{timestamp_prefix}-{count + 1:03d}"

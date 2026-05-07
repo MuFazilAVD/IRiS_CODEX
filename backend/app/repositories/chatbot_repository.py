@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
+from app.models.audit_event import AuditEvent
 from app.models.cedent import Cedent
 from app.models.cession_file import CessionFile
 from app.models.contract import Contract
@@ -57,4 +58,8 @@ class ChatbotRepository:
             .order_by(desc(WorklistItem.created_at), desc(WorklistItem.wl_id))
             .limit(limit)
         )
+        return list(self.db.scalars(statement))
+
+    def list_recent_audit_events(self, limit: int = 5) -> list[AuditEvent]:
+        statement = select(AuditEvent).order_by(desc(AuditEvent.timestamp), desc(AuditEvent.created_at)).limit(limit)
         return list(self.db.scalars(statement))

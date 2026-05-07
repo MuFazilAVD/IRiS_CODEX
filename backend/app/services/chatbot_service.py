@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 SETTLEMENT_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "settlement_overrides.json"
 
 ROLE_NAVIGATION_PREFIXES = {
-    "admin": ["/dashboard", "/worklist"],
-    "underwriter": ["/dashboard", "/worklist", "/underwriting"],
-    "claims_ops": ["/dashboard", "/worklist", "/claims"],
-    "compliance": ["/dashboard", "/worklist", "/compliance"],
+    "admin": ["/dashboard", "/worklist", "/reports", "/admin"],
+    "underwriter": ["/dashboard", "/worklist", "/underwriting", "/reports"],
+    "claims_ops": ["/dashboard", "/worklist", "/claims", "/operations", "/reports"],
+    "compliance": ["/dashboard", "/worklist", "/compliance", "/reports"],
     "super_admin": ["/"],
 }
 
@@ -142,7 +142,7 @@ class ChatbotService:
                 f"I can also show the sanctions workspace if you want to review the broader trail."
             )
         return self._navigation_response(
-            "/compliance/sanctions",
+            "/compliance/audit",
             request_role,
             response,
             sources=["cedent_detail_overrides.json", "contract_detail_overrides.json", "settlement_overrides.json"],
@@ -323,49 +323,17 @@ class ChatbotService:
 
     def _recent_audit_entries(self) -> list[dict[str, Any]]:
         events: list[dict[str, Any]] = []
-
-        cedent_overrides = load_mock_data("cedent_detail_overrides.json")
-        for cedent_id, detail in cedent_overrides.items():
-            for event in detail.get("audit_approval", []):
-                events.append(
-                    {
-                        "timestamp": event.get("timestamp", ""),
-                        "actor": event.get("actor", "Unknown"),
-                        "action": event.get("action", ""),
-                        "detail": event.get("detail", ""),
-                        "source": f"cedent:{cedent_id}",
-                    }
-                )
-
-        contract_overrides = load_mock_data("contract_detail_overrides.json")
-        for contract_id, detail in contract_overrides.items():
-            audit_section = detail.get("audit_compliance", {})
-            for event in audit_section.get("audit_trail", []):
-                events.append(
-                    {
-                        "timestamp": event.get("timestamp", ""),
-                        "actor": event.get("actor", "Unknown"),
-                        "action": event.get("action", ""),
-                        "detail": event.get("detail", ""),
-                        "source": f"contract:{contract_id}",
-                    }
-                )
-
-        settlement_overrides = self._read_settlement_override_store()
-        for settlement_id, detail in settlement_overrides.items():
-            for event in detail.get("audit_trail", []):
-                events.append(
-                    {
-                        "timestamp": event.get("timestamp", ""),
-                        "actor": event.get("actor", "Unknown"),
-                        "action": event.get("action", ""),
-                        "detail": event.get("detail", ""),
-                        "source": f"settlement:{settlement_id}",
-                    }
-                )
-
-        events.sort(key=lambda item: item["timestamp"], reverse=True)
-        return events[:5]
+        for event in self.repository.list_recent_audit_events(limit=5):
+            events.append(
+                {
+                    "timestamp": event.timestamp.astimezone().isoformat().replace("+00:00", "Z") if event.timestamp else "",
+                    "actor": event.actor_id or "Unknown",
+                    "action": event.event_type,
+                    "detail": event.description,
+                    "source": f"{event.module}:{event.entity_id or 'n/a'}",
+                }
+            )
+        return events
 
     def _worklist_items_for_role(self, role: str) -> list[dict[str, Any]]:
         if role == "claims_ops":

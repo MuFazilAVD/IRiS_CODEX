@@ -37,6 +37,23 @@ export interface DashboardPayload {
   insight: string
   quick_actions: QuickAction[]
   kpis: DashboardKpi[]
+  supplementary_panels?: DashboardSupplementaryPanel[]
+}
+
+export interface DashboardSupplementaryPanelItem {
+  id: string
+  title: string
+  description: string
+  badge?: string
+  metric?: string
+}
+
+export interface DashboardSupplementaryPanel {
+  id: string
+  title: string
+  action_label: string
+  action: string
+  items: DashboardSupplementaryPanelItem[]
 }
 
 export interface IntelligenceItem {
@@ -72,7 +89,7 @@ export interface GraphConfig {
   id: string
   title: string
   subtitle?: string
-  type: 'donut' | 'line' | 'bar' | 'bar_horizontal'
+  type: 'donut' | 'line' | 'bar' | 'bar_horizontal' | 'area'
   data: {
     labels: string[]
     datasets: GraphDataset[]

@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import {
+  Activity,
   BarChart3,
   BookOpen,
   Building2,
@@ -46,7 +47,7 @@ const sections: NavSection[] = [
     roles: ['underwriter', 'super_admin'],
     items: [
       { label: 'Cedants', to: '/underwriting/cedants', icon: Building2 },
-      { label: 'Contracts', to: '/underwriting/contracts', icon: FileText },
+      { label: 'Contract Management', to: '/underwriting/contracts', icon: FileText },
       { label: 'Population', to: '/underwriting/population', icon: Users },
     ],
   },
@@ -54,13 +55,14 @@ const sections: NavSection[] = [
     label: 'Claims & Settlement',
     roles: ['claims_ops', 'super_admin'],
     items: [
+      { label: 'Operations', to: '/operations', icon: Activity },
       { label: 'Cession Files', to: '/claims/cession-files', icon: FolderOpen },
       { label: 'Settlements', to: '/claims/settlements', icon: DollarSign },
       { label: 'Calc Engine', to: '/claims/calculation-engine', icon: Calculator },
     ],
   },
   {
-    label: 'Compliance & Audit',
+    label: 'Compliance',
     roles: ['compliance', 'super_admin'],
     items: [
       { label: 'Sanctions', to: '/compliance/sanctions', icon: Shield },

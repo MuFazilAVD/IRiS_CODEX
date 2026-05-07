@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import UploadFile
 
 from app.errors import IrisAPIError
+from app.models.audit_event import AuditEvent
 from app.models.cedent import Cedent
 from app.models.contract import Contract
 from app.models.population import PolicyRegister
@@ -858,6 +859,7 @@ class UnderwritingService:
     def _build_cedent_payload(self, cedent: Cedent, contracts: list[Contract]) -> dict[str, Any]:
         store = self._read_detail_store()
         detail = self._deep_merge(self._default_detail_store(cedent, contracts), store.get(cedent.cedent_id, {}))
+        audit_approval = self._load_cedent_audit_timeline(cedent.cedent_id, detail["audit_approval"])
 
         legal_entity = {
             "cedent_id": cedent.cedent_id,
@@ -899,7 +901,7 @@ class UnderwritingService:
             "operational_connectivity": detail["operational_connectivity"],
             "actuarial_preferences": detail["actuarial_preferences"],
             "access_beneficiary_rules": detail["access_beneficiary_rules"],
-            "audit_approval": detail["audit_approval"],
+            "audit_approval": audit_approval,
             "mapped_contracts": mapped_contracts,
             "calculations": {
                 "status": "spec_gap",
@@ -969,6 +971,8 @@ class UnderwritingService:
         store = self._read_contract_detail_store()
         detail = self._deep_merge(self._default_contract_store(contract, cedent_name), store.get(contract.contract_id, {}))
         detail["details_performance"] = self._enrich_contract_performance(detail, contract, cedent_name)
+        audit_approval = self._load_contract_audit_timeline(contract.contract_id, detail["audit_approval"])
+        audit_compliance = self._load_contract_compliance_trail(contract.contract_id, detail["audit_compliance"])
         return {
             "contract_id": contract.contract_id,
             "contract_name": contract.contract_name,
@@ -987,11 +991,11 @@ class UnderwritingService:
             "risk_limits": detail["risk_limits"],
             "operational_terms": detail["operational_terms"],
             "compliance_docs": detail["compliance_docs"],
-            "audit_approval": detail["audit_approval"],
+            "audit_approval": audit_approval,
             "details_performance": detail["details_performance"],
             "file_templates": detail["file_templates"],
             "amendments": detail["amendments"],
-            "audit_compliance": detail["audit_compliance"],
+            "audit_compliance": audit_compliance,
             "member_population": detail["member_population"],
         }
 
@@ -1156,14 +1160,167 @@ class UnderwritingService:
     def _append_audit_event(self, store: dict[str, Any], cedent_id: str, event: dict[str, Any]) -> None:
         audit_events = store.setdefault(cedent_id, {}).setdefault("audit_approval", [])
         audit_events.insert(0, event)
+        self._persist_underwriting_audit_event(
+            module="contract",
+            entity_id=cedent_id,
+            entity_type="cedent",
+            event=event,
+            cedent_id=cedent_id,
+        )
 
     def _append_contract_audit_event(self, store: dict[str, Any], contract_id: str, event: dict[str, Any]) -> None:
         audit_events = store.setdefault(contract_id, {}).setdefault("audit_approval", [])
         audit_events.insert(0, event)
+        contract = self.repository.get_contract(contract_id)
+        self._persist_underwriting_audit_event(
+            module="contract",
+            entity_id=contract_id,
+            entity_type="contract",
+            event=event,
+            contract_id=contract_id,
+            cedent_id=contract.cedent_id if contract else None,
+        )
 
     def _append_contract_compliance_event(self, store: dict[str, Any], contract_id: str, event: dict[str, Any]) -> None:
         audit_trail = store.setdefault(contract_id, {}).setdefault("audit_compliance", {}).setdefault("audit_trail", [])
         audit_trail.insert(0, event)
+        contract = self.repository.get_contract(contract_id)
+        self._persist_underwriting_audit_event(
+            module="cession",
+            entity_id=contract_id,
+            entity_type="contract",
+            event=event,
+            contract_id=contract_id,
+            cedent_id=contract.cedent_id if contract else None,
+        )
+
+    def _load_cedent_audit_timeline(self, cedent_id: str, fallback: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        events = self.repository.list_audit_events_for_cedent(cedent_id)
+        if not events:
+            return fallback
+        return [self._serialize_timeline_event(event) for event in events[:20]]
+
+    def _load_contract_audit_timeline(self, contract_id: str, fallback: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        events = [
+            event
+            for event in self.repository.list_audit_events_for_contract(contract_id)
+            if event.entity_id == contract_id or event.module == "contract"
+        ]
+        if not events:
+            return fallback
+        return [self._serialize_timeline_event(event) for event in events[:20]]
+
+    def _load_contract_compliance_trail(self, contract_id: str, fallback: dict[str, Any]) -> dict[str, Any]:
+        events = [
+            event
+            for event in self.repository.list_audit_events_for_contract(contract_id)
+            if event.module in {"cession", "settlement", "calculation", "contract"}
+        ]
+        if not events:
+            return fallback
+        return {
+            **fallback,
+            "audit_trail": [self._serialize_compliance_event(event) for event in events[:20]],
+        }
+
+    def _serialize_timeline_event(self, event: AuditEvent) -> dict[str, Any]:
+        return {
+            "timestamp": self._format_audit_timestamp(event.timestamp),
+            "actor": event.actor_id or self._display_actor_name(event.actor_type),
+            "action": event.event_type,
+            "detail": event.description,
+        }
+
+    def _serialize_compliance_event(self, event: AuditEvent) -> dict[str, Any]:
+        return {
+            "timestamp": self._format_audit_timestamp(event.timestamp),
+            "actor": event.actor_id or self._display_actor_name(event.actor_type),
+            "type": self._display_actor_type(event.actor_type),
+            "action": event.event_type,
+            "detail": event.description,
+        }
+
+    def _persist_underwriting_audit_event(
+        self,
+        *,
+        module: str,
+        entity_id: str,
+        entity_type: str,
+        event: dict[str, Any],
+        contract_id: str | None = None,
+        cedent_id: str | None = None,
+    ) -> None:
+        timestamp = self._parse_audit_timestamp(event.get("timestamp"))
+        logger.info("Persisting underwriting audit event")
+        logger.debug(
+            "Underwriting audit persist module=%s entity_id=%s contract_id=%s cedent_id=%s",
+            module,
+            entity_id,
+            contract_id,
+            cedent_id,
+        )
+        self.repository.create_audit_event(
+            AuditEvent(
+                audit_id=self.repository.get_next_audit_id(timestamp.astimezone(UTC).strftime("%Y-%m-%d")),
+                timestamp=timestamp,
+                module=module,
+                event_type=event.get("action") or "Audit Event",
+                actor_type=self._audit_actor_type(event),
+                actor_id=event.get("actor"),
+                entity_id=entity_id,
+                entity_type=entity_type,
+                description=event.get("detail") or event.get("action") or "Audit Event",
+                approval_status=self._audit_approval_status(event.get("action")),
+                contract_id=contract_id,
+                cedent_id=cedent_id,
+            )
+        )
+
+    def _parse_audit_timestamp(self, value: Any) -> datetime:
+        if not isinstance(value, str) or not value:
+            return datetime.now(UTC)
+        normalized = value.replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(normalized)
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+    def _format_audit_timestamp(self, value: datetime | None) -> str:
+        if value is None:
+            return ""
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=UTC)
+        return value.astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S")
+
+    def _audit_actor_type(self, event: dict[str, Any]) -> str:
+        explicit_type = str(event.get("type") or "").strip().lower()
+        if explicit_type in {"human", "manual"}:
+            return "human"
+        if explicit_type in {"ai agent", "ai"}:
+            return "ai"
+        if explicit_type == "system":
+            return "system"
+
+        actor = str(event.get("actor") or "").lower()
+        if "agent" in actor or actor.startswith("ai "):
+            return "ai"
+        if any(keyword in actor for keyword in ["iris", "engine", "system", "listener", "orchestrator", "router"]):
+            return "system"
+        return "human"
+
+    def _audit_approval_status(self, action: Any) -> str:
+        normalized = str(action or "").lower()
+        if "approved" in normalized or "completed compliance review" in normalized:
+            return "approved"
+        if "rejected" in normalized:
+            return "rejected"
+        if "pending" in normalized or "review" in normalized or "queued" in normalized:
+            return "pending"
+        return "n/a"
+
+    def _display_actor_name(self, actor_type: str) -> str:
+        return {"human": "Human User", "ai": "IRiS Agent", "system": "System"}.get(actor_type, "System")
+
+    def _display_actor_type(self, actor_type: str) -> str:
+        return {"human": "Manual", "ai": "AI Agent", "system": "System"}.get(actor_type, "System")
 
     def _load_population_seed_last_verified_map(self) -> dict[str, str]:
         if not POPULATION_SEED_FILE.exists():

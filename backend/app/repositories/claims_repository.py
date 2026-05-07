@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app.models.audit_event import AuditEvent
 from app.models.cedent import Cedent
 from app.models.cession_file import CessionFile
 from app.models.cession_file_exception import CessionFileException
@@ -167,3 +168,33 @@ class ClaimsRepository:
                 continue
         next_value = (max(numeric_values) + 1) if numeric_values else 1
         return f"{prefix}{next_value:03d}"
+
+    def list_audit_events_for_cession_file(self, file_id: str, cession_file_db_id: str | None = None) -> list[AuditEvent]:
+        filters = [AuditEvent.entity_id == file_id]
+        if cession_file_db_id:
+            filters.append(AuditEvent.cession_file_id == cession_file_db_id)
+        statement = (
+            select(AuditEvent)
+            .where(or_(*filters))
+            .order_by(AuditEvent.timestamp.desc(), AuditEvent.created_at.desc())
+        )
+        return list(self.db.scalars(statement))
+
+    def list_audit_events_for_settlement(self, settlement_id: str) -> list[AuditEvent]:
+        statement = (
+            select(AuditEvent)
+            .where(or_(AuditEvent.settlement_id == settlement_id, AuditEvent.entity_id == settlement_id))
+            .order_by(AuditEvent.timestamp.desc(), AuditEvent.created_at.desc())
+        )
+        return list(self.db.scalars(statement))
+
+    def create_audit_event(self, event: AuditEvent) -> AuditEvent:
+        self.db.add(event)
+        self.db.commit()
+        self.db.refresh(event)
+        return event
+
+    def get_next_audit_id(self, timestamp_prefix: str) -> str:
+        statement = select(func.count(AuditEvent.id)).where(AuditEvent.audit_id.like(f"AUD-{timestamp_prefix}-%"))
+        count = self.db.scalar(statement) or 0
+        return f"AUD-{timestamp_prefix}-{count + 1:03d}"

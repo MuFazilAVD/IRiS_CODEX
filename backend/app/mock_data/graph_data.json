@@ -72,6 +72,30 @@
           { "data": [38, 2, 2, 3, 4], "colors": ["#0D1B2A", "#1A6B9A", "#F39C12", "#2ECC71", "#E74C3C"] }
         ]
       }
+    },
+    {
+      "id": "population_movement",
+      "title": "Population Movement (000s)",
+      "type": "area",
+      "data": {
+        "labels": ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"],
+        "datasets": [
+          { "label": "Lives", "data": [590, 597, 604, 608, 612, 617], "color": "#00BCD4" }
+        ]
+      }
+    },
+    {
+      "id": "renewal_pipeline",
+      "title": "Renewal Pipeline",
+      "subtitle": "Notional $bn",
+      "type": "bar",
+      "data": {
+        "labels": ["0-30d", "31-60d", "61-90d", "91-180d"],
+        "datasets": [
+          { "label": "Contracts", "data": [0.75, 0.75, 2.0, 3.0], "color": "#00BCD4" },
+          { "label": "Notional", "data": [0.75, 0.8, 1.4, 2.3], "color": "#0D1B2A" }
+        ]
+      }
     }
   ],
   "claims_ops": [
@@ -106,6 +130,19 @@
         "labels": ["Approved", "Awaiting Approval", "Reconciling", "Disputed"],
         "datasets": [
           { "data": [12, 8, 5, 2], "colors": ["#0D1B2A", "#1A6B9A", "#F39C12", "#2ECC71"] }
+        ]
+      }
+    },
+    {
+      "id": "cedant_file_delivery",
+      "title": "Cedant File Delivery (30d)",
+      "subtitle": "On-time vs late",
+      "type": "bar",
+      "data": {
+        "labels": ["Northstar", "Helvetia", "Maple Leaf", "Atlas"],
+        "datasets": [
+          { "label": "On Time", "data": [27, 24, 18, 16], "color": "#2ECC71" },
+          { "label": "Late", "data": [0, 1, 1, 8], "color": "#E74C3C" }
         ]
       }
     }
@@ -147,4 +184,3 @@
     }
   ]
 }
-

@@ -2,13 +2,13 @@
   "summary": {
     "my_critical": 1,
     "overdue": 2,
-    "pending_approvals": 3,
-    "compliance_holds": 2,
-    "ai_exception_queue": 1,
-    "team_backlog": 6,
-    "awaiting_review": 3
+    "pending_approvals": 1,
+    "compliance_holds": 0,
+    "ai_exception_queue": 0,
+    "team_backlog": 5,
+    "awaiting_review": 2
   },
-  "total": 6,
+  "total": 5,
   "items": [
     {
       "wl_id": "WL-8001",
@@ -23,7 +23,7 @@
       "elapsed_display": "Overdue 4h 20m",
       "is_approaching": false,
       "is_overdue": true,
-      "breadcrumb": "Access Governance · Elevated Entitlement"
+      "breadcrumb": "Access Governance - Elevated Entitlement"
     },
     {
       "wl_id": "WL-8002",
@@ -38,7 +38,7 @@
       "elapsed_display": "5h 10m",
       "is_approaching": true,
       "is_overdue": false,
-      "breadcrumb": "Reference Data · Approval Queue"
+      "breadcrumb": "Reference Data - Approval Queue"
     },
     {
       "wl_id": "WL-8003",
@@ -53,8 +53,37 @@
       "elapsed_display": "2h 30m",
       "is_approaching": false,
       "is_overdue": false,
-      "breadcrumb": "Infrastructure · Endpoint Health"
+      "breadcrumb": "Infrastructure - Endpoint Health"
+    },
+    {
+      "wl_id": "WL-9211",
+      "title": "Failed login spike - possible credential stuffing",
+      "category": "Access Audit",
+      "priority": "high",
+      "status": "open",
+      "assigned_role": "admin",
+      "source": "System Rule",
+      "ai_generated": false,
+      "compliance_hold": false,
+      "elapsed_display": "1h 50m",
+      "is_approaching": false,
+      "is_overdue": false,
+      "breadcrumb": "Security - Investigation"
+    },
+    {
+      "wl_id": "WL-9213",
+      "title": "Role entitlement approval - Compliance role grant",
+      "category": "Role Assignment",
+      "priority": "medium",
+      "status": "open",
+      "assigned_role": "admin",
+      "source": "Human",
+      "ai_generated": false,
+      "compliance_hold": false,
+      "elapsed_display": "28h 0m",
+      "is_approaching": false,
+      "is_overdue": true,
+      "breadcrumb": "Identity - Privilege Review"
     }
   ]
 }
-

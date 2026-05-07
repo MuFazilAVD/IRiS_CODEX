@@ -31,12 +31,12 @@
 ## Phase 2: App Shell + Navigation
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Sidebar layout | Working | Role-aware sections, collapse toggle, PNG-backed MetLife logo, themed scrollbar |
+| Sidebar layout | Working | Role-aware sections, collapse toggle, PNG-backed MetLife logo, themed scrollbar, Phase 16 sidebar labels/items, the underwriter `Contract Management` nav entry, and the claims-ops `Operations` landing link are implemented |
 | Topbar layout | Working | Environment banner, role switcher, user/logout |
 | Super admin role switcher | Working | Drives role-aware dashboard/worklist payloads without limiting route access |
 | Protected route skeleton | Working | All phase routes registered |
 | Later-phase route placeholders | Working | Cedants, Contracts, Population, Cession Files, Settlements, Calculation Engine, Compliance Sanctions, Audit, Reports, and Admin routes are now implemented |
-| IRiS chatbot | Partial | Floating `IRiS Assist` drawer, role-aware quick actions, navigation chips, and `/api/v1/chatbot/message` are implemented; responses are deterministic mock/live-lookup hybrids because the current repo path does not include a live Claude integration |
+| IRiS chatbot | Partial | Floating `IRiS Assist` drawer, Phase 16 header/copy updates, Phase 17 admin/compliance role-specific quick-action chips, route-aware location chip, expanded module navigation permissions, audit quick-action lookups seeded from `audit_events`, and `/api/v1/chatbot/message` are implemented; responses are deterministic mock/live-lookup hybrids because the current repo path does not include a live Claude integration |
 
 ---
 
@@ -45,15 +45,15 @@
 |---------|--------|-------|
 | Role-aware dashboard page | Working | Admin / Underwriter / Claims Ops / Compliance views implemented |
 | KPI cards | Mock | Loaded from backend JSON by role |
-| Graph sets | Mock | Loaded from backend JSON by role |
-| IRiS Insight banner | Mock | Mock text by role |
-| Today's Intelligence cards | Mock | Mock feed by role |
+| Graph sets | Mock | Loaded from backend JSON by role, including the Phase 17 underwriter `Population Movement` and `Renewal Pipeline` charts plus the claims-ops `Cedant File Delivery (30d)` chart |
+| IRiS Insight banner | Mock | Now derived from `intelligence_feeds_complete.json` instead of static per-role copy |
+| Today's Intelligence cards | Mock | Role-filtered cards now load from `intelligence_feeds_complete.json` |
 | Admin recent activities feed | Mock | Mock activity payload rendered |
 | Quick action buttons | Working | Wired to navigation placeholders |
 | Integration Health panel | Not started | Pending |
 | Pending Admin Approvals panel | Not started | Pending |
-| High-Risk Cedants panel | Not started | Pending |
-| High-Impact Exceptions panel | Not started | Pending |
+| High-Risk Cedants panel | Mock | Screenshot-backed underwriter panel rendered from dashboard JSON |
+| High-Impact Exceptions panel | Mock | Screenshot-backed claims-ops panel rendered from dashboard JSON |
 | Active Screening Hits / Audit Heatmap | Not started | Pending |
 
 ---
@@ -62,9 +62,9 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Claims Ops worklist (live DB) | Working | Seeded with `WL-9202`, `WL-9204`, `WL-9206` |
-| Admin worklist | Mock | Mock JSON |
+| Admin worklist | Mock | Mock JSON updated through Phase 17 with `WL-9211` and `WL-9213` |
 | Underwriter worklist | Mock | Mock JSON |
-| Compliance worklist | Mock | Mock JSON |
+| Compliance worklist | Mock | Mock JSON updated through Phase 17 with `WL-9208` |
 | Summary tiles | Working | DB-backed for Claims Ops, mock for other roles |
 | Search/filter | Working | Client-side |
 | Quick filter pills | Working | Overdue / Approval / AI / Hold |
@@ -80,14 +80,14 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Cedants list page | Working | Search, status filter, screenshot-style register table, and `+ New Cedant` action implemented |
-| Cedant detail page | Partial | All 13 master-data sections plus linked contracts/calculations are rendered; calculations remain a documented spec-gap placeholder |
+| Cedant detail page | Partial | All 13 master-data sections plus linked contracts/calculations are rendered; calculations remain a documented spec-gap placeholder, and the `Audit & Approval` timeline now reads seeded `audit_events` rows when available |
 | Cedant onboarding wizard | Partial | Full 13-step UI flow implemented with stepwise persistence and AI intake; approval worklist is created on record creation because the spec does not define a separate final-submit endpoint |
 | Cedant section APIs | Working | List, detail, create, section patch, status update, and sanction history routes implemented |
 | Cedant AI extract | Mock | Deterministic mock extraction response, wired into the wizard upload flow |
 | Cedant sanction screening | Mock | Deterministic mock screening results with source cards and history table |
 | Screenshot-only cedant sub-sections | Partial | Pension Scheme, Key Contacts, and other screenshot-only detail sections persist through a mock JSON overlay because `docs/SCHEMA.md` does not define backing tables/columns |
 | Contracts list page | Working | Screenshot-style register table, `+ New Contract`, and row-level view/members/amend actions implemented |
-| Contract detail page | Partial | Revised Phase 9 V2 is implemented with the tabbed Overview / Rules & Configuration / Member Population / Financials / Amendments / Audit Log / Risk & Insights shell, settlement-linked header actions, and enriched overview intelligence; several screenshot-only fields remain mock-backed because the SQLAlchemy layer does not yet model the full contract child tables from `docs/SCHEMA.md` |
+| Contract detail page | Partial | Revised Phase 9 V2 is implemented with the tabbed Overview / Rules & Configuration / Member Population / Financials / Amendments / Audit Log / Risk & Insights shell, settlement-linked header actions, enriched overview intelligence, and `audit_events`-backed Audit Log/Compliance Trail reads; several screenshot-only fields remain mock-backed because the SQLAlchemy layer does not yet model the full contract child tables from `docs/SCHEMA.md` |
 | Contract section APIs | Working | List, detail, create, section patch, amendment, performance, calculations, member list, and upload-members routes implemented |
 | Contract calculations | Mock | Calculator responses are deterministic and driven from the contract performance overlay until the later claims/calculation-engine phases provide live processing inputs |
 | Contract member list | Mock | Contract Detail still renders the earlier deterministic inline member sample, but its row actions now deep-link into the live Population module |
@@ -105,8 +105,8 @@
 | Cession file processing | Partial | Queue page now supports both the legacy upload/historical intake flow and the revised V2 Active Pipelines flow; `/operations/:process_id` full-page six-step workflow is implemented, while upload/history remain on the legacy modal because the revised spec does not redefine that intake flow |
 | Cession file queue metrics | Mock | Top metrics and throughput cards follow the API/spec baseline and layer live queue rows on top of the seeded mock counts |
 | Cession file detect/map/clauses/validate stages | Working | Detect, map-contract, clauses, validate, process-exceptions, process, approve, summary, and pipeline-status endpoints are wired end to end and frontend-connected |
-| Cession file summary/worklist/audit detail | Mock | Legacy modal summary/worklist/audit detail plus the revised V2 operations step content are rendered from deterministic mock/seed data where the schema has no backing tables for settlement impact, audit payload shape, pipeline commentary, or richer workflow session payloads |
-| Settlements | Working | Revised Phase 9 V2 settlement register is implemented with the 4 KPI row, search/filter row, settlement table, right-side detail panel, approve/hold/dispute actions, and direct pipeline-outcome handoff into the mock-backed settlement register via JSON override state |
+| Cession file summary/worklist/audit detail | Mock | Legacy modal summary/worklist detail plus the revised V2 operations step content remain deterministic mock/seed payloads where the schema has no backing tables for settlement impact, commentary, or richer workflow session state; the modal audit section now reads seeded `audit_events` rows when available |
+| Settlements | Working | Revised Phase 9 V2 settlement register is implemented with the 4 KPI row, search/filter row, settlement table, right-side detail panel, approve/hold/dispute actions, direct pipeline-outcome handoff into the mock-backed settlement register via JSON override state, and `audit_events`-backed detail-panel audit trails |
 | Calculation engine | Partial | Live contract selector and backend calculation run endpoint are implemented; screenshot-only save/submit workflow and richer audit context are deterministic UI-local mocks because the current phase spec only defines contracts list + run |
 
 ---
@@ -151,4 +151,4 @@
 ---
 
 ## Next Build Unit
-- Phase 16: Navigation + Sidebar Updates, as the next strict-sequence unit after the completed Administration Module follow-through.
+- No remaining strict-sequence build-plan phases remain after the completed Phase 17 Polish Pass; the open backlog is now the tracker-only residual scope such as registration UI, MFA, real SSO/SAML, responsive mobile support, and live Claude integration.

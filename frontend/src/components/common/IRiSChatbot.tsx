@@ -34,6 +34,7 @@ export function IRiSChatbot() {
 
   const roleKey = effectiveRole ?? 'admin'
   const roleLabel = roleDisplayLabel(roleKey)
+  const locationLabel = formatLocationChip(location.pathname)
   const quickActions = useMemo(() => quickActionsForRole(roleKey), [roleKey])
 
   async function submitMessage(message: string) {
@@ -110,7 +111,7 @@ export function IRiSChatbot() {
               <div>
                 <p className="text-[13px] font-semibold leading-5">IRiS Assist</p>
                 <p className="text-[12px] text-white/75">
-                  {roleLabel} · {location.pathname}
+                  {roleLabel} - {locationLabel}
                 </p>
               </div>
             </div>
@@ -126,7 +127,7 @@ export function IRiSChatbot() {
             </div>
 
             <div className="mt-4">
-              <p className="mb-2 text-[12px] text-iris-text-secondary">Quick actions for {roleLabel}</p>
+              <p className="mb-2 text-[12px] text-iris-text-secondary">Quick actions</p>
               <div className="flex flex-wrap gap-2">
                 {quickActions.map((item) => (
                   <button
@@ -159,11 +160,11 @@ export function IRiSChatbot() {
                         }}
                         type="button"
                       >
-                        Go to →
+                        Go to {'->'}
                       </button>
                     ) : null}
                     {message.sources?.length ? (
-                      <p className="mt-2 text-[11px] text-iris-text-secondary">Sources: {message.sources.join(' · ')}</p>
+                      <p className="mt-2 text-[11px] text-iris-text-secondary">Sources: {message.sources.join(' - ')}</p>
                     ) : null}
                   </div>
                 </div>
@@ -211,6 +212,13 @@ export function IRiSChatbot() {
 }
 
 function quickActionsForRole(role: string) {
+  if (role === 'admin') {
+    return [
+      'Open the admin dashboard',
+      'Any FYA items on my worklist?',
+      'Show recent audit trail entries',
+    ]
+  }
   if (role === 'compliance') {
     return [
       'Show me the latest screening hits',
@@ -236,7 +244,7 @@ function quickActionsForRole(role: string) {
     ]
   }
   return [
-    'Open the operations dashboard',
+    'Open the admin dashboard',
     'Any FYA items on my worklist?',
     'Show recent audit trail entries',
   ]
@@ -263,4 +271,11 @@ function extractNavigationTag(content: string) {
 function extractErrorMessage(caughtError: unknown) {
   const maybeMessage = caughtError as { response?: { data?: { details?: string } } }
   return maybeMessage.response?.data?.details
+}
+
+function formatLocationChip(pathname: string) {
+  if (pathname === '/dashboard') {
+    return '/'
+  }
+  return pathname
 }

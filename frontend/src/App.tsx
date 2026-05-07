@@ -16,6 +16,7 @@ import { SettlementsPage } from './pages/claims/settlements/SettlementsPage'
 import { AuditPage } from './pages/compliance/AuditPage'
 import { SanctionsPage } from './pages/compliance/SanctionsPage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
+import { OperationsLandingPage } from './pages/operations/OperationsLandingPage'
 import { PipelinePage } from './pages/operations/PipelinePage'
 import { ReportDetailPage } from './pages/reports/ReportDetailPage'
 import { ReportsPage } from './pages/reports/ReportsPage'
@@ -96,6 +97,14 @@ export default function App() {
                 element={
                   <RoleGate roles={['claims_ops', 'super_admin']}>
                     <CessionFilesPage />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/operations"
+                element={
+                  <RoleGate roles={['claims_ops', 'super_admin']}>
+                    <OperationsLandingPage />
                   </RoleGate>
                 }
               />

@@ -12,7 +12,14 @@ import { PageHeader } from '../../components/common/PageHeader'
 import { KpiGridSkeleton, Skeleton, SkeletonCard, SkeletonText } from '../../components/common/Skeleton'
 import { StatusBadge } from '../../components/common/StatusBadge'
 import { useAuth } from '../../hooks/useAuth'
-import type { ActivitiesPayload, DashboardPayload, GraphConfig, GraphPayload, IntelligencePayload } from '../../types/api'
+import type {
+  ActivitiesPayload,
+  DashboardPayload,
+  DashboardSupplementaryPanel,
+  GraphConfig,
+  GraphPayload,
+  IntelligencePayload,
+} from '../../types/api'
 import { formatRelativeDate } from '../../utils/formatters'
 
 export function DashboardPage() {
@@ -45,6 +52,7 @@ export function DashboardPage() {
   })
 
   const graphs = graphsQuery.data?.graphs ?? []
+  const supplementaryPanels = kpisQuery.data?.supplementary_panels ?? []
   const lastRefreshed = useMemo(() => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), [kpisQuery.dataUpdatedAt])
 
   const headerActions = (
@@ -102,6 +110,9 @@ export function DashboardPage() {
           {graphs.map((graph) => (
             <GraphPanel key={graph.id} graph={graph} />
           ))}
+          {supplementaryPanels.map((panel) => (
+            <SupplementaryPanelCard key={panel.id} panel={panel} onNavigate={navigate} />
+          ))}
         </div>
       )}
 
@@ -129,26 +140,26 @@ export function DashboardPage() {
                   </SkeletonCard>
                 ))
               : intelligenceQuery.data?.items?.map((item) => (
-              <article key={item.id} className="rounded-lg border border-iris-border bg-iris-surface p-3.5">
-                <div className="mb-2.5 flex items-center justify-between gap-3">
-                  <StatusBadge status={item.priority.toLowerCase()}>{item.priority}</StatusBadge>
-                  <span className="text-[11px] text-iris-text-muted">{item.sla}</span>
-                </div>
-                <h3 className="text-[13px] font-semibold leading-5 text-iris-text-primary">{item.message}</h3>
-                <p className="mt-1.5 text-[11px] leading-4 text-iris-text-secondary">{item.impact}</p>
-                <div className="mt-3 flex items-center justify-between text-[11px]">
-                  <span className="text-iris-text-muted">
-                    {item.cedant} · {item.contract_id}
-                  </span>
-                  <button
-                    className="font-semibold text-iris-blue"
-                    onClick={() => navigate(item.action.replace('navigate:', ''))}
-                    type="button"
-                  >
-                    {item.action_label}
-                  </button>
-                </div>
-              </article>
+                  <article key={item.id} className="rounded-lg border border-iris-border bg-iris-surface p-3.5">
+                    <div className="mb-2.5 flex items-center justify-between gap-3">
+                      <StatusBadge status={item.priority.toLowerCase()}>{item.priority}</StatusBadge>
+                      <span className="text-[11px] text-iris-text-muted">{item.sla}</span>
+                    </div>
+                    <h3 className="text-[13px] font-semibold leading-5 text-iris-text-primary">{item.message}</h3>
+                    <p className="mt-1.5 text-[11px] leading-4 text-iris-text-secondary">{item.impact}</p>
+                    <div className="mt-3 flex items-center justify-between text-[11px]">
+                      <span className="text-iris-text-muted">
+                        {item.cedant} - {item.contract_id}
+                      </span>
+                      <button
+                        className="font-semibold text-iris-blue"
+                        onClick={() => navigate(item.action.replace('navigate:', ''))}
+                        type="button"
+                      >
+                        {item.action_label}
+                      </button>
+                    </div>
+                  </article>
                 ))}
           </div>
         </section>
@@ -171,21 +182,21 @@ export function DashboardPage() {
                     </div>
                   ))
                 : activitiesQuery.data?.items?.map((item) => (
-                <article key={item.id} className="border-b border-iris-border pb-3 last:border-b-0 last:pb-0">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    {item.tags.map((tag) => (
-                      <StatusBadge key={tag} status={tag.toLowerCase()}>
-                        {tag}
-                      </StatusBadge>
-                    ))}
-                  </div>
-                  <h3 className="text-[13px] font-semibold leading-5 text-iris-text-primary">{item.title}</h3>
-                  <p className="mt-1 text-[11px] text-iris-text-secondary">
-                    {item.actor ? `${item.actor} · ` : ''}
-                    {item.cedant ? `${item.cedant} · ` : ''}
-                    {formatRelativeDate(item.timestamp)}
-                  </p>
-                </article>
+                    <article key={item.id} className="border-b border-iris-border pb-3 last:border-b-0 last:pb-0">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        {item.tags.map((tag) => (
+                          <StatusBadge key={tag} status={tag.toLowerCase()}>
+                            {tag}
+                          </StatusBadge>
+                        ))}
+                      </div>
+                      <h3 className="text-[13px] font-semibold leading-5 text-iris-text-primary">{item.title}</h3>
+                      <p className="mt-1 text-[11px] text-iris-text-secondary">
+                        {item.actor ? `${item.actor} - ` : ''}
+                        {item.cedant ? `${item.cedant} - ` : ''}
+                        {formatRelativeDate(item.timestamp)}
+                      </p>
+                    </article>
                   ))}
             </div>
           </section>
@@ -211,9 +222,48 @@ function GraphPanel({ graph }: { graph: GraphConfig }) {
     return <DonutChart graph={graph} />
   }
 
-  if (graph.type === 'line') {
+  if (graph.type === 'line' || graph.type === 'area') {
     return <LineChart graph={graph} />
   }
 
   return <BarChart graph={graph} />
+}
+
+function SupplementaryPanelCard({
+  panel,
+  onNavigate,
+}: {
+  panel: DashboardSupplementaryPanel
+  onNavigate: (path: string) => void
+}) {
+  return (
+    <section className="panel-card">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <h3 className="text-sm font-semibold text-iris-text-primary">{panel.title}</h3>
+        <button
+          className="text-[11px] font-semibold text-iris-blue"
+          onClick={() => {
+            if (panel.action.startsWith('navigate:')) {
+              onNavigate(panel.action.replace('navigate:', ''))
+            }
+          }}
+          type="button"
+        >
+          {panel.action_label}
+        </button>
+      </div>
+      <div className="space-y-3">
+        {panel.items.map((item) => (
+          <article key={item.id} className="rounded-lg border border-iris-border bg-[#FAFBFC] px-3.5 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[13px] font-semibold leading-5 text-iris-text-primary">{item.title}</p>
+              {item.badge ? <StatusBadge status={item.badge.toLowerCase()}>{item.badge}</StatusBadge> : null}
+              {!item.badge && item.metric ? <span className="text-[11px] font-semibold text-iris-blue">{item.metric}</span> : null}
+            </div>
+            <p className="mt-1.5 text-[12px] leading-5 text-iris-text-secondary">{item.description}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
 }
