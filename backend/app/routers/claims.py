@@ -47,10 +47,11 @@ async def upload_cession_file(
     file: UploadFile = File(...),
     cedent_id: str | None = Form(default=None),
     contract_id: str | None = Form(default=None),
+    file_type: str | None = Form(default=None),
     _: User = Depends(require_roles(["claims_ops"])),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    return await get_service(db).upload_cession_file(file, background_tasks, cedent_id, contract_id)
+    return await get_service(db).upload_cession_file(file, background_tasks, cedent_id, contract_id, file_type)
 
 
 @router.get("/cession-files/{file_id}")

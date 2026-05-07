@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.orm import Session
 
 from app.models.audit_event import AuditEvent
@@ -9,6 +9,7 @@ from app.models.cession_file import CessionFile
 from app.models.cession_file_exception import CessionFileException
 from app.models.cession_file_record import CessionFileRecord
 from app.models.contract import Contract
+from app.models.population import PolicyRegister
 from app.models.worklist import WorklistItem
 
 
@@ -83,6 +84,81 @@ class ClaimsRepository:
 
     def list_all_cedents(self) -> list[Cedent]:
         return list(self.db.scalars(select(Cedent).order_by(Cedent.cedent_id)))
+
+    def get_contract_clause_context(self, contract_id: str) -> dict[str, object] | None:
+        statement = text(
+            """
+            SELECT
+              contract_id,
+              contract_name,
+              contract_version,
+              cedent_id,
+              status,
+              notional_amount,
+              currency,
+              fixed_leg_rate,
+              fixed_leg_frequency,
+              floating_leg_definition,
+              lives_count,
+              inception_date,
+              maturity_date
+            FROM contracts
+            WHERE contract_id = :contract_id
+            LIMIT 1
+            """
+        )
+        row = self.db.execute(statement, {"contract_id": contract_id}).mappings().first()
+        return dict(row) if row else None
+
+    def get_current_population_count(self, contract_id: str) -> int:
+        statement = (
+            select(func.count())
+            .select_from(PolicyRegister)
+            .where(PolicyRegister.contract_id == contract_id, PolicyRegister.is_current.is_(True))
+        )
+        return int(self.db.scalar(statement) or 0)
+
+    def list_current_population_for_members(
+        self,
+        contract_id: str,
+        member_ids: list[str],
+    ) -> list[PolicyRegister]:
+        if not member_ids:
+            return []
+        statement = (
+            select(PolicyRegister)
+            .where(
+                PolicyRegister.contract_id == contract_id,
+                PolicyRegister.is_current.is_(True),
+                PolicyRegister.member_id.in_(member_ids),
+            )
+            .order_by(PolicyRegister.member_id, PolicyRegister.created_at)
+        )
+        return list(self.db.scalars(statement))
+
+    def find_contract_by_member_overlap(self, member_ids: list[str]) -> tuple[str, int] | None:
+        if not member_ids:
+            return None
+        statement = (
+            select(PolicyRegister.contract_id, func.count().label("matched_members"))
+            .where(
+                PolicyRegister.is_current.is_(True),
+                PolicyRegister.member_id.in_(member_ids),
+            )
+            .group_by(PolicyRegister.contract_id)
+            .order_by(func.count().desc())
+            .limit(1)
+        )
+        row = self.db.execute(statement).first()
+        if row is None:
+            return None
+        return str(row.contract_id), int(row.matched_members)
+
+    def save_population_records(self, records: list[PolicyRegister]) -> list[PolicyRegister]:
+        for record in records:
+            self.db.add(record)
+        self.db.commit()
+        return records
 
     def list_file_records(self, cession_file_db_id: str) -> list[CessionFileRecord]:
         statement = (

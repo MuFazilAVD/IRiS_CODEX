@@ -71,15 +71,23 @@ export function TableSkeleton({
   )
 }
 
-export function KpiGridSkeleton({ count = 6 }: { count?: number }) {
+export function KpiGridSkeleton({
+  count = 6,
+  density = 'default',
+}: {
+  count?: number
+  density?: 'default' | 'compact'
+}) {
+  const compact = density === 'compact'
+
   return (
-    <div className="compact-kpi-grid">
+    <div className={compact ? 'dashboard-kpi-grid' : 'compact-kpi-grid'}>
       {Array.from({ length: count }).map((_, index) => (
-        <SkeletonCard key={index} className="min-h-[88px]">
+        <SkeletonCard key={index} className={compact ? 'min-h-[76px] rounded-lg p-3' : 'min-h-[88px]'}>
           <Skeleton className="h-3 w-24 rounded-full" />
-          <Skeleton className="mt-4 h-8 w-20 rounded-lg" />
-          <Skeleton className="mt-3 h-3 w-28 rounded-full" />
-          <Skeleton className="mt-2 h-3 w-32 rounded-full" />
+          <Skeleton className={compact ? 'mt-3 h-6 w-16 rounded-md' : 'mt-4 h-8 w-20 rounded-lg'} />
+          <Skeleton className={compact ? 'mt-2 h-2.5 w-24 rounded-full' : 'mt-3 h-3 w-28 rounded-full'} />
+          <Skeleton className={compact ? 'mt-1.5 h-2.5 w-28 rounded-full' : 'mt-2 h-3 w-32 rounded-full'} />
         </SkeletonCard>
       ))}
     </div>

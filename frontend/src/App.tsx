@@ -11,6 +11,7 @@ import { LoginPage } from './pages/auth/LoginPage'
 import { ReferenceLibraryPage } from './pages/admin/library/ReferenceLibraryPage'
 import { AdminUsersPage } from './pages/admin/users/AdminUsersPage'
 import { CalcEnginePage } from './pages/claims/calculation/CalcEnginePage'
+import { CessionFileProcessingPage } from './pages/claims/cession/CessionFileProcessingPage'
 import { CessionFilesPage } from './pages/claims/cession/CessionFilesPage'
 import { SettlementsPage } from './pages/claims/settlements/SettlementsPage'
 import { AuditPage } from './pages/compliance/AuditPage'
@@ -97,6 +98,22 @@ export default function App() {
                 element={
                   <RoleGate roles={['claims_ops', 'super_admin']}>
                     <CessionFilesPage />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/claims/cession-files/new"
+                element={
+                  <RoleGate roles={['claims_ops', 'super_admin']}>
+                    <CessionFileProcessingPage />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/claims/cession-files/:fileId"
+                element={
+                  <RoleGate roles={['claims_ops', 'super_admin']}>
+                    <CessionFileProcessingPage />
                   </RoleGate>
                 }
               />

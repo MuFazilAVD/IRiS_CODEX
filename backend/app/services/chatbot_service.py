@@ -3,18 +3,22 @@ from __future__ import annotations
 import json
 import logging
 import re
-from copy import deepcopy
-from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
+from pydantic import BaseModel
+
+from config import OPENAI_MODEL, openai_client
 from app.errors import IrisAPIError
-from app.mock_data_loader import load_mock_data
 from app.repositories.chatbot_repository import ChatbotRepository
+from app.schemas.chatbot import ChatbotLLMPlan, ChatbotMessageResponse, ChatbotSQLRepair
+from app.services.chatbot_sql_tool import ChatbotSQLExecution, ChatbotSQLTool
 
 
 logger = logging.getLogger(__name__)
 
-SETTLEMENT_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "settlement_overrides.json"
+JSON_OBJECT_PATTERN = re.compile(r"\{.*\}", re.DOTALL)
+MAX_PLANNED_QUERIES = 3
+SQL_ROW_LIMIT = 200
 
 ROLE_NAVIGATION_PREFIXES = {
     "admin": ["/dashboard", "/worklist", "/reports", "/admin"],
@@ -24,10 +28,63 @@ ROLE_NAVIGATION_PREFIXES = {
     "super_admin": ["/"],
 }
 
+ROLE_ROUTE_CATALOG = {
+    "admin": [
+        {"path": "/dashboard", "label": "Admin dashboard"},
+        {"path": "/worklist", "label": "Shared worklist"},
+        {"path": "/reports", "label": "Reports workspace"},
+        {"path": "/admin/users", "label": "Users & roles"},
+        {"path": "/admin/library", "label": "Reference library"},
+    ],
+    "underwriter": [
+        {"path": "/dashboard", "label": "Underwriting dashboard"},
+        {"path": "/worklist", "label": "Shared worklist"},
+        {"path": "/underwriting/cedants", "label": "Cedants register"},
+        {"path": "/underwriting/contracts", "label": "Contracts register"},
+        {"path": "/underwriting/population", "label": "Population register"},
+        {"path": "/reports", "label": "Reports workspace"},
+    ],
+    "claims_ops": [
+        {"path": "/dashboard", "label": "Claims dashboard"},
+        {"path": "/worklist", "label": "Shared worklist"},
+        {"path": "/claims/cession-files", "label": "Cession files queue"},
+        {"path": "/claims/settlements", "label": "Settlement workbench"},
+        {"path": "/claims/calculation-engine", "label": "Calculation engine"},
+        {"path": "/operations", "label": "Operations pipeline"},
+        {"path": "/reports", "label": "Reports workspace"},
+    ],
+    "compliance": [
+        {"path": "/dashboard", "label": "Compliance dashboard"},
+        {"path": "/worklist", "label": "Shared worklist"},
+        {"path": "/compliance/sanctions", "label": "Sanctions workspace"},
+        {"path": "/compliance/audit", "label": "Audit & traceability"},
+        {"path": "/reports", "label": "Reports workspace"},
+    ],
+    "super_admin": [
+        {"path": "/dashboard", "label": "Dashboard"},
+        {"path": "/worklist", "label": "Shared worklist"},
+        {"path": "/underwriting/cedants", "label": "Cedants register"},
+        {"path": "/underwriting/contracts", "label": "Contracts register"},
+        {"path": "/underwriting/population", "label": "Population register"},
+        {"path": "/claims/cession-files", "label": "Cession files queue"},
+        {"path": "/claims/settlements", "label": "Settlement workbench"},
+        {"path": "/claims/calculation-engine", "label": "Calculation engine"},
+        {"path": "/operations", "label": "Operations pipeline"},
+        {"path": "/compliance/sanctions", "label": "Sanctions workspace"},
+        {"path": "/compliance/audit", "label": "Audit & traceability"},
+        {"path": "/reports", "label": "Reports workspace"},
+        {"path": "/admin/users", "label": "Users & roles"},
+        {"path": "/admin/library", "label": "Reference library"},
+    ],
+}
+
+ResponseModel = TypeVar("ResponseModel", bound=BaseModel)
+
 
 class ChatbotService:
     def __init__(self, repository: ChatbotRepository) -> None:
         self.repository = repository
+        self.sql_tool = ChatbotSQLTool(repository)
 
     def send_message(self, payload: dict[str, Any], request_role: str) -> dict[str, Any]:
         logger.info("Processing chatbot message")
@@ -44,339 +101,343 @@ class ChatbotService:
             logger.error("Chatbot request rejected because message content was empty")
             raise IrisAPIError(400, "Invalid message", "Chatbot message cannot be empty")
 
-        normalized = message.lower()
+        if openai_client is None:
+            logger.error("OpenAI client is not configured for live chatbot responses")
+            return ChatbotMessageResponse(
+                response="IRiS Assist needs the configured OpenAI client before it can answer live data questions.",
+                navigation_action=None,
+                sql_query_used=None,
+                sources=[],
+            ).model_dump()
 
-        if contract_id := self._extract_contract_id(message):
-            return self._respond_for_contract(contract_id, request_role)
-        if settlement_id := self._extract_settlement_id(message):
-            return self._respond_for_settlement_id(settlement_id, request_role)
-        if self._mentions_screening_hits(normalized):
-            return self._respond_for_screening_hits(request_role)
-        if "audit" in normalized:
-            return self._respond_for_audit_entries(request_role)
-        if "worklist" in normalized or "fya" in normalized:
-            return self._respond_for_worklist(request_role)
-        if "settlement variance" in normalized or ("settlement" in normalized and "variance" in normalized):
-            return self._respond_for_settlement_variance(message, request_role)
-        if "active contract" in normalized:
-            return self._respond_for_active_contract_count(message, request_role)
-        if "cession" in normalized or ("file" in normalized and "claims" in normalized):
-            return self._respond_for_recent_cession_files(request_role)
-        if "dashboard" in normalized:
-            return self._navigation_response(
-                self._dashboard_for_role(request_role),
-                request_role,
-                f"I can take you to the {self._role_label(request_role)} dashboard.",
-                sources=["role permissions"],
-            )
-
-        return self._fallback_response(request_role, current_page)
-
-    def _respond_for_contract(self, contract_id: str, request_role: str) -> dict[str, Any]:
-        contract = self.repository.get_contract(contract_id)
-        if contract is None:
-            logger.error("Chatbot contract lookup failed because contract_id=%s was not found", contract_id)
-            raise IrisAPIError(404, "Invalid contract ID", "Contract not found in DB")
-
-        cedent = self.repository.get_cedent(contract.cedent_id) if contract.cedent_id else None
-        population_count = self.repository.count_current_population_for_contract(contract.contract_id)
-        response = (
-            f"{contract.contract_id} is {contract.contract_name} for {cedent.legal_entity_name if cedent else 'an unmapped cedent'}. "
-            f"Status is {contract.status}, notional is {self._format_money(contract.notional_amount, contract.currency)}, "
-            f"and the current register shows {population_count or contract.lives_count or 0:,} lives."
+        conversation_history = payload.get("conversation_history", [])
+        table_catalog = self.sql_tool.describe_catalog()
+        logger.info("Planning chatbot response with live LLM")
+        logger.debug("Chatbot runtime table catalog tables=%s", len(table_catalog))
+        plan = self._plan_chatbot_response(
+            user_message=message,
+            current_page=current_page,
+            request_role=request_role,
+            conversation_history=conversation_history,
+            table_catalog=table_catalog,
         )
-        sql = f"SELECT * FROM contracts WHERE contract_id = '{contract.contract_id}'"
-        return self._navigation_response(
-            f"/underwriting/contracts/{contract.contract_id}",
-            request_role,
-            response,
-            sql_query_used=sql,
-            sources=["contracts table", "cedents table", "policy_register table"],
+        executions = self._run_planned_queries(
+            plan=plan,
+            user_message=message,
+            current_page=current_page,
+            request_role=request_role,
+            conversation_history=conversation_history,
+            table_catalog=table_catalog,
         )
-
-    def _respond_for_settlement_id(self, settlement_id: str, request_role: str) -> dict[str, Any]:
-        settlement = next((item for item in self._load_settlements() if item["settlement_id"] == settlement_id), None)
-        if settlement is None:
-            logger.error("Chatbot settlement lookup failed because settlement_id=%s was not found", settlement_id)
-            raise IrisAPIError(404, "Invalid settlement ID", "Settlement not found in mock register")
-
-        cedent = self.repository.get_cedent(settlement.get("cedent_id"))
-        response = (
-            f"{settlement['settlement_id']} for {cedent.legal_entity_name if cedent else 'an unmapped cedent'} "
-            f"is {settlement.get('status', 'pending_approval')} with net {self._format_signed_money(settlement['net_amount'], settlement['currency'])}. "
-            f"Due date is {settlement['payment_due_date']}."
+        navigation_action = self._allowed_navigation_action(plan.navigation_action, request_role)
+        response_text = self._generate_answer(
+            plan=plan,
+            executions=executions,
+            user_message=message,
+            current_page=current_page,
+            request_role=request_role,
+            conversation_history=conversation_history,
+            table_catalog=table_catalog,
+            navigation_action=navigation_action,
         )
-        return self._navigation_response(
-            f"/claims/settlements",
-            request_role,
-            response,
-            sql_query_used=None,
-            sources=["settlements_seed.json", "settlement_overrides.json"],
-        )
+        if plan.navigation_action and navigation_action is None:
+            response_text = f"{response_text} Navigation is limited for the current role, so I kept this as a read-only answer."
 
-    def _respond_for_screening_hits(self, request_role: str) -> dict[str, Any]:
-        hits = self._latest_screening_hits()
-        if not hits:
-            response = "There are no active screening hits in the current mock screening register."
-        else:
-            lead = hits[0]
-            response = (
-                f"The latest screening hit is {lead['cedent_name']} on {lead['source']} with {lead['matches']} match(es). "
-                f"{len(hits)} cedant(s) currently show review or open-hit activity."
-            )
-        return self._navigation_response(
-            "/compliance/sanctions",
-            request_role,
-            response,
-            sources=["cedents table", "cedent_detail_overrides.json"],
-        )
+        return ChatbotMessageResponse(
+            response=response_text,
+            navigation_action=navigation_action,
+            sql_query_used=self._combined_sql(executions),
+            sources=self._response_sources(executions),
+        ).model_dump()
 
-    def _respond_for_audit_entries(self, request_role: str) -> dict[str, Any]:
-        events = self._recent_audit_entries()
-        if not events:
-            response = "No recent audit entries are available in the current mock audit register."
-        else:
-            lead = events[0]
-            response = (
-                f"Recent audit activity: {lead['timestamp']} · {lead['actor']} · {lead['action']}. "
-                f"I can also show the sanctions workspace if you want to review the broader trail."
-            )
-        return self._navigation_response(
-            "/compliance/audit",
-            request_role,
-            response,
-            sources=["cedent_detail_overrides.json", "contract_detail_overrides.json", "settlement_overrides.json"],
-        )
-
-    def _respond_for_worklist(self, request_role: str) -> dict[str, Any]:
-        items = self._worklist_items_for_role(request_role)
-        if not items:
-            response = f"There are no {self._role_label(request_role)} worklist items in the current register."
-        else:
-            lead = items[0]
-            response = (
-                f"You have {len(items)} visible {self._role_label(request_role).lower()} worklist item(s). "
-                f"The top item is {lead['wl_id']}: {lead['title']}."
-            )
-        return self._navigation_response(
-            "/worklist",
-            request_role,
-            response,
-            sql_query_used="SELECT * FROM worklist_items WHERE assigned_role = :role",
-            sources=self._worklist_sources_for_role(request_role),
-        )
-
-    def _respond_for_settlement_variance(self, message: str, request_role: str) -> dict[str, Any]:
-        settlements = self._load_settlements()
-        filtered = [item for item in settlements if item.get("period_label") == "Q1 2025"]
-        contract_id = self._extract_contract_id(message)
-        if contract_id:
-            filtered = [item for item in filtered if item.get("contract_id") == contract_id]
-        if not filtered:
-            response = "I couldn't find a matching Q1 settlement variance in the current mock register."
-        else:
-            lead = max(filtered, key=lambda item: abs(float(item.get("net_amount") or 0)))
-            cedent = self.repository.get_cedent(lead.get("cedent_id"))
-            response = (
-                f"The largest Q1 2025 settlement variance is {self._format_signed_money(lead['net_amount'], lead['currency'])} "
-                f"for {cedent.legal_entity_name if cedent else lead['contract_id']} ({lead['contract_id']})."
-            )
-        return self._navigation_response(
-            "/claims/settlements",
-            request_role,
-            response,
-            sources=["settlements_seed.json", "settlement_overrides.json"],
-        )
-
-    def _respond_for_active_contract_count(self, message: str, request_role: str) -> dict[str, Any]:
-        cedent = self._match_cedent_from_message(message)
-        if cedent is None:
-            return {
-                "response": "Tell me the cedant name and I can count active contracts for that counterparty.",
-                "navigation_action": None,
-                "sql_query_used": None,
-                "sources": ["cedents table"],
-            }
-        count = self.repository.count_active_contracts_for_cedent(cedent.cedent_id)
-        response = f"{cedent.legal_entity_name} currently has {count} active contract(s) in the contracts register."
-        return self._navigation_response(
-            "/underwriting/contracts",
-            request_role,
-            response,
-            sql_query_used=f"SELECT COUNT(*) FROM contracts WHERE cedent_id = '{cedent.cedent_id}' AND status = 'active'",
-            sources=["contracts table", "cedents table"],
-        )
-
-    def _respond_for_recent_cession_files(self, request_role: str) -> dict[str, Any]:
-        files = self.repository.list_recent_cession_files(limit=3)
-        if not files:
-            response = "There are no cession files in the current queue."
-        else:
-            response = (
-                "Recent cession files: "
-                + "; ".join(f"{item.file_id} ({item.file_type or 'Unclassified'}) at stage {item.stage}" for item in files)
-                + "."
-            )
-        return self._navigation_response(
-            "/claims/cession-files",
-            request_role,
-            response,
-            sql_query_used="SELECT * FROM cession_files ORDER BY received_at DESC LIMIT 3",
-            sources=["cession_files table"],
-        )
-
-    def _fallback_response(self, request_role: str, current_page: str) -> dict[str, Any]:
-        response = (
-            f"I can help with contracts, settlements, cession files, worklist items, screening hits, or navigation from {current_page}. "
-            "Try asking for a contract ID, the latest screening hits, your worklist, or the Q1 settlement variance."
-        )
-        return {
-            "response": response,
-            "navigation_action": None,
-            "sql_query_used": None,
-            "sources": ["contracts table", "cedents table", "worklist register", "settlements_seed.json"],
-        }
-
-    def _navigation_response(
+    def _plan_chatbot_response(
         self,
-        requested_path: str,
+        *,
+        user_message: str,
+        current_page: str,
         request_role: str,
-        response: str,
-        sql_query_used: str | None = None,
-        sources: list[str] | None = None,
-    ) -> dict[str, Any]:
-        allowed = self._is_path_allowed_for_role(requested_path, request_role)
-        final_response = response
-        navigation_action = requested_path if allowed else None
-        if not allowed:
-            final_response = f"{response} Navigation is limited for the current role, so I kept this as a read-only answer."
-        return {
-            "response": final_response,
-            "navigation_action": navigation_action,
-            "sql_query_used": sql_query_used,
-            "sources": sources or [],
-        }
-
-    def _extract_contract_id(self, message: str) -> str | None:
-        match = re.search(r"(LSC-\d{4}-\d{3})", message.upper())
-        return match.group(1) if match else None
-
-    def _extract_settlement_id(self, message: str) -> str | None:
-        match = re.search(r"(SET-\d{4}-Q\d-\d{3})", message.upper())
-        return match.group(1) if match else None
-
-    def _mentions_screening_hits(self, normalized: str) -> bool:
-        return "screening" in normalized or "ofac" in normalized or "fincen" in normalized or "hit" in normalized
-
-    def _match_cedent_from_message(self, message: str) -> Any | None:
-        normalized = message.lower()
-        cedents = self.repository.list_all_cedents()
-        return next((item for item in cedents if item.legal_entity_name.lower() in normalized), None) or next(
-            (item for item in cedents if item.legal_entity_name.lower().split()[0] in normalized),
-            None,
+        conversation_history: list[dict[str, Any]],
+        table_catalog: list[dict[str, Any]],
+    ) -> ChatbotLLMPlan:
+        response = openai_client.responses.create(
+            model=OPENAI_MODEL,
+            instructions=(
+                "You are the IRiS Assist query planner for an internal reinsurance platform. "
+                "You have a read-only SQL tool over the runtime database tables listed in the input. "
+                "Use SQL for any live-data question about counts, statuses, records, comparisons, recent activity, worklists, contracts, cedents, cession files, reports, audit events, screening cache data, or reference data. "
+                "Never invent values. Only use the runtime tables listed in the input. "
+                "If the user asks for data that is not available in the runtime tables, set requires_sql to false and let the answering model explain that the live database does not expose it. "
+                "If the user is asking for navigation only, set requires_sql to false and supply a navigation_action when appropriate. "
+                "Return JSON only with this shape: "
+                '{"intent": "string", "requires_sql": true, "sql_queries": [{"purpose": "string", "sql": "string"}], "navigation_action": "/path-or-null", "answer_strategy": "string"}. '
+                "Queries must be a single read-only SELECT or WITH statement. Prefer joins over multiple queries. "
+                "Use LIMIT when returning raw rows. Maximum 3 queries."
+            ),
+            input=json.dumps(
+                {
+                    "role": request_role,
+                    "current_page": current_page,
+                    "user_message": user_message,
+                    "conversation_history": self._conversation_excerpt(conversation_history),
+                    "allowed_routes": ROLE_ROUTE_CATALOG.get(request_role, ROLE_ROUTE_CATALOG["admin"]),
+                    "runtime_tables": table_catalog,
+                },
+                indent=2,
+                default=str,
+            ),
         )
+        plan = self._parse_json_response(
+            response.output_text or "",
+            ChatbotLLMPlan,
+            "IRiS Assist could not create a valid query plan for that request.",
+        )
+        if plan.requires_sql and not plan.sql_queries:
+            logger.error("Chatbot planner returned requires_sql without any queries")
+            raise IrisAPIError(502, "Chatbot planning failed", "IRiS Assist did not return a SQL query for a live data request")
+        logger.info("Chatbot response plan created")
+        logger.debug(
+            "Chatbot plan intent=%s requires_sql=%s query_count=%s navigation_action=%s",
+            plan.intent,
+            plan.requires_sql,
+            len(plan.sql_queries),
+            plan.navigation_action,
+        )
+        return plan
 
-    def _load_settlements(self) -> list[dict[str, Any]]:
-        base = deepcopy(load_mock_data("settlements_seed.json"))
-        overrides = self._read_settlement_override_store()
-        for item in base:
-            for key, value in overrides.get(item["settlement_id"], {}).items():
-                item[key] = value
-        return base
-
-    def _read_settlement_override_store(self) -> dict[str, Any]:
-        if not SETTLEMENT_OVERRIDES_FILE.exists():
-            return {}
-        with SETTLEMENT_OVERRIDES_FILE.open("r", encoding="utf-8") as handle:
-            payload = json.load(handle)
-        return payload if isinstance(payload, dict) else {}
-
-    def _latest_screening_hits(self) -> list[dict[str, Any]]:
-        cedents = {item.cedent_id: item for item in self.repository.list_all_cedents()}
-        overrides = load_mock_data("cedent_detail_overrides.json")
-        hits: list[dict[str, Any]] = []
-        for cedent_id, cedent in cedents.items():
-            detail = overrides.get(cedent_id, {})
-            screening = detail.get("sanction_screening", {})
-            history = screening.get("history", [])
-            matched_history = [item for item in history if item.get("matches", 0) > 0 or item.get("result") == "review"]
-            latest = matched_history[0] if matched_history else (history[0] if history else None)
-            open_hits = int(screening.get("open_hits", 0))
-            needs_review = (cedent.screening_status or "").lower() in {"review", "pending"}
-            if not needs_review and open_hits == 0 and not matched_history:
+    def _run_planned_queries(
+        self,
+        *,
+        plan: ChatbotLLMPlan,
+        user_message: str,
+        current_page: str,
+        request_role: str,
+        conversation_history: list[dict[str, Any]],
+        table_catalog: list[dict[str, Any]],
+    ) -> list[ChatbotSQLExecution]:
+        executions: list[ChatbotSQLExecution] = []
+        for query_plan in plan.sql_queries[:MAX_PLANNED_QUERIES]:
+            failure_details: str | None = None
+            try:
+                executions.append(
+                    self.sql_tool.execute(
+                        purpose=query_plan.purpose,
+                        query=query_plan.sql,
+                        max_rows=SQL_ROW_LIMIT,
+                    )
+                )
                 continue
-            hits.append(
-                {
-                    "cedent_id": cedent_id,
-                    "cedent_name": cedent.legal_entity_name,
-                    "source": latest.get("source", "OFAC") if latest else "Periodic Screening",
-                    "matches": max(int(latest.get("matches", 0)) if latest else 0, open_hits, 1 if needs_review else 0),
-                    "screening_date": (
-                        latest.get("screening_date", "")
-                        if latest
-                        else screening.get("next_periodic_due", "")
-                    ),
-                }
+            except Exception as exc:  # pragma: no cover - runtime path depends on LLM output
+                failure_details = str(exc)
+                logger.error("Chatbot SQL execution failed error=%s", exc)
+                logger.debug(
+                    "Chatbot SQL failure purpose=%s query=%s",
+                    query_plan.purpose,
+                    query_plan.sql,
+                )
+
+            repaired_query = self._repair_sql_query(
+                user_message=user_message,
+                current_page=current_page,
+                request_role=request_role,
+                conversation_history=conversation_history,
+                table_catalog=table_catalog,
+                failed_query=query_plan.sql,
+                failure_details=failure_details or "Unknown SQL execution failure",
             )
-        hits.sort(key=lambda item: item["screening_date"], reverse=True)
-        return hits
+            try:
+                executions.append(
+                    self.sql_tool.execute(
+                        purpose=query_plan.purpose,
+                        query=repaired_query,
+                        max_rows=SQL_ROW_LIMIT,
+                    )
+                )
+            except Exception as repair_exc:  # pragma: no cover - runtime path depends on LLM output
+                logger.error("Chatbot SQL repair execution failed error=%s", repair_exc)
+                raise IrisAPIError(
+                    502,
+                    "Chatbot query failed",
+                    "IRiS Assist could not execute a valid read-only SQL query for that request",
+                ) from repair_exc
+        return executions
 
-    def _recent_audit_entries(self) -> list[dict[str, Any]]:
-        events: list[dict[str, Any]] = []
-        for event in self.repository.list_recent_audit_events(limit=5):
-            events.append(
+    def _repair_sql_query(
+        self,
+        *,
+        user_message: str,
+        current_page: str,
+        request_role: str,
+        conversation_history: list[dict[str, Any]],
+        table_catalog: list[dict[str, Any]],
+        failed_query: str,
+        failure_details: str,
+    ) -> str:
+        logger.info("Repairing chatbot SQL query with LLM")
+        response = openai_client.responses.create(
+            model=OPENAI_MODEL,
+            instructions=(
+                "You are repairing a read-only SQL query for IRiS Assist. "
+                "Return JSON only with shape {\"sql\": \"...\"}. "
+                "Preserve the original intent, use only the runtime tables and columns from the input, and return one SELECT or WITH statement only."
+            ),
+            input=json.dumps(
                 {
-                    "timestamp": event.timestamp.astimezone().isoformat().replace("+00:00", "Z") if event.timestamp else "",
-                    "actor": event.actor_id or "Unknown",
-                    "action": event.event_type,
-                    "detail": event.description,
-                    "source": f"{event.module}:{event.entity_id or 'n/a'}",
-                }
+                    "role": request_role,
+                    "current_page": current_page,
+                    "user_message": user_message,
+                    "conversation_history": self._conversation_excerpt(conversation_history),
+                    "runtime_tables": table_catalog,
+                    "failed_query": failed_query,
+                    "failure_details": failure_details,
+                },
+                indent=2,
+                default=str,
+            ),
+        )
+        repaired = self._parse_json_response(
+            response.output_text or "",
+            ChatbotSQLRepair,
+            "IRiS Assist could not repair the generated SQL query.",
+        )
+        logger.debug("Chatbot repaired SQL query=%s", repaired.sql)
+        return repaired.sql
+
+    def _generate_answer(
+        self,
+        *,
+        plan: ChatbotLLMPlan,
+        executions: list[ChatbotSQLExecution],
+        user_message: str,
+        current_page: str,
+        request_role: str,
+        conversation_history: list[dict[str, Any]],
+        table_catalog: list[dict[str, Any]],
+        navigation_action: str | None,
+    ) -> str:
+        logger.info("Generating final chatbot answer from live context")
+        logger.debug(
+            "Chatbot answer context query_count=%s navigation_action=%s",
+            len(executions),
+            navigation_action,
+        )
+        try:
+            response = openai_client.responses.create(
+                model=OPENAI_MODEL,
+                instructions=(
+                    "You are IRiS Assist inside an internal reinsurance operations platform. "
+                    "Answer only from the provided live SQL results, allowed navigation routes, and runtime table catalog. "
+                    "Do not invent values, IDs, records, or routes. "
+                    "If the SQL results are empty, say you could not find matching live records. "
+                    "If the database does not expose the requested data, say so plainly. "
+                    "Keep the answer concise and professional, usually 2 to 4 sentences."
+                ),
+                input=json.dumps(
+                    {
+                        "role": request_role,
+                        "current_page": current_page,
+                        "user_message": user_message,
+                        "conversation_history": self._conversation_excerpt(conversation_history),
+                        "plan": plan.model_dump(),
+                        "navigation_action": navigation_action,
+                        "allowed_routes": ROLE_ROUTE_CATALOG.get(request_role, ROLE_ROUTE_CATALOG["admin"]),
+                        "runtime_tables": table_catalog,
+                        "sql_results": [self._execution_payload(item) for item in executions],
+                    },
+                    indent=2,
+                    default=str,
+                ),
             )
-        return events
+            output_text = (response.output_text or "").strip()
+            if output_text:
+                return output_text
+        except Exception as exc:  # pragma: no cover - runtime path depends on LLM output
+            logger.error("Chatbot final answer generation failed error=%s", exc)
 
-    def _worklist_items_for_role(self, role: str) -> list[dict[str, Any]]:
-        if role == "claims_ops":
-            items = self.repository.list_worklist_items_for_role(role, limit=5)
-            return [{"wl_id": item.wl_id, "title": item.title} for item in items]
+        logger.error("Falling back to generic chatbot answer rendering")
+        return self._generic_answer_from_results(plan, executions, navigation_action)
 
-        file_map = {
-            "underwriter": "worklist_underwriter.json",
-            "compliance": "worklist_compliance.json",
-            "admin": "worklist_admin.json",
+    def _generic_answer_from_results(
+        self,
+        plan: ChatbotLLMPlan,
+        executions: list[ChatbotSQLExecution],
+        navigation_action: str | None,
+    ) -> str:
+        if not executions:
+            response = plan.answer_strategy or "I can help with live data questions, but this request did not need a database query."
+            if navigation_action:
+                return f"{response} I also have a matching page ready if you want to open it."
+            return response
+
+        first_result = executions[0]
+        if first_result.row_count == 0:
+            return "I could not find matching live records in the current database for that request."
+
+        lead_row = json.dumps(first_result.rows[0], ensure_ascii=True)
+        suffix = " Results were truncated to the first 200 rows." if first_result.truncated else ""
+        return f"I found {first_result.row_count} row(s) for '{first_result.purpose}'. First row: {lead_row}.{suffix}"
+
+    def _execution_payload(self, execution: ChatbotSQLExecution) -> dict[str, Any]:
+        return {
+            "purpose": execution.purpose,
+            "query": execution.query,
+            "columns": execution.columns,
+            "row_count": execution.row_count,
+            "truncated": execution.truncated,
+            "tables": execution.tables,
+            "rows": execution.rows,
         }
-        filename = file_map.get(role)
-        if not filename:
-            return []
-        payload = load_mock_data(filename)
-        rows = payload.get("items", []) if isinstance(payload, dict) else payload
-        return [{"wl_id": item["wl_id"], "title": item["title"]} for item in rows[:5]]
 
-    def _worklist_sources_for_role(self, role: str) -> list[str]:
-        if role == "claims_ops":
-            return ["worklist_items table"]
-        return [f"backend/app/mock_data/worklist_{role}.json"]
+    def _conversation_excerpt(self, conversation_history: list[dict[str, Any]]) -> list[dict[str, str]]:
+        excerpt: list[dict[str, str]] = []
+        for item in conversation_history[-6:]:
+            role = str(item.get("role") or "").strip().lower()
+            content = str(item.get("content") or "").strip()
+            if role not in {"user", "assistant"} or not content:
+                continue
+            excerpt.append({"role": role, "content": content[:800]})
+        return excerpt
+
+    def _allowed_navigation_action(self, requested_path: str | None, request_role: str) -> str | None:
+        if not requested_path:
+            return None
+        if self._is_path_allowed_for_role(requested_path, request_role):
+            return requested_path
+        logger.info("Chatbot navigation request blocked by role guard")
+        logger.debug("Blocked chatbot navigation role=%s path=%s", request_role, requested_path)
+        return None
+
+    def _response_sources(self, executions: list[ChatbotSQLExecution]) -> list[str]:
+        ordered_sources: list[str] = []
+        for execution in executions:
+            for table_name in execution.tables:
+                source = f"{table_name} table"
+                if source in ordered_sources:
+                    continue
+                ordered_sources.append(source)
+        return ordered_sources
+
+    def _combined_sql(self, executions: list[ChatbotSQLExecution]) -> str | None:
+        if not executions:
+            return None
+        return "\n\n".join(execution.query for execution in executions)
 
     def _is_path_allowed_for_role(self, path: str, role: str) -> bool:
         prefixes = ROLE_NAVIGATION_PREFIXES.get(role, ["/dashboard", "/worklist"])
         return any(path.startswith(prefix) for prefix in prefixes)
 
-    def _dashboard_for_role(self, role: str) -> str:
-        return "/dashboard"
-
-    def _role_label(self, role: str) -> str:
-        return {
-            "admin": "Admin",
-            "underwriter": "Underwriting",
-            "claims_ops": "Claims Ops",
-            "compliance": "Compliance",
-            "super_admin": "Super Admin",
-        }.get(role, role.replace("_", " ").title())
-
-    def _format_money(self, amount: Any, currency: str | None) -> str:
-        numeric = float(amount or 0)
-        return f"{currency or 'USD'} {numeric:,.0f}"
-
-    def _format_signed_money(self, amount: Any, currency: str | None) -> str:
-        numeric = float(amount or 0)
-        return f"{'+' if numeric >= 0 else '-'}{currency or 'USD'} {abs(numeric):,.0f}"
+    def _parse_json_response(
+        self,
+        output_text: str,
+        model_type: type[ResponseModel],
+        failure_message: str,
+    ) -> ResponseModel:
+        candidate = output_text.strip()
+        json_match = JSON_OBJECT_PATTERN.search(candidate)
+        if json_match is not None:
+            candidate = json_match.group(0)
+        try:
+            payload = json.loads(candidate)
+            return model_type.model_validate(payload)
+        except Exception as exc:  # pragma: no cover - runtime path depends on LLM output
+            logger.error("Chatbot JSON parsing failed error=%s raw_output=%s", exc, output_text)
+            raise IrisAPIError(502, "Chatbot response invalid", failure_message) from exc

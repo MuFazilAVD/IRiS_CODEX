@@ -636,5 +636,65 @@
         }
       }
     ]
+  },
+  "LSC-2025-009": {
+    "audit_approval": [
+      {
+        "timestamp": "2026-05-07 12:23:46",
+        "actor": "Underwriter",
+        "action": "Uploaded members file",
+        "detail": "atlas_corporate_population_file.xlsx"
+      },
+      {
+        "timestamp": "2026-05-07 11:53:38",
+        "actor": "Underwriter",
+        "action": "Uploaded members file",
+        "detail": "atlas_population_dates.xlsx"
+      },
+      {
+        "timestamp": "2026-05-07 11:51:17",
+        "actor": "Underwriter",
+        "action": "Uploaded members file",
+        "detail": "atlas_population.xlsx"
+      },
+      {
+        "timestamp": "2026-05-07 11:06:40",
+        "actor": "Underwriter",
+        "action": "Uploaded members file",
+        "detail": "atlas_population.csv"
+      }
+    ],
+    "audit_compliance": {
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-07 12:23:46",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Uploaded members file",
+          "detail": "atlas_corporate_population_file.xlsx"
+        },
+        {
+          "timestamp": "2026-05-07 11:53:38",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Uploaded members file",
+          "detail": "atlas_population_dates.xlsx"
+        },
+        {
+          "timestamp": "2026-05-07 11:51:17",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Uploaded members file",
+          "detail": "atlas_population.xlsx"
+        },
+        {
+          "timestamp": "2026-05-07 11:06:40",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Uploaded members file",
+          "detail": "atlas_population.csv"
+        }
+      ]
+    }
   }
 }

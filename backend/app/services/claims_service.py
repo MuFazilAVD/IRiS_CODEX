@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import logging
+import re
 import uuid
 from copy import deepcopy
 from datetime import UTC, date, datetime, timedelta
@@ -11,6 +12,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 from fastapi import BackgroundTasks, UploadFile
 
 from app.errors import IrisAPIError
@@ -20,8 +22,15 @@ from app.models.cession_file import CessionFile
 from app.models.cession_file_exception import CessionFileException
 from app.models.cession_file_record import CessionFileRecord
 from app.models.contract import Contract
+from app.models.population import PolicyRegister
 from app.models.worklist import WorklistItem
 from app.repositories.claims_repository import ClaimsRepository
+from app.services.population_csv import (
+    ALLOWED_POPULATION_STATUSES,
+    PopulationCsvIssue,
+    PopulationCsvNormalizedRow,
+    extract_tabular_upload_text,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -65,13 +74,6 @@ LIST_METRICS_BASELINE = {
     },
 }
 
-SETTLEMENT_METRICS_BASELINE = {
-    "pending_approval": 8,
-    "pending_amount": 42100000,
-    "paid_ytd": 24,
-    "dispute_count": 2,
-}
-
 SUPPORTED_CALCULATION_TYPES = {"settlement", "fixed_leg", "floating_leg", "ae_ratio"}
 
 
@@ -109,13 +111,15 @@ class ClaimsService:
         background_tasks: BackgroundTasks,
         cedent_id: str | None,
         contract_id: str | None,
+        file_type: str | None = None,
     ) -> dict[str, Any]:
         logger.info("Uploading cession file into claims pipeline")
         logger.debug(
-            "Claims upload filename=%s provided_cedent_id=%s provided_contract_id=%s",
+            "Claims upload filename=%s provided_cedent_id=%s provided_contract_id=%s provided_file_type=%s",
             file.filename,
             cedent_id,
             contract_id,
+            file_type,
         )
         if not file.filename:
             logger.error("Claims upload rejected because filename is empty")
@@ -131,9 +135,26 @@ class ClaimsService:
             logger.error("Claims upload failed because cedent_id=%s was not found", cedent_id)
             raise IrisAPIError(404, "Invalid cedent ID", "Cedent not found in DB")
 
-        content = (await file.read()).decode("utf-8", errors="ignore")
+        raw_bytes = await file.read()
+        try:
+            content = extract_tabular_upload_text(file.filename, raw_bytes)
+        except ValueError as exc:
+            logger.error("Claims upload rejected because the file could not be parsed filename=%s", file.filename)
+            raise IrisAPIError(400, "Invalid file", str(exc)) from exc
         now = datetime.now(UTC)
         detection_seed = self._detect_file_profile(file.filename, content, provided_cedent, provided_contract)
+        manual_file_type = self._normalize_file_type(file_type)
+        if file_type and manual_file_type is None:
+            logger.error("Claims upload rejected because file_type=%s is invalid", file_type)
+            raise IrisAPIError(400, "Invalid file type", f"{file_type} is not supported")
+        if manual_file_type:
+            logger.info("Manual cession file type supplied during upload")
+            logger.debug("Manual upload file_type=%s filename=%s", manual_file_type, file.filename)
+            detection_seed["file_type"] = manual_file_type
+            detection_seed["file_type_confidence"] = 1.0
+            detection_seed["iris_reasoning"] = (
+                f'Manual file type "{manual_file_type}" supplied; cedant and contract were derived from filename and DB context.'
+            )
         effective_cedent_id = provided_contract.cedent_id if provided_contract else (cedent_id or detection_seed["cedent_id"])
         effective_contract_id = contract_id or detection_seed["contract_id"]
         record_count = self._count_records(file.filename, content) or detection_seed["record_count"]
@@ -172,9 +193,10 @@ class ClaimsService:
                 "pipeline_session_id": f"pipe-{uuid.uuid4()}",
                 "active_step": "detect",
                 "source_filename": file.filename,
-                "source_size_bytes": len(content.encode("utf-8")),
+                "source_size_bytes": len(raw_bytes),
                 "manual_cedent_id": cedent_id,
                 "manual_contract_id": contract_id,
+                "manual_file_type": manual_file_type,
                 "detection_override": None,
                 "contract_override": None,
                 "audit_events": [upload_audit_event],
@@ -468,6 +490,11 @@ class ClaimsService:
     def _handle_detect(self, cession_file: CessionFile, payload: dict[str, Any]) -> dict[str, Any]:
         override_file_type = payload.get("override_file_type")
         override_cedent_id = payload.get("override_cedent_id")
+        if override_file_type:
+            override_file_type = self._normalize_file_type(str(override_file_type))
+            if override_file_type is None:
+                logger.error("Detect stage failed because override_file_type=%s is invalid", payload.get("override_file_type"))
+                raise IrisAPIError(400, "Invalid file type", "Unsupported cession file type")
         override_cedent = None
         if override_cedent_id:
             override_cedent = self.repository.get_cedent(override_cedent_id)
@@ -691,6 +718,9 @@ class ClaimsService:
                 "Resolve all exceptions before processing the file",
             )
 
+        if self._build_detection_payload(cession_file)["file_type"] == "Pension Status":
+            self._apply_pension_status_population_changes(cession_file)
+
         cession_file.stage = "processed"
         cession_file.updated_at = datetime.now(UTC)
         self.repository.update_cession_file(cession_file)
@@ -747,6 +777,256 @@ class ClaimsService:
             "stage": "approved",
             "result": {"approved": True},
         }
+
+    def _apply_pension_status_population_changes(self, cession_file: CessionFile) -> dict[str, Any]:
+        if not cession_file.contract_id:
+            logger.error("Pension Status processing failed because contract mapping is missing file_id=%s", cession_file.file_id)
+            raise IrisAPIError(400, "Contract mapping required", "Map the cession file to a contract before processing")
+
+        received_date = (
+            cession_file.received_at.astimezone(UTC).date()
+            if cession_file.received_at and cession_file.received_at.tzinfo
+            else (cession_file.received_at.date() if cession_file.received_at else date.today())
+        )
+        overrides_by_row = self._resolved_population_overrides(cession_file)
+        parsed_rows: list[PopulationCsvNormalizedRow] = []
+
+        for record in self.repository.list_file_records(cession_file.id):
+            mapped_data = json.loads(record.mapped_data or "{}")
+            mapped_data.update(overrides_by_row.get(record.row_number, {}))
+            normalized = self._population_row_from_pipeline(mapped_data, received_date)
+            if normalized is not None:
+                parsed_rows.append(normalized)
+
+        current_rows = {
+            row.member_id: row
+            for row in self.repository.list_current_population_for_members(
+                cession_file.contract_id,
+                [row.member_id for row in parsed_rows],
+            )
+        }
+        rows_to_save: list[PolicyRegister] = []
+        summary = {
+            "new_active": 0,
+            "new_deferred": 0,
+            "new_deceased": 0,
+            "created": 0,
+            "updated": 0,
+            "unchanged": 0,
+            "skipped": 0,
+            "records_processed": len(parsed_rows),
+            "liability_impact": 0,
+            "insight": "No policy-register changes were required for this pension status file.",
+        }
+
+        for row in parsed_rows:
+            current = current_rows.get(row.member_id)
+            effective_from = row.effective_from or received_date
+
+            if current is None:
+                logger.error(
+                    "Pension Status processing skipped row because member_id=%s is not current in contract_id=%s",
+                    row.member_id,
+                    cession_file.contract_id,
+                )
+                summary["skipped"] += 1
+                continue
+
+            if current and self._population_rows_match(current, row) and current.source_cession_file_id == cession_file.id:
+                summary["unchanged"] += 1
+                continue
+
+            if current and self._population_rows_match(current, row):
+                summary["unchanged"] += 1
+                continue
+
+            if effective_from <= current.effective_from:
+                effective_from = current.effective_from + timedelta(days=1)
+            current.is_current = False
+            current.effective_to = effective_from - timedelta(days=1)
+            rows_to_save.append(current)
+            summary["updated"] += 1
+
+            rows_to_save.append(self._build_population_record(cession_file.contract_id, row, effective_from, cession_file.id))
+            self._increment_population_change_counter(summary, row.status)
+
+        if rows_to_save:
+            self.repository.save_population_records(rows_to_save)
+        summary["liability_impact"] = self._estimate_pension_status_liability_impact(parsed_rows, current_rows)
+
+        if summary["created"] or summary["updated"]:
+            summary["insight"] = (
+                f"Applied {summary['created'] + summary['updated']} pension status movement(s) "
+                f"into the policy register for {cession_file.contract_id}."
+            )
+
+        logger.info("Applied Pension Status movements to policy register")
+        logger.debug(
+            "Pension Status processing file_id=%s contract_id=%s created=%s updated=%s unchanged=%s",
+            cession_file.file_id,
+            cession_file.contract_id,
+            summary["created"],
+            summary["updated"],
+            summary["unchanged"],
+        )
+        self._store_override(cession_file.file_id, {"population_processing_summary": summary})
+        return summary
+
+    def _resolved_population_overrides(self, cession_file: CessionFile) -> dict[int, dict[str, Any]]:
+        overrides: dict[int, dict[str, Any]] = {}
+        for exception in self.repository.list_file_exceptions(cession_file.id):
+            if exception.resolution not in {"accepted", "overridden"}:
+                continue
+            if exception.current_value is None:
+                continue
+            overrides.setdefault(exception.row_number, {})[exception.field_name] = exception.current_value
+        return overrides
+
+    def _population_row_from_pipeline(
+        self,
+        mapped_data: dict[str, Any],
+        received_date: date,
+    ) -> PopulationCsvNormalizedRow | None:
+        member_id = str(mapped_data.get("member_id") or "").strip()
+        date_of_birth = self._parse_iso_date(str(mapped_data.get("date_of_birth") or ""))
+        gender = str(mapped_data.get("gender") or "").strip().upper()
+        annual_pension_value = mapped_data.get("annual_pension")
+        status = str(mapped_data.get("status") or "active").strip().lower()
+        if not member_id or date_of_birth is None or gender not in {"M", "F"} or annual_pension_value in {None, ""}:
+            return None
+
+        try:
+            annual_pension = Decimal(str(annual_pension_value))
+        except Exception:
+            return None
+
+        escalation_rate_value = mapped_data.get("escalation_rate")
+        try:
+            escalation_rate = Decimal(str(escalation_rate_value)) if escalation_rate_value not in {None, ""} else None
+        except Exception:
+            escalation_rate = None
+
+        return PopulationCsvNormalizedRow(
+            member_id=member_id,
+            policy_id=str(mapped_data.get("policy_id") or "").strip() or None,
+            date_of_birth=date_of_birth,
+            gender=gender,
+            smoker_status=str(mapped_data.get("smoker_status") or "").strip() or None,
+            postcode=str(mapped_data.get("postcode") or "").strip() or None,
+            annual_pension=annual_pension,
+            pension_currency=str(mapped_data.get("pension_currency") or "GBP").strip().upper() or "GBP",
+            escalation_type=str(mapped_data.get("escalation_type") or "").strip() or None,
+            escalation_rate=escalation_rate,
+            status=status,
+            date_of_death=self._parse_iso_date(str(mapped_data.get("date_of_death") or "")),
+            commencement_date=self._parse_iso_date(str(mapped_data.get("commencement_date") or "")),
+            effective_from=self._parse_iso_date(str(mapped_data.get("effective_from") or "")) or received_date,
+            verification_reference=str(mapped_data.get("verification_reference") or "").strip() or None,
+        )
+
+    def _increment_population_change_counter(self, summary: dict[str, Any], status: str) -> None:
+        counter_key = {
+            "active": "new_active",
+            "deferred": "new_deferred",
+            "deceased": "new_deceased",
+        }.get(status)
+        if counter_key:
+            summary[counter_key] += 1
+
+    def _estimate_pension_status_liability_impact(
+        self,
+        parsed_rows: list[PopulationCsvNormalizedRow],
+        current_rows: dict[str, PolicyRegister],
+    ) -> float:
+        if not parsed_rows:
+            return 0.0
+        incoming_frame = pd.DataFrame(
+            [
+                {
+                    "member_id": row.member_id,
+                    "incoming_status": row.status,
+                    "incoming_annual_pension": float(row.annual_pension),
+                }
+                for row in parsed_rows
+            ]
+        )
+        current_frame = pd.DataFrame(
+            [
+                {
+                    "member_id": member_id,
+                    "current_status": row.status,
+                    "current_annual_pension": float(row.annual_pension or 0),
+                }
+                for member_id, row in current_rows.items()
+            ]
+        )
+        if incoming_frame.empty or current_frame.empty:
+            return 0.0
+        movement_frame = incoming_frame.merge(current_frame, how="inner", on="member_id")
+        changed = movement_frame[movement_frame["incoming_status"] != movement_frame["current_status"]].copy()
+        if changed.empty:
+            return 0.0
+        changed["directional_factor"] = 0.0
+        changed.loc[
+            changed["current_status"].eq("active") & changed["incoming_status"].ne("active"),
+            "directional_factor",
+        ] = -1.0
+        changed.loc[
+            changed["current_status"].ne("active") & changed["incoming_status"].eq("active"),
+            "directional_factor",
+        ] = 1.0
+        changed["impact"] = changed["current_annual_pension"] * changed["directional_factor"]
+        return round(float(changed["impact"].sum()), 2)
+
+    def _build_population_record(
+        self,
+        contract_id: str,
+        row: PopulationCsvNormalizedRow,
+        effective_from: date,
+        source_cession_file_id: str | None,
+    ) -> PolicyRegister:
+        return PolicyRegister(
+            contract_id=contract_id,
+            member_id=row.member_id,
+            policy_id=row.policy_id,
+            date_of_birth=row.date_of_birth,
+            gender=row.gender,
+            smoker_status=row.smoker_status,
+            postcode=row.postcode,
+            annual_pension=float(row.annual_pension),
+            pension_currency=row.pension_currency,
+            escalation_type=row.escalation_type,
+            escalation_rate=float(row.escalation_rate) if row.escalation_rate is not None else None,
+            status=row.status,
+            date_of_death=row.date_of_death,
+            commencement_date=row.commencement_date,
+            effective_from=effective_from,
+            effective_to=None,
+            is_current=True,
+            source_cession_file_id=source_cession_file_id,
+            created_at=datetime.now(UTC),
+        )
+
+    def _population_rows_match(self, current: PolicyRegister, row: PopulationCsvNormalizedRow) -> bool:
+        return (
+            current.policy_id == row.policy_id
+            and current.date_of_birth == row.date_of_birth
+            and current.gender == row.gender
+            and current.smoker_status == row.smoker_status
+            and current.postcode == row.postcode
+            and float(current.annual_pension or 0) == float(row.annual_pension)
+            and (current.pension_currency or "GBP") == row.pension_currency
+            and current.escalation_type == row.escalation_type
+            and self._float_or_none(current.escalation_rate) == self._float_or_none(row.escalation_rate)
+            and current.status == row.status
+            and current.date_of_death == row.date_of_death
+            and current.commencement_date == row.commencement_date
+        )
+
+    def _float_or_none(self, value: Any) -> float | None:
+        if value is None:
+            return None
+        return float(value)
 
     def _build_file_detail(self, cession_file: CessionFile) -> dict[str, Any]:
         detection = self._build_detection_payload(cession_file)
@@ -904,6 +1184,85 @@ class ClaimsService:
     def _build_clauses_payload(self, cession_file: CessionFile) -> dict[str, Any]:
         detection = self._build_detection_payload(cession_file)
         file_type = detection["file_type"]
+        mapping = self._build_contract_mapping_payload(cession_file)
+        contract_context = self.repository.get_contract_clause_context(mapping["contract_id"])
+        if contract_context is None:
+            logger.error("Clause extraction failed because contract_id=%s was not found by SQL", mapping["contract_id"])
+            raise IrisAPIError(404, "Invalid contract ID", "Contract not found in DB")
+
+        if file_type == "Pension Status":
+            current_count = self.repository.get_current_population_count(mapping["contract_id"])
+            return {
+                "title": "Applicable Contract Clauses",
+                "subtitle": f'3 SQL-derived clauses identified for Pension Status on {mapping["contract_id"]}.',
+                "flagged_count": 1,
+                "clauses_checked": [
+                    {
+                        "clause_id": "SQL-POLICY-REGISTER-SCOPE",
+                        "clause_title": "Reference Population Scope",
+                        "category": "Population",
+                        "status": "matched",
+                        "description": (
+                            f"Pension-status member IDs must exist in current policy_register rows for {mapping['contract_id']} "
+                            f"before movement processing. Current SQL population count: {current_count}."
+                        ),
+                        "fields_affected": ["member_id", "contract_id"],
+                        "active": True,
+                    },
+                    {
+                        "clause_id": "SQL-POLICY-REGISTER-SCD2",
+                        "clause_title": "SCD2 Movement Processing",
+                        "category": "Data",
+                        "status": "matched",
+                        "description": "Status movements update policy_register by expiring the current row and inserting a new current row.",
+                        "fields_affected": ["status", "effective_from", "effective_to", "is_current"],
+                        "active": True,
+                    },
+                    {
+                        "clause_id": "SQL-POLICY-DEATH-DATE",
+                        "clause_title": "Death Movement Evidence",
+                        "category": "Data",
+                        "status": "check_required",
+                        "description": "Rows moving to deceased require date_of_death before the SQL population update can be applied.",
+                        "fields_affected": ["status", "date_of_death"],
+                        "active": True,
+                    },
+                ],
+            }
+
+        if file_type == "Fixed Leg":
+            frequency = contract_context.get("fixed_leg_frequency") or "contract frequency"
+            currency = contract_context.get("currency") or mapping["currency"]
+            fixed_leg_rate = float(contract_context.get("fixed_leg_rate") or 0) * 100
+            return {
+                "title": "Applicable Contract Clauses",
+                "subtitle": f'2 SQL-derived clauses identified for {mapping["contract_id"]}.',
+                "flagged_count": 0,
+                "clauses_checked": [
+                    {
+                        "clause_id": "SQL-CONTRACT-FIXED-LEG",
+                        "clause_title": "Fixed Leg Calculation",
+                        "category": "Calculation",
+                        "status": "matched",
+                        "description": (
+                            f"{frequency} fixed leg uses notional {currency} {contract_context.get('notional_amount')} "
+                            f"and fixed rate {fixed_leg_rate:.2f}% from contracts."
+                        ),
+                        "fields_affected": ["fixed_leg_amount"],
+                        "active": True,
+                    },
+                    {
+                        "clause_id": "SQL-CONTRACT-CURRENCY",
+                        "clause_title": "Settlement Currency",
+                        "category": "Calculation",
+                        "status": "matched",
+                        "description": f"Uploaded fixed-leg amounts must reconcile to the mapped contract currency {currency}.",
+                        "fields_affected": ["currency"],
+                        "active": True,
+                    },
+                ],
+            }
+
         if file_type == "Fixed Leg":
             clauses_checked = [
                 {
@@ -1034,11 +1393,7 @@ class ClaimsService:
         settlement = self._mock_settlement_for_contract(mapping["contract_id"])
         file_type = detection["file_type"]
 
-        resolved_critical = sum(
-            1
-            for item in exceptions
-            if item.severity == "critical" and item.resolution in {"accepted", "overridden"}
-        )
+        resolved_exceptions = sum(1 for item in exceptions if item.resolution in {"accepted", "overridden"})
         overridden_total = sum(1 for item in exceptions if item.resolution == "overridden")
         summary: dict[str, Any] = {
             "file_id": cession_file.file_id,
@@ -1046,7 +1401,7 @@ class ClaimsService:
             "file_type": file_type,
             "period": mapping["period"],
             "records_processed": cession_file.record_count or 0,
-            "exceptions_resolved": resolved_critical,
+            "exceptions_resolved": resolved_exceptions,
             "exceptions_overridden": overridden_total,
             "worklist_items_created": len(worklist_items),
             "audit_trail_id": self._get_override(cession_file.file_id).get("pipeline_session_id"),
@@ -1070,18 +1425,22 @@ class ClaimsService:
             return summary
 
         if file_type == "Pension Status":
+            processing_summary = self._get_override(cession_file.file_id).get("population_processing_summary") or {}
             summary.update(
                 {
                     "settlement_impact": None,
                     "population_changes": {
-                        "new_deceased": 1,
-                        "new_deferred": 0,
-                        "new_active": 3,
+                        "new_deceased": processing_summary.get("new_deceased", 0),
+                        "new_deferred": processing_summary.get("new_deferred", 0),
+                        "new_active": processing_summary.get("new_active", 0),
                     },
-                    "liability_impact": -2480000,
+                    "liability_impact": processing_summary.get("liability_impact", 0),
                     "fixed_leg_recomputed": None,
                     "net_settlement_amount": None,
-                    "insight": "recommendation: 1 deceased member update will reduce projected liability in the next cycle.",
+                    "insight": processing_summary.get(
+                        "insight",
+                        "recommendation: processed pension status movements will feed the next population and valuation cycle.",
+                    ),
                 }
             )
             return summary
@@ -1221,14 +1580,14 @@ class ClaimsService:
     def _ensure_records_and_exceptions(self, cession_file: CessionFile, content: str | None = None) -> None:
         current_records = self.repository.list_file_records(cession_file.id)
         current_exceptions = self.repository.list_file_exceptions(cession_file.id)
-        if current_records and current_exceptions:
+        if current_records:
             self._apply_exception_counts_to_file(cession_file)
             return
 
         detection = self._build_detection_payload(cession_file)
         mapping = self._build_contract_mapping_payload(cession_file)
         template_records = self._build_record_templates(cession_file, detection["file_type"], mapping["contract_id"], content or "")
-        template_exceptions = self._build_exception_templates(cession_file, detection["file_type"])
+        template_exceptions = self._build_exception_templates(cession_file, detection["file_type"], template_records)
 
         if not current_records:
             self.repository.replace_file_records(
@@ -1336,84 +1695,11 @@ class ClaimsService:
             ]
 
         if file_type == "Pension Status":
-            return [
-                {
-                    "row_number": 1,
-                    "member_id": "PEN-0100234",
-                    "raw_data": {
-                        "member_id": "PEN-0100234",
-                        "date_of_birth": "1963-04-12",
-                        "gender": "F",
-                        "status": "active",
-                        "date_of_death": "",
-                        "annual_pension": "12000",
-                    },
-                    "mapped_data": {
-                        "contract_id": contract_id,
-                        "member_id": "PEN-0100234",
-                        "status": "active",
-                    },
-                    "validation_status": "valid",
-                    "validation_issues": [],
-                },
-                {
-                    "row_number": 2,
-                    "member_id": "PEN-0100236",
-                    "raw_data": {
-                        "member_id": "PEN-0100236",
-                        "date_of_birth": "1954-07-23",
-                        "gender": "F",
-                        "status": "active",
-                        "date_of_death": "",
-                        "annual_pension": "12774",
-                    },
-                    "mapped_data": {
-                        "contract_id": contract_id,
-                        "member_id": "PEN-0100236",
-                        "status": "active",
-                    },
-                    "validation_status": "valid",
-                    "validation_issues": [],
-                },
-                {
-                    "row_number": 3,
-                    "member_id": "PEN-0100238",
-                    "raw_data": {
-                        "member_id": "PEN-0100238",
-                        "date_of_birth": "1947-02-08",
-                        "gender": "F",
-                        "status": "deceased",
-                        "date_of_death": "2025-01-18",
-                        "annual_pension": "13548",
-                    },
-                    "mapped_data": {
-                        "contract_id": contract_id,
-                        "member_id": "PEN-0100238",
-                        "status": "deceased",
-                    },
-                    "validation_status": "warning",
-                    "validation_issues": [],
-                },
-                {
-                    "row_number": 4,
-                    "member_id": "PEN-0100240",
-                    "raw_data": {
-                        "member_id": "PEN-0100240",
-                        "date_of_birth": "1941-11-30",
-                        "gender": "F",
-                        "status": "active",
-                        "date_of_death": "",
-                        "annual_pension": "14322",
-                    },
-                    "mapped_data": {
-                        "contract_id": contract_id,
-                        "member_id": "PEN-0100240",
-                        "status": "active",
-                    },
-                    "validation_status": "valid",
-                    "validation_issues": [],
-                },
-            ]
+            if not content.strip():
+                logger.error("Pension Status records cannot be built without uploaded tabular content file_id=%s", cession_file.file_id)
+                return []
+
+            return self._build_pension_status_record_templates(contract_id, content)
 
         if file_type == "Mortality Report":
             return [
@@ -1505,7 +1791,346 @@ class ClaimsService:
             },
         ]
 
-    def _build_exception_templates(self, cession_file: CessionFile, file_type: str) -> list[dict[str, Any]]:
+    def _build_pension_status_record_templates(self, contract_id: str, content: str) -> list[dict[str, Any]]:
+        if not content.strip():
+            logger.debug("Pension Status upload has no content to parse contract_id=%s", contract_id)
+            return []
+
+        try:
+            upload_frame = pd.read_csv(io.StringIO(content), dtype=str).fillna("")
+        except Exception as exc:
+            logger.error("Pension Status upload could not be parsed with pandas contract_id=%s", contract_id)
+            raise IrisAPIError(400, "Invalid pension status file", "Unable to parse the uploaded tabular file") from exc
+
+        if upload_frame.empty:
+            return []
+
+        upload_frame.columns = [self._normalize_column_name(str(column)) for column in upload_frame.columns]
+        upload_frame = upload_frame.reset_index(drop=True)
+        upload_frame["row_number"] = upload_frame.index + 1
+        normalized_frame = self._normalize_pension_status_upload_frame(upload_frame)
+
+        member_ids = normalized_frame["member_id"].dropna().astype(str).str.strip()
+        current_rows = self.repository.list_current_population_for_members(contract_id, member_ids[member_ids != ""].tolist())
+        current_frame = self._population_rows_to_frame(current_rows)
+        comparison_frame = normalized_frame.merge(
+            current_frame,
+            how="left",
+            left_on="member_id",
+            right_on="current_member_id",
+        )
+
+        templates: list[dict[str, Any]] = []
+        for record in comparison_frame.to_dict(orient="records"):
+            row_number = int(record["row_number"])
+            raw_data = self._raw_upload_row(upload_frame, row_number)
+            validation_issues = self._build_pension_status_validation_issues(record)
+            normalized_row = self._population_row_from_pandas_record(record)
+            templates.append(
+                {
+                    "row_number": row_number,
+                    "member_id": normalized_row.member_id if normalized_row else str(record.get("member_id") or ""),
+                    "raw_data": raw_data,
+                    "mapped_data": self._serialize_population_row_for_pipeline(contract_id, normalized_row),
+                    "validation_status": self._validation_status_from_issues(validation_issues),
+                    "validation_issues": validation_issues,
+                }
+            )
+        return templates
+
+    def _normalize_pension_status_upload_frame(self, upload_frame: pd.DataFrame) -> pd.DataFrame:
+        normalized = pd.DataFrame(index=upload_frame.index)
+        normalized["row_number"] = upload_frame["row_number"]
+        normalized["member_id"] = self._aliased_upload_series(upload_frame, ("member_id", "pensioner_ref"))
+        normalized["policy_id"] = self._aliased_upload_series(upload_frame, ("policy_id",))
+        normalized["date_of_birth_raw"] = self._aliased_upload_series(upload_frame, ("date_of_birth", "dob"))
+        normalized["date_of_birth"] = pd.to_datetime(normalized["date_of_birth_raw"], errors="coerce").dt.date
+        normalized["gender_raw"] = self._aliased_upload_series(upload_frame, ("gender",))
+        normalized["gender"] = normalized["gender_raw"].str.upper().replace({"MALE": "M", "FEMALE": "F"})
+        normalized["smoker_status"] = self._aliased_upload_series(upload_frame, ("smoker_status",))
+        normalized["postcode"] = self._aliased_upload_series(upload_frame, ("postcode",))
+        normalized["annual_pension_raw"] = self._aliased_upload_series(upload_frame, ("annual_pension", "annuity_amount"))
+        normalized["annual_pension"] = pd.to_numeric(
+            normalized["annual_pension_raw"].str.replace(",", "", regex=False),
+            errors="coerce",
+        )
+        normalized["pension_currency"] = self._aliased_upload_series(upload_frame, ("pension_currency", "currency")).str.upper()
+        normalized.loc[normalized["pension_currency"] == "", "pension_currency"] = "GBP"
+        normalized["escalation_type"] = self._aliased_upload_series(upload_frame, ("escalation_type", "indexation_basis"))
+        normalized["escalation_rate_raw"] = self._aliased_upload_series(upload_frame, ("escalation_rate",))
+        normalized["escalation_rate"] = pd.to_numeric(normalized["escalation_rate_raw"], errors="coerce")
+        normalized["status_raw"] = self._aliased_upload_series(upload_frame, ("status",))
+        normalized["status"] = normalized["status_raw"].str.lower()
+        normalized.loc[normalized["status"] == "", "status"] = "active"
+        normalized["date_of_death_raw"] = self._aliased_upload_series(upload_frame, ("date_of_death", "death_date"))
+        normalized["date_of_death"] = pd.to_datetime(normalized["date_of_death_raw"], errors="coerce").dt.date
+        normalized["commencement_date_raw"] = self._aliased_upload_series(upload_frame, ("commencement_date",))
+        normalized["commencement_date"] = pd.to_datetime(normalized["commencement_date_raw"], errors="coerce").dt.date
+        normalized["effective_from_raw"] = self._aliased_upload_series(upload_frame, ("effective_from",))
+        normalized["effective_from"] = pd.to_datetime(normalized["effective_from_raw"], errors="coerce").dt.date
+        normalized["verification_reference"] = self._aliased_upload_series(upload_frame, ("verification_reference", "verified_by"))
+        return normalized
+
+    def _aliased_upload_series(self, upload_frame: pd.DataFrame, aliases: tuple[str, ...]) -> pd.Series:
+        for alias in aliases:
+            if alias in upload_frame.columns:
+                return upload_frame[alias].astype(str).str.strip()
+        return pd.Series([""] * len(upload_frame), index=upload_frame.index, dtype="string")
+
+    def _population_rows_to_frame(self, rows: list[PolicyRegister]) -> pd.DataFrame:
+        if not rows:
+            return pd.DataFrame(
+                columns=[
+                    "current_member_id",
+                    "current_policy_id",
+                    "current_date_of_birth",
+                    "current_gender",
+                    "current_smoker_status",
+                    "current_postcode",
+                    "current_annual_pension",
+                    "current_pension_currency",
+                    "current_escalation_type",
+                    "current_escalation_rate",
+                    "current_status",
+                    "current_date_of_death",
+                    "current_commencement_date",
+                    "current_effective_from",
+                ]
+            )
+        return pd.DataFrame(
+            [
+                {
+                    "current_member_id": row.member_id,
+                    "current_policy_id": row.policy_id,
+                    "current_date_of_birth": row.date_of_birth,
+                    "current_gender": row.gender,
+                    "current_smoker_status": row.smoker_status,
+                    "current_postcode": row.postcode,
+                    "current_annual_pension": float(row.annual_pension or 0),
+                    "current_pension_currency": row.pension_currency or "GBP",
+                    "current_escalation_type": row.escalation_type,
+                    "current_escalation_rate": self._float_or_none(row.escalation_rate),
+                    "current_status": row.status,
+                    "current_date_of_death": row.date_of_death,
+                    "current_commencement_date": row.commencement_date,
+                    "current_effective_from": row.effective_from,
+                }
+                for row in rows
+            ]
+        )
+
+    def _raw_upload_row(self, upload_frame: pd.DataFrame, row_number: int) -> dict[str, str]:
+        rows = upload_frame.loc[upload_frame["row_number"] == row_number]
+        if rows.empty:
+            return {}
+        return {
+            key: value
+            for key, value in rows.iloc[0].drop(labels=["row_number"], errors="ignore").astype(str).to_dict().items()
+        }
+
+    def _build_pension_status_validation_issues(self, record: dict[str, Any]) -> list[dict[str, Any]]:
+        issues: list[dict[str, Any]] = []
+        member_id = str(record.get("member_id") or "").strip()
+        status = str(record.get("status") or "").strip().lower()
+        current_member_id = record.get("current_member_id")
+        current_status = str(record.get("current_status") or "").strip().lower()
+
+        self._append_required_issue(issues, record, "member_id", member_id)
+        self._append_required_issue(issues, record, "date_of_birth", record.get("date_of_birth_raw"))
+        self._append_required_issue(issues, record, "gender", record.get("gender_raw"))
+        self._append_required_issue(issues, record, "annual_pension", record.get("annual_pension_raw"))
+
+        if record.get("date_of_birth_raw") and pd.isna(record.get("date_of_birth")):
+            issues.append(self._validation_issue("date_of_birth", "critical", "invalid_date", "date_of_birth must be a valid ISO date (YYYY-MM-DD).", record.get("date_of_birth_raw")))
+        if record.get("gender_raw") and record.get("gender") not in {"M", "F"}:
+            issues.append(self._validation_issue("gender", "critical", "invalid_gender", "gender must be M or F.", record.get("gender_raw")))
+        if record.get("annual_pension_raw") and pd.isna(record.get("annual_pension")):
+            issues.append(self._validation_issue("annual_pension", "critical", "invalid_number", "annual_pension must be numeric.", record.get("annual_pension_raw")))
+        if status not in ALLOWED_POPULATION_STATUSES:
+            issues.append(
+                self._validation_issue(
+                    "status",
+                    "critical",
+                    "invalid_status",
+                    "status must be active, deceased, deferred, suspended, or transferred.",
+                    record.get("status_raw"),
+                )
+            )
+        if member_id and pd.isna(current_member_id):
+            issues.append(
+                self._validation_issue(
+                    "member_id",
+                    "critical",
+                    "member_not_in_contract",
+                    "Member does not exist in the current population for this mapped contract.",
+                    member_id,
+                )
+            )
+        if status == "deceased" and (not record.get("date_of_death_raw") or pd.isna(record.get("date_of_death"))):
+            issues.append(
+                self._validation_issue(
+                    "date_of_death",
+                    "critical",
+                    "missing_death_date",
+                    "A deceased movement requires date_of_death before policy_register can be updated.",
+                    record.get("date_of_death_raw"),
+                )
+            )
+        if status == "deceased" and record.get("date_of_death_raw") and pd.isna(record.get("date_of_death")):
+            issues.append(self._validation_issue("date_of_death", "critical", "invalid_date", "date_of_death must be a valid ISO date (YYYY-MM-DD).", record.get("date_of_death_raw")))
+        if current_status == "deceased" and status != "deceased":
+            issues.append(
+                self._validation_issue(
+                    "status",
+                    "critical",
+                    "invalid_status_regression",
+                    "Current population is deceased; a non-deceased status requires manual contract evidence.",
+                    record.get("status_raw"),
+                )
+            )
+        if not pd.isna(record.get("current_date_of_birth")) and not pd.isna(record.get("date_of_birth")) and record.get("date_of_birth") != record.get("current_date_of_birth"):
+            issues.append(
+                self._validation_issue(
+                    "date_of_birth",
+                    "warning",
+                    "static_field_mismatch",
+                    "date_of_birth differs from the current policy_register row for this contract.",
+                    record.get("date_of_birth_raw"),
+                    str(record.get("current_date_of_birth")),
+                    0.86,
+                )
+            )
+        if record.get("current_gender") and record.get("gender") and record.get("gender") != record.get("current_gender"):
+            issues.append(
+                self._validation_issue(
+                    "gender",
+                    "warning",
+                    "static_field_mismatch",
+                    "gender differs from the current policy_register row for this contract.",
+                    record.get("gender_raw"),
+                    record.get("current_gender"),
+                    0.86,
+                )
+            )
+        if not pd.isna(record.get("annual_pension")) and not pd.isna(record.get("current_annual_pension")):
+            current_amount = float(record.get("current_annual_pension") or 0)
+            uploaded_amount = float(record.get("annual_pension") or 0)
+            if abs(current_amount - uploaded_amount) > 0.01:
+                issues.append(
+                    self._validation_issue(
+                        "annual_pension",
+                        "warning",
+                        "static_field_mismatch",
+                        "annual_pension differs from the current policy_register row for this contract.",
+                        record.get("annual_pension_raw"),
+                        str(current_amount),
+                        0.82,
+                    )
+                )
+        return issues
+
+    def _append_required_issue(self, issues: list[dict[str, Any]], record: dict[str, Any], field_name: str, value: Any) -> None:
+        if str(value or "").strip():
+            return
+        issues.append(self._validation_issue(field_name, "critical", "missing_required_field", f"{field_name} is required.", value))
+
+    def _validation_issue(
+        self,
+        field_name: str,
+        severity: str,
+        issue_type: str,
+        description: str,
+        current_value: Any,
+        ai_suggestion: Any | None = None,
+        ai_confidence: float | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "field_name": field_name,
+            "severity": severity,
+            "issue_type": issue_type,
+            "description": description,
+            "current_value": "" if current_value is None or pd.isna(current_value) else str(current_value),
+            "ai_suggestion": None if ai_suggestion is None or pd.isna(ai_suggestion) else str(ai_suggestion),
+            "ai_confidence": ai_confidence,
+        }
+
+    def _population_row_from_pandas_record(self, record: dict[str, Any]) -> PopulationCsvNormalizedRow | None:
+        member_id = str(record.get("member_id") or "").strip()
+        if not member_id or pd.isna(record.get("date_of_birth")) or record.get("gender") not in {"M", "F"} or pd.isna(record.get("annual_pension")):
+            return None
+        status = str(record.get("status") or "active").strip().lower()
+        if status not in ALLOWED_POPULATION_STATUSES:
+            return None
+        return PopulationCsvNormalizedRow(
+            member_id=member_id,
+            policy_id=str(record.get("policy_id") or "").strip() or (None if pd.isna(record.get("current_policy_id")) else str(record.get("current_policy_id") or "").strip() or None),
+            date_of_birth=record["date_of_birth"],
+            gender=record["gender"],
+            smoker_status=str(record.get("smoker_status") or "").strip() or (None if pd.isna(record.get("current_smoker_status")) else record.get("current_smoker_status")),
+            postcode=str(record.get("postcode") or "").strip() or (None if pd.isna(record.get("current_postcode")) else record.get("current_postcode")),
+            annual_pension=Decimal(str(record["annual_pension"])),
+            pension_currency=str(record.get("pension_currency") or "GBP").strip().upper() or "GBP",
+            escalation_type=str(record.get("escalation_type") or "").strip() or (None if pd.isna(record.get("current_escalation_type")) else record.get("current_escalation_type")),
+            escalation_rate=Decimal(str(record.get("escalation_rate"))) if not pd.isna(record.get("escalation_rate")) else None,
+            status=status,
+            date_of_death=None if pd.isna(record.get("date_of_death")) else record.get("date_of_death"),
+            commencement_date=None if pd.isna(record.get("commencement_date")) else record.get("commencement_date"),
+            effective_from=None if pd.isna(record.get("effective_from")) else record.get("effective_from"),
+            verification_reference=str(record.get("verification_reference") or "").strip() or None,
+        )
+
+    def _serialize_population_row_for_pipeline(
+        self,
+        contract_id: str,
+        row: PopulationCsvNormalizedRow | None,
+    ) -> dict[str, Any]:
+        if row is None:
+            return {"contract_id": contract_id}
+        return {
+            "contract_id": contract_id,
+            "member_id": row.member_id,
+            "policy_id": row.policy_id,
+            "date_of_birth": row.date_of_birth.isoformat(),
+            "gender": row.gender,
+            "smoker_status": row.smoker_status,
+            "postcode": row.postcode,
+            "annual_pension": float(row.annual_pension),
+            "pension_currency": row.pension_currency,
+            "escalation_type": row.escalation_type,
+            "escalation_rate": float(row.escalation_rate) if row.escalation_rate is not None else None,
+            "status": row.status,
+            "date_of_death": row.date_of_death.isoformat() if row.date_of_death else None,
+            "commencement_date": row.commencement_date.isoformat() if row.commencement_date else None,
+            "effective_from": row.effective_from.isoformat() if row.effective_from else None,
+            "verification_reference": row.verification_reference,
+        }
+
+    def _serialize_population_csv_issue(self, issue: PopulationCsvIssue) -> dict[str, Any]:
+        return {
+            "field_name": issue.field_name,
+            "severity": issue.severity,
+            "issue_type": issue.issue_type,
+            "description": issue.description,
+            "current_value": issue.current_value,
+            "ai_suggestion": issue.ai_suggestion,
+            "ai_confidence": issue.ai_confidence,
+        }
+
+    def _validation_status_from_issues(self, issues: list[dict[str, Any]]) -> str:
+        if any(issue["severity"] == "critical" for issue in issues):
+            return "critical"
+        if any(issue["severity"] == "warning" for issue in issues):
+            return "warning"
+        if any(issue["severity"] == "info" for issue in issues):
+            return "warning"
+        return "valid"
+
+    def _build_exception_templates(
+        self,
+        cession_file: CessionFile,
+        file_type: str,
+        template_records: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         if file_type == "Fixed Leg":
             resolved_by_stage = cession_file.stage in {"processed", "approved"}
             resolution = "accepted" if resolved_by_stage else "pending"
@@ -1579,19 +2204,23 @@ class ClaimsService:
             ]
 
         if file_type == "Pension Status":
-            return [
-                {
-                    "row_number": 3,
-                    "field_name": "date_of_death",
-                    "severity": "warning",
-                    "issue_type": "verification_gap",
-                    "description": "Death update requires administrator verification reference",
-                    "current_value": "2025-01-18",
-                    "ai_suggestion": "Attach verification reference",
-                    "ai_confidence": 0.84,
-                    "resolution": "pending" if cession_file.critical_count else "accepted",
-                }
-            ]
+            exceptions: list[dict[str, Any]] = []
+            for record in template_records:
+                for issue in record.get("validation_issues", []):
+                    exceptions.append(
+                        {
+                            "row_number": record["row_number"],
+                            "field_name": issue["field_name"],
+                            "severity": issue["severity"],
+                            "issue_type": issue["issue_type"],
+                            "description": issue["description"],
+                            "current_value": issue.get("current_value"),
+                            "ai_suggestion": issue.get("ai_suggestion"),
+                            "ai_confidence": issue.get("ai_confidence"),
+                            "resolution": "pending",
+                        }
+                    )
+            return exceptions
 
         if file_type == "Mortality Report":
             return [
@@ -1644,6 +2273,17 @@ class ClaimsService:
             "verified_by": "§7.3 Material Change Reporting",
             "activity_code": "§7.3 Material Change Reporting",
         }.get(item.field_name, "Operational rule")
+        clause_reference = {
+            "fixed_leg_amount": "SQL-CONTRACT-FIXED-LEG",
+            "fee_amount": "SQL-CONTRACT-FIXED-LEG",
+            "value_date": "SQL-CONTRACT-CURRENCY",
+            "member_id": "SQL-POLICY-REGISTER-SCOPE",
+            "status": "SQL-POLICY-REGISTER-SCD2",
+            "effective_from": "SQL-POLICY-REGISTER-SCD2",
+            "date_of_death": "SQL-POLICY-DEATH-DATE",
+            "verified_by": "SQL-MOVEMENT-REPORTING",
+            "activity_code": "SQL-MOVEMENT-REPORTING",
+        }.get(item.field_name, clause_reference)
         return {
             "severity": item.severity,
             "row": item.row_number,
@@ -1809,122 +2449,167 @@ class ClaimsService:
         provided_cedent: Any | None = None,
         provided_contract: Contract | None = None,
     ) -> dict[str, Any]:
-        lower_name = filename.lower()
-        lower_content = content.lower()
+        logger.info("Deriving cession file profile from filename and DB context")
+        logger.debug("Cession profile derive filename=%s provided_cedent=%s provided_contract=%s", filename, provided_cedent, provided_contract)
+        filename_tokens = self._filename_tokens(filename)
+        content_columns = self._content_columns(content)
+        member_ids = self._extract_member_ids_from_content(content)
 
-        if "bavarian" in lower_name and "fixed_leg" in lower_name:
-            return {
-                "file_type": "Fixed Leg",
-                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1201"),
-                "cedent_name": "Bavarian Industrial Fund",
-                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2025-002",
-                "period": "2025 Q1",
-                "file_type_confidence": 0.94,
-                "cedent_confidence": 0.99,
-                "contract_confidence": 0.99,
-                "record_count": 4,
-                "iris_reasoning": "Filename token match (bavarian_fixed_leg_q1.csv) + column signature + cedant SFTP key matched.",
-            }
-
-        if "northstar" in lower_name and "status" in lower_name:
-            return {
-                "file_type": "Pension Status",
-                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1042"),
-                "cedent_name": "Northstar Pension Trust",
-                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2024-019",
-                "period": "2025 Q1",
-                "file_type_confidence": 0.97,
-                "cedent_confidence": 0.99,
-                "contract_confidence": 0.96,
-                "record_count": 18420 if not content else self._count_records(filename, content),
-                "iris_reasoning": "Filename token match + member-level schema signature + known Northstar endpoint fingerprint matched.",
-            }
-
-        if "helvetia" in lower_name and "mortality" in lower_name:
-            return {
-                "file_type": "Mortality Report",
-                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1087"),
-                "cedent_name": "Helvetia Retirement Fund",
-                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2024-031",
-                "period": "2025 Q1",
-                "file_type_confidence": 0.96,
-                "cedent_confidence": 0.98,
-                "contract_confidence": 0.95,
-                "record_count": 3200 if not content else self._count_records(filename, content),
-                "iris_reasoning": "Filename token match + mortality event headers + Helvetia contract roster matched.",
-            }
-
-        if "maple" in lower_name and "activity" in lower_name:
-            return {
-                "file_type": "Activity Report",
-                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1156"),
-                "cedent_name": "Maple Leaf Pension Plan",
-                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2024-044",
-                "period": "2025 Q1",
-                "file_type_confidence": 0.91,
-                "cedent_confidence": 0.97,
-                "contract_confidence": 0.9,
-                "record_count": 1850 if not content else self._count_records(filename, content),
-                "iris_reasoning": "Filename token match + activity file header pattern + Maple cedant mapping key matched.",
-            }
-
-        if "northstar" in lower_name and "spouse" in lower_name:
-            return {
-                "file_type": "Spouse Events",
-                "cedent_id": provided_contract.cedent_id if provided_contract else (provided_cedent.cedent_id if provided_cedent else "CED-1042"),
-                "cedent_name": "Northstar Pension Trust",
-                "contract_id": provided_contract.contract_id if provided_contract else "LSC-2024-019",
-                "period": "2025 Q1",
-                "file_type_confidence": 0.88,
-                "cedent_confidence": 0.97,
-                "contract_confidence": 0.91,
-                "record_count": self._count_records(filename, content),
-                "iris_reasoning": "Spouse event headers detected and matched to Northstar contract file templates.",
-            }
-
-        inferred_cedent = provided_cedent
-        if inferred_cedent is None:
-            inferred_cedent = next(
-                (
-                    item
-                    for item in self.repository.list_all_cedents()
-                    if item.legal_entity_name.lower().split()[0] in lower_name
-                ),
-                None,
-            )
         inferred_contract = provided_contract
-        if inferred_contract is None and inferred_cedent is not None:
-            inferred_contract = next(
-                (
-                    item
-                    for item in self.repository.list_all_contracts()
-                    if item.cedent_id == inferred_cedent.cedent_id
-                ),
-                None,
-            )
+        inferred_cedent = provided_cedent
+        member_overlap_count = 0
+        if inferred_contract is None and member_ids:
+            overlap = self.repository.find_contract_by_member_overlap(member_ids)
+            if overlap:
+                inferred_contract = self.repository.get_contract(overlap[0])
+                member_overlap_count = overlap[1]
+        if inferred_cedent is None and inferred_contract is not None:
+            inferred_cedent = self.repository.get_cedent(inferred_contract.cedent_id)
+        if inferred_cedent is None:
+            inferred_cedent = self._match_cedent_from_filename(filename_tokens)
+        if inferred_contract is None:
+            inferred_contract = self._match_contract_from_filename(filename_tokens, inferred_cedent)
 
-        file_type = "Unclassified"
-        if "fixed_leg_amount" in lower_content:
-            file_type = "Fixed Leg"
-        elif "date_of_death" in lower_content:
-            file_type = "Pension Status"
-        elif "death_date" in lower_content:
-            file_type = "Mortality Report"
-        elif "activity_code" in lower_content:
-            file_type = "Activity Report"
+        file_type, file_type_confidence, file_type_basis = self._detect_file_type_from_filename_and_columns(
+            filename_tokens,
+            content_columns,
+        )
+        period = self._period_from_filename(filename)
+        record_count = self._count_records(filename, content)
+        cedent_confidence = 1.0 if provided_cedent else self._confidence_from_match(inferred_cedent is not None, filename_tokens)
+        contract_confidence = 1.0 if provided_contract else (
+            min(0.98, 0.70 + (member_overlap_count / max(len(member_ids), 1)) * 0.25)
+            if member_overlap_count
+            else self._confidence_from_match(inferred_contract is not None, filename_tokens)
+        )
+
+        reasoning_parts = [file_type_basis]
+        if inferred_cedent:
+            reasoning_parts.append(f'cedant matched to "{inferred_cedent.legal_entity_name}" from filename/contract context')
+        if inferred_contract:
+            reasoning_parts.append(f"contract matched to {inferred_contract.contract_id}")
+        if member_overlap_count:
+            reasoning_parts.append(f"{member_overlap_count} uploaded member id(s) matched current policy_register rows")
 
         return {
             "file_type": file_type,
             "cedent_id": inferred_contract.cedent_id if inferred_contract else (inferred_cedent.cedent_id if inferred_cedent else None),
             "cedent_name": inferred_cedent.legal_entity_name if inferred_cedent else "Unmapped cedent",
             "contract_id": inferred_contract.contract_id if inferred_contract else None,
-            "period": "2025 Q1",
-            "file_type_confidence": 0.61,
-            "cedent_confidence": 0.64 if inferred_cedent else 0.22,
-            "contract_confidence": 0.55 if inferred_contract else 0.18,
-            "record_count": self._count_records(filename, content),
-            "iris_reasoning": "Low-confidence generic classifier result. Manual review recommended.",
+            "period": period,
+            "file_type_confidence": file_type_confidence,
+            "cedent_confidence": cedent_confidence,
+            "contract_confidence": contract_confidence,
+            "record_count": record_count,
+            "iris_reasoning": "; ".join(reasoning_parts) + ".",
         }
+
+    def _normalize_file_type(self, value: str | None) -> str | None:
+        if not value:
+            return None
+        normalized = value.strip().lower().replace("_", " ").replace("-", " ")
+        for option in FILE_TYPE_OPTIONS:
+            if normalized == option.lower():
+                return option
+        return None
+
+    def _filename_tokens(self, filename: str) -> set[str]:
+        stem = Path(filename).stem.lower()
+        return {token for token in re.split(r"[^a-z0-9]+", stem) if token}
+
+    def _content_columns(self, content: str) -> set[str]:
+        if not content.strip():
+            return set()
+        try:
+            reader = csv.reader(io.StringIO(content.lstrip("\ufeff")))
+            headers = next(reader, [])
+        except csv.Error:
+            return set()
+        return {self._normalize_column_name(str(header)) for header in headers if str(header).strip()}
+
+    def _normalize_column_name(self, value: str) -> str:
+        return value.strip().lower().replace(" ", "_").replace("-", "_")
+
+    def _extract_member_ids_from_content(self, content: str) -> list[str]:
+        if not content.strip():
+            return []
+        try:
+            frame = pd.read_csv(io.StringIO(content), dtype=str).fillna("")
+        except Exception:
+            return []
+        frame.columns = [self._normalize_column_name(str(column)) for column in frame.columns]
+        member_column = next((column for column in ("member_id", "pensioner_ref") if column in frame.columns), None)
+        if member_column is None:
+            return []
+        return [value for value in frame[member_column].astype(str).str.strip().tolist() if value]
+
+    def _detect_file_type_from_filename_and_columns(
+        self,
+        filename_tokens: set[str],
+        content_columns: set[str],
+    ) -> tuple[str, float, str]:
+        if {"fixed", "leg"} <= filename_tokens or "fixed_leg_amount" in content_columns:
+            return "Fixed Leg", 0.94, "file type derived from fixed-leg filename tokens/header signature"
+        if {"mortality"} & filename_tokens or "death_date" in content_columns or "cause_code" in content_columns:
+            return "Mortality Report", 0.92, "file type derived from mortality filename tokens/header signature"
+        if {"spouse", "beneficiary"} & filename_tokens or "spouse_dob" in content_columns or "benefit_pct" in content_columns:
+            return "Spouse Events", 0.90, "file type derived from spouse/beneficiary filename tokens/header signature"
+        if {"activity", "movement"} & filename_tokens or "activity_code" in content_columns:
+            return "Activity Report", 0.88, "file type derived from activity filename tokens/header signature"
+        if {"fee", "fees"} & filename_tokens or "fee_amount" in content_columns:
+            return "Fee Schedule", 0.86, "file type derived from fee filename tokens/header signature"
+        if {"status", "pensioner", "pensioners"} & filename_tokens or (
+            "member_id" in content_columns and "status" in content_columns
+        ):
+            return "Pension Status", 0.96, "file type derived from pension-status filename tokens/header signature"
+        return "Unclassified", 0.35, "file type could not be confidently derived from filename or headers"
+
+    def _match_cedent_from_filename(self, filename_tokens: set[str]) -> Any | None:
+        stopwords = {"pension", "pensions", "trust", "fund", "plan", "retirement", "corporate", "industrial", "the"}
+        best_match = None
+        best_score = 0
+        for cedent in self.repository.list_all_cedents():
+            candidate_tokens = self._filename_tokens(cedent.legal_entity_name)
+            if cedent.trading_name:
+                candidate_tokens |= self._filename_tokens(cedent.trading_name)
+            candidate_tokens.add(cedent.cedent_id.lower())
+            scored_tokens = {token for token in candidate_tokens if token not in stopwords}
+            score = len(filename_tokens & scored_tokens)
+            if score > best_score:
+                best_match = cedent
+                best_score = score
+        return best_match if best_score > 0 else None
+
+    def _match_contract_from_filename(self, filename_tokens: set[str], cedent: Any | None) -> Contract | None:
+        best_match = None
+        best_score = 0
+        for contract in self.repository.list_all_contracts():
+            candidate_tokens = self._filename_tokens(contract.contract_id) | self._filename_tokens(contract.contract_name)
+            score = len(filename_tokens & candidate_tokens)
+            if cedent and contract.cedent_id == cedent.cedent_id:
+                score += 2
+            if score > best_score:
+                best_match = contract
+                best_score = score
+        return best_match if best_score > 0 else None
+
+    def _confidence_from_match(self, matched: bool, filename_tokens: set[str]) -> float:
+        if not matched:
+            return 0.22
+        return 0.92 if len(filename_tokens) >= 3 else 0.78
+
+    def _period_from_filename(self, filename: str) -> str:
+        stem = Path(filename).stem.lower()
+        compact_match = re.search(r"(20\d{2})\s*[-_ ]?\s*q([1-4])", stem)
+        if compact_match:
+            return f"{compact_match.group(1)} Q{compact_match.group(2)}"
+        reversed_match = re.search(r"q([1-4])\s*[-_ ]?\s*(20\d{2})", stem)
+        if reversed_match:
+            return f"{reversed_match.group(2)} Q{reversed_match.group(1)}"
+        year_match = re.search(r"(20\d{2})", stem)
+        if year_match:
+            return f"{year_match.group(1)} Q1"
+        return "Unspecified period"
 
     def _mock_settlement_for_contract(self, contract_id: str) -> dict[str, Any]:
         settlements = load_mock_data("settlements_seed.json")
@@ -1972,32 +2657,23 @@ class ClaimsService:
         return True
 
     def _build_settlement_metrics(self, settlements: list[dict[str, Any]]) -> dict[str, Any]:
-        metrics = deepcopy(SETTLEMENT_METRICS_BASELINE)
-        seeded_rows = {item["settlement_id"]: item for item in self._load_settlement_seed_rows()}
-        for current in settlements:
-            seeded = seeded_rows.get(current["settlement_id"], current)
-            seeded_status = seeded.get("status")
-            current_status = current.get("status")
-            if seeded_status == current_status:
-                continue
-
-            amount_delta = round(abs(self._to_float(current.get("net_amount"))))
-            if seeded_status == "pending_approval":
-                metrics["pending_approval"] = max(metrics["pending_approval"] - 1, 0)
-                metrics["pending_amount"] = max(metrics["pending_amount"] - amount_delta, 0)
-            elif seeded_status == "disputed":
-                metrics["dispute_count"] = max(metrics["dispute_count"] - 1, 0)
-            elif seeded_status == "paid":
-                metrics["paid_ytd"] = max(metrics["paid_ytd"] - 1, 0)
-
-            if current_status == "pending_approval":
-                metrics["pending_approval"] += 1
-                metrics["pending_amount"] += amount_delta
-            elif current_status == "disputed":
-                metrics["dispute_count"] += 1
-            elif current_status == "paid":
-                metrics["paid_ytd"] += 1
-        return metrics
+        pending_statuses = {
+            "variance_review",
+            "ready_for_payment",
+            "pending_reconciliation",
+            "compliance_hold",
+            "pending_approval",
+            "held",
+            "disputed",
+        }
+        return {
+            "pending_approval": sum(1 for item in settlements if item.get("status") == "pending_approval"),
+            "pending_amount": round(
+                sum(self._to_float(item.get("floating_leg_amount")) for item in settlements if item.get("status") in pending_statuses)
+            ),
+            "paid_ytd": sum(1 for item in settlements if item.get("status") in {"approved", "paid"}),
+            "dispute_count": sum(1 for item in settlements if item.get("status") == "disputed"),
+        }
 
     def _serialize_settlement_list_item(self, settlement: dict[str, Any]) -> dict[str, Any]:
         contract = self.repository.get_contract(settlement.get("contract_id"))
@@ -2007,8 +2683,11 @@ class ClaimsService:
         cedent_name = settlement.get("cedent_name") or (cedent.legal_entity_name if cedent else "Unmapped cedent")
         return {
             "settlement_id": settlement["settlement_id"],
+            "settlement_display_id": settlement.get("settlement_display_id"),
             "contract_id": settlement.get("contract_id"),
+            "contract_display_id": settlement.get("contract_display_id") or settlement.get("contract_id"),
             "contract_name": settlement.get("contract_name") or (contract.contract_name if contract else "Unmapped contract"),
+            "contract_version": settlement.get("contract_version") or (contract.contract_version if contract else "v1.0"),
             "cedent_id": settlement.get("cedent_id"),
             "cedent_name": cedent_name,
             "period_label": settlement.get("period_label"),
@@ -2019,6 +2698,7 @@ class ClaimsService:
             "direction": settlement.get("direction"),
             "payment_due": settlement.get("payment_due_date"),
             "status": settlement.get("status", "pending_approval"),
+            "iris_recommendation": settlement.get("iris_recommendation"),
         }
 
     def _get_settlement_or_error(self, settlement_id: str) -> dict[str, Any]:
@@ -2036,7 +2716,9 @@ class ClaimsService:
         cedent_name = settlement.get("cedent_name") or (cedent.legal_entity_name if cedent else "Unmapped cedent")
         return {
             "settlement_id": settlement["settlement_id"],
+            "settlement_display_id": settlement.get("settlement_display_id"),
             "contract_id": settlement.get("contract_id"),
+            "contract_display_id": settlement.get("contract_display_id") or settlement.get("contract_id"),
             "contract_name": settlement.get("contract_name") or (contract.contract_name if contract else "Unmapped contract"),
             "contract_version": settlement.get("contract_version") or (contract.contract_version if contract else "v1.0"),
             "cedent_id": settlement.get("cedent_id"),
@@ -2221,6 +2903,9 @@ class ClaimsService:
             "cedent_name",
             "contract_name",
             "contract_version",
+            "settlement_display_id",
+            "contract_display_id",
+            "iris_recommendation",
             "period_label",
             "period_start",
             "period_end",
@@ -2456,7 +3141,7 @@ class ClaimsService:
     def _count_records(self, filename: str, content: str) -> int:
         if not content.strip():
             return 0
-        if filename.lower().endswith(".csv"):
+        if filename.lower().endswith((".csv", ".xlsx", ".xlsm")):
             return len(self._parse_csv_rows(content))
         return max(len([line for line in content.splitlines() if line.strip()]) - 1, 0)
 

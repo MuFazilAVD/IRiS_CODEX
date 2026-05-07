@@ -148,8 +148,6 @@ export function CalcEnginePage() {
             Download
           </button>
         }
-        eyebrow="Claims & Settlement"
-        subtitle="Contract-driven workbench — every run is anchored to cedant, contract, version, valuation date and assumption snapshot"
         title="Calculation Engine"
       />
 

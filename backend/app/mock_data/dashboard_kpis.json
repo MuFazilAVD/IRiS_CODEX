@@ -25,6 +25,38 @@
       { "label": "API Failure Alerts", "value": "0", "trend": "neutral", "trend_value": "All healthy", "subtitle": "No active incidents", "border_color": "green" },
       { "label": "System Performance", "value": "Nominal", "trend": "neutral", "trend_value": "p95 < 800ms", "subtitle": "Latency healthy", "border_color": "green" },
       { "label": "Pending Admin Approvals", "value": "8", "trend": "neutral", "trend_value": "Cross-team", "subtitle": "Approvals open", "border_color": "blue" }
+    ],
+    "supplementary_panels": [
+      {
+        "id": "integration_health",
+        "title": "Integration Health",
+        "variant": "status_grid",
+        "meta_text": "10 endpoints",
+        "items": [
+          { "id": "atlas_sftp", "title": "SFTP - Atlas", "badge": "Degraded" },
+          { "id": "helvetia_sftp", "title": "SFTP - Helvetia", "badge": "Healthy" },
+          { "id": "northstar_sftp", "title": "SFTP - Northstar", "badge": "Healthy" },
+          { "id": "bloomberg_fx", "title": "Bloomberg FX Feed", "badge": "Healthy" },
+          { "id": "cmi_sync", "title": "CMI Mortality Sync", "badge": "Healthy" },
+          { "id": "fincen_api", "title": "FinCEN API", "badge": "Healthy" },
+          { "id": "ofac_sync", "title": "OFAC SDN Sync", "badge": "Healthy" },
+          { "id": "lovable_gateway", "title": "Lovable AI Gateway", "badge": "Healthy" },
+          { "id": "audit_warehouse", "title": "Audit Warehouse", "badge": "Healthy" },
+          { "id": "reporting_engine", "title": "Reporting Engine", "badge": "Healthy" }
+        ]
+      },
+      {
+        "id": "pending_admin_approvals",
+        "title": "Pending Admin Approvals",
+        "variant": "list",
+        "action_label": "Open ->",
+        "action": "navigate:/worklist",
+        "items": [
+          { "id": "REQ-1101", "title": "REQ-1101", "description": "Elevate u-205 to Underwriting Lead - h.suzuki", "badge": "Pending" },
+          { "id": "REQ-1102", "title": "REQ-1102", "description": "Approve mortality table CMI-2024 refresh - system", "badge": "Pending" },
+          { "id": "REQ-1103", "title": "REQ-1103", "description": "Reinstate locked cedant - Bavarian - j.morales", "badge": "Pending" }
+        ]
+      }
     ]
   },
   "underwriter": {
@@ -121,6 +153,33 @@
       { "label": "Escalated Tasks", "value": "4", "trend": "up", "trend_value": "Risk Committee", "subtitle": "Priority queue", "border_color": "red" },
       { "label": "Contracts Under Review", "value": "2", "trend": "neutral", "trend_value": "Open review", "subtitle": "Watchlist contracts", "border_color": "amber" },
       { "label": "Screening Coverage", "value": "98.7%", "trend": "neutral", "trend_value": "Compliant", "subtitle": "Coverage rate", "border_color": "green" }
+    ],
+    "supplementary_panels": [
+      {
+        "id": "audit_risk_heatmap",
+        "title": "Audit Risk Heatmap",
+        "variant": "heatmap",
+        "meta_text": "open exceptions",
+        "heatmap_rows": [
+          { "area": "Underwriting", "low": 2, "medium": 1, "high": 0 },
+          { "area": "Cession", "low": 4, "medium": 2, "high": 1 },
+          { "area": "Settlement", "low": 1, "medium": 2, "high": 1 },
+          { "area": "Compliance", "low": 3, "medium": 0, "high": 0 },
+          { "area": "Admin", "low": 1, "medium": 1, "high": 0 }
+        ]
+      },
+      {
+        "id": "active_screening_hits",
+        "title": "Active Screening Hits",
+        "variant": "list",
+        "action_label": "Open ->",
+        "action": "navigate:/compliance/sanctions",
+        "items": [
+          { "id": "hit-001", "title": "Sergei V. Markov", "description": "OFAC SDN - conf 0.88", "badge": "Escalated" },
+          { "id": "hit-002", "title": "John A. Whitcomb", "description": "FinCEN 314(a) - conf 0.71", "badge": "Pending Review" },
+          { "id": "hit-003", "title": "Atlas Corporate Pensions", "description": "OFAC SDN - conf 0.42", "badge": "Under Review" }
+        ]
+      }
     ]
   }
 }

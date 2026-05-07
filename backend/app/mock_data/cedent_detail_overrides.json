@@ -521,5 +521,249 @@
         "detail": "OFAC, FinCEN"
       }
     ]
+  },
+  "CED-1202": {
+    "pension_scheme": {
+      "scheme_id": "PS-1202",
+      "scheme_name": "Northstar Pension Trust Defined Benefit Scheme",
+      "scheme_type": "Defined Benefit",
+      "trustee_name": "Northstar Pension Trust Trustee",
+      "scheme_registration_number": "",
+      "scheme_country": "UK",
+      "scheme_currency": "GBP",
+      "benefit_type": "Final Salary",
+      "retirement_age_rules": "",
+      "indexation_rules": "",
+      "spouse_benefits": "",
+      "guaranteed_period_rules": "",
+      "deferred_member_rules": "",
+      "trustee_type": "",
+      "administrator": "",
+      "total_members": "",
+      "active_members": "",
+      "deferred_members": "",
+      "pensioner_members": "",
+      "total_assets_amount": "",
+      "total_assets_currency": "GBP",
+      "total_liabilities_amount": "",
+      "funding_level_pct": "",
+      "valuation_date": "",
+      "actuarial_firm": "",
+      "investment_consultant": ""
+    },
+    "key_contacts": [
+      {
+        "category": "Executive Sponsor",
+        "full_name": "Alex Morgan",
+        "designation": "",
+        "department": "",
+        "email": "",
+        "phone": "",
+        "mobile": "",
+        "preferred_contact": "Email",
+        "language": "English"
+      }
+    ],
+    "financial_treasury": {
+      "bank_name": "",
+      "account_number": "",
+      "sort_code": "",
+      "iban": "",
+      "swift_bic": "",
+      "account_currency": "GBP",
+      "payment_method": "Wire",
+      "settlement_instructions": ""
+    },
+    "contract_readiness": {
+      "isda_signed": false,
+      "isda_date": "",
+      "csa_signed": false,
+      "csa_date": "",
+      "nda_signed": false,
+      "nda_date": "",
+      "kyc_complete": false,
+      "aml_complete": false,
+      "data_sharing_agreed": false,
+      "file_format_agreed": false,
+      "sftp_configured_tested": false,
+      "notes": ""
+    },
+    "population_exposure": {
+      "total_lives": "",
+      "average_age": "",
+      "pct_male": "",
+      "pct_female": "",
+      "total_annuity_pa_amount": "",
+      "currency": "GBP",
+      "avg_annuity_per_life": "",
+      "geographic_spread": "",
+      "age_distribution": "",
+      "mortality_table_used": "CMI S3"
+    },
+    "compliance_kyc": {
+      "kyc_status": "pending",
+      "kyc_completed_date": "",
+      "kyc_provider": "",
+      "aml_status": "pending",
+      "pep_check_done": false,
+      "beneficial_owner_verified": false,
+      "high_risk_jurisdiction": false,
+      "risk_rating": "medium",
+      "review_frequency": "",
+      "next_review_date": "",
+      "notes": ""
+    },
+    "sanction_screening": {
+      "total_scans": 2,
+      "open_hits": 1,
+      "sources_monitored": 2,
+      "next_periodic_due": "2025-09-15",
+      "source_status": [
+        {
+          "source": "OFAC",
+          "status": "Cleared",
+          "last_scan": "2025-03-15",
+          "reference": "REF-50000",
+          "matches": 0
+        },
+        {
+          "source": "FinCEN",
+          "status": "Cleared",
+          "last_scan": "2025-03-15",
+          "reference": "REF-50001",
+          "matches": 0
+        }
+      ],
+      "history": [
+        {
+          "id": "CED-1202-OFAC-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "OFAC",
+          "result": "cleared",
+          "reference_id": "REF-50000",
+          "matches": 0
+        },
+        {
+          "id": "CED-1202-FINCEN-001",
+          "screening_date": "2025-03-15T00:00:00Z",
+          "source": "FinCEN",
+          "result": "cleared",
+          "reference_id": "REF-50001",
+          "matches": 0
+        }
+      ]
+    },
+    "regulatory_docs": [
+      {
+        "doc_type": "",
+        "doc_name": "",
+        "doc_date": "",
+        "expiry_date": "",
+        "regulator": "",
+        "file_name": ""
+      }
+    ],
+    "operational_connectivity": {
+      "sftp_host": "",
+      "sftp_port": 22,
+      "sftp_username": "",
+      "sftp_key_fingerprint": "",
+      "sftp_status": "pending",
+      "file_format": "CSV",
+      "file_encoding": "UTF-8",
+      "submission_frequency": "Quarterly",
+      "notification_email": ""
+    },
+    "actuarial_preferences": {
+      "mortality_table": "CMI S3",
+      "improvement_scale": "CMI 2022",
+      "base_year": "",
+      "long_term_rate": "",
+      "initial_rate": "",
+      "convergence_period": "",
+      "age_rating_adjustment": "",
+      "loading_factor": "",
+      "discount_rate": "",
+      "discount_basis": "",
+      "valuation_method": "",
+      "experience_study_frequency": "",
+      "notes": ""
+    },
+    "access_beneficiary_rules": [
+      {
+        "rule_type": "spousal",
+        "pct_benefit": "",
+        "conditions": "",
+        "rule_description": ""
+      }
+    ],
+    "audit_approval": [
+      {
+        "timestamp": "2026-05-07 09:22:20",
+        "actor": "Underwriter",
+        "action": "Updated access beneficiary rules section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:19",
+        "actor": "Underwriter",
+        "action": "Updated actuarial preferences section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:18",
+        "actor": "Underwriter",
+        "action": "Updated operational connectivity section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:18",
+        "actor": "Underwriter",
+        "action": "Updated regulatory docs section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:18",
+        "actor": "Underwriter",
+        "action": "Updated compliance kyc section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:18",
+        "actor": "Underwriter",
+        "action": "Updated population exposure section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:17",
+        "actor": "Underwriter",
+        "action": "Updated contract readiness section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:17",
+        "actor": "Underwriter",
+        "action": "Updated financial treasury section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:17",
+        "actor": "Underwriter",
+        "action": "Updated key contacts section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-07 09:22:16",
+        "actor": "Underwriter",
+        "action": "Updated pension scheme section",
+        "detail": "User-saved section change"
+      },
+      {
+        "timestamp": "2026-05-05 10:30:00",
+        "actor": "IRiS Bootstrap",
+        "action": "Seeded cedant profile",
+        "detail": "Default underwriting data prepared"
+      }
+    ]
   }
 }

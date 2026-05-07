@@ -176,7 +176,7 @@ export function PipelinePage() {
       <Breadcrumbs items={[{ label: 'Operations', to: '/claims/cession-files' }, { label: pipeline.filename }]} />
       <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-iris-text-muted">Operations Pipeline</p>
+          {/* <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-iris-text-muted">Operations Pipeline</p> */}
           <h1 className="text-[28px] font-bold leading-tight text-iris-text-primary">{pipeline.filename}</h1>
           <p className="mt-1.5 text-[13px] text-iris-text-secondary">
             {pipeline.cedent} · {pipeline.period ?? 'Current Period'} · {pipeline.process_id}

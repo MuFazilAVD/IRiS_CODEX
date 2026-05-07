@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Check, FileUp, RefreshCw, Sparkles, Upload, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, FileUp, RefreshCw, Sparkles, Upload, X } from 'lucide-react'
 
 import { api } from '../../../api/client'
 import { formatCurrency, formatRelativeDate } from '../../../utils/formatters'
@@ -50,6 +50,12 @@ interface FileProcessingModalProps {
   contractOptions: ContractListItem[]
   onClose: () => void
   onRefresh: () => Promise<unknown> | void
+}
+
+interface CessionFileProcessingWorkflowProps extends FileProcessingModalProps {
+  presentation?: 'modal' | 'page'
+  backLabel?: string
+  onFileCreated?: (fileId: string) => void
 }
 
 const PIPELINE_STEPS: Array<{ id: ClaimsStep; label: string }> = [
@@ -116,14 +122,17 @@ const SAMPLE_FILES: Array<{ name: string; content: string; type: string }> = [
   },
 ]
 
-export function FileProcessingModal({
+export function CessionFileProcessingWorkflow({
   fileId,
   startInUpload = false,
   cedentOptions,
   contractOptions,
   onClose,
   onRefresh,
-}: FileProcessingModalProps) {
+  presentation = 'page',
+  backLabel = 'Back to Cession Files',
+  onFileCreated,
+}: CessionFileProcessingWorkflowProps) {
   const [activeFileId, setActiveFileId] = useState<string | null>(fileId ?? null)
   const [selectedStep, setSelectedStep] = useState<ClaimsStep>(startInUpload ? 'upload' : 'detect')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -241,8 +250,9 @@ export function FileProcessingModal({
       if (currentStep === 'validate') {
         await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/validate`, {})
         const refreshed = await detailQuery.refetch()
-        setExceptionActions(buildExceptionState(refreshed.data?.exceptions.items ?? []))
-        setSelectedStep('exceptions')
+        const nextExceptions = refreshed.data?.exceptions.items ?? []
+        setExceptionActions(buildExceptionState(nextExceptions))
+        setSelectedStep(nextExceptions.length ? 'exceptions' : 'process')
         return
       }
 
@@ -294,10 +304,15 @@ export function FileProcessingModal({
 
     const formData = new FormData()
     formData.append('file', selectedFile)
+    if (uploadMode === 'manual') {
+      formData.append('file_type', manualUploadFileType)
+    }
     const { data } = await api.post<ClaimsUploadResponse>('/claims/cession-files/upload', formData)
     setActiveFileId(data.file_id)
     initializedFileId.current = null
     setPendingManualType(uploadMode === 'manual' ? manualUploadFileType : null)
+    setSelectedStep('detect')
+    onFileCreated?.(data.file_id)
     await Promise.resolve(onRefresh())
     setNotice({
       tone: 'success',
@@ -338,6 +353,146 @@ export function FileProcessingModal({
     setSelectedFile(new File([sample.content], sample.name, { type: sample.type }))
   }
 
+  const isPage = presentation === 'page'
+  const pageTitle = activeFileId && detail ? `${detail.file_id} · ${detail.filename}` : 'New Cession File'
+  const pageSubtitle = activeFileId && detail ? `${detail.cedent} · ${detail.file_type} · ${formatCount(detail.records)} records` : 'Upload + AI-assisted ingestion pipeline'
+
+  if (isPage) {
+    return (
+      <div className="cession-compact pb-6">
+        <div className="mb-5 border-b border-[#E5EBF0] pb-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
+              <button className="btn-secondary w-fit" onClick={onClose} type="button">
+                <ArrowLeft className="h-4 w-4" />
+                {backLabel}
+              </button>
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-[28px] font-bold leading-tight text-iris-text-primary">{pageTitle}</h1>
+                  {detail ? <PipelineStageBadge stage={detail.stage} /> : null}
+                </div>
+                <p className="mt-1.5 text-[13px] text-iris-text-secondary">{pageSubtitle}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section className="overflow-hidden rounded-lg border border-[#D7E1E8] bg-white shadow-sm">
+          <div className="overflow-x-auto border-t border-[#E5EBF0] bg-white px-4 py-3 md:px-6">
+            <div className="flex min-w-max items-center gap-2">
+              {PIPELINE_STEPS.map((step, index) => {
+                const isCurrent = currentStep === step.id
+                const isComplete = completedSteps.has(step.id)
+                return (
+                  <div key={step.id} className="flex items-center gap-2">
+                    <button
+                      className={`rounded-full px-3.5 py-2 text-[12px] font-semibold transition ${
+                        isCurrent
+                          ? 'bg-iris-navy text-white'
+                          : isComplete
+                            ? 'bg-[#E8F8F5] text-[#117A65]'
+                            : 'bg-[#F4F7FA] text-iris-text-secondary hover:bg-[#EAF1F6]'
+                      }`}
+                      onClick={() => {
+                        if (activeFileId) {
+                          setSelectedStep(step.id)
+                        }
+                      }}
+                      type="button"
+                    >
+                      {isComplete ? '✓ ' : ''}
+                      {step.label}
+                    </button>
+                    {index < PIPELINE_STEPS.length - 1 ? <span className="text-[#AAB7C4]">→</span> : null}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="min-h-[620px] bg-[#FAFBFC] px-4 py-5 md:px-6">
+            {notice ? <NoticeBanner tone={notice.tone}>{notice.message}</NoticeBanner> : null}
+
+            {detailQuery.isLoading && activeFileId ? <div className="panel-card">Loading file detail...</div> : null}
+
+            {currentStep === 'upload' ? (
+              <UploadStep
+                manualUploadFileType={manualUploadFileType}
+                selectedFile={selectedFile}
+                uploadMode={uploadMode}
+                onFilePicked={setSelectedFile}
+                onManualUploadFileTypeChange={setManualUploadFileType}
+                onSampleSelect={handleSelectSample}
+                onUploadModeChange={setUploadMode}
+              />
+            ) : null}
+
+            {detail && currentStep === 'detect' ? (
+              <DetectStep
+                cedentOptions={cedentOptions}
+                detectCedentId={detectCedentId}
+                detectFileType={detectFileType}
+                detail={detail}
+                onCedentChange={setDetectCedentId}
+                onFileTypeChange={setDetectFileType}
+              />
+            ) : null}
+
+            {detail && currentStep === 'map-contract' ? (
+              <MapContractStep
+                contractOptions={visibleContracts}
+                detail={detail}
+                mappedContractId={mappedContractId}
+                onContractChange={setMappedContractId}
+              />
+            ) : null}
+
+            {detail && currentStep === 'clauses' ? <ClausesStep detail={detail} /> : null}
+            {detail && currentStep === 'validate' ? <ValidateStep detail={detail} /> : null}
+
+            {detail && currentStep === 'exceptions' ? (
+              <ExceptionsStep
+                detail={detail}
+                exceptionActions={exceptionActions}
+                onExceptionActionsChange={setExceptionActions}
+              />
+            ) : null}
+
+            {detail && currentStep === 'process' ? <ProcessStep detail={detail} /> : null}
+
+            {detail && currentStep === 'summary' ? (
+              <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} />
+            ) : null}
+
+            {detail && currentStep === 'worklist' ? <WorklistStep items={detail.worklist.items} subtitle={detail.worklist.subtitle} title={detail.worklist.title} /> : null}
+
+            {detail && currentStep === 'audit' ? <AuditStep items={detail.audit.items} subtitle={detail.audit.subtitle} title={detail.audit.title} /> : null}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-[#E5EBF0] bg-white px-6 py-4">
+            <button className="btn-secondary" onClick={onClose} type="button">
+              Save & Close
+            </button>
+
+            <div className="flex items-center gap-2">
+              {currentStep === 'summary' ? (
+                <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('process')} type="button">
+                  <RefreshCw className="h-4 w-4" />
+                  Back to Process
+                </button>
+              ) : null}
+
+              <button className="btn-primary" disabled={!canContinue} onClick={() => void handleContinue()} type="button">
+                {busy ? 'Working...' : currentStep === 'audit' ? 'Finish' : 'Continue'}
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
   const modalTitle = activeFileId ? 'Cession File Processing' : 'New Cession File'
   const fileSubtitle = detail
     ? `${detail.file_id} · ${detail.filename} · ${detail.cedent} · ${detail.file_type} · ${formatCount(detail.records)} records`
@@ -346,7 +501,7 @@ export function FileProcessingModal({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[1px]" onClick={onClose} />
-      <div className="fixed inset-3 z-50 overflow-hidden rounded-[24px] border border-[#D8E2EA] bg-white shadow-[0_24px_70px_rgba(13,27,42,0.24)]">
+      <div className="cession-compact fixed inset-3 z-50 overflow-hidden rounded-[24px] border border-[#D8E2EA] bg-white shadow-[0_24px_70px_rgba(13,27,42,0.24)]">
         <div className="flex h-full flex-col">
           <div className="border-b border-[#E5EBF0] bg-[linear-gradient(180deg,#FBFCFD_0%,#F4F7FA_100%)] px-6 py-5">
             <div className="flex items-start justify-between gap-4">
@@ -488,6 +643,10 @@ export function FileProcessingModal({
   )
 }
 
+export function FileProcessingModal(props: FileProcessingModalProps) {
+  return <CessionFileProcessingWorkflow {...props} presentation="modal" />
+}
+
 function UploadStep({
   manualUploadFileType,
   selectedFile,
@@ -519,6 +678,7 @@ function UploadStep({
             <FileUp className="h-4 w-4" />
             Choose local file
             <input
+              accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12"
               className="hidden"
               onChange={(event) => onFilePicked(event.target.files?.[0] ?? null)}
               type="file"

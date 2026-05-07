@@ -6,39 +6,53 @@
     "compliance_holds": 1,
     "ai_exception_queue": 1,
     "team_backlog": 3,
-    "awaiting_review": 1
+    "awaiting_review": 0
   },
   "total": 3,
   "items": [
     {
-      "wl_id": "WL-8201",
+      "wl_id": "WL-9201",
       "title": "OFAC sanctions match - Atlas Corporate Pensions",
       "category": "OFAC Match",
       "priority": "critical",
       "status": "open",
       "assigned_role": "compliance",
+      "assigned_to_email": "j.morales@reinsure.io",
       "source": "AI Agent",
       "ai_generated": true,
       "compliance_hold": true,
       "elapsed_display": "Overdue 8h 47m",
       "is_approaching": false,
       "is_overdue": true,
-      "breadcrumb": "Compliance Hold - Review Required"
+      "breadcrumb": "Compliance Hold - Review Required",
+      "cedent_name": "Atlas Corporate Pensions",
+      "entity_display": "Atlas Corporate Pensions",
+      "financial_impact_display": "+USD 720.00M",
+      "is_high_impact": true,
+      "confidence_display": "92%",
+      "action_label": "Approval req."
     },
     {
-      "wl_id": "WL-8202",
-      "title": "Override approval pending - mortality table refresh",
+      "wl_id": "WL-9203",
+      "title": "Manual override approval - CMI 2024 mortality scaling",
       "category": "Override Approval",
-      "priority": "high",
-      "status": "pending_review",
+      "priority": "critical",
+      "status": "open",
       "assigned_role": "compliance",
-      "source": "Human",
+      "assigned_to_email": null,
+      "source": "Approval Matrix",
       "ai_generated": false,
       "compliance_hold": false,
-      "elapsed_display": "3h 10m",
+      "elapsed_display": "1h 35m",
       "is_approaching": true,
       "is_overdue": false,
-      "breadcrumb": "Reference Data - Four-eyes Review"
+      "breadcrumb": "Override Review - Chief Actuary Sign-off Required",
+      "cedent_name": "Northstar Pension Trust",
+      "entity_display": "Northstar Pension Trust - LSC-2024-019",
+      "financial_impact_display": "-GBP 3.18M",
+      "is_high_impact": true,
+      "confidence_display": null,
+      "action_label": "Approval req."
     },
     {
       "wl_id": "WL-9208",
@@ -47,13 +61,20 @@
       "priority": "medium",
       "status": "open",
       "assigned_role": "compliance",
+      "assigned_to_email": "j.morales@reinsure.io",
       "source": "Audit Control",
       "ai_generated": false,
       "compliance_hold": false,
       "elapsed_display": "15h 20m",
       "is_approaching": false,
-      "is_overdue": true,
-      "breadcrumb": "Access Audit - Review Required"
+      "is_overdue": false,
+      "breadcrumb": "Access Audit - Review",
+      "cedent_name": null,
+      "entity_display": null,
+      "financial_impact_display": null,
+      "is_high_impact": false,
+      "confidence_display": null,
+      "action_label": null
     }
   ]
 }

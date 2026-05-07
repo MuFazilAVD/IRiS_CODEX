@@ -323,7 +323,7 @@ Returns paginated member list for the contract.
 ---
 
 ### POST `/contracts/{contract_id}/upload-members`
-Upload a population file (CSV) to update the member list.
+Upload a population file (CSV or Excel `.xlsx`) to update the member list.
 
 **Request:** `multipart/form-data` with `file`
 

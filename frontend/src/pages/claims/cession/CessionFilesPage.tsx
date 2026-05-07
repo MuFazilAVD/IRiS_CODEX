@@ -9,16 +9,12 @@ import { EmptyState, EmptyTableRow } from '../../../components/common/EmptyState
 import { PageHeader } from '../../../components/common/PageHeader'
 import { formatRelativeDate } from '../../../utils/formatters'
 import type {
-  CedentsListPayload,
   ClaimsCessionQueueItem,
   ClaimsCessionQueuePayload,
-  ContractsListPayload,
   OperationsPipelinesPayload,
 } from '../../../types/api'
-import { FileProcessingModal } from './FileProcessingModal'
 
 type StatusFilter = 'all' | 'exceptions' | 'review' | 'approved'
-type ModalState = { mode: 'closed' } | { mode: 'upload' } | { mode: 'detail'; fileId: string }
 
 const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
   { id: 'all', label: 'All' },
@@ -31,7 +27,6 @@ export function CessionFilesPage() {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [fileTypeFilter, setFileTypeFilter] = useState('all')
-  const [modalState, setModalState] = useState<ModalState>({ mode: 'closed' })
 
   const queueQuery = useQuery({
     queryKey: ['claims-cession-files', statusFilter, fileTypeFilter],
@@ -53,40 +48,18 @@ export function CessionFilesPage() {
     queryFn: async () => (await api.get<OperationsPipelinesPayload>('/operations/pipelines')).data,
   })
 
-  const cedentsQuery = useQuery({
-    queryKey: ['claims-cession-cedents'],
-    queryFn: async () =>
-      (
-        await api.get<CedentsListPayload>('/underwriting/cedents', {
-          params: { status: 'all', page: 1, page_size: 100 },
-        })
-      ).data,
-  })
-
-  const contractsQuery = useQuery({
-    queryKey: ['claims-cession-contracts'],
-    queryFn: async () =>
-      (
-        await api.get<ContractsListPayload>('/underwriting/contracts', {
-          params: { status: 'all', page: 1, page_size: 200 },
-        })
-      ).data,
-  })
-
   const fileTypeOptions = ['all', ...new Set((queueQuery.data?.items ?? []).map((item) => item.file_type).filter(Boolean))]
 
   return (
-    <div>
+    <div className="cession-compact">
       <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Claims Ops' }, { label: 'Cession Files' }]} />
       <PageHeader
         action={
-          <button className="btn-primary" onClick={() => setModalState({ mode: 'upload' })} type="button">
+          <button className="btn-primary" onClick={() => navigate('/claims/cession-files/new')} type="button">
             <Upload className="h-4 w-4" />
             Upload File
           </button>
         }
-        eyebrow="Claims Pipeline"
-        subtitle="End-to-end ingestion, classification, validation, clause-driven processing and audit"
         title="Cedant File Processing"
       />
 
@@ -172,7 +145,7 @@ export function CessionFilesPage() {
             <div className="flex flex-col gap-4 border-b border-[#E8EDF2] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
                 <p className="text-[18px] font-bold text-iris-text-primary">File Queue</p>
-                <p className="mt-1 text-[13px] text-iris-text-secondary">{formatCount(queueQuery.data.items.length)} file(s) currently in this filtered view. Historical and intake detail continues to open in the legacy review modal.</p>
+                <p className="mt-1 text-[13px] text-iris-text-secondary">{formatCount(queueQuery.data.items.length)} file(s) currently in this filtered view. Historical intake and processing detail now open in the full-page workflow.</p>
               </div>
 
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
@@ -216,7 +189,7 @@ export function CessionFilesPage() {
                 </thead>
                 <tbody>
                   {queueQuery.data.items.map((item) => (
-                    <QueueRow key={item.file_id} item={item} onOpen={() => setModalState({ mode: 'detail', fileId: item.file_id })} />
+                    <QueueRow key={item.file_id} item={item} onOpen={() => navigate(`/claims/cession-files/${item.file_id}`)} />
                   ))}
 
                   {!queueQuery.data.items.length ? (
@@ -240,20 +213,6 @@ export function CessionFilesPage() {
           title="Unable to load the cession file queue"
         />
       )}
-
-      {modalState.mode !== 'closed' ? (
-        <FileProcessingModal
-          cedentOptions={cedentsQuery.data?.items ?? []}
-          contractOptions={contractsQuery.data?.items ?? []}
-          fileId={modalState.mode === 'detail' ? modalState.fileId : null}
-          startInUpload={modalState.mode === 'upload'}
-          onClose={() => {
-            setModalState({ mode: 'closed' })
-            void queueQuery.refetch()
-          }}
-          onRefresh={() => queueQuery.refetch()}
-        />
-      ) : null}
     </div>
   )
 }

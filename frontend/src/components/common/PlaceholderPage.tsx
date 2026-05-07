@@ -8,7 +8,7 @@ interface PlaceholderPageProps {
 export function PlaceholderPage({ title, subtitle }: PlaceholderPageProps) {
   return (
     <div>
-      <PageHeader title={title} subtitle={subtitle} eyebrow="Build Sequence" />
+      <PageHeader title={title} subtitle={subtitle} />
       <div className="rounded-xl border border-dashed border-iris-border bg-white p-8 text-sm text-iris-text-secondary shadow-sm">
         This route is scaffolded and reserved for a later build-plan phase.
       </div>

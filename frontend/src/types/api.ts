@@ -43,17 +43,28 @@ export interface DashboardPayload {
 export interface DashboardSupplementaryPanelItem {
   id: string
   title: string
-  description: string
+  description?: string
   badge?: string
   metric?: string
+  metric_tone?: 'default' | 'negative'
+}
+
+export interface DashboardSupplementaryHeatmapRow {
+  area: string
+  low: number
+  medium: number
+  high: number
 }
 
 export interface DashboardSupplementaryPanel {
   id: string
   title: string
-  action_label: string
-  action: string
-  items: DashboardSupplementaryPanelItem[]
+  variant?: 'list' | 'status_grid' | 'heatmap'
+  action_label?: string
+  action?: string
+  meta_text?: string
+  items?: DashboardSupplementaryPanelItem[]
+  heatmap_rows?: DashboardSupplementaryHeatmapRow[]
 }
 
 export interface IntelligenceItem {
@@ -101,20 +112,34 @@ export interface GraphPayload {
   graphs: GraphConfig[]
 }
 
-export interface ActivityItem {
-  id: string
-  source_type: string
-  tags: string[]
-  title: string
-  timestamp: string
-  cedant?: string | null
-  wl_id?: string | null
-  actor?: string | null
+export type DashboardRecentActivitiesTabKey = 'team_activities' | 'iris_ai' | 'escalations'
+
+export interface DashboardRecentActivityChip {
+  label: string
+  tone: 'default' | 'info' | 'positive' | 'warning' | 'negative'
 }
 
-export interface ActivitiesPayload {
-  total: number
-  items: ActivityItem[]
+export interface DashboardRecentActivityItem {
+  id: string
+  tab: DashboardRecentActivitiesTabKey
+  actor_label: string
+  actor_kind: 'person' | 'system' | 'iris'
+  module: string
+  priority: 'FYA' | 'FYI'
+  title: string
+  timestamp_label: string
+  meta_segments: string[]
+  emphasis_chip?: DashboardRecentActivityChip | null
+  metric_chip?: DashboardRecentActivityChip | null
+  worklist_ref?: string | null
+  action?: string | null
+}
+
+export interface DashboardRecentActivitiesPayload {
+  role: Exclude<AppRole, 'super_admin'>
+  window_label: string
+  default_tab: DashboardRecentActivitiesTabKey
+  items: DashboardRecentActivityItem[]
 }
 
 export interface WorklistSummary {
@@ -144,6 +169,13 @@ export interface WorklistItem {
   is_approaching?: boolean
   is_overdue?: boolean
   breadcrumb?: string
+  cedent_name?: string
+  assigned_to_email?: string | null
+  entity_display?: string
+  financial_impact_display?: string | null
+  is_high_impact?: boolean
+  confidence_display?: string | null
+  action_label?: string | null
 }
 
 export interface WorklistPayload {
@@ -1063,8 +1095,11 @@ export interface ClaimsSettlementMetrics {
 
 export interface ClaimsSettlementListItem {
   settlement_id: string
+  settlement_display_id?: string
   contract_id: string | null
+  contract_display_id?: string | null
   contract_name: string
+  contract_version?: string
   cedent_id: string | null
   cedent_name: string
   period_label: string
@@ -1075,6 +1110,7 @@ export interface ClaimsSettlementListItem {
   direction: string
   payment_due: string
   status: string
+  iris_recommendation?: 'accept' | 'adjust' | 'review'
 }
 
 export interface ClaimsSettlementListPayload {
@@ -1113,7 +1149,9 @@ export interface ClaimsSettlementWorkflowStep {
 
 export interface ClaimsSettlementDetailPayload {
   settlement_id: string
+  settlement_display_id?: string
   contract_id: string | null
+  contract_display_id?: string | null
   contract_name: string
   contract_version: string
   cedent_id: string | null

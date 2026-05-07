@@ -4,6 +4,70 @@ This file SUPPLEMENTS and OVERRIDES the relevant sections of CONTRACTS.md with e
 
 ---
 
+## REPORTS CATALOG VISUAL CORRECTIONS
+
+From `docs/ui-screens/Reports/Reports(1).png` and `Reports(2).png`:
+
+- The Reports catalog uses sharper bordered boxes rather than the softer large-radius card treatment
+- KPI tiles are plain bordered summary boxes with compact text sizing and no dashboard-style accent rails
+- The left Categories rail is a flat navigation column with icons, a tighter active state, and a vertical divider, not a rounded card block
+- The Global filters panel is a compact bordered box with field labels above each control and denser spacing
+- The report table uses smaller typography, lighter row density, and compact outline action buttons
+
+---
+
+## CESSION FILE PROCESSING ROUTE PRESENTATION
+
+From the full-page cession processing screenshot provided during implementation:
+
+- The cession-file upload/history workflow should open as a full page when launched from the queue or upload action
+- The existing 10-step processing flow remains the same, but it should render inside a routed page shell rather than a fixed overlay modal
+- The full-page version includes a page-level back action and retains the step bar, upload/detect/map/clauses/validate/exceptions/process/summary/worklist/audit flow
+
+---
+
+## SETTLEMENTS REGISTER VISUAL CORRECTIONS
+
+From `docs/ui-screens/Settlements/Settlements(1).png` and `Settlements(2).png`:
+
+- The Settlements register is not the older four-KPI worklist page from `SETTLEMENTS_AND_CALC_ENGINE.md`
+- The screenshot-backed page uses the title `Settlement & Reconciliation` and a two-button action row with `Export` and `Generate Settlement Statement`
+- The top summary strip contains seven compact bordered cards:
+  - `Total Pending`
+  - `Pending Reconciliation`
+  - `Pending Approval`
+  - `High Variance`
+  - `Compliance Hold`
+  - `Total Payable`
+  - `Overdue`
+- The page includes a three-panel chart row:
+  - `Expected vs Actual (M)`
+  - `Variance % by Cedant`
+  - `Cedant Settlement Exposure (M)`
+- The worklist toolbar is compact and only shows:
+  - search
+  - status dropdown
+  - list/grid view toggle
+- The table columns are:
+  - `Settlement`
+  - `Cedant / Contract`
+  - `Period`
+  - `Expected`
+  - `Actual`
+  - `Variance`
+  - `IRiS`
+  - `Status`
+  - `Open`
+- The screenshot row set is the source of truth for the seeded mock register:
+  - `Northstar Pension Trust`
+  - `Helvetia Retirement Fund`
+  - `Maple Leaf Pension Plan`
+  - `Bavarian Industrial Fund`
+  - `Atlas Corporate Pensions`
+- Stale smoke-test settlement overrides and created rows that conflict with the screenshot-backed register should be cleared rather than treated as permanent design truth
+
+---
+
 ## CORRECT CONTRACT NAV (from screenshots)
 
 The left nav has TWO groups: **Master Data** (8 tabs) and **Operations** (6 tabs lettered A–F):
@@ -562,3 +626,15 @@ Recon break > tolerance — Maple Leaf
 EXC-4423   —
 Late SFTP delivery — Atlas
 ```
+---
+
+## POPULATION UPLOAD MODAL CORRECTION
+
+From `Population_UploadCedentFile.png`:
+
+- The Population page upload action opens an in-page modal titled `Upload Pensioner CSV`
+- The modal must ask for both `Cedant` and `Contract` before upload
+- The contract selector is cascade-driven and stays disabled with `Select cedant first` until a cedant is chosen
+- Both dropdowns are populated from existing cedants and contracts instead of using a free-text handoff field
+- The modal includes a CSV file picker plus `Cancel` and `Upload` actions instead of a redirect-only stub
+- User change on 2026-05-07 widened the live uploader to accept Excel (`.xlsx`) files as well, so the implemented modal copy now references `Upload Pensioner File` / `CSV or Excel File` even though the screenshot labels say CSV

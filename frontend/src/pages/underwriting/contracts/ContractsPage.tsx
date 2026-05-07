@@ -38,7 +38,6 @@ export function ContractsPage() {
             New Contract
           </button>
         }
-        eyebrow="Contracts Register"
         subtitle="Longevity reinsurance contracts: terms, versioning, amendments"
         title="Contracts"
       />
@@ -139,8 +138,8 @@ function ContractRow({
       <td className="px-3 py-3">
         <StatusBadge status={item.status}>{titleCase(item.status)}</StatusBadge>
       </td>
-      <td className="px-3 py-3">
-        <div className="flex flex-wrap gap-2">
+      <td className="px-3 py-3 whitespace-nowrap">
+        <div className="flex min-w-max flex-nowrap items-center gap-2">
           <button className="btn-secondary" onClick={onView} type="button">
             View
           </button>

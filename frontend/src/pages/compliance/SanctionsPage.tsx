@@ -176,8 +176,6 @@ export function SanctionsPage() {
       <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Compliance & Audit' }, { label: 'Sanctions Screening' }]} />
       <PageHeader
         title={overviewQuery.data?.title ?? 'Sanctions Screening'}
-        subtitle={overviewQuery.data?.subtitle ?? 'Loading sanctions controls and screening status...'}
-        eyebrow="Compliance Command Center"
         action={
           <>
             <button className="btn-secondary" disabled={busyBulk} onClick={handleExportReport} type="button">

@@ -36,7 +36,7 @@
 | Super admin role switcher | Working | Drives role-aware dashboard/worklist payloads without limiting route access |
 | Protected route skeleton | Working | All phase routes registered |
 | Later-phase route placeholders | Working | Cedants, Contracts, Population, Cession Files, Settlements, Calculation Engine, Compliance Sanctions, Audit, Reports, and Admin routes are now implemented |
-| IRiS chatbot | Partial | Floating `IRiS Assist` drawer, Phase 16 header/copy updates, Phase 17 admin/compliance role-specific quick-action chips, route-aware location chip, expanded module navigation permissions, audit quick-action lookups seeded from `audit_events`, and `/api/v1/chatbot/message` are implemented; responses are deterministic mock/live-lookup hybrids because the current repo path does not include a live Claude integration |
+| IRiS chatbot | Working | Floating `IRiS Assist` drawer, Phase 16 header/copy updates, Phase 17 admin/compliance role-specific quick-action chips, route-aware location chip, expanded module navigation permissions, audit quick-action lookups seeded from `audit_events`, and `/api/v1/chatbot/message` are implemented; the backend now uses the shared OpenAI client from `.env` to plan read-only SQL against the live runtime tables, execute the generated queries, repair invalid SQL once when needed, and answer from returned database context instead of the earlier hybrid hardcoded intent routing |
 
 ---
 
@@ -45,30 +45,29 @@
 |---------|--------|-------|
 | Role-aware dashboard page | Working | Admin / Underwriter / Claims Ops / Compliance views implemented |
 | KPI cards | Mock | Loaded from backend JSON by role |
-| Graph sets | Mock | Loaded from backend JSON by role, including the Phase 17 underwriter `Population Movement` and `Renewal Pipeline` charts plus the claims-ops `Cedant File Delivery (30d)` chart |
+| Graph sets | Mock | Loaded from backend JSON by role, with screenshot-backed two-row dashboard visual sections across admin, underwriter, claims ops, and compliance, including the Phase 17 underwriter `Population Movement` and `Renewal Pipeline` charts plus the claims-ops `Cedant File Delivery (30d)` chart |
 | IRiS Insight banner | Mock | Now derived from `intelligence_feeds_complete.json` instead of static per-role copy |
-| Today's Intelligence cards | Mock | Role-filtered cards now load from `intelligence_feeds_complete.json` |
-| Admin recent activities feed | Mock | Mock activity payload rendered |
+| Recent Activities workspace | Mock | Screenshot-backed role-aware dashboard activity workspace now replaces the old intelligence-card section, with Team Activities / IRiS AI / Escalations tabs and backend JSON feeds for admin, underwriter, claims ops, and compliance |
 | Quick action buttons | Working | Wired to navigation placeholders |
-| Integration Health panel | Not started | Pending |
-| Pending Admin Approvals panel | Not started | Pending |
+| Integration Health panel | Mock | Screenshot-backed admin second-row panel rendered from dashboard JSON |
+| Pending Admin Approvals panel | Mock | Screenshot-backed admin approvals panel rendered from dashboard JSON |
 | High-Risk Cedants panel | Mock | Screenshot-backed underwriter panel rendered from dashboard JSON |
 | High-Impact Exceptions panel | Mock | Screenshot-backed claims-ops panel rendered from dashboard JSON |
-| Active Screening Hits / Audit Heatmap | Not started | Pending |
+| Active Screening Hits / Audit Heatmap | Mock | Screenshot-backed compliance second-row dashboard panels rendered from dashboard JSON |
 
 ---
 
 ## Phase 4: Worklist
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Claims Ops worklist (live DB) | Working | Seeded with `WL-9202`, `WL-9204`, `WL-9206` |
-| Admin worklist | Mock | Mock JSON updated through Phase 17 with `WL-9211` and `WL-9213` |
-| Underwriter worklist | Mock | Mock JSON |
-| Compliance worklist | Mock | Mock JSON updated through Phase 17 with `WL-9208` |
+| Claims Ops worklist (live DB) | Working | Live status for `WL-9202`, `WL-9204`, and `WL-9206` now overlays the shared screenshot-backed mock register so the richer card layout and cross-role accessible list stay consistent |
+| Admin worklist | Mock | Admin now reads the shared 13-card screenshot-backed mock register with role-aware `Read-only` tagging instead of the earlier narrow admin-only mock subset |
+| Underwriter worklist | Mock | Underwriter now reads the shared 13-card screenshot-backed mock register with role-aware `Read-only` tagging and owner/entity/impact metadata |
+| Compliance worklist | Mock | Compliance now reads the shared 13-card screenshot-backed mock register including `WL-9201`, `WL-9203`, `WL-9208`, `WL-9214`, and the cross-team read-only cards |
 | Summary tiles | Working | DB-backed for Claims Ops, mock for other roles |
-| Search/filter | Working | Client-side |
-| Quick filter pills | Working | Overdue / Approval / AI / Hold |
-| Grid/List view toggle | Working | Both layouts implemented |
+| Search/filter | Working | Client-side filters now cover My Tasks / Team Tasks / All Accessible plus priority / status / category / source, with screenshot-style bordered controls |
+| Quick filter pills | Working | Overdue / Approval / AI / Hold / High Impact |
+| Grid/List view toggle | Working | Both layouts implemented, with the grid tightened to the screenshot-backed compact 3-column density and the grid cards now stretched to consistent row heights with footer anchoring |
 | Claims Ops polling | Working | 30s refresh in UI |
 | Worklist PATCH endpoint | Working | Backend status update route |
 | Expanded card detail | Partial | Full-page worklist detail route is implemented for the screenshot-backed revised Phase 8 operations flow at `/worklist/:wlId`; broader role-specific detail experiences remain pending |
@@ -86,15 +85,15 @@
 | Cedant AI extract | Mock | Deterministic mock extraction response, wired into the wizard upload flow |
 | Cedant sanction screening | Mock | Deterministic mock screening results with source cards and history table |
 | Screenshot-only cedant sub-sections | Partial | Pension Scheme, Key Contacts, and other screenshot-only detail sections persist through a mock JSON overlay because `docs/SCHEMA.md` does not define backing tables/columns |
-| Contracts list page | Working | Screenshot-style register table, `+ New Contract`, and row-level view/members/amend actions implemented |
+| Contracts list page | Working | Screenshot-style register table, `+ New Contract`, and row-level view/members/amend actions implemented, with the actions cell now locked to a single inline row like the reference UI |
 | Contract detail page | Partial | Revised Phase 9 V2 is implemented with the tabbed Overview / Rules & Configuration / Member Population / Financials / Amendments / Audit Log / Risk & Insights shell, settlement-linked header actions, enriched overview intelligence, and `audit_events`-backed Audit Log/Compliance Trail reads; several screenshot-only fields remain mock-backed because the SQLAlchemy layer does not yet model the full contract child tables from `docs/SCHEMA.md` |
 | Contract section APIs | Working | List, detail, create, section patch, amendment, performance, calculations, member list, and upload-members routes implemented |
 | Contract calculations | Mock | Calculator responses are deterministic and driven from the contract performance overlay until the later claims/calculation-engine phases provide live processing inputs |
-| Contract member list | Mock | Contract Detail still renders the earlier deterministic inline member sample, but its row actions now deep-link into the live Population module |
-| Contract member upload | Mock | Upload endpoint is wired and audited, but stores a deterministic mock acceptance response until the Population / cession-file pipeline phase is built |
+| Contract member list | Working | Contract Detail now reads live current `policy_register` rows when population exists for the contract, including live summary counts and row-level status updates |
+| Contract member upload | Working | `POST /underwriting/contracts/{contract_id}/upload-members` now imports baseline population CSV or Excel (`.xlsx`) rows into `policy_register` with SCD2 upserts and audit logging; the live upload path currently tolerates missing/invalid `date_of_birth` and `annual_pension` by reusing current member values when present and defaulting new members to placeholder values until the later enrichment phase |
 | Screenshot-only contract sub-sections | Partial | Reference Pool, Actuarial Basis, Risk & Limits, Operational Terms, Audit & Compliance, and richer performance/member data persist through a documented mock JSON overlay because the current repo does not yet implement the full schema tables/models |
 | Population module | Working | Policy-register-backed Population page, cascading cedent/contract filters, member history drawer, and defer endpoint are implemented |
-| Population upload handoff | Mock | `Upload cedant file` is a documented stub because the cession-file pipeline belongs to the next build-plan phase and the upload API contract does not exist yet |
+| Population upload handoff | Working | The Population page CTA now opens the cedant/contract cascade modal and submits baseline population CSV or Excel (`.xlsx`) files through `POST /underwriting/contracts/{contract_id}/upload-members`; Claims > Cession Files remains the Pension Status processing path |
 | Population `last_verified` field | Mock | The UI/API spec requires `last_verified`, but `docs/SCHEMA.md` does not define a backing column on `policy_register`, so it is served from seed/override metadata instead of invented schema |
 
 ---
@@ -102,11 +101,11 @@
 ## Claims
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Cession file processing | Partial | Queue page now supports both the legacy upload/historical intake flow and the revised V2 Active Pipelines flow; `/operations/:process_id` full-page six-step workflow is implemented, while upload/history remain on the legacy modal because the revised spec does not redefine that intake flow |
+| Cession file processing | Partial | Queue page now supports both the screenshot-backed full-page upload/history workflow at `/claims/cession-files/new` and `/claims/cession-files/:fileId` plus the revised V2 Active Pipelines flow; the cession UI is compacted to the claims screenshots, manual file-type upload now carries into detection, and Pension Status CSV or Excel (`.xlsx`) files parse real uploaded rows, derive cedant/contract from filename or SQL member overlap, validate through pandas against current `policy_register`, and apply SCD2 population updates; richer summary/worklist/audit presentation remains partly mock-backed |
 | Cession file queue metrics | Mock | Top metrics and throughput cards follow the API/spec baseline and layer live queue rows on top of the seeded mock counts |
-| Cession file detect/map/clauses/validate stages | Working | Detect, map-contract, clauses, validate, process-exceptions, process, approve, summary, and pipeline-status endpoints are wired end to end and frontend-connected |
-| Cession file summary/worklist/audit detail | Mock | Legacy modal summary/worklist detail plus the revised V2 operations step content remain deterministic mock/seed payloads where the schema has no backing tables for settlement impact, commentary, or richer workflow session state; the modal audit section now reads seeded `audit_events` rows when available |
-| Settlements | Working | Revised Phase 9 V2 settlement register is implemented with the 4 KPI row, search/filter row, settlement table, right-side detail panel, approve/hold/dispute actions, direct pipeline-outcome handoff into the mock-backed settlement register via JSON override state, and `audit_events`-backed detail-panel audit trails |
+| Cession file detect/map/clauses/validate stages | Working | Detect, map-contract, clauses, validate, process-exceptions, process, approve, summary, and pipeline-status endpoints are wired end to end and frontend-connected; Pension Status detection/manual override, SQL-derived contract clauses, pandas validation, exception creation, and processing now use the actual uploaded CSV or Excel (`.xlsx`) file plus current DB population rows instead of hardcoded sample rows |
+| Cession file summary/worklist/audit detail | Mock | The routed cession-file workflow summary/worklist/audit sections remain deterministic mock/seed payloads where the schema has no backing tables for settlement impact, commentary, or richer workflow session state; the audit section reads seeded `audit_events` rows when available |
+| Settlements | Working | Screenshot-backed settlement register now uses the 7-card `Settlement & Reconciliation` summary strip, 3-chart analytics row, compact search/status/list-grid toolbar, seeded Q1 2025 settlement worklist rows for Northstar/Helvetia/Maple/Bavarian/Atlas, export/statement actions, the right-side detail panel, approve/hold/dispute actions, and `audit_events`-backed detail-panel audit trails |
 | Calculation engine | Partial | Live contract selector and backend calculation run endpoint are implemented; screenshot-only save/submit workflow and richer audit context are deterministic UI-local mocks because the current phase spec only defines contracts list + run |
 
 ---
@@ -114,16 +113,16 @@
 ## Compliance
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Sanctions screening page | Working | Phase 13a is implemented with the sanctions workspace, KPI/graph panels, active-hit drawer, queued `POST /sanctions/bulk-screen`, `GET /sanctions/hits`, persisted `PATCH /sanctions/hits/{screening_ref}` resolution actions, `GET /sanctions/overview`, `GET /sanctions/cedents/{cedent_id}`, legacy `POST /sanctions/trigger`, and pipeline-facing `GET /sanctions/screen`; export remains a frontend-generated CSV because the compliance additions spec does not define a dedicated export endpoint |
+| Sanctions screening page | Working | Phase 13a is implemented with the sanctions workspace, KPI/graph panels, active-hit drawer, queued `POST /sanctions/bulk-screen`, `GET /sanctions/hits`, persisted `PATCH /sanctions/hits/{screening_ref}` resolution actions, `GET /sanctions/overview`, `GET /sanctions/cedents/{cedent_id}`, legacy `POST /sanctions/trigger`, and pipeline-facing `GET /sanctions/screen`; single-entity screening verification now uses the shared OpenAI client when configured and falls back to the existing deterministic heuristic when it is not, and export remains a frontend-generated CSV because the compliance additions spec does not define a dedicated export endpoint |
 | Audit & Traceability workspace | Working | Phase 13b is implemented at `/compliance/audit` with the screenshot-backed 10-item left nav, dashboard/search/risk-governance/data-access/reporting sections, role-gated `/api/v1/audit/*` endpoints, and mock-backed export downloads; the additions/build-plan text says 9 sub-sections, but the UI spec and screenshot include Export Audit Reports as a 10th item, so the screenshot-backed navigation was used |
-| Cedant-level screening | Partial | Implemented inside Cedant Detail and the onboarding wizard as mock-backed flows |
+| Cedant-level screening | Partial | Implemented inside Cedant Detail and the onboarding wizard; the backend single-entity watchlist verification path is now OpenAI-backed with deterministic fallback, while the broader onboarding/detail UX remains partial/mock-backed |
 
 ---
 
 ## Reports
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Report catalog + detail workspace | Working | Phase 14 is implemented with `/reports` and `/reports/:reportId`, a DB-seeded report catalog, role-filtered backend access, screenshot-backed category rail/filter panel/export actions, static mock detail previews, and `POST /reports/export` for csv/excel/pdf/zip downloads; the source docs fully specify 21 report rows, while 2 Debugging report definitions are missing, so the Debugging category is rendered with `0` rather than inventing undocumented entries |
+| Report catalog + detail workspace | Working | Phase 14 is implemented with `/reports` and `/reports/:reportId`, a DB-seeded report catalog, role-filtered backend access, screenshot-backed category rail/filter panel/export actions, the tighter bordered reports-catalog visual treatment from the source screenshots, static mock detail previews, and `POST /reports/export` for csv/excel/pdf/zip downloads; the source docs fully specify 21 report rows, while 2 Debugging report definitions are missing, so the Debugging category is rendered with `0` rather than inventing undocumented entries |
 
 ---
 
@@ -151,4 +150,4 @@
 ---
 
 ## Next Build Unit
-- No remaining strict-sequence build-plan phases remain after the completed Phase 17 Polish Pass; the open backlog is now the tracker-only residual scope such as registration UI, MFA, real SSO/SAML, responsive mobile support, and live Claude integration.
+- No remaining strict-sequence build-plan phases remain after the completed Phase 17 Polish Pass; the open backlog is now the tracker-only residual scope such as registration UI, MFA, real SSO/SAML, responsive mobile support, and broader live OpenAI rollout across the remaining mock AI experiences.

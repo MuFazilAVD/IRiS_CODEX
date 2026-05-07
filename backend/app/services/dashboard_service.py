@@ -36,9 +36,23 @@ class DashboardService:
         payload = self.repository.get_graphs()
         return {"role": role, "graphs": payload.get(role, [])}
 
-    def get_recent_activities(self) -> dict:
-        logger.info("Loading admin recent activities feed")
-        return self.repository.get_recent_activities()
+    def get_recent_activities(self, role: str) -> dict:
+        logger.info("Loading dashboard recent activities feed")
+        logger.debug("Dashboard recent activities role=%s", role)
+        payload = self.repository.get_recent_activities()
+        if role not in payload:
+            logger.error("Dashboard recent activities payload missing role=%s", role)
+            raise KeyError(role)
+
+        role_payload = dict(payload[role])
+        role_payload["items"] = [
+            {
+                **item,
+                "action": self._normalize_action(item.get("action")),
+            }
+            for item in role_payload.get("items", [])
+        ]
+        return {"role": role, **role_payload}
 
     def _normalize_intelligence_items(self, role: str, items: list[dict]) -> list[dict]:
         normalized_items: list[dict] = []

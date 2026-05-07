@@ -64,7 +64,6 @@ export function ReportDetailPage() {
         ]}
       />
       <PageHeader
-        eyebrow="Reporting"
         title={reportQuery.data?.name ?? 'Report Detail'}
         subtitle={reportQuery.data?.description ?? 'Loading static mock report content for this catalog entry...'}
         action={

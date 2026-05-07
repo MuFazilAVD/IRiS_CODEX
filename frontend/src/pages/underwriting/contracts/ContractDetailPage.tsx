@@ -268,6 +268,7 @@ export function ContractDetailPage() {
 
           <div className="flex flex-wrap gap-2">
             <input
+              accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12"
               ref={fileInputRef}
               className="hidden"
               type="file"

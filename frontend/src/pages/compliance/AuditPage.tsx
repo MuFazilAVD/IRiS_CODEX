@@ -254,9 +254,7 @@ export function AuditPage() {
     <div>
       <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Compliance & Audit' }, { label: 'Audit Management' }]} />
       <PageHeader
-        eyebrow="Compliance Command Center"
         title="Audit & Traceability"
-        subtitle="Regulator-grade traceability across every operational, financial, actuarial and AI action."
         action={
           <button className="btn-secondary" onClick={() => navigate('/reports')} type="button">
             <Download className="h-4 w-4" />

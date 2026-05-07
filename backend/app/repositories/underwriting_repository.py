@@ -149,6 +149,32 @@ class UnderwritingRepository:
         items = list(self.db.scalars(statement))
         return items, total
 
+    def list_current_population_for_contract(self, contract_id: str) -> list[PolicyRegister]:
+        statement = (
+            select(PolicyRegister)
+            .where(PolicyRegister.contract_id == contract_id, PolicyRegister.is_current.is_(True))
+            .order_by(PolicyRegister.member_id, PolicyRegister.created_at)
+        )
+        return list(self.db.scalars(statement))
+
+    def list_current_population_for_members(
+        self,
+        contract_id: str,
+        member_ids: list[str],
+    ) -> list[PolicyRegister]:
+        if not member_ids:
+            return []
+        statement = (
+            select(PolicyRegister)
+            .where(
+                PolicyRegister.contract_id == contract_id,
+                PolicyRegister.is_current.is_(True),
+                PolicyRegister.member_id.in_(member_ids),
+            )
+            .order_by(PolicyRegister.member_id, PolicyRegister.created_at)
+        )
+        return list(self.db.scalars(statement))
+
     def get_current_population_member(self, member_id: str) -> PolicyRegister | None:
         statement = (
             select(PolicyRegister)
@@ -175,6 +201,12 @@ class UnderwritingRepository:
         self.db.commit()
         self.db.refresh(deferred_record)
         return deferred_record
+
+    def save_population_records(self, records: list[PolicyRegister]) -> list[PolicyRegister]:
+        for record in records:
+            self.db.add(record)
+        self.db.commit()
+        return records
 
     def create_contract(self, contract: Contract) -> Contract:
         self.db.add(contract)

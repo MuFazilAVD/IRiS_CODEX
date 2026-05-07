@@ -59,7 +59,6 @@ export function CedantsPage() {
             New Cedant
           </button>
         }
-        eyebrow="Counterparty Register"
         subtitle="Counterparties ceding longevity risk to the platform"
         title="Cedants"
       />

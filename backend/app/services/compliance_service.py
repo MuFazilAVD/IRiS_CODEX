@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from config import OPENAI_MODEL, openai_client
 from app.errors import IrisAPIError
 from app.repositories.compliance_repository import ComplianceRepository
 from app.repositories.underwriting_repository import UnderwritingRepository
@@ -142,16 +143,16 @@ class ComplianceService:
                 "method": "keyword_no_match",
             }
 
-        llm_result = self._mock_llm_verification(entity_name, dob, matches)
+        llm_result = self._verify_watchlist_match(entity_name, dob, matches)
         return {
             "screening_ref": screening_ref,
             "entity_name": entity_name,
             "result": "review" if llm_result["is_genuine_match"] else "cleared",
             "matched_lists": [entry["list_name"] for entry in matches],
-            "llm_called": True,
+            "llm_called": llm_result["llm_called"],
             "llm_confidence": llm_result["confidence"],
             "llm_reasoning": llm_result["reasoning"],
-            "method": "llm_confirmed" if llm_result["is_genuine_match"] else "llm_false_positive",
+            "method": self._screening_method_label(llm_result),
             "source": matches[0]["source"],
             "trigger_type": trigger_type or "pipeline",
             "cedent_id": cedent_id,
@@ -370,7 +371,63 @@ class ComplianceService:
         digits = sum(ord(char) for char in seed) % 900
         return f"SHM-{digits + 100:03d}"
 
-    def _mock_llm_verification(self, entity_name: str, dob: str | None, matches: list[dict[str, Any]]) -> dict[str, Any]:
+    def _verify_watchlist_match(self, entity_name: str, dob: str | None, matches: list[dict[str, Any]]) -> dict[str, Any]:
+        if openai_client is None:
+            logger.info("OpenAI client is not configured; using heuristic screening verification")
+            return {
+                **self._fallback_llm_verification(entity_name, dob, matches),
+                "llm_called": False,
+            }
+
+        logger.info("Running OpenAI watchlist verification")
+        logger.debug(
+            "OpenAI screening verification entity_name=%s dob=%s matched_lists=%s",
+            entity_name,
+            dob,
+            [item["list_name"] for item in matches],
+        )
+        try:
+            response = openai_client.responses.create(
+                model=OPENAI_MODEL,
+                instructions=(
+                    "You are a sanctions-screening verification assistant for an internal compliance workflow. "
+                    "Review the entity and watchlist matches and return JSON only with keys "
+                    "is_genuine_match (boolean), confidence (number between 0 and 1), and reasoning (string). "
+                    "Use conservative compliance judgment. Do not include markdown."
+                ),
+                input=json.dumps(
+                    {
+                        "entity_name": entity_name,
+                        "date_of_birth": dob,
+                        "matches": matches,
+                    },
+                    indent=2,
+                ),
+            )
+            parsed = json.loads((response.output_text or "").strip() or "{}")
+            confidence = parsed.get("confidence", 0.0)
+            normalized_confidence = max(0.0, min(float(confidence), 1.0))
+            reasoning = str(parsed.get("reasoning") or "OpenAI verification completed.")
+            return {
+                "is_genuine_match": bool(parsed.get("is_genuine_match")),
+                "confidence": normalized_confidence,
+                "reasoning": reasoning,
+                "llm_called": True,
+            }
+        except Exception as exc:  # pragma: no cover - network/runtime path
+            logger.error("OpenAI screening verification failed entity_name=%s error=%s", entity_name, exc)
+            logger.debug(
+                "OpenAI screening verification fallback entity_name=%s dob=%s matches=%s",
+                entity_name,
+                dob,
+                matches,
+            )
+            return {
+                **self._fallback_llm_verification(entity_name, dob, matches),
+                "llm_called": False,
+            }
+
+    def _fallback_llm_verification(self, entity_name: str, dob: str | None, matches: list[dict[str, Any]]) -> dict[str, Any]:
         normalized_name = self._normalize_name(entity_name)
         if normalized_name == self._normalize_name("Hans Muller"):
             if dob == "1962-03-15":
@@ -404,3 +461,8 @@ class ComplianceService:
             "confidence": 0.75,
             "reasoning": f"Potential watchlist overlap found against {[item['list_name'] for item in matches]}. Human review is recommended.",
         }
+
+    def _screening_method_label(self, llm_result: dict[str, Any]) -> str:
+        if llm_result.get("llm_called"):
+            return "llm_confirmed" if llm_result["is_genuine_match"] else "llm_false_positive"
+        return "heuristic_confirmed" if llm_result["is_genuine_match"] else "heuristic_false_positive"

@@ -11,6 +11,7 @@ import { StatusBadge } from '../../../components/common/StatusBadge'
 import { useUiStore } from '../../../store/uiStore'
 import type {
   CedentsListPayload,
+  ContractUploadMembersResponse,
   ContractsListPayload,
   PopulationDeferResponse,
   PopulationHistoryPayload,
@@ -46,7 +47,10 @@ export function PopulationPage() {
   const [deferTargetId, setDeferTargetId] = useState<string | null>(null)
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
-  const [uploadFileName, setUploadFileName] = useState('')
+  const [uploadCedentId, setUploadCedentId] = useState('')
+  const [uploadContractId, setUploadContractId] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadBusy, setUploadBusy] = useState(false)
   const pushToast = useUiStore((state) => state.pushToast)
 
   const cedentsQuery = useQuery({
@@ -126,6 +130,10 @@ export function PopulationPage() {
     () => contractOptions.filter((item) => !selectedCedentId || item.cedent_id === selectedCedentId),
     [contractOptions, selectedCedentId],
   )
+  const uploadVisibleContracts = useMemo(
+    () => (uploadCedentId ? contractOptions.filter((item) => item.cedent_id === uploadCedentId) : []),
+    [contractOptions, uploadCedentId],
+  )
 
   useEffect(() => {
     if (!visibleContracts.length) {
@@ -173,10 +181,82 @@ export function PopulationPage() {
     appliedInitialIntent.current = true
   }, [populationQuery.data])
 
+  useEffect(() => {
+    if (!uploadModalOpen || uploadCedentId || !cedentOptions.length) {
+      return
+    }
+
+    const resolvedCedentId =
+      selectedCedentId ||
+      contractOptions.find((item) => item.contract_id === selectedContractId)?.cedent_id ||
+      cedentOptions[0]?.cedent_id ||
+      ''
+
+    if (resolvedCedentId) {
+      setUploadCedentId(resolvedCedentId)
+    }
+  }, [cedentOptions, contractOptions, selectedCedentId, selectedContractId, uploadCedentId, uploadModalOpen])
+
+  useEffect(() => {
+    if (!uploadModalOpen) {
+      return
+    }
+
+    if (!uploadCedentId) {
+      if (uploadContractId) {
+        setUploadContractId('')
+      }
+      return
+    }
+
+    const currentStillValid = uploadVisibleContracts.some((item) => item.contract_id === uploadContractId)
+    if (currentStillValid) {
+      return
+    }
+
+    const preferredContractId =
+      (selectedContractId &&
+        uploadVisibleContracts.some((item) => item.contract_id === selectedContractId) &&
+        selectedContractId) ||
+      uploadVisibleContracts[0]?.contract_id ||
+      ''
+
+    setUploadContractId(preferredContractId)
+  }, [selectedContractId, uploadCedentId, uploadContractId, uploadModalOpen, uploadVisibleContracts])
+
   const deferTarget = useMemo(
     () => populationQuery.data?.items.find((item) => item.member_id === deferTargetId) ?? null,
     [deferTargetId, populationQuery.data?.items],
   )
+
+  function handleOpenUploadModal() {
+    const resolvedCedentId =
+      selectedCedentId ||
+      contractOptions.find((item) => item.contract_id === selectedContractId)?.cedent_id ||
+      cedentOptions[0]?.cedent_id ||
+      ''
+    const nextUploadContracts = resolvedCedentId ? contractOptions.filter((item) => item.cedent_id === resolvedCedentId) : []
+    const resolvedContractId =
+      (selectedContractId && nextUploadContracts.some((item) => item.contract_id === selectedContractId) && selectedContractId) ||
+      nextUploadContracts[0]?.contract_id ||
+      ''
+
+    setUploadCedentId(resolvedCedentId)
+    setUploadContractId(resolvedContractId)
+    setUploadFile(null)
+    setUploadModalOpen(true)
+  }
+
+  function handleCloseUploadModal() {
+    if (uploadBusy) {
+      return
+    }
+
+    setUploadModalOpen(false)
+    setUploadCedentId('')
+    setUploadContractId('')
+    setUploadFile(null)
+  }
 
   async function handleConfirmDefer() {
     if (!deferTarget) {
@@ -206,18 +286,45 @@ export function PopulationPage() {
     }
   }
 
-  function handleCaptureUploadStub() {
-    // MOCK IMPLEMENTATION:
-    // The Population spec references the later cession-file pipeline, but Phase 8 is not
-    // built yet and the upload API contract does not exist in the current sequence.
-    pushToast({
-      tone: 'success',
-      message: uploadFileName
-        ? `${uploadFileName} captured as a mock upload handoff. The live cession-file pipeline remains scheduled for Phase 8.`
-        : 'Mock upload handoff captured. The live cession-file pipeline remains scheduled for Phase 8.',
-    })
-    setUploadModalOpen(false)
-    setUploadFileName('')
+  async function handleUploadPopulationFile() {
+    if (!uploadCedentId || !uploadContractId || !uploadFile) {
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('file', uploadFile)
+    const uploadsIntoCurrentView = selectedCedentId === uploadCedentId && selectedContractId === uploadContractId
+
+    setUploadBusy(true)
+    try {
+      const { data } = await api.post<ContractUploadMembersResponse>(
+        `/underwriting/contracts/${uploadContractId}/upload-members`,
+        formData,
+      )
+
+      if (uploadsIntoCurrentView) {
+        await populationQuery.refetch()
+      } else {
+        setSelectedCedentId(uploadCedentId)
+        setSelectedContractId(uploadContractId)
+      }
+
+      pushToast({
+        tone: 'success',
+        message: `${data.filename ?? uploadFile.name} uploaded. ${data.message}`,
+      })
+      setUploadModalOpen(false)
+      setUploadCedentId('')
+      setUploadContractId('')
+      setUploadFile(null)
+    } catch (caughtError: unknown) {
+      pushToast({
+        tone: 'error',
+        message: extractErrorMessage(caughtError) ?? 'Unable to upload this cedant file right now.',
+      })
+    } finally {
+      setUploadBusy(false)
+    }
   }
 
   return (
@@ -225,12 +332,11 @@ export function PopulationPage() {
       <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Underwriting' }, { label: 'Population' }]} />
       <PageHeader
         action={
-          <button className="btn-primary" onClick={() => setUploadModalOpen(true)} type="button">
+          <button className="btn-primary" onClick={handleOpenUploadModal} type="button">
             <Upload className="h-4 w-4" />
             Upload cedant file
           </button>
         }
-        eyebrow="Population Screen"
         subtitle="Insured lives across active reinsurance contracts"
         title="Population"
       />
@@ -354,14 +460,18 @@ export function PopulationPage() {
       ) : null}
 
       {uploadModalOpen ? (
-        <UploadHandoffModal
-          fileName={uploadFileName}
-          onCapture={handleCaptureUploadStub}
-          onClose={() => {
-            setUploadModalOpen(false)
-            setUploadFileName('')
-          }}
-          onFileNameChange={setUploadFileName}
+        <UploadPopulationModal
+          busy={uploadBusy}
+          cedentOptions={cedentOptions}
+          contractOptions={uploadVisibleContracts}
+          selectedCedentId={uploadCedentId}
+          selectedContractId={uploadContractId}
+          selectedFile={uploadFile}
+          onCedentChange={setUploadCedentId}
+          onClose={handleCloseUploadModal}
+          onContractChange={setUploadContractId}
+          onFileChange={setUploadFile}
+          onUpload={() => void handleUploadPopulationFile()}
         />
       ) : null}
     </div>
@@ -528,48 +638,108 @@ function DeferMemberModal({
   )
 }
 
-function UploadHandoffModal({
-  fileName,
-  onCapture,
+function UploadPopulationModal({
+  busy,
+  cedentOptions,
+  contractOptions,
+  selectedCedentId,
+  selectedContractId,
+  selectedFile,
+  onCedentChange,
   onClose,
-  onFileNameChange,
+  onContractChange,
+  onFileChange,
+  onUpload,
 }: {
-  fileName: string
-  onCapture: () => void
+  busy: boolean
+  cedentOptions: CedentsListPayload['items']
+  contractOptions: ContractsListPayload['items']
+  selectedCedentId: string
+  selectedContractId: string
+  selectedFile: File | null
+  onCedentChange: (value: string) => void
   onClose: () => void
-  onFileNameChange: (value: string) => void
+  onContractChange: (value: string) => void
+  onFileChange: (file: File | null) => void
+  onUpload: () => void
 }) {
+  const canUpload = Boolean(selectedCedentId && selectedContractId && selectedFile && !busy)
+
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-slate-900/30" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-slate-900/30" onClick={busy ? undefined : onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-[560px] rounded-xl border border-iris-border bg-white shadow-2xl">
-          <div className="border-b border-iris-border px-5 py-4">
-            <p className="text-[18px] font-bold text-iris-text-primary">Upload Cedant File</p>
-            <p className="mt-1 text-[13px] text-iris-text-secondary">
-              Mock handoff until the Claims cession-file pipeline is built in the next phase.
-            </p>
-          </div>
-          <div className="space-y-3 px-5 py-4">
-            <div className="rounded-xl border border-[#AED6F1] bg-[#EBF5FB] px-4 py-3 text-[13px] text-iris-blue">
-              The Population spec references a later pipeline modal. This build captures the handoff without inventing the Phase 8 flow early.
+        <div className="w-full max-w-[510px] rounded-2xl border border-iris-border bg-white shadow-2xl">
+          <div className="flex items-start justify-between gap-3 border-b border-iris-border px-5 py-4">
+            <div>
+              <p className="text-[18px] font-bold text-iris-text-primary">Upload Pensioner File</p>
+              <p className="mt-1 text-[13px] text-iris-text-secondary">Tag the CSV or Excel file to a cedant and contract before upload.</p>
             </div>
+            <button
+              className="rounded-md p-1 text-iris-text-secondary transition hover:bg-iris-bg disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={busy}
+              onClick={onClose}
+              type="button"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-5 px-5 py-5">
             <label className="block">
-              <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">Filename</span>
-              <input
+              <span className="mb-1.5 block text-[13px] font-medium text-iris-text-primary">Cedant</span>
+              <select
                 className="field-input"
-                placeholder="northstar_status_2025Q1.csv"
-                value={fileName}
-                onChange={(event) => onFileNameChange(event.target.value)}
+                disabled={busy}
+                value={selectedCedentId}
+                onChange={(event) => onCedentChange(event.target.value)}
+              >
+                <option value="">Select a cedant...</option>
+                {cedentOptions.map((item) => (
+                  <option key={item.cedent_id} value={item.cedent_id}>
+                    {item.legal_entity_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-medium text-iris-text-primary">Contract</span>
+              <select
+                className="field-input disabled:cursor-not-allowed disabled:bg-[#F8F9FA] disabled:text-iris-text-muted"
+                disabled={busy || !selectedCedentId || !contractOptions.length}
+                value={selectedContractId}
+                onChange={(event) => onContractChange(event.target.value)}
+              >
+                <option value="">
+                  {!selectedCedentId ? 'Select cedant first' : contractOptions.length ? 'Select a contract...' : 'No contracts available'}
+                </option>
+                {contractOptions.map((item) => (
+                  <option key={item.contract_id} value={item.contract_id}>
+                    {item.contract_id}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-medium text-iris-text-primary">CSV or Excel File</span>
+              <input
+                accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12"
+                className="block w-full text-[13px] text-iris-text-primary file:mr-4 file:rounded-md file:border-0 file:bg-[#0F2B46] file:px-4 file:py-2 file:text-[13px] file:font-semibold file:text-white hover:file:bg-[#123B5B]"
+                disabled={busy}
+                type="file"
+                onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
               />
             </label>
           </div>
+
           <div className="flex justify-end gap-2 border-t border-iris-border px-5 py-4">
-            <button className="btn-secondary" onClick={onClose} type="button">
+            <button className="btn-secondary" disabled={busy} onClick={onClose} type="button">
               Cancel
             </button>
-            <button className="btn-primary" onClick={onCapture} type="button">
-              Capture Mock Handoff
+            <button className="btn-primary" disabled={!canUpload} onClick={onUpload} type="button">
+              {busy ? 'Uploading...' : 'Upload'}
             </button>
           </div>
         </div>

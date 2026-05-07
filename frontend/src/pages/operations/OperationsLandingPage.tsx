@@ -41,7 +41,6 @@ export function OperationsLandingPage() {
     <div>
       <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Claims Ops' }, { label: 'Operations' }]} />
       <PageHeader
-        eyebrow="Claims Pipeline"
         subtitle="Open an active workflow from the cession-file queue when no live pipeline is available for direct navigation."
         title="Operations"
       />

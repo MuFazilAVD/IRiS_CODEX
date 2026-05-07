@@ -30,6 +30,5 @@ def get_graphs(role: str = Depends(get_request_role)) -> dict:
 
 
 @router.get("/recent-activities")
-def get_recent_activities() -> dict:
-    return get_service().get_recent_activities()
-
+def get_recent_activities(role: str = Depends(get_request_role)) -> dict:
+    return get_service().get_recent_activities(role)

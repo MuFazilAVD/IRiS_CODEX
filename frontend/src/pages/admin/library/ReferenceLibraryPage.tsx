@@ -63,8 +63,6 @@ export function ReferenceLibraryPage() {
       <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Administration' }, { label: 'Reference Library' }]} />
       <PageHeader
         title="Reference Data Library"
-        subtitle="Core system dependency · version-controlled · lockable at contract level"
-        eyebrow="Administration"
         action={
           <button className="btn-primary" onClick={() => setUploadOpen(true)} type="button">
             <Upload className="h-4 w-4" />

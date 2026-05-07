@@ -9,7 +9,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, get_request_role
 from app.models.user import User
 from app.repositories.chatbot_repository import ChatbotRepository
-from app.schemas.chatbot import ChatbotMessageRequest
+from app.schemas.chatbot import ChatbotMessageRequest, ChatbotMessageResponse
 from app.services.chatbot_service import ChatbotService
 
 
@@ -20,7 +20,7 @@ def get_service(db: Session) -> ChatbotService:
     return ChatbotService(ChatbotRepository(db))
 
 
-@router.post("/message")
+@router.post("/message", response_model=ChatbotMessageResponse)
 def send_chatbot_message(
     payload: ChatbotMessageRequest,
     request_role: str = Depends(get_request_role),

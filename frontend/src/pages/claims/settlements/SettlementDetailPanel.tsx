@@ -115,8 +115,8 @@ export function SettlementDetailPanel({ settlementId, onClose, onRefresh }: Sett
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-iris-text-muted">Settlement Detail</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <h2 className="text-[24px] font-bold text-iris-text-primary">{detail?.settlement_id ?? settlementId}</h2>
-              {detail ? <StatusBadge status={detail.status}>{titleCase(detail.status)}</StatusBadge> : null}
+              <h2 className="text-[24px] font-bold text-iris-text-primary">{detail?.settlement_display_id ?? detail?.settlement_id ?? settlementId}</h2>
+              {detail ? <StatusBadge status={detail.status}>{formatSettlementStatus(detail.status)}</StatusBadge> : null}
             </div>
           </div>
           <button className="rounded-md p-1 text-iris-text-secondary hover:bg-iris-bg" onClick={onClose} type="button">
@@ -131,7 +131,10 @@ export function SettlementDetailPanel({ settlementId, onClose, onRefresh }: Sett
             <div className="space-y-5">
               <div className="rounded-[22px] border border-iris-border bg-[#FAFBFC] p-4">
                 <div className="space-y-2 text-[13px]">
-                  <InfoRow label="Contract" value={detail.contract_id ?? detail.contract_name} />
+                  <InfoRow
+                    label="Contract"
+                    value={`${detail.contract_display_id ?? detail.contract_id ?? detail.contract_name}${detail.contract_version ? ` | ${detail.contract_version}` : ''}`}
+                  />
                   <InfoRow label="Cedant" value={detail.cedent_name} />
                   <InfoRow label="Period" value={formatPeriodRange(detail.period_label, detail.period_start, detail.period_end)} />
                 </div>
@@ -149,7 +152,7 @@ export function SettlementDetailPanel({ settlementId, onClose, onRefresh }: Sett
               </div>
 
               <div className="rounded-[22px] border border-iris-border bg-white p-4 shadow-sm">
-                <InfoRow label="Status" value={titleCase(detail.status)} />
+                <InfoRow label="Status" value={formatSettlementStatus(detail.status)} />
                 <div className="mt-3 border-t border-[#EEF2F5] pt-3">
                   <InfoRow label="Source" value={detail.source} />
                   <InfoRow label="Last Updated" value={formatRelativeDate(detail.last_updated)} />
@@ -218,7 +221,7 @@ export function SettlementDetailPanel({ settlementId, onClose, onRefresh }: Sett
                           <span className="text-[11px] text-iris-text-muted">{formatRelativeDate(item.timestamp)}</span>
                         </div>
                         <p className="mt-1 text-[12px] text-iris-text-secondary">
-                          {item.actor} · {item.type}
+                          {item.actor} | {item.type}
                         </p>
                         <p className="mt-2 text-[13px] text-iris-text-secondary">{item.detail}</p>
                       </div>
@@ -299,6 +302,17 @@ function titleCase(value: string) {
     .split(' ')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+}
+
+function formatSettlementStatus(value: string) {
+  const labels: Record<string, string> = {
+    variance_review: 'Variance Review',
+    ready_for_payment: 'Ready for Payment',
+    pending_reconciliation: 'Pending Reconciliation',
+    compliance_hold: 'Compliance Hold',
+    pending_approval: 'Pending Approval',
+  }
+  return labels[value] ?? titleCase(value)
 }
 
 function extractErrorMessage(caughtError: unknown) {

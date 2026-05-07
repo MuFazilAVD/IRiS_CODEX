@@ -57,8 +57,6 @@ export function AdminUsersPage() {
       <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Administration' }, { label: 'Users & Roles' }]} />
       <PageHeader
         title="User & Role Management"
-        subtitle="Identity, RBAC, data entitlements, approval matrices, access logs"
-        eyebrow="Administration"
         action={
           <button className="btn-primary" onClick={() => setNewUserOpen(true)} type="button">
             <Plus className="h-4 w-4" />

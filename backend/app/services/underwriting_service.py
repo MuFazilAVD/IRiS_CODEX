@@ -4,6 +4,7 @@ import json
 import logging
 from copy import deepcopy
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ from app.models.contract import Contract
 from app.models.population import PolicyRegister
 from app.models.worklist import WorklistItem
 from app.repositories.underwriting_repository import UnderwritingRepository
+from app.services.population_csv import PopulationCsvNormalizedRow, parse_population_file
 
 
 logger = logging.getLogger(__name__)
@@ -48,6 +50,9 @@ CONTRACT_SECTION_NAME_MAP = {
     "compliance-docs": "compliance_docs",
 }
 CONTRACT_DETAIL_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "contract_detail_overrides.json"
+# Temporary backfill defaults keep early-phase population uploads moving until richer member enrichment lands.
+RELAXED_POPULATION_UPLOAD_PLACEHOLDER_DOB = date(1900, 1, 1)
+RELAXED_POPULATION_UPLOAD_PLACEHOLDER_PENSION = Decimal("0")
 
 
 class UnderwritingService:
@@ -668,8 +673,44 @@ class UnderwritingService:
             logger.error("Contract members upload failed for missing contract_id=%s", contract_id)
             raise IrisAPIError(404, "Contract not found", f"{contract_id} does not exist")
 
-        # MOCK IMPLEMENTATION
         raw_bytes = await file.read()
+        try:
+            parsed_rows = parse_population_file(file.filename, raw_bytes)
+        except ValueError as exc:
+            logger.error("Contract members upload failed because the uploaded file could not be parsed contract_id=%s", contract_id)
+            raise IrisAPIError(400, "Invalid members file", str(exc)) from exc
+
+        if not parsed_rows:
+            logger.error("Contract members upload failed because the file had no usable rows contract_id=%s", contract_id)
+            raise IrisAPIError(400, "Invalid members file", "The uploaded file does not contain any population rows")
+
+        normalized_rows, critical_issues, relaxed_fallbacks = self._normalize_contract_upload_rows(contract_id, parsed_rows)
+        if critical_issues:
+            logger.error(
+                "Contract members upload failed validation contract_id=%s issue_count=%s",
+                contract_id,
+                len(critical_issues),
+            )
+            details = "; ".join(
+                f"row {issue.row_number}: {issue.description}"
+                for issue in critical_issues[:5]
+            )
+            raise IrisAPIError(400, "Invalid members file", details)
+
+        if relaxed_fallbacks["rows_relaxed"] > 0:
+            logger.info("Contract members upload applied relaxed population defaults")
+            logger.debug(
+                "Contract members relaxed upload contract_id=%s rows_relaxed=%s dob_from_existing=%s dob_placeholder=%s pension_from_existing=%s pension_placeholder=%s",
+                contract_id,
+                relaxed_fallbacks["rows_relaxed"],
+                relaxed_fallbacks["date_of_birth_from_existing"],
+                relaxed_fallbacks["date_of_birth_placeholder"],
+                relaxed_fallbacks["annual_pension_from_existing"],
+                relaxed_fallbacks["annual_pension_placeholder"],
+            )
+
+        import_summary = self._import_contract_population_snapshot(contract, normalized_rows)
+
         store = self._read_contract_detail_store()
         timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
         self._append_contract_audit_event(
@@ -700,7 +741,7 @@ class UnderwritingService:
             "status": "accepted",
             "filename": file.filename,
             "bytes_received": len(raw_bytes),
-            "message": "Mock member upload captured until the Population phase is implemented.",
+            "message": self._build_contract_upload_message(import_summary, relaxed_fallbacks),
         }
 
     def list_population(
@@ -1567,6 +1608,10 @@ class UnderwritingService:
         }
 
     def _build_contract_member_list(self, contract: Contract, status: str, page: int, page_size: int) -> dict[str, Any]:
+        live_rows = self.repository.list_current_population_for_contract(contract.contract_id)
+        if live_rows:
+            return self._build_live_contract_member_list(contract, live_rows, status, page, page_size)
+
         detail = self._build_contract_payload(contract)
         summary = detail["member_population"]
         items = self._generate_contract_members(contract, summary)
@@ -1585,6 +1630,370 @@ class UnderwritingService:
             "summary": summary,
             "items": paginated_items,
         }
+
+    def _build_live_contract_member_list(
+        self,
+        contract: Contract,
+        live_rows: list[PolicyRegister],
+        status: str,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        seed_last_verified = self._load_population_seed_last_verified_map()
+        overrides = self._read_population_overrides()
+        items = [
+            self._serialize_contract_population_member(record, seed_last_verified, overrides)
+            for record in live_rows
+        ]
+        if status and status != "all":
+            filtered = [item for item in items if item["status"].lower() == status.lower()]
+        else:
+            filtered = items
+
+        start_index = max(page - 1, 0) * page_size
+        paginated_items = filtered[start_index : start_index + page_size]
+        return {
+            "contract_id": contract.contract_id,
+            "total": len(filtered),
+            "page": page,
+            "page_size": page_size,
+            "summary": self._build_live_contract_member_summary(items, contract.currency or "USD"),
+            "items": paginated_items,
+        }
+
+    def _build_live_contract_member_summary(
+        self,
+        items: list[dict[str, Any]],
+        default_currency: str,
+    ) -> dict[str, Any]:
+        if not items:
+            return {
+                "total_members": 0,
+                "active_members": 0,
+                "deferred_members": 0,
+                "spouse_members": 0,
+                "deceased_members": 0,
+                "currency": default_currency,
+                "last_verified_date": date.today().isoformat(),
+            }
+
+        return {
+            "total_members": len(items),
+            "active_members": sum(1 for item in items if item["status"] == "active"),
+            "deferred_members": sum(1 for item in items if item["status"] == "deferred"),
+            "spouse_members": 0,
+            "deceased_members": sum(1 for item in items if item["status"] == "deceased"),
+            "currency": items[0]["currency"] or default_currency,
+            "last_verified_date": max(item["last_verified"] for item in items),
+        }
+
+    def _serialize_contract_population_member(
+        self,
+        record: PolicyRegister,
+        seed_last_verified: dict[str, str],
+        overrides: dict[str, Any],
+    ) -> dict[str, Any]:
+        last_verified = self._resolve_population_last_verified(
+            record.member_id,
+            record.effective_from,
+            seed_last_verified,
+            overrides,
+        )
+        return {
+            "member_id": record.member_id,
+            "name": record.policy_id or record.member_id,
+            "age": self._calculate_age(record.date_of_birth, last_verified),
+            "gender": record.gender,
+            "annuity_amount": float(record.annual_pension or 0),
+            "currency": record.pension_currency or "GBP",
+            "status": record.status,
+            "last_verified": last_verified,
+            "defer_reason": "Benefit verification hold" if record.status == "deferred" else "",
+        }
+
+    def _import_contract_population_snapshot(
+        self,
+        contract: Contract,
+        rows: list[PopulationCsvNormalizedRow],
+    ) -> dict[str, int]:
+        member_ids = [row.member_id for row in rows]
+        current_rows = {
+            row.member_id: row
+            for row in self.repository.list_current_population_for_members(contract.contract_id, member_ids)
+        }
+        rows_to_save: list[PolicyRegister] = []
+        summary = {"created": 0, "updated": 0, "unchanged": 0}
+
+        for row in rows:
+            current = current_rows.get(row.member_id)
+            effective_from = row.effective_from or date.today()
+            if current is None:
+                rows_to_save.append(self._build_population_record(contract.contract_id, row, effective_from, None))
+                summary["created"] += 1
+                continue
+
+            if self._population_rows_match(current, row):
+                summary["unchanged"] += 1
+                continue
+
+            if effective_from <= current.effective_from:
+                effective_from = current.effective_from + timedelta(days=1)
+
+            current.is_current = False
+            current.effective_to = effective_from - timedelta(days=1)
+            rows_to_save.append(current)
+            rows_to_save.append(self._build_population_record(contract.contract_id, row, effective_from, None))
+            summary["updated"] += 1
+
+        if rows_to_save:
+            self.repository.save_population_records(rows_to_save)
+
+        logger.info("Imported contract population snapshot")
+        logger.debug(
+            "Population import contract_id=%s created=%s updated=%s unchanged=%s",
+            contract.contract_id,
+            summary["created"],
+            summary["updated"],
+            summary["unchanged"],
+        )
+        return summary
+
+    def _build_population_record(
+        self,
+        contract_id: str,
+        row: PopulationCsvNormalizedRow,
+        effective_from: date,
+        source_cession_file_id: str | None,
+    ) -> PolicyRegister:
+        return PolicyRegister(
+            contract_id=contract_id,
+            member_id=row.member_id,
+            policy_id=row.policy_id,
+            date_of_birth=row.date_of_birth,
+            gender=row.gender,
+            smoker_status=row.smoker_status,
+            postcode=row.postcode,
+            annual_pension=float(row.annual_pension),
+            pension_currency=row.pension_currency,
+            escalation_type=row.escalation_type,
+            escalation_rate=float(row.escalation_rate) if row.escalation_rate is not None else None,
+            status=row.status,
+            date_of_death=row.date_of_death,
+            commencement_date=row.commencement_date,
+            effective_from=effective_from,
+            effective_to=None,
+            is_current=True,
+            source_cession_file_id=source_cession_file_id,
+            created_at=datetime.now(UTC),
+        )
+
+    def _normalize_contract_upload_rows(
+        self,
+        contract_id: str,
+        parsed_rows: list[Any],
+    ) -> tuple[list[PopulationCsvNormalizedRow], list[Any], dict[str, int]]:
+        member_ids = [
+            member_id
+            for member_id in (
+                self._population_upload_member_id(row_result)
+                for row_result in parsed_rows
+            )
+            if member_id
+        ]
+        current_rows = {
+            row.member_id: row
+            for row in self.repository.list_current_population_for_members(contract_id, member_ids)
+        }
+        normalized_rows: list[PopulationCsvNormalizedRow] = []
+        critical_issues: list[Any] = []
+        relaxed_fallbacks = {
+            "rows_relaxed": 0,
+            "date_of_birth_from_existing": 0,
+            "date_of_birth_placeholder": 0,
+            "annual_pension_from_existing": 0,
+            "annual_pension_placeholder": 0,
+        }
+
+        for row_result in parsed_rows:
+            blocking_issues = [
+                issue
+                for issue in row_result.issues
+                if issue.severity == "critical" and not self._is_relaxed_population_upload_issue(issue)
+            ]
+            if blocking_issues:
+                critical_issues.extend(blocking_issues)
+                continue
+
+            normalized = row_result.normalized
+            if normalized is None:
+                normalized = self._coerce_relaxed_contract_upload_row(
+                    row_result.raw_data,
+                    current_rows.get(self._population_upload_member_id(row_result)),
+                    relaxed_fallbacks,
+                )
+                if normalized is None:
+                    critical_issues.extend(issue for issue in row_result.issues if issue.severity == "critical")
+                    continue
+
+            normalized_rows.append(normalized)
+
+        return normalized_rows, critical_issues, relaxed_fallbacks
+
+    def _population_upload_member_id(self, row_result: Any) -> str | None:
+        if row_result.normalized is not None:
+            return row_result.normalized.member_id
+        return self._population_upload_value(row_result.raw_data, "member_id", "pensioner_ref")
+
+    def _is_relaxed_population_upload_issue(self, issue: Any) -> bool:
+        return issue.field_name in {"date_of_birth", "annual_pension"} and issue.issue_type in {
+            "missing_required_field",
+            "invalid_date",
+            "invalid_number",
+        }
+
+    def _coerce_relaxed_contract_upload_row(
+        self,
+        raw_data: dict[str, str],
+        current_row: PolicyRegister | None,
+        relaxed_fallbacks: dict[str, int],
+    ) -> PopulationCsvNormalizedRow | None:
+        member_id = self._population_upload_value(raw_data, "member_id", "pensioner_ref")
+        gender = self._normalize_population_upload_gender(self._population_upload_value(raw_data, "gender"))
+        if not member_id or gender is None:
+            return None
+
+        relaxed_fallbacks["rows_relaxed"] += 1
+        date_of_birth = self._parse_population_upload_date(self._population_upload_value(raw_data, "date_of_birth", "dob"))
+        if date_of_birth is None:
+            if current_row is not None:
+                date_of_birth = current_row.date_of_birth
+                relaxed_fallbacks["date_of_birth_from_existing"] += 1
+            else:
+                date_of_birth = RELAXED_POPULATION_UPLOAD_PLACEHOLDER_DOB
+                relaxed_fallbacks["date_of_birth_placeholder"] += 1
+
+        annual_pension = self._parse_population_upload_decimal(
+            self._population_upload_value(raw_data, "annual_pension", "annuity_amount")
+        )
+        if annual_pension is None:
+            if current_row is not None:
+                annual_pension = Decimal(str(current_row.annual_pension or 0))
+                relaxed_fallbacks["annual_pension_from_existing"] += 1
+            else:
+                annual_pension = RELAXED_POPULATION_UPLOAD_PLACEHOLDER_PENSION
+                relaxed_fallbacks["annual_pension_placeholder"] += 1
+
+        pension_currency = self._population_upload_value(raw_data, "pension_currency", "currency")
+        status = self._population_upload_value(raw_data, "status")
+        date_of_death_value = self._population_upload_value(raw_data, "date_of_death", "death_date")
+        commencement_date_value = self._population_upload_value(raw_data, "commencement_date")
+        effective_from_value = self._population_upload_value(raw_data, "effective_from")
+        escalation_rate_value = self._population_upload_value(raw_data, "escalation_rate")
+
+        return PopulationCsvNormalizedRow(
+            member_id=member_id,
+            policy_id=self._population_upload_value(raw_data, "policy_id") or (current_row.policy_id if current_row else None),
+            date_of_birth=date_of_birth,
+            gender=gender,
+            smoker_status=self._population_upload_value(raw_data, "smoker_status") or (current_row.smoker_status if current_row else None),
+            postcode=self._population_upload_value(raw_data, "postcode") or (current_row.postcode if current_row else None),
+            annual_pension=annual_pension,
+            pension_currency=(
+                pension_currency
+                or (current_row.pension_currency if current_row and current_row.pension_currency else "GBP")
+            ).upper(),
+            escalation_type=(
+                self._population_upload_value(raw_data, "escalation_type", "indexation_basis")
+                or (current_row.escalation_type if current_row else None)
+            ),
+            escalation_rate=(
+                self._parse_population_upload_decimal(escalation_rate_value)
+                if escalation_rate_value is not None
+                else (Decimal(str(current_row.escalation_rate)) if current_row and current_row.escalation_rate is not None else None)
+            ),
+            status=(status or (current_row.status if current_row else "active")).lower(),
+            date_of_death=(
+                self._parse_population_upload_date(date_of_death_value)
+                if date_of_death_value is not None
+                else (current_row.date_of_death if current_row else None)
+            ),
+            commencement_date=(
+                self._parse_population_upload_date(commencement_date_value)
+                if commencement_date_value is not None
+                else (current_row.commencement_date if current_row else None)
+            ),
+            effective_from=self._parse_population_upload_date(effective_from_value),
+            verification_reference=self._population_upload_value(raw_data, "verification_reference", "verified_by"),
+        )
+
+    def _population_upload_value(self, raw_data: dict[str, str], *aliases: str) -> str | None:
+        for alias in aliases:
+            value = (raw_data.get(alias) or "").strip()
+            if value:
+                return value
+        return None
+
+    def _normalize_population_upload_gender(self, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().upper()
+        if normalized in {"M", "F"}:
+            return normalized
+        if normalized == "MALE":
+            return "M"
+        if normalized == "FEMALE":
+            return "F"
+        return None
+
+    def _parse_population_upload_date(self, value: str | None) -> date | None:
+        if value is None:
+            return None
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+
+    def _parse_population_upload_decimal(self, value: str | None) -> Decimal | None:
+        if value is None:
+            return None
+        try:
+            return Decimal(value.replace(",", ""))
+        except InvalidOperation:
+            return None
+
+    def _build_contract_upload_message(self, import_summary: dict[str, int], relaxed_fallbacks: dict[str, int]) -> str:
+        message = (
+            f"Imported {import_summary['created']} new rows, updated {import_summary['updated']} members, "
+            f"and left {import_summary['unchanged']} rows unchanged."
+        )
+        if relaxed_fallbacks["rows_relaxed"] == 0:
+            return message
+        return (
+            f"{message} Accepted {relaxed_fallbacks['rows_relaxed']} row(s) with missing or invalid "
+            "date_of_birth/annual_pension by reusing current member values when available and defaulting new members to "
+            "1900-01-01 / 0 until the later enrichment phase."
+        )
+
+    def _population_rows_match(self, current: PolicyRegister, row: PopulationCsvNormalizedRow) -> bool:
+        return (
+            current.policy_id == row.policy_id
+            and current.date_of_birth == row.date_of_birth
+            and current.gender == row.gender
+            and current.smoker_status == row.smoker_status
+            and current.postcode == row.postcode
+            and float(current.annual_pension or 0) == float(row.annual_pension)
+            and (current.pension_currency or "GBP") == row.pension_currency
+            and current.escalation_type == row.escalation_type
+            and self._float_or_none(current.escalation_rate) == self._float_or_none(row.escalation_rate)
+            and current.status == row.status
+            and current.date_of_death == row.date_of_death
+            and current.commencement_date == row.commencement_date
+        )
+
+    def _float_or_none(self, value: Any) -> float | None:
+        if value is None:
+            return None
+        return float(value)
 
     def _generate_contract_members(self, contract: Contract, summary: dict[str, Any]) -> list[dict[str, Any]]:
         total_members = int(summary.get("total_members") or 0)

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from sqlalchemy import desc, func, select
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any
+
+from sqlalchemy import desc, func, inspect, select, text
 from sqlalchemy.orm import Session
 
 from app.models.audit_event import AuditEvent
@@ -14,6 +18,32 @@ from app.models.worklist import WorklistItem
 class ChatbotRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
+
+    def list_table_catalog(self) -> list[dict[str, Any]]:
+        inspector = inspect(self.db.get_bind())
+        catalog: list[dict[str, Any]] = []
+        for table_name in sorted(inspector.get_table_names()):
+            columns = [
+                {
+                    "name": column["name"],
+                    "type": str(column["type"]),
+                }
+                for column in inspector.get_columns(table_name)
+            ]
+            catalog.append({"table_name": table_name, "columns": columns})
+        return catalog
+
+    def execute_readonly_query(self, query: str, max_rows: int = 200) -> dict[str, Any]:
+        result = self.db.execute(text(query))
+        fetched_rows = result.fetchmany(max_rows + 1)
+        truncated = len(fetched_rows) > max_rows
+        rows = fetched_rows[:max_rows]
+        return {
+            "columns": list(result.keys()),
+            "rows": [self._serialize_row(dict(row._mapping)) for row in rows],
+            "row_count": len(rows),
+            "truncated": truncated,
+        }
 
     def get_contract(self, contract_id: str) -> Contract | None:
         return self.db.get(Contract, contract_id)
@@ -63,3 +93,13 @@ class ChatbotRepository:
     def list_recent_audit_events(self, limit: int = 5) -> list[AuditEvent]:
         statement = select(AuditEvent).order_by(desc(AuditEvent.timestamp), desc(AuditEvent.created_at)).limit(limit)
         return list(self.db.scalars(statement))
+
+    def _serialize_row(self, row: dict[str, Any]) -> dict[str, Any]:
+        return {key: self._serialize_value(value) for key, value in row.items()}
+
+    def _serialize_value(self, value: Any) -> Any:
+        if isinstance(value, Decimal):
+            return float(value)
+        if isinstance(value, (datetime, date)):
+            return value.isoformat()
+        return value
