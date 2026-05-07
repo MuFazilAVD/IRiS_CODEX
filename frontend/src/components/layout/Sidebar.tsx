@@ -91,18 +91,22 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-[#112233] bg-iris-navy text-white transition-all ${
-        sidebarCollapsed ? 'w-16' : 'w-60'
-      }`}
+      className={`fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-[#112233] bg-iris-navy text-white transition-all ${sidebarCollapsed ? 'w-16' : 'w-60'
+        }`}
     >
-      <div className="flex h-[72px] items-center gap-3 px-4">
-        <div className="rounded-xl bg-white px-2 py-1.5 shadow-sm">
+      <div className="flex h-[72px] items-center gap-1 px-4">
+        <div className="rounded-xl px-2 py-1.5 shadow-sm">
           <MetLifeLogo className={sidebarCollapsed ? 'h-7 w-9' : 'h-7 w-[108px]'} showWordmark={!sidebarCollapsed} />
         </div>
         {!sidebarCollapsed ? (
-          <div>
-            <div className="text-lg font-bold tracking-tight text-white">IRiS</div>
-          </div>
+          <>
+            {/* Transparent Pipe Divider */}
+            <div className="h-6 w-px bg-white/20" />
+
+            <div className="relative -top-[1px] text-lg font-bold leading-none tracking-tight text-white">
+              IRiS
+            </div>
+          </>
         ) : null}
       </div>
 
@@ -122,10 +126,9 @@ export function Sidebar() {
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition ${
-                        isActive
-                          ? 'border-l-2 border-iris-teal bg-iris-navy-light text-white'
-                          : 'text-iris-text-muted hover:bg-white/10 hover:text-white'
+                      `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition ${isActive
+                        ? 'border-l-2 border-iris-teal bg-iris-navy-light text-white'
+                        : 'text-iris-text-muted hover:bg-white/10 hover:text-white'
                       }`
                     }
                   >

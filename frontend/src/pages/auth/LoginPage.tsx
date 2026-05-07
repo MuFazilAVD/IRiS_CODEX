@@ -70,7 +70,7 @@ export function LoginPage() {
     <div className="login-bg flex min-h-screen items-center justify-center px-6 py-16">
       <div className="relative z-10 w-full max-w-[440px]">
         <div className="mb-8 flex items-center justify-center gap-4 text-white">
-          <div className="rounded-lg bg-white px-2.5 py-1.5 shadow-sm">
+          <div className="rounded-lg px-2.5 py-1.5 shadow-sm">
             <MetLifeLogo className="h-12 w-[150px]" />
           </div>
           <div className="h-10 w-px bg-white/20" />

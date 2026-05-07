@@ -11,7 +11,7 @@ export function MetLifeLogo({ className, showWordmark = true }: MetLifeLogoProps
 
   return (
     <span aria-label="MetLife logo" className={containerClassName} role="img">
-      <img alt="MetLife" className={imageClassName} src="/metlife-logo-trimmed.png" />
+      <img alt="MetLife" className={imageClassName} src="/logo-white-trimmed.png" />
     </span>
   )
 }
