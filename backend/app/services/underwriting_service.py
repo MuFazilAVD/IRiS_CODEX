@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from copy import deepcopy
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -21,6 +21,7 @@ from app.services.population_csv import PopulationCsvNormalizedRow, parse_popula
 
 
 logger = logging.getLogger(__name__)
+UTC = timezone.utc
 
 SECTION_NAME_MAP = {
     "legal-entity": "legal_entity",

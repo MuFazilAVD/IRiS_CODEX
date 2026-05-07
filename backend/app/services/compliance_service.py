@@ -6,7 +6,7 @@ import json
 import logging
 import unicodedata
 from copy import deepcopy
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +18,7 @@ from app.services.underwriting_service import UnderwritingService
 
 
 logger = logging.getLogger(__name__)
+UTC = timezone.utc
 
 COMPLIANCE_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "compliance_overrides.json"
 
@@ -75,11 +76,102 @@ AUDIT_RISK_HEATMAP = [
 ]
 
 WATCHLIST_CACHE = [
-    {"entity_name": "Hans Muller", "list_name": "OFAC SDN", "source": "OFAC DB", "dob": "1962-03-15"},
-    {"entity_name": "Petra Schmidt", "list_name": "FinCEN 314(a)", "source": "FinCEN", "dob": None},
-    {"entity_name": "Sergei V. Markov", "list_name": "OFAC SDN", "source": "OFAC DB", "dob": None},
-    {"entity_name": "Atlas Corporate Pensions", "list_name": "OFAC SDN", "source": "OFAC DB", "dob": None},
+    {
+        "entity_name": "Hans Muller",
+        "list_name": "OFAC SDN",
+        "source": "OFAC DB",
+        "dob": "1962-03-15",
+        "country": "DE",
+        "street_address": "Friedrichstrasse 91",
+        "city": "Berlin",
+        "postal_code": "10117",
+        "tax_identification_number": None,
+        "company_registration_number": None,
+    },
+    {
+        "entity_name": "Petra Schmidt",
+        "list_name": "FinCEN 314(a)",
+        "source": "FinCEN",
+        "dob": None,
+        "country": "CH",
+        "street_address": "Bahnhofstrasse 44",
+        "city": "Zurich",
+        "postal_code": "8001",
+        "tax_identification_number": None,
+        "company_registration_number": None,
+    },
+    {
+        "entity_name": "Sergei V. Markov",
+        "list_name": "OFAC SDN",
+        "source": "OFAC DB",
+        "dob": None,
+        "country": "RU",
+        "street_address": "Tverskaya Street 12",
+        "city": "Moscow",
+        "postal_code": "125009",
+        "tax_identification_number": None,
+        "company_registration_number": None,
+    },
+    {
+        "entity_name": "Atlas Corporate Pensions",
+        "list_name": "OFAC SDN",
+        "source": "OFAC DB",
+        "dob": None,
+        "country": "RU",
+        "street_address": "Nevsky Prospect 28",
+        "city": "Saint Petersburg",
+        "postal_code": "191186",
+        "tax_identification_number": "RU-998877661",
+        "company_registration_number": "RU-OGRN-1133",
+    },
 ]
+
+# MOCK IMPLEMENTATION: cedent street/city/postal identifiers are not part of the current cedents schema.
+# These values enrich sanctions verification without inventing new DB columns.
+CEDENT_IDENTITY_MOCKS: dict[str, dict[str, str]] = {
+    "CED-0991": {
+        "street_address": "10 Fenchurch Avenue",
+        "city": "London",
+        "postal_code": "EC3M 5BN",
+        "tax_identification_number": "GB-991-384-220",
+        "uk_company_registration_number": "09114320",
+    },
+    "CED-1042": {
+        "street_address": "22 Bishopsgate",
+        "city": "London",
+        "postal_code": "EC2N 4BQ",
+        "tax_identification_number": "GB-1042-774-921",
+        "uk_company_registration_number": "04281042",
+    },
+    "CED-1087": {
+        "street_address": "Rue du Rhone 14",
+        "city": "Geneva",
+        "postal_code": "1204",
+        "tax_identification_number": "CHE-1087.442.119",
+        "uk_company_registration_number": "N/A",
+    },
+    "CED-1133": {
+        "street_address": "200 Liberty Street",
+        "city": "New York",
+        "postal_code": "10281",
+        "tax_identification_number": "US-TIN-13-1133110",
+        "uk_company_registration_number": "N/A",
+    },
+    "CED-1156": {
+        "street_address": "100 King Street West",
+        "city": "Toronto",
+        "postal_code": "M5X 1A9",
+        "tax_identification_number": "CA-BN-1156-8821",
+        "uk_company_registration_number": "N/A",
+    },
+    "CED-1201": {
+        "street_address": "Leopoldstrasse 20",
+        "city": "Munich",
+        "postal_code": "80802",
+        "tax_identification_number": "DE-1201-442-008",
+        "uk_company_registration_number": "N/A",
+    },
+}
 
 
 class ComplianceService:
@@ -130,6 +222,8 @@ class ComplianceService:
         normalized_name = self._normalize_name(entity_name)
         matches = [entry for entry in WATCHLIST_CACHE if self._normalize_name(entry["entity_name"]) == normalized_name]
         screening_ref = self._screening_ref(entity_name, member_id)
+        identity_context = self._cedent_identity_context(cedent_id, entity_name)
+        logger.debug("Sanctions identity context screening_ref=%s context=%s", screening_ref, identity_context)
 
         if not matches:
             return {
@@ -141,9 +235,10 @@ class ComplianceService:
                 "llm_confidence": 1.0,
                 "llm_reasoning": "No keyword or fuzzy watchlist match exceeded the screening threshold.",
                 "method": "keyword_no_match",
+                "identity_context": identity_context,
             }
 
-        llm_result = self._verify_watchlist_match(entity_name, dob, matches)
+        llm_result = self._verify_watchlist_match(entity_name, dob, matches, identity_context)
         return {
             "screening_ref": screening_ref,
             "entity_name": entity_name,
@@ -158,6 +253,8 @@ class ComplianceService:
             "cedent_id": cedent_id,
             "member_id": member_id,
             "cession_file_id": cession_file_id,
+            "identity_context": identity_context,
+            "identity_match_summary": llm_result.get("identity_match_summary", []),
         }
 
     def get_cedent_screening(self, cedent_id: str) -> dict[str, Any]:
@@ -173,6 +270,7 @@ class ComplianceService:
             "cedent_name": cedent_detail.get("legal_entity_name"),
             "screening_status": cedent_detail.get("screening_status"),
             "sanction_screening": screening,
+            "identity_context": self._cedent_identity_context(cedent_id, cedent_detail.get("legal_entity_name")),
         }
 
     def trigger_bulk_screening(self, sources: list[str], scope: str) -> dict[str, Any]:
@@ -285,6 +383,15 @@ class ComplianceService:
             merged = {**seed_hit, **deepcopy(overrides.get(seed_hit["screening_ref"], {}))}
             merged["screening_ref"] = merged.get("screening_ref") or merged.get("hit_id")
             merged["hit_id"] = merged.get("hit_id") or merged["screening_ref"]
+            if merged.get("member_id") is None:
+                identity_context = self._cedent_identity_context(merged.get("cedent_id"), merged.get("entity"))
+                matches = [
+                    entry
+                    for entry in WATCHLIST_CACHE
+                    if self._normalize_name(entry["entity_name"]) == self._normalize_name(str(merged.get("entity") or ""))
+                ]
+                merged["identity_context"] = identity_context
+                merged["identity_match_summary"] = self._identity_match_summary(identity_context, matches)
             items.append(merged)
         return items
 
@@ -371,11 +478,38 @@ class ComplianceService:
         digits = sum(ord(char) for char in seed) % 900
         return f"SHM-{digits + 100:03d}"
 
-    def _verify_watchlist_match(self, entity_name: str, dob: str | None, matches: list[dict[str, Any]]) -> dict[str, Any]:
+    def _cedent_identity_context(self, cedent_id: str | None, entity_name: str | None = None) -> dict[str, Any] | None:
+        cedent = self.repository.get_cedent(cedent_id) or self.repository.find_cedent_by_name(entity_name)
+        if cedent is None:
+            return None
+
+        mock_identity = CEDENT_IDENTITY_MOCKS.get(cedent.cedent_id, {})
+        tax_identifier = cedent.tax_identification_number or mock_identity.get("tax_identification_number")
+        company_number = cedent.registered_company_number or mock_identity.get("uk_company_registration_number")
+        return {
+            "cedent_id": cedent.cedent_id,
+            "name": cedent.legal_entity_name,
+            "trading_name": cedent.trading_name,
+            "street_address": mock_identity.get("street_address", ""),
+            "city": mock_identity.get("city", ""),
+            "postal_code": mock_identity.get("postal_code", ""),
+            "country": cedent.country_of_registration or cedent.jurisdiction or "",
+            "ssn_tin": tax_identifier or "",
+            "uk_company_registration_number": company_number or "",
+            "source": "db_plus_mock_address_overlay" if mock_identity else "db",
+        }
+
+    def _verify_watchlist_match(
+        self,
+        entity_name: str,
+        dob: str | None,
+        matches: list[dict[str, Any]],
+        identity_context: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         if openai_client is None:
             logger.info("OpenAI client is not configured; using heuristic screening verification")
             return {
-                **self._fallback_llm_verification(entity_name, dob, matches),
+                **self._fallback_llm_verification(entity_name, dob, matches, identity_context),
                 "llm_called": False,
             }
 
@@ -391,14 +525,18 @@ class ComplianceService:
                 model=OPENAI_MODEL,
                 instructions=(
                     "You are a sanctions-screening verification assistant for an internal compliance workflow. "
-                    "Review the entity and watchlist matches and return JSON only with keys "
-                    "is_genuine_match (boolean), confidence (number between 0 and 1), and reasoning (string). "
+                    "Review the entity, cedent identity context, and watchlist matches. Use name, street address, "
+                    "city, postal code, country, SSN/TIN, and UK company registration number when available to "
+                    "detect genuine matches or mismatches. Return JSON only with keys "
+                    "is_genuine_match (boolean), confidence (number between 0 and 1), reasoning (string), and "
+                    "identity_match_summary (array of field/status objects). "
                     "Use conservative compliance judgment. Do not include markdown."
                 ),
                 input=json.dumps(
                     {
                         "entity_name": entity_name,
                         "date_of_birth": dob,
+                        "cedent_identity_context": identity_context,
                         "matches": matches,
                     },
                     indent=2,
@@ -412,34 +550,48 @@ class ComplianceService:
                 "is_genuine_match": bool(parsed.get("is_genuine_match")),
                 "confidence": normalized_confidence,
                 "reasoning": reasoning,
+                "identity_match_summary": parsed.get("identity_match_summary", []),
                 "llm_called": True,
             }
         except Exception as exc:  # pragma: no cover - network/runtime path
             logger.error("OpenAI screening verification failed entity_name=%s error=%s", entity_name, exc)
             logger.debug(
-                "OpenAI screening verification fallback entity_name=%s dob=%s matches=%s",
+                "OpenAI screening verification fallback entity_name=%s dob=%s matches=%s identity_context=%s",
                 entity_name,
                 dob,
                 matches,
+                identity_context,
             )
             return {
-                **self._fallback_llm_verification(entity_name, dob, matches),
+                **self._fallback_llm_verification(entity_name, dob, matches, identity_context),
                 "llm_called": False,
             }
 
-    def _fallback_llm_verification(self, entity_name: str, dob: str | None, matches: list[dict[str, Any]]) -> dict[str, Any]:
+    def _fallback_llm_verification(
+        self,
+        entity_name: str,
+        dob: str | None,
+        matches: list[dict[str, Any]],
+        identity_context: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         normalized_name = self._normalize_name(entity_name)
+        identity_summary = self._identity_match_summary(identity_context, matches)
+        identifier_mismatch = any(item["status"] == "mismatch" for item in identity_summary if item["field"] in {"country", "ssn_tin", "uk_company_registration_number"})
+        address_mismatch = any(item["status"] == "mismatch" for item in identity_summary if item["field"] in {"city", "postal_code"})
+
         if normalized_name == self._normalize_name("Hans Muller"):
             if dob == "1962-03-15":
                 return {
                     "is_genuine_match": True,
                     "confidence": 0.92,
                     "reasoning": "Name, DOB and list source align above the conservative review threshold. Recommend human review.",
+                    "identity_match_summary": identity_summary,
                 }
             return {
                 "is_genuine_match": True,
                 "confidence": 0.86,
                 "reasoning": "Name alignment is strong, but DOB is missing or incomplete. Conservative review is still recommended.",
+                "identity_match_summary": identity_summary,
             }
 
         if normalized_name == self._normalize_name("Petra Schmidt"):
@@ -447,20 +599,71 @@ class ComplianceService:
                 "is_genuine_match": False,
                 "confidence": 0.88,
                 "reasoning": "Keyword match was found, but the profile lacks supporting DOB or geography signals and is treated as a false positive.",
+                "identity_match_summary": identity_summary,
             }
 
         if normalized_name == self._normalize_name("Atlas Corporate Pensions"):
+            if identifier_mismatch or address_mismatch:
+                return {
+                    "is_genuine_match": False,
+                    "confidence": 0.83,
+                    "reasoning": (
+                        "Entity-name overlap was found, but cedent country/address/identifier context conflicts with the watchlist record. "
+                        "Treating as a likely mismatch for analyst confirmation."
+                    ),
+                    "identity_match_summary": identity_summary,
+                }
             return {
                 "is_genuine_match": True,
                 "confidence": 0.42,
                 "reasoning": "Entity-name overlap remains unresolved. Confidence is low, but the case should stay under human review.",
+                "identity_match_summary": identity_summary,
             }
 
         return {
             "is_genuine_match": True,
             "confidence": 0.75,
             "reasoning": f"Potential watchlist overlap found against {[item['list_name'] for item in matches]}. Human review is recommended.",
+            "identity_match_summary": identity_summary,
         }
+
+    def _identity_match_summary(
+        self,
+        identity_context: dict[str, Any] | None,
+        matches: list[dict[str, Any]],
+    ) -> list[dict[str, str]]:
+        if identity_context is None or not matches:
+            return []
+
+        match = matches[0]
+        field_pairs = [
+            ("name", identity_context.get("name"), match.get("entity_name")),
+            ("street_address", identity_context.get("street_address"), match.get("street_address")),
+            ("city", identity_context.get("city"), match.get("city")),
+            ("postal_code", identity_context.get("postal_code"), match.get("postal_code")),
+            ("country", identity_context.get("country"), match.get("country")),
+            ("ssn_tin", identity_context.get("ssn_tin"), match.get("tax_identification_number")),
+            ("uk_company_registration_number", identity_context.get("uk_company_registration_number"), match.get("company_registration_number")),
+        ]
+        summary: list[dict[str, str]] = []
+        for field, cedent_value, watchlist_value in field_pairs:
+            cedent_text = str(cedent_value or "").strip()
+            watchlist_text = str(watchlist_value or "").strip()
+            if not cedent_text or not watchlist_text or watchlist_text.upper() == "N/A":
+                status = "missing"
+            elif self._normalize_name(cedent_text) == self._normalize_name(watchlist_text):
+                status = "match"
+            else:
+                status = "mismatch"
+            summary.append(
+                {
+                    "field": field,
+                    "cedent_value": cedent_text or "Not available",
+                    "watchlist_value": watchlist_text or "Not available",
+                    "status": status,
+                }
+            )
+        return summary
 
     def _screening_method_label(self, llm_result: dict[str, Any]) -> str:
         if llm_result.get("llm_called"):

@@ -10,6 +10,7 @@ from app.models.cession_file_exception import CessionFileException
 from app.models.cession_file_record import CessionFileRecord
 from app.models.contract import Contract
 from app.models.population import PolicyRegister
+from app.models.settlement import Settlement
 from app.models.worklist import WorklistItem
 
 
@@ -136,6 +137,14 @@ class ClaimsRepository:
         )
         return list(self.db.scalars(statement))
 
+    def list_current_population_for_contract(self, contract_id: str) -> list[PolicyRegister]:
+        statement = (
+            select(PolicyRegister)
+            .where(PolicyRegister.contract_id == contract_id, PolicyRegister.is_current.is_(True))
+            .order_by(PolicyRegister.member_id, PolicyRegister.created_at)
+        )
+        return list(self.db.scalars(statement))
+
     def find_contract_by_member_overlap(self, member_ids: list[str]) -> tuple[str, int] | None:
         if not member_ids:
             return None
@@ -219,6 +228,20 @@ class ClaimsRepository:
         self.db.commit()
         self.db.refresh(item)
         return item
+
+    def list_settlements(self) -> list[Settlement]:
+        statement = select(Settlement).order_by(Settlement.period_end.desc(), Settlement.settlement_id)
+        return list(self.db.scalars(statement))
+
+    def get_settlement(self, settlement_id: str) -> Settlement | None:
+        statement = select(Settlement).where(Settlement.settlement_id == settlement_id).limit(1)
+        return self.db.scalar(statement)
+
+    def upsert_settlement(self, settlement: Settlement) -> Settlement:
+        self.db.add(settlement)
+        self.db.commit()
+        self.db.refresh(settlement)
+        return settlement
 
     def get_next_worklist_id(self) -> str:
         current_ids = [value for value in self.db.scalars(select(WorklistItem.wl_id))]

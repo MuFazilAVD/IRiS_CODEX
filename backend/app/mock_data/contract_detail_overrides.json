@@ -640,6 +640,12 @@
   "LSC-2025-009": {
     "audit_approval": [
       {
+        "timestamp": "2026-05-07 18:48:34",
+        "actor": "Underwriter",
+        "action": "Uploaded members file",
+        "detail": "atlas_corporate_population_file.xlsx"
+      },
+      {
         "timestamp": "2026-05-07 12:23:46",
         "actor": "Underwriter",
         "action": "Uploaded members file",
@@ -666,6 +672,13 @@
     ],
     "audit_compliance": {
       "audit_trail": [
+        {
+          "timestamp": "2026-05-07 18:48:34",
+          "actor": "Underwriter",
+          "type": "Manual",
+          "action": "Uploaded members file",
+          "detail": "atlas_corporate_population_file.xlsx"
+        },
         {
           "timestamp": "2026-05-07 12:23:46",
           "actor": "Underwriter",

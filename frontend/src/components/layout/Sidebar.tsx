@@ -1,6 +1,5 @@
 import type { ComponentType } from 'react'
 import {
-  Activity,
   BarChart3,
   BookOpen,
   Building2,
@@ -55,7 +54,6 @@ const sections: NavSection[] = [
     label: 'Claims & Settlement',
     roles: ['claims_ops', 'super_admin'],
     items: [
-      { label: 'Operations', to: '/operations', icon: Activity },
       { label: 'Cession Files', to: '/claims/cession-files', icon: FolderOpen },
       { label: 'Settlements', to: '/claims/settlements', icon: DollarSign },
       { label: 'Calc Engine', to: '/claims/calculation-engine', icon: Calculator },

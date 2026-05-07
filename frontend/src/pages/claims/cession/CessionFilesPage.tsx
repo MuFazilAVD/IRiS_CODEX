@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Activity, Inbox, Upload } from 'lucide-react'
+import { Inbox, Upload } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { api } from '../../../api/client'
@@ -11,7 +11,6 @@ import { formatRelativeDate } from '../../../utils/formatters'
 import type {
   ClaimsCessionQueueItem,
   ClaimsCessionQueuePayload,
-  OperationsPipelinesPayload,
 } from '../../../types/api'
 
 type StatusFilter = 'all' | 'exceptions' | 'review' | 'approved'
@@ -41,11 +40,6 @@ export function CessionFilesPage() {
           },
         })
       ).data,
-  })
-
-  const pipelinesQuery = useQuery({
-    queryKey: ['operations-pipelines'],
-    queryFn: async () => (await api.get<OperationsPipelinesPayload>('/operations/pipelines')).data,
   })
 
   const fileTypeOptions = ['all', ...new Set((queueQuery.data?.items ?? []).map((item) => item.file_type).filter(Boolean))]
@@ -85,59 +79,6 @@ export function CessionFilesPage() {
               <ThroughputTile label="Files" value={formatCount(queueQuery.data.metrics.pipeline_throughput.files)} />
               <ThroughputTile label="In exception" value={formatCount(queueQuery.data.metrics.pipeline_throughput.in_exception)} />
               <ThroughputTile label="Avg processing time" value={queueQuery.data.metrics.pipeline_throughput.avg_processing_time} />
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-[22px] border border-iris-border bg-white shadow-sm">
-            <div className="flex flex-col gap-2 border-b border-[#E8EDF2] px-5 py-4">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-iris-blue" />
-                <p className="text-[18px] font-bold text-iris-text-primary">Active Pipelines</p>
-              </div>
-              <p className="text-[13px] text-iris-text-secondary">Revised Phase 8 workflows open in the full-page operations view with left-nav steps.</p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-[13px]">
-                <thead className="bg-[#F8F9FA]">
-                  <tr>
-                    {['Process ID', 'Filename', 'Cedent', 'Priority', 'Current Step', 'Pipeline Health', 'Received'].map((label) => (
-                      <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
-                        {label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(pipelinesQuery.data?.active_pipelines ?? []).map((item) => (
-                    <tr
-                      key={item.process_id}
-                      className="cursor-pointer border-t border-[#EEF2F5] transition hover:bg-[#FAFBFC]"
-                      onClick={() => navigate(`/operations/${item.process_id}`)}
-                    >
-                      <td className="px-4 py-3 font-mono text-[12px] text-iris-blue">{item.process_id}</td>
-                      <td className="px-4 py-3 font-medium text-iris-text-primary">{item.filename}</td>
-                      <td className="px-4 py-3 text-iris-text-secondary">{item.cedent}</td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${priorityClass(item.priority)}`}>{item.priority}</span>
-                      </td>
-                      <td className="px-4 py-3 text-iris-text-secondary">{item.current_step}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded-full bg-[#E8F8F5] px-2.5 py-1 text-[12px] font-semibold text-[#117A65]">{item.pipeline_health}</span>
-                      </td>
-                      <td className="px-4 py-3 text-iris-text-secondary">{formatRelativeDate(item.received_at)}</td>
-                    </tr>
-                  ))}
-
-                  {!pipelinesQuery.isLoading && !(pipelinesQuery.data?.active_pipelines.length ?? 0) ? (
-                    <EmptyTableRow
-                      colSpan={7}
-                      description="No active V2 operations pipelines are available right now."
-                      title="No active operations workflows"
-                    />
-                  ) : null}
-                </tbody>
-              </table>
             </div>
           </div>
 
@@ -307,16 +248,3 @@ function formatCount(value: number) {
   return new Intl.NumberFormat('en-GB').format(value)
 }
 
-function priorityClass(priority: string) {
-  const normalized = priority.toLowerCase()
-  if (normalized === 'critical') {
-    return 'bg-[#FDEDEC] text-[#922B21]'
-  }
-  if (normalized === 'high') {
-    return 'bg-[#FEF5E7] text-[#B9770E]'
-  }
-  if (normalized === 'medium') {
-    return 'bg-[#FEF9E7] text-[#9A7D0A]'
-  }
-  return 'bg-[#EBF5FB] text-[#1A5276]'
-}

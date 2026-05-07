@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from copy import deepcopy
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +15,7 @@ from app.services.claims_service import ClaimsService
 
 
 logger = logging.getLogger(__name__)
+UTC = timezone.utc
 
 OPERATIONS_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "operations_pipeline_overrides.json"
 

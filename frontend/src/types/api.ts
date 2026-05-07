@@ -1463,6 +1463,8 @@ export interface ComplianceScreenEntityResponse {
   cedent_id?: string | null
   member_id?: string | null
   cession_file_id?: string | null
+  identity_context?: ComplianceCedentIdentityContext | null
+  identity_match_summary?: ComplianceIdentityMatchSummaryItem[]
 }
 
 export interface OperationsAIDecisionPanelItem {
@@ -1559,6 +1561,28 @@ export interface ComplianceActiveHit {
   reasoning: string
   resolution_notes?: string | null
   resolved_at?: string | null
+  identity_context?: ComplianceCedentIdentityContext | null
+  identity_match_summary?: ComplianceIdentityMatchSummaryItem[]
+}
+
+export interface ComplianceCedentIdentityContext {
+  cedent_id: string
+  name: string
+  trading_name?: string | null
+  street_address: string
+  city: string
+  postal_code: string
+  country: string
+  ssn_tin: string
+  uk_company_registration_number: string
+  source: string
+}
+
+export interface ComplianceIdentityMatchSummaryItem {
+  field: string
+  cedent_value: string
+  watchlist_value: string
+  status: 'match' | 'mismatch' | 'missing' | string
 }
 
 export interface ComplianceSanctionsOverviewPayload {
@@ -1582,6 +1606,7 @@ export interface ComplianceCedentScreeningPayload {
   cedent_name: string
   screening_status: string
   sanction_screening: SanctionScreeningSection
+  identity_context?: ComplianceCedentIdentityContext | null
 }
 
 export interface ComplianceBulkScreeningResponse {

@@ -8,6 +8,7 @@ from app.models.population import PolicyRegister
 from app.models.reference_data_version import ReferenceDataVersion
 from app.models.report import Report
 from app.models.screening_cache_list import ScreeningCacheList
+from app.models.settlement import Settlement
 from app.models.user import User
 from app.models.worklist import WorklistItem
 

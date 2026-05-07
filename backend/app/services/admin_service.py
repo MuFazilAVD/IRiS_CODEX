@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import secrets
 from copy import deepcopy
-from datetime import UTC, date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 
 from app.errors import IrisAPIError
@@ -17,6 +17,7 @@ from app.repositories.auth_repository import AuthRepository
 
 
 logger = logging.getLogger(__name__)
+UTC = timezone.utc
 
 VALID_ROLES = {"super_admin", "admin", "underwriter", "claims_ops", "compliance"}
 VALID_STATUSES = {"active", "invited", "suspended", "inactive"}

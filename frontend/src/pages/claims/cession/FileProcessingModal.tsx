@@ -202,6 +202,14 @@ export function CessionFileProcessingWorkflow({
   }
 
   const visibleContracts = contractOptions.filter((item) => !detectCedentId || item.cedent_id === detectCedentId)
+  useEffect(() => {
+    if (!visibleContracts.length) {
+      return
+    }
+    if (!visibleContracts.some((item) => item.contract_id === mappedContractId)) {
+      setMappedContractId(visibleContracts[0].contract_id)
+    }
+  }, [mappedContractId, visibleContracts])
   const canContinue =
     !busy &&
     (currentStep !== 'upload' || Boolean(selectedFile)) &&
@@ -798,6 +806,23 @@ function MapContractStep({
 }) {
   const mapping = detail.contract_mapping
   const selectedContract = contractOptions.find((item) => item.contract_id === mappedContractId)
+  const preview = selectedContract
+    ? {
+        contract_id: selectedContract.contract_id,
+        contract_name: selectedContract.contract_name,
+        version: selectedContract.version,
+        matching_basis: `Manual preview: ${selectedContract.cedent_name} + File Type "${detail.file_type}" + Period ${mapping.period}`,
+        confidence: selectedContract.contract_id === mapping.contract_id ? mapping.confidence : 1,
+        notional: selectedContract.notional,
+        currency: selectedContract.currency,
+        fixed_leg_rate_pct: selectedContract.fixed_rate * 100,
+        floating_leg: selectedContract.floating_definition || mapping.floating_leg,
+        lives_covered: selectedContract.lives_count,
+        inception_date: selectedContract.inception_date ?? '',
+        maturity_date: selectedContract.maturity_date ?? '',
+        status: selectedContract.status,
+      }
+    : mapping
 
   return (
     <div className="space-y-5">
@@ -811,7 +836,7 @@ function MapContractStep({
             </option>
           ))}
         </select>
-        <div className="field-input bg-[#F8FAFC]">{selectedContract?.version ?? mapping.version}</div>
+        <div className="field-input bg-[#F8FAFC]">{preview.version}</div>
         <div className="field-input bg-[#F8FAFC]">{mapping.period}</div>
       </div>
 
@@ -819,24 +844,24 @@ function MapContractStep({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-[18px] font-bold text-iris-text-primary">
-              {mapping.contract_id} — {selectedContract?.contract_name ?? mapping.contract_name}
+              {preview.contract_id} - {preview.contract_name}
             </p>
-            <p className="mt-1 text-[13px] text-iris-text-secondary">{mapping.matching_basis}</p>
+            <p className="mt-1 text-[13px] text-iris-text-secondary">{preview.matching_basis}</p>
           </div>
           <span className="rounded-full bg-[#E8F8F5] px-3 py-1 text-[12px] font-semibold text-[#117A65]">
-            {formatConfidence(mapping.confidence)} confidence
+            {formatConfidence(preview.confidence)} confidence
           </span>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <MetricLine label="Notional" value={compactCurrency(mapping.notional, mapping.currency)} />
-          <MetricLine label="Fixed leg" value={`${mapping.fixed_leg_rate_pct.toFixed(2)}%`} />
-          <MetricLine label="Floating leg" value={mapping.floating_leg} />
-          <MetricLine label="Lives covered" value={formatCount(mapping.lives_covered)} />
-          <MetricLine label="Inception" value={mapping.inception_date} />
-          <MetricLine label="Maturity" value={mapping.maturity_date} />
-          <MetricLine label="Status" value={titleCase(mapping.status)} />
-          <MetricLine label="Currency" value={mapping.currency} />
+          <MetricLine label="Notional" value={compactCurrency(preview.notional, preview.currency)} />
+          <MetricLine label="Fixed leg" value={`${preview.fixed_leg_rate_pct.toFixed(2)}%`} />
+          <MetricLine label="Floating leg" value={preview.floating_leg} />
+          <MetricLine label="Lives covered" value={formatCount(preview.lives_covered)} />
+          <MetricLine label="Inception" value={preview.inception_date} />
+          <MetricLine label="Maturity" value={preview.maturity_date} />
+          <MetricLine label="Status" value={titleCase(preview.status)} />
+          <MetricLine label="Currency" value={preview.currency} />
         </div>
       </div>
     </div>
@@ -955,7 +980,7 @@ function ExceptionsStep({
     onExceptionActionsChange({
       ...exceptionActions,
       [exceptionId]: {
-        choice: 'manual',
+        choice: 'override',
         manualValue,
       },
     })
@@ -1015,7 +1040,7 @@ function ExceptionsStep({
                         <ActionChoiceButton active={state.choice === 'override'} label="Override" onClick={() => updateChoice(item.exception_id, 'override')} />
                         <ActionChoiceButton active={state.choice === 'manual'} label="Manual" onClick={() => updateChoice(item.exception_id, 'manual')} />
                       </div>
-                      {state.choice === 'manual' ? (
+                      {state.choice === 'override' ? (
                         <input
                           className="field-input mt-3"
                           placeholder="Enter manual override"
@@ -1399,7 +1424,7 @@ function buildExceptionState(items: ClaimsExceptionItem[]): ExceptionActionState
     items.map((item) => [
       item.exception_id,
       {
-        choice: item.resolution === 'overridden' ? 'manual' : item.resolution === 'rejected' ? 'override' : 'accept',
+        choice: item.resolution === 'overridden' ? 'override' : item.resolution === 'rejected' ? 'manual' : 'accept',
         manualValue: item.resolution === 'overridden' ? item.current_value ?? '' : '',
       },
     ]),
@@ -1409,14 +1434,14 @@ function buildExceptionState(items: ClaimsExceptionItem[]): ExceptionActionState
 function buildExceptionResolutionPayload(items: ClaimsExceptionItem[], state: ExceptionActionState) {
   return items.map((item) => {
     const itemState = state[item.exception_id] ?? { choice: 'accept' as ExceptionChoice, manualValue: '' }
-    if (itemState.choice === 'manual') {
+    if (itemState.choice === 'override') {
       return {
         exception_id: item.exception_id,
         resolution: 'overridden',
         override_value: itemState.manualValue,
       }
     }
-    if (itemState.choice === 'override') {
+    if (itemState.choice === 'manual') {
       return {
         exception_id: item.exception_id,
         resolution: 'rejected',

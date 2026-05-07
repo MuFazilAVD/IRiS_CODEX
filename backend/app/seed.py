@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 import logging
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -24,6 +24,7 @@ from app.repositories.auth_repository import AuthRepository
 
 
 logger = logging.getLogger(__name__)
+UTC = timezone.utc
 
 
 def seed_database(db: Session) -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.mock_data_loader import load_mock_data
@@ -30,3 +30,23 @@ class ComplianceRepository:
             .order_by(Cedent.cedent_id)
         )
         return list(self.db.scalars(statement))
+
+    def get_cedent(self, cedent_id: str | None) -> Cedent | None:
+        if not cedent_id:
+            return None
+        return self.db.get(Cedent, cedent_id)
+
+    def find_cedent_by_name(self, entity_name: str | None) -> Cedent | None:
+        if not entity_name:
+            return None
+        normalized_name = entity_name.strip().lower()
+        if not normalized_name:
+            return None
+        statement = (
+            select(Cedent)
+            .where(
+                func.lower(Cedent.legal_entity_name) == normalized_name
+            )
+            .limit(1)
+        )
+        return self.db.scalar(statement)

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { Fragment, type ReactNode, useMemo, useRef, useState } from 'react'
 import { MessageSquarePlus, Send, Sparkles, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -150,7 +150,7 @@ export function IRiSChatbot() {
                       message.role === 'user' ? 'bg-iris-navy text-white' : 'bg-[#F1F4F7] text-iris-text-primary'
                     }`}
                   >
-                    <p>{message.content}</p>
+                    <MarkdownMessage content={message.content} />
                     {message.navigationAction ? (
                       <button
                         className="mt-3 rounded-full border border-[#AED6F1] bg-[#EBF5FB] px-3 py-1.5 text-[12px] font-semibold text-iris-blue"
@@ -278,4 +278,154 @@ function formatLocationChip(pathname: string) {
     return '/'
   }
   return pathname
+}
+
+function MarkdownMessage({ content }: { content: string }) {
+  return <div className="iris-chat-markdown">{renderMarkdownBlocks(content)}</div>
+}
+
+function renderMarkdownBlocks(content: string) {
+  const blocks = splitMarkdownBlocks(content)
+
+  return blocks.map((block, index) => {
+    const key = `block-${index}`
+
+    if (isMarkdownTable(block)) {
+      const rows = block
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+      const header = splitTableRow(rows[0])
+      const bodyRows = rows.slice(2).map(splitTableRow)
+
+      return (
+        <div className="iris-chat-table-wrap" key={key}>
+          <table>
+            <thead>
+              <tr>
+                {header.map((cell, cellIndex) => (
+                  <th key={`${key}-h-${cellIndex}`}>{renderInlineMarkdown(cell, `${key}-h-${cellIndex}`)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {bodyRows.map((row, rowIndex) => (
+                <tr key={`${key}-r-${rowIndex}`}>
+                  {row.map((cell, cellIndex) => (
+                    <td key={`${key}-r-${rowIndex}-${cellIndex}`}>{renderInlineMarkdown(cell, `${key}-r-${rowIndex}-${cellIndex}`)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+
+    if (isListBlock(block, /^[-*]\s+/)) {
+      return (
+        <ul key={key}>
+          {block.split('\n').map((line, lineIndex) => (
+            <li key={`${key}-${lineIndex}`}>{renderInlineMarkdown(line.replace(/^[-*]\s+/, ''), `${key}-${lineIndex}`)}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    if (isListBlock(block, /^\d+\.\s+/)) {
+      return (
+        <ol key={key}>
+          {block.split('\n').map((line, lineIndex) => (
+            <li key={`${key}-${lineIndex}`}>{renderInlineMarkdown(line.replace(/^\d+\.\s+/, ''), `${key}-${lineIndex}`)}</li>
+          ))}
+        </ol>
+      )
+    }
+
+    return (
+      <p key={key}>
+        {block.split('\n').map((line, lineIndex) => (
+          <Fragment key={`${key}-${lineIndex}`}>
+            {lineIndex > 0 ? <br /> : null}
+            {renderInlineMarkdown(line, `${key}-${lineIndex}`)}
+          </Fragment>
+        ))}
+      </p>
+    )
+  })
+}
+
+function splitMarkdownBlocks(content: string) {
+  return content
+    .replace(/\r\n/g, '\n')
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+}
+
+function isListBlock(block: string, markerPattern: RegExp) {
+  return block
+    .split('\n')
+    .map((line) => line.trim())
+    .every((line) => markerPattern.test(line))
+}
+
+function isMarkdownTable(block: string) {
+  const rows = block
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  return rows.length >= 2 && rows[0].includes('|') && /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(rows[1])
+}
+
+function splitTableRow(row: string) {
+  return row
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((cell) => cell.trim())
+}
+
+function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+  const tokens: ReactNode[] = []
+  const pattern = /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|_[^_\s][^_]*_|`[^`]+`|\[[^\]]+\]\((https?:\/\/[^)\s]+)\))/g
+  let cursor = 0
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > cursor) {
+      tokens.push(text.slice(cursor, match.index))
+    }
+
+    const value = match[0]
+    const key = `${keyPrefix}-inline-${match.index}`
+
+    if (value.startsWith('**') || value.startsWith('__')) {
+      tokens.push(<strong key={key}>{value.slice(2, -2)}</strong>)
+    } else if (value.startsWith('*') || value.startsWith('_')) {
+      tokens.push(<em key={key}>{value.slice(1, -1)}</em>)
+    } else if (value.startsWith('`')) {
+      tokens.push(<code key={key}>{value.slice(1, -1)}</code>)
+    } else {
+      const linkMatch = value.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/)
+      if (linkMatch) {
+        tokens.push(
+          <a href={linkMatch[2]} key={key} rel="noreferrer" target="_blank">
+            {linkMatch[1]}
+          </a>,
+        )
+      } else {
+        tokens.push(value)
+      }
+    }
+
+    cursor = match.index + value.length
+  }
+
+  if (cursor < text.length) {
+    tokens.push(text.slice(cursor))
+  }
+
+  return tokens
 }

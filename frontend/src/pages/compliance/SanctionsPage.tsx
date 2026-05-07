@@ -380,6 +380,25 @@ function HitDetailDrawer({
             </div>
           </section>
 
+          {hit.identity_match_summary?.length ? (
+            <section className="rounded-xl border border-[#F0D9A7] bg-[#FFFCF4] p-4">
+              <p className="text-[13px] font-semibold text-iris-text-primary">Identity Match Check</p>
+              <p className="mt-1 text-[12px] text-iris-text-secondary">Cedant identity values compared with the watchlist record for this hit.</p>
+              <div className="mt-3 overflow-hidden rounded-lg border border-[#EAD7AD] bg-white">
+                {hit.identity_match_summary.map((item) => (
+                  <div key={item.field} className="grid gap-3 border-t border-[#F3E8CF] px-3 py-2.5 first:border-t-0 md:grid-cols-[0.9fr_1.2fr_1.2fr_0.7fr]">
+                    <p className="text-[12px] font-semibold text-iris-text-primary">{identityFieldLabel(item.field)}</p>
+                    <p className="text-[12px] text-iris-text-secondary">{item.cedent_value}</p>
+                    <p className="text-[12px] text-iris-text-secondary">{item.watchlist_value}</p>
+                    <span className={`w-fit rounded-full px-2 py-1 text-[11px] font-semibold ${identityStatusClass(item.status)}`}>
+                      {identityFieldLabel(item.status)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <section className="rounded-xl border border-iris-border bg-white p-4">
             <p className="text-[13px] font-semibold text-iris-text-primary">Resolution Notes</p>
             <p className="mt-1 text-[12px] text-iris-text-secondary">Add the rationale that should be captured with this compliance disposition.</p>
@@ -423,6 +442,29 @@ function HitDetailDrawer({
               <p className="text-[13px] text-iris-text-secondary">Cedant sanctions context is not available for this hit.</p>
             )}
           </section>
+
+          <section className="rounded-xl border border-iris-border bg-white p-4">
+            <div className="mb-3">
+              <p className="text-[13px] font-semibold text-iris-text-primary">Cedant Identity Verification</p>
+              <p className="text-[12px] text-iris-text-secondary">Identity fields supplied to IRiS for match or mismatch validation.</p>
+            </div>
+            {loading ? (
+              <p className="text-[13px] text-iris-text-secondary">Loading cedant identity context...</p>
+            ) : screeningDetail?.identity_context ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <DetailField label="Legal Name" value={screeningDetail.identity_context.name} />
+                <DetailField label="Street Address" value={screeningDetail.identity_context.street_address || 'N/A'} />
+                <DetailField label="City" value={screeningDetail.identity_context.city || 'N/A'} />
+                <DetailField label="ZIP / Postal Code" value={screeningDetail.identity_context.postal_code || 'N/A'} />
+                <DetailField label="Country" value={screeningDetail.identity_context.country || 'N/A'} />
+                <DetailField label="SSN / TIN" value={screeningDetail.identity_context.ssn_tin || 'N/A'} />
+                <DetailField label="UK Company Reg No." value={screeningDetail.identity_context.uk_company_registration_number || 'N/A'} />
+                <DetailField label="Source" value={identitySourceLabel(screeningDetail.identity_context.source)} />
+              </div>
+            ) : (
+              <p className="text-[13px] text-iris-text-secondary">Cedant identity context is not available for this hit.</p>
+            )}
+          </section>
         </div>
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-[#E8EDF2] px-6 py-4">
@@ -448,6 +490,40 @@ function DetailField({ label, value }: { label: string; value: string }) {
       <p className="mt-1.5 text-[13px] text-iris-text-primary">{value}</p>
     </div>
   )
+}
+
+function identitySourceLabel(value: string) {
+  if (value === 'db_plus_mock_address_overlay') {
+    return 'DB + mock address overlay'
+  }
+  return value
+    ? value
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    : 'N/A'
+}
+
+function identityFieldLabel(value: string) {
+  return value
+    .replaceAll('_', ' ')
+    .split(' ')
+    .map((part) => {
+      const upper = part.toUpperCase()
+      return ['SSN', 'TIN', 'UK'].includes(upper) ? upper : part.charAt(0).toUpperCase() + part.slice(1)
+    })
+    .join(' ')
+}
+
+function identityStatusClass(status: string) {
+  if (status === 'match') {
+    return 'bg-[#D5F5E3] text-[#1E8449]'
+  }
+  if (status === 'mismatch') {
+    return 'bg-[#FDEDEC] text-[#922B21]'
+  }
+  return 'bg-[#EEF1F4] text-[#566573]'
 }
 
 function formatCount(value: number) {

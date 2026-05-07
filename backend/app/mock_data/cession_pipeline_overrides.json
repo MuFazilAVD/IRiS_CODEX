@@ -82,154 +82,121 @@
     }
   },
   "CES-2026-001": {
-    "pipeline_session_id": "pipe-cf3be869-7103-4eda-8c92-d151cac1cd73",
-    "active_step": "summary",
-    "source_filename": "northstar_status_2025Q1.csv",
-    "source_size_bytes": 312,
+    "pipeline_session_id": "pipe-2860f041-3775-4f74-94f4-edf15af51cbc",
+    "active_step": "exceptions",
+    "source_filename": "atlas_member_movement_q2_2025_unique.xlsx",
+    "source_size_bytes": 15159,
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "detection_override": {
       "file_type": "Pension Status",
-      "cedent_id": "CED-1042",
-      "completed_at": "2026-05-06T12:41:27.771440Z"
+      "cedent_id": "CED-1133",
+      "completed_at": "2026-05-07T17:22:41.315870Z"
     },
     "contract_override": {
-      "contract_id": "LSC-2024-019",
-      "completed_at": "2026-05-06T12:41:29.694971Z"
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-07T17:22:58.484099Z"
     },
     "audit_events": [
       {
-        "timestamp": "2026-05-06T12:41:24.294341Z",
+        "timestamp": "2026-05-07T17:22:26.012169Z",
         "actor": "Claims Ops",
         "type": "Human",
         "action": "File uploaded manually",
-        "detail": "northstar_status_2025Q1.csv"
+        "detail": "atlas_member_movement_q2_2025_unique.xlsx"
       },
       {
-        "timestamp": "2026-05-06T12:41:27.782041Z",
+        "timestamp": "2026-05-07T17:22:41.369855Z",
         "actor": "AI Classifier v3.2",
         "type": "AI Agent",
         "action": "Classified as \"Pension Status\"",
         "detail": "confidence 100%"
       },
       {
-        "timestamp": "2026-05-06T12:41:27.784142Z",
+        "timestamp": "2026-05-07T17:22:41.397319Z",
         "actor": "AI Classifier v3.2",
         "type": "AI Agent",
-        "action": "Identified cedant Northstar Pension Trust",
+        "action": "Identified cedant Atlas Corporate Pensions",
         "detail": "confidence 100%"
       },
       {
-        "timestamp": "2026-05-06T12:41:29.705032Z",
+        "timestamp": "2026-05-07T17:22:58.529070Z",
         "actor": "Pipeline Orchestrator",
         "type": "System",
-        "action": "Mapped to LSC-2024-019 v1.2",
+        "action": "Mapped to LSC-2024-044 v1.1",
         "detail": "Auto-mapped by cedant + period"
       },
       {
-        "timestamp": "2026-05-06T12:41:31.285447Z",
+        "timestamp": "2026-05-07T17:23:07.392050Z",
         "actor": "Contract Rules Engine",
         "type": "System",
-        "action": "Checked 2 clauses",
+        "action": "Checked 3 clauses",
         "detail": "1 flagged"
       },
       {
-        "timestamp": "2026-05-06T12:41:32.180831Z",
+        "timestamp": "2026-05-07T17:23:29.644744Z",
         "actor": "Validation Engine",
         "type": "System",
         "action": "Validation complete",
-        "detail": "0 critical, 1 warnings"
-      },
-      {
-        "timestamp": "2026-05-06T12:41:32.728379Z",
-        "actor": "Claims Ops",
-        "type": "Human",
-        "action": "Exception handling updated",
-        "detail": "1 actions saved"
-      },
-      {
-        "timestamp": "2026-05-06T12:41:33.237499Z",
-        "actor": "Claims Engine",
-        "type": "System",
-        "action": "Processing complete",
-        "detail": "4 records applied"
-      },
-      {
-        "timestamp": "2026-05-06T12:41:33.239809Z",
-        "actor": "Workflow Router",
-        "type": "System",
-        "action": "Created 1 worklist item(s)",
-        "detail": "WL-9208"
+        "detail": "396 critical, 201 warnings"
       }
     ],
     "stage_history": [
       {
         "stage": "uploaded",
-        "completed_at": "2026-05-06T12:41:24.294341Z"
+        "completed_at": "2026-05-07T17:22:26.012169Z"
       },
       {
         "stage": "detecting",
-        "completed_at": "2026-05-06T12:41:27.773962Z"
+        "completed_at": "2026-05-07T17:22:41.319493Z"
       },
       {
         "stage": "detected",
-        "completed_at": "2026-05-06T12:41:27.776000Z"
+        "completed_at": "2026-05-07T17:22:41.336674Z"
       },
       {
         "stage": "mapped",
-        "completed_at": "2026-05-06T12:41:29.697184Z"
+        "completed_at": "2026-05-07T17:22:58.496956Z"
       },
       {
         "stage": "clauses",
-        "completed_at": "2026-05-06T12:41:31.278216Z"
+        "completed_at": "2026-05-07T17:23:07.358320Z"
       },
       {
         "stage": "validated",
-        "completed_at": "2026-05-06T12:41:32.173016Z"
-      },
-      {
-        "stage": "exceptions",
-        "completed_at": "2026-05-06T12:41:32.724088Z"
-      },
-      {
-        "stage": "processing",
-        "completed_at": "2026-05-06T12:41:33.228003Z"
-      },
-      {
-        "stage": "processed",
-        "completed_at": "2026-05-06T12:41:33.230419Z"
+        "completed_at": "2026-05-07T17:23:29.613513Z"
       }
     ],
     "stage_log": [
       {
         "stage": "upload",
         "status": "complete",
-        "timestamp": "2026-05-06T12:41:24.294341Z"
+        "timestamp": "2026-05-07T17:22:26.012169Z"
       },
       {
         "stage": "detect",
         "status": "complete",
-        "timestamp": "2026-05-06T12:41:27.777932Z"
+        "timestamp": "2026-05-07T17:22:41.349589Z"
       },
       {
         "stage": "map_contract",
         "status": "complete",
-        "timestamp": "2026-05-06T12:41:29.700224Z"
+        "timestamp": "2026-05-07T17:22:58.496956Z"
       },
       {
         "stage": "clauses",
         "status": "complete",
-        "timestamp": "2026-05-06T12:41:31.280344Z"
+        "timestamp": "2026-05-07T17:23:07.360554Z"
       },
       {
         "stage": "validate",
         "status": "complete",
-        "timestamp": "2026-05-06T12:41:32.175900Z"
+        "timestamp": "2026-05-07T17:23:29.623936Z"
       },
       {
         "stage": "exceptions",
-        "status": "complete",
-        "timestamp": "2026-05-06T12:41:32.721818Z"
+        "status": "in_progress",
+        "timestamp": "2026-05-07T17:23:29.634215Z"
       },
       {
         "stage": "process",
@@ -241,137 +208,43 @@
         "status": "in_progress",
         "timestamp": "2026-05-06T12:41:33.235053Z"
       }
-    ]
+    ],
+    "manual_file_type": "Pension Status"
   },
   "CES-2026-002": {
-    "pipeline_session_id": "pipe-16155186-1a93-4bc7-9324-c1d0715b1d17",
-    "active_step": "summary",
-    "source_filename": "northstar_status_2025Q1.csv",
-    "source_size_bytes": 312,
+    "pipeline_session_id": "pipe-5ed56b71-b045-4337-aedd-c840549120da",
+    "active_step": "detect",
+    "source_filename": "atlas_member_movement_q2_2025_unique.xlsx",
+    "source_size_bytes": 15159,
     "manual_cedent_id": null,
     "manual_contract_id": null,
-    "detection_override": {
-      "file_type": "Pension Status",
-      "cedent_id": "CED-1042",
-      "completed_at": "2026-05-07T09:26:32.356503Z"
-    },
-    "contract_override": {
-      "contract_id": "LSC-2024-019",
-      "completed_at": "2026-05-07T09:26:33.118634Z"
-    },
+    "detection_override": null,
+    "contract_override": null,
     "audit_events": [
       {
-        "timestamp": "2026-05-07T09:26:30.876392Z",
+        "timestamp": "2026-05-07T17:29:12.661933Z",
         "actor": "Claims Ops",
         "type": "Human",
         "action": "File uploaded manually",
-        "detail": "northstar_status_2025Q1.csv"
-      },
-      {
-        "timestamp": "2026-05-07T09:26:32.371796Z",
-        "actor": "AI Classifier v3.2",
-        "type": "AI Agent",
-        "action": "Classified as \"Pension Status\"",
-        "detail": "confidence 100%"
-      },
-      {
-        "timestamp": "2026-05-07T09:26:32.392223Z",
-        "actor": "AI Classifier v3.2",
-        "type": "AI Agent",
-        "action": "Identified cedant Northstar Pension Trust",
-        "detail": "confidence 100%"
-      },
-      {
-        "timestamp": "2026-05-07T09:26:33.133857Z",
-        "actor": "Pipeline Orchestrator",
-        "type": "System",
-        "action": "Mapped to LSC-2024-019 v1.2",
-        "detail": "Auto-mapped by cedant + period"
-      },
-      {
-        "timestamp": "2026-05-07T09:26:33.507069Z",
-        "actor": "Contract Rules Engine",
-        "type": "System",
-        "action": "Checked 2 clauses",
-        "detail": "1 flagged"
-      },
-      {
-        "timestamp": "2026-05-07T09:26:33.725307Z",
-        "actor": "Validation Engine",
-        "type": "System",
-        "action": "Validation complete",
-        "detail": "0 critical, 1 warnings"
-      },
-      {
-        "timestamp": "2026-05-07T09:26:33.993435Z",
-        "actor": "Claims Ops",
-        "type": "Human",
-        "action": "Exception handling updated",
-        "detail": "1 actions saved"
-      },
-      {
-        "timestamp": "2026-05-07T09:26:34.410414Z",
-        "actor": "Claims Engine",
-        "type": "System",
-        "action": "Processing complete",
-        "detail": "4 records applied"
-      },
-      {
-        "timestamp": "2026-05-07T09:26:34.429281Z",
-        "actor": "Workflow Router",
-        "type": "System",
-        "action": "Created 1 worklist item(s)",
-        "detail": "WL-9211"
+        "detail": "atlas_member_movement_q2_2025_unique.xlsx"
       }
     ],
     "stage_history": [
       {
         "stage": "uploaded",
-        "completed_at": "2026-05-07T09:26:30.876392Z"
-      },
-      {
-        "stage": "detecting",
-        "completed_at": "2026-05-07T09:26:32.360392Z"
-      },
-      {
-        "stage": "detected",
-        "completed_at": "2026-05-07T09:26:32.363366Z"
-      },
-      {
-        "stage": "mapped",
-        "completed_at": "2026-05-07T09:26:33.122490Z"
-      },
-      {
-        "stage": "clauses",
-        "completed_at": "2026-05-07T09:26:33.496476Z"
-      },
-      {
-        "stage": "validated",
-        "completed_at": "2026-05-07T09:26:33.713077Z"
-      },
-      {
-        "stage": "exceptions",
-        "completed_at": "2026-05-07T09:26:33.984883Z"
-      },
-      {
-        "stage": "processing",
-        "completed_at": "2026-05-07T09:26:34.399401Z"
-      },
-      {
-        "stage": "processed",
-        "completed_at": "2026-05-07T09:26:34.402436Z"
+        "completed_at": "2026-05-07T17:29:12.661933Z"
       }
     ],
     "stage_log": [
       {
         "stage": "upload",
         "status": "complete",
-        "timestamp": "2026-05-07T09:26:30.876392Z"
+        "timestamp": "2026-05-07T17:29:12.661933Z"
       },
       {
         "stage": "detect",
-        "status": "complete",
-        "timestamp": "2026-05-07T09:26:32.366903Z"
+        "status": "in_progress",
+        "timestamp": "2026-05-07T17:29:17.661933Z"
       },
       {
         "stage": "map_contract",
@@ -403,194 +276,300 @@
         "status": "in_progress",
         "timestamp": "2026-05-07T09:26:34.407871Z"
       }
-    ]
+    ],
+    "manual_file_type": "Pension Status"
   },
   "CES-2026-003": {
-    "pipeline_session_id": "pipe-9f570075-a70b-4e33-a912-a8f6e51f782a",
-    "active_step": "detect",
-    "source_filename": "atlas_status_test.csv",
-    "source_size_bytes": 151,
-    "manual_cedent_id": "CED-1133",
-    "manual_contract_id": "LSC-2025-009",
-    "detection_override": null,
-    "contract_override": null,
-    "audit_events": [
-      {
-        "timestamp": "2026-05-07T10:48:07.412779Z",
-        "actor": "Claims Ops",
-        "type": "Human",
-        "action": "File uploaded manually",
-        "detail": "atlas_status_test.csv"
-      }
-    ],
-    "stage_history": [
-      {
-        "stage": "uploaded",
-        "completed_at": "2026-05-07T10:48:07.412779Z"
-      }
-    ],
-    "stage_log": [
-      {
-        "stage": "upload",
-        "status": "complete",
-        "timestamp": "2026-05-07T10:48:07.412779Z"
-      },
-      {
-        "stage": "detect",
-        "status": "in_progress",
-        "timestamp": "2026-05-07T10:48:12.412779Z"
-      }
-    ]
-  },
-  "CES-2026-004": {
-    "pipeline_session_id": "pipe-8e44f51a-493c-4d6e-a094-ebcf4bd50625",
+    "pipeline_session_id": "pipe-d0b69d60-4263-4b85-bcf8-a073016284f6",
     "active_step": "summary",
-    "source_filename": "atlas_status_test.csv",
-    "source_size_bytes": 151,
-    "manual_cedent_id": "CED-1133",
-    "manual_contract_id": "LSC-2025-009",
+    "source_filename": "atlas_member_movement_q2_2025_unique.xlsx",
+    "source_size_bytes": 15159,
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
     "detection_override": {
-      "file_type": null,
-      "cedent_id": null,
-      "completed_at": "2026-05-07T10:48:26.857182Z"
+      "file_type": "Pension Status",
+      "cedent_id": "CED-1133",
+      "completed_at": "2026-05-07T17:40:29.044466Z"
     },
     "contract_override": {
-      "contract_id": null,
-      "completed_at": "2026-05-07T10:48:26.944396Z"
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-07T17:40:34.033545Z"
     },
     "audit_events": [
       {
-        "timestamp": "2026-05-07T10:48:26.708081Z",
+        "timestamp": "2026-05-07T17:39:52.358967Z",
         "actor": "Claims Ops",
         "type": "Human",
         "action": "File uploaded manually",
-        "detail": "atlas_status_test.csv"
+        "detail": "atlas_member_movement_q2_2025_unique.xlsx"
       },
       {
-        "timestamp": "2026-05-07T10:48:26.874825Z",
+        "timestamp": "2026-05-07T17:40:29.115630Z",
         "actor": "AI Classifier v3.2",
         "type": "AI Agent",
         "action": "Classified as \"Pension Status\"",
-        "detail": "confidence 61%"
+        "detail": "confidence 100%"
       },
       {
-        "timestamp": "2026-05-07T10:48:26.897288Z",
+        "timestamp": "2026-05-07T17:40:29.123931Z",
         "actor": "AI Classifier v3.2",
         "type": "AI Agent",
         "action": "Identified cedant Atlas Corporate Pensions",
-        "detail": "confidence 64%"
+        "detail": "confidence 100%"
       },
       {
-        "timestamp": "2026-05-07T10:48:26.957965Z",
+        "timestamp": "2026-05-07T17:40:34.081201Z",
         "actor": "Pipeline Orchestrator",
         "type": "System",
-        "action": "Mapped to LSC-2025-009 v1.0",
+        "action": "Mapped to LSC-2024-044 v1.1",
         "detail": "Auto-mapped by cedant + period"
       },
       {
-        "timestamp": "2026-05-07T10:48:27.021772Z",
+        "timestamp": "2026-05-07T17:40:35.689973Z",
         "actor": "Contract Rules Engine",
         "type": "System",
-        "action": "Checked 2 clauses",
+        "action": "Checked 3 clauses",
         "detail": "1 flagged"
       },
       {
-        "timestamp": "2026-05-07T10:48:27.096399Z",
+        "timestamp": "2026-05-07T17:40:45.775827Z",
         "actor": "Validation Engine",
         "type": "System",
         "action": "Validation complete",
-        "detail": "0 critical, 1 warnings"
+        "detail": "1 critical, 0 warnings"
       },
       {
-        "timestamp": "2026-05-07T10:48:27.224067Z",
+        "timestamp": "2026-05-07T17:40:56.747608Z",
         "actor": "Claims Ops",
         "type": "Human",
         "action": "Exception handling updated",
         "detail": "1 actions saved"
       },
       {
-        "timestamp": "2026-05-07T10:48:27.345278Z",
+        "timestamp": "2026-05-07T17:40:59.347961Z",
         "actor": "Claims Engine",
         "type": "System",
         "action": "Processing complete",
-        "detail": "2 records applied"
+        "detail": "200 records applied"
       },
       {
-        "timestamp": "2026-05-07T10:48:27.371226Z",
+        "timestamp": "2026-05-07T17:40:59.366712Z",
         "actor": "Workflow Router",
         "type": "System",
         "action": "Created 1 worklist item(s)",
-        "detail": "WL-9212"
+        "detail": "WL-9207"
       }
     ],
     "stage_history": [
       {
         "stage": "uploaded",
-        "completed_at": "2026-05-07T10:48:26.708081Z"
+        "completed_at": "2026-05-07T17:39:52.358967Z"
       },
       {
         "stage": "detecting",
-        "completed_at": "2026-05-07T10:48:26.860617Z"
+        "completed_at": "2026-05-07T17:40:29.065064Z"
       },
       {
         "stage": "detected",
-        "completed_at": "2026-05-07T10:48:26.863818Z"
+        "completed_at": "2026-05-07T17:40:29.076149Z"
       },
       {
         "stage": "mapped",
-        "completed_at": "2026-05-07T10:48:26.948274Z"
+        "completed_at": "2026-05-07T17:40:34.037574Z"
       },
       {
         "stage": "clauses",
-        "completed_at": "2026-05-07T10:48:27.011774Z"
+        "completed_at": "2026-05-07T17:40:35.656011Z"
       },
       {
         "stage": "validated",
-        "completed_at": "2026-05-07T10:48:27.085318Z"
+        "completed_at": "2026-05-07T17:40:45.740519Z"
       },
       {
         "stage": "exceptions",
-        "completed_at": "2026-05-07T10:48:27.214650Z"
+        "completed_at": "2026-05-07T17:40:56.731752Z"
       },
       {
         "stage": "processing",
-        "completed_at": "2026-05-07T10:48:27.327394Z"
+        "completed_at": "2026-05-07T17:40:59.316326Z"
       },
       {
         "stage": "processed",
-        "completed_at": "2026-05-07T10:48:27.331445Z"
+        "completed_at": "2026-05-07T17:40:59.316326Z"
       }
     ],
     "stage_log": [
       {
         "stage": "upload",
         "status": "complete",
-        "timestamp": "2026-05-07T10:48:26.708081Z"
+        "timestamp": "2026-05-07T17:39:52.358967Z"
       },
       {
         "stage": "detect",
         "status": "complete",
-        "timestamp": "2026-05-07T10:48:26.868207Z"
+        "timestamp": "2026-05-07T17:40:29.091810Z"
       },
       {
         "stage": "map_contract",
         "status": "complete",
-        "timestamp": "2026-05-07T10:48:26.951642Z"
+        "timestamp": "2026-05-07T17:40:34.049462Z"
       },
       {
         "stage": "clauses",
         "status": "complete",
-        "timestamp": "2026-05-07T10:48:27.015065Z"
+        "timestamp": "2026-05-07T17:40:35.668853Z"
       },
       {
         "stage": "validate",
         "status": "complete",
-        "timestamp": "2026-05-07T10:48:27.089305Z"
+        "timestamp": "2026-05-07T17:40:45.756531Z"
       },
       {
         "stage": "exceptions",
         "status": "complete",
-        "timestamp": "2026-05-07T10:48:27.209568Z"
+        "timestamp": "2026-05-07T17:40:56.715936Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-07T17:40:59.332042Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-07T17:40:59.332042Z"
+      }
+    ],
+    "manual_file_type": null,
+    "population_processing_summary": {
+      "new_active": 0,
+      "new_deferred": 0,
+      "new_deceased": 0,
+      "created": 0,
+      "updated": 0,
+      "unchanged": 0,
+      "skipped": 0,
+      "records_processed": 0,
+      "liability_impact": 0.0,
+      "insight": "No policy-register changes were required for this pension status file."
+    }
+  },
+  "CES-2026-004": {
+    "pipeline_session_id": "pipe-e768cd53-8a88-42c1-a551-8d1dc447e18d",
+    "active_step": "exceptions",
+    "source_filename": "atlas_member_movement_q2_2025_unique.xlsx",
+    "source_size_bytes": 15159,
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "detection_override": {
+      "file_type": "Pension Status",
+      "cedent_id": "CED-1133",
+      "completed_at": "2026-05-07T18:28:35.846508Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2025-009",
+      "completed_at": "2026-05-07T18:30:49.142549Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-07T18:27:17.742242Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "atlas_member_movement_q2_2025_unique.xlsx"
+      },
+      {
+        "timestamp": "2026-05-07T18:28:35.893407Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Pension Status\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-07T18:28:35.925333Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Atlas Corporate Pensions",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-07T18:30:49.174331Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2025-009 v1.0",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-07T18:31:50.030372Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 4 clauses",
+        "detail": "1 flagged"
+      },
+      {
+        "timestamp": "2026-05-07T18:32:39.486497Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "600 critical, 200 warnings"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-07T18:27:17.742242Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-07T18:28:35.865517Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-07T18:28:35.874298Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-07T18:30:49.142549Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-07T18:31:49.998748Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-07T18:32:39.451722Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-07T18:27:17.742242Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-07T18:28:35.877685Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-07T18:30:49.164319Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-07T18:31:50.008132Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-07T18:32:39.463411Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "in_progress",
+        "timestamp": "2026-05-07T18:32:39.476576Z"
       },
       {
         "stage": "process",
@@ -602,7 +581,9 @@
         "status": "in_progress",
         "timestamp": "2026-05-07T10:48:27.340014Z"
       }
-    ]
+    ],
+    "source_content_text": "Member ID,First Name,Last Name,Gender,Date of Birth,Annuity Currency,Monthly Pension Amount,Spouse Flag,Member Status\r\nPEN-0300123,Stephanie,Gonzalez,F,1975-03-29,GBP,\"\u00a33,577.95\",NO,Deferred\r\nPEN-0300028,Christopher,Green,M,1975-01-17,GBP,\"\u00a32,176.55\",NO,Deferred\r\nPEN-0300050,Tyler,Hall,M,1975-01-28,GBP,\"\u00a31,409.01\",NO,Deferred\r\nPEN-0300136,Amanda,Baker,F,1975-04-05,GBP,\"\u00a32,020.61\",NO,Deferred\r\nPEN-0300057,Mark,Davis,M,1975-06-05,GBP,\"\u00a32,860.40\",NO,Deferred\r\nPEN-0300096,Brandon,Lopez,M,1975-04-14,GBP,\"\u00a32,241.52\",NO,Deferred\r\nPEN-0300077,Kevin,Nelson,M,1975-04-05,GBP,\"\u00a32,269.83\",NO,Deferred\r\nPEN-0300084,Joshua,Hernandez,M,1975-01-15,GBP,\"\u00a31,418.24\",NO,Deferred\r\nPEN-0300047,Amanda,Brown,F,1975-02-08,GBP,\"\u00a33,139.35\",NO,Deferred\r\nPEN-0300107,Sharon,Gonzalez,F,1974-02-06,GBP,\"\u00a33,265.86\",NO,Deferred\r\nPEN-0300181,Mary,Thomas,F,1974-06-17,GBP,\"\u00a32,933.65\",NO,Deferred\r\nPEN-0300117,Cynthia,King,F,1974-01-27,GBP,\"\u00a33,254.01\",NO,Deferred\r\nPEN-0300165,Amy,Rivera,F,1974-04-17,GBP,\"\u00a32,521.07\",NO,Deferred\r\nPEN-0300101,Deborah,Walker,F,1974-05-03,GBP,\"\u00a31,472.52\",NO,Deferred\r\nPEN-0300013,Nicholas,Martinez,M,1974-04-01,GBP,\"\u00a33,660.43\",NO,Deferred\r\nPEN-0300194,Charles,Rodriguez,M,1974-04-29,GBP,\"\u00a32,786.65\",NO,Deferred\r\nPEN-0300093,Joshua,Rivera,M,1974-06-01,GBP,\"\u00a33,476.30\",NO,Deferred\r\nPEN-0300141,Sarah,Miller,F,1974-05-17,GBP,\"\u00a33,412.76\",NO,Deferred\r\nPEN-0300119,Barbara,Harris,F,1973-03-11,GBP,\"\u00a32,178.49\",NO,Deferred\r\nPEN-0300048,Patrick,Wilson,M,1973-04-12,GBP,\"\u00a33,726.54\",NO,Deferred\r\nPEN-0300033,Shirley,Johnson,F,1973-04-23,GBP,\"\u00a31,233.38\",NO,Deferred\r\nPEN-0300083,George,Torres,M,1973-03-20,GBP,\"\u00a32,139.06\",NO,Deferred\r\nPEN-0300108,Emma,Hill,F,1973-04-06,GBP,\"\u00a32,246.74\",NO,Deferred\r\nPEN-0300095,Dorothy,Martin,F,1973-06-14,GBP,\"\u00a33,675.14\",NO,Deferred\r\nPEN-0300019,Jonathan,Carter,M,1972-05-26,GBP,\"\u00a33,421.37\",NO,Deferred\r\nPEN-0300081,Amanda,Clark,F,1972-04-02,GBP,\u00a3838.07,NO,Deferred\r\nPEN-0300046,Samantha,Martin,F,1972-04-26,GBP,\"\u00a33,613.17\",NO,Deferred\r\nPEN-0300148,Mark,Clark,M,1972-03-02,GBP,\"\u00a32,276.05\",NO,Deferred\r\nPEN-0300109,Michael,Lee,M,1972-02-17,GBP,\"\u00a31,816.57\",NO,Deferred\r\nPEN-0300155,Sharon,Hall,F,1971-06-10,GBP,\"\u00a31,446.66\",NO,Deferred\r\nPEN-0300161,Barbara,Scott,F,1971-01-24,GBP,\"\u00a31,118.39\",NO,Deferred\r\nPEN-0300066,Joshua,Martinez,M,1970-01-12,GBP,\u00a3889.99,NO,Deferred\r\nPEN-0300129,Anna,Gonzalez,F,1970-06-08,GBP,\"\u00a32,590.62\",NO,Deferred\r\nPEN-0300003,Heather,Johnson,F,1970-04-16,GBP,\"\u00a31,540.25\",NO,Deferred\r\nPEN-0300069,Sarah,Green,F,1970-04-02,GBP,\"\u00a32,625.95\",NO,Deferred\r\nPEN-0300185,Maria,Allen,F,1970-06-23,GBP,\"\u00a31,217.60\",NO,Deferred\r\nPEN-0300164,Sarah,Mitchell,F,1970-04-10,GBP,\"\u00a33,132.75\",NO,Deferred\r\nPEN-0300196,Alexander,Flores,M,1969-05-10,GBP,\"\u00a33,427.51\",NO,Deferred\r\nPEN-0300189,Barbara,Hall,F,1969-03-17,GBP,\"\u00a32,231.50\",NO,Deferred\r\nPEN-0300045,Justin,Lewis,M,1969-02-09,GBP,\"\u00a31,432.95\",NO,Deferred\r\nPEN-0300070,Dennis,Smith,M,1969-01-28,GBP,\"\u00a31,171.40\",NO,Deferred\r\nPEN-0300073,Carol,Hernandez,F,1969-02-23,GBP,\"\u00a33,277.36\",NO,Deferred\r\nPEN-0300031,Deborah,Hill,F,1969-02-16,GBP,\"\u00a32,784.59\",NO,Deferred\r\nPEN-0300086,Angela,Mitchell,F,1969-04-19,GBP,\"\u00a31,664.86\",NO,Deferred\r\nPEN-0300104,Raymond,Hall,M,1968-04-08,GBP,\"\u00a33,112.52\",NO,Deferred\r\nPEN-0300037,Olivia,Adams,F,1968-01-10,GBP,\u00a3950.40,NO,Deferred\r\nPEN-0300074,Melissa,Lee,F,1968-04-12,GBP,\"\u00a33,493.87\",NO,Deferred\r\nPEN-0300150,Edward,Lewis,M,1968-04-23,GBP,\"\u00a31,420.20\",NO,Deferred\r\nPEN-0300159,Samantha,Sanchez,F,1967-05-11,GBP,\"\u00a32,619.85\",NO,Deferred\r\nPEN-0300036,Brandon,Sanchez,M,1967-02-10,GBP,\"\u00a32,674.30\",NO,Deferred\r\nPEN-0300063,Matthew,White,M,1967-02-23,GBP,\"\u00a32,487.12\",NO,Deferred\r\nPEN-0300147,Joshua,Young,M,1967-03-14,GBP,\"\u00a32,280.26\",NO,Deferred\r\nPEN-0300000,Olivia,Roberts,F,1966-05-29,GBP,\"\u00a32,114.78\",NO,Deferred\r\nPEN-0300092,Jason,Wilson,M,1966-01-27,GBP,\"\u00a32,080.97\",NO,Deferred\r\nPEN-0300068,Amanda,Rodriguez,F,1966-01-06,GBP,\"\u00a31,068.66\",NO,Deferred\r\nPEN-0300192,Richard,Mitchell,M,1966-06-15,GBP,\u00a3824.28,NO,Deferred\r\nPEN-0300032,Stephanie,Baker,F,1966-03-07,GBP,\"\u00a33,554.24\",NO,Deferred\r\nPEN-0300094,Carol,Lewis,F,1965-02-16,GBP,\"\u00a32,977.97\",NO,Deferred\r\nPEN-0300112,Gregory,Thomas,M,1965-02-25,GBP,\"\u00a32,963.81\",NO,Deferred\r\nPEN-0300152,Nancy,Baker,F,1965-03-06,GBP,\"\u00a33,555.13\",NO,Deferred\r\nPEN-0300060,Maria,Perez,F,1965-06-24,GBP,\u00a3969.52,NO,Deferred\r\nPEN-0300186,Jonathan,Brown,M,1965-01-10,GBP,\"\u00a32,426.38\",NO,Deferred\r\nPEN-0300088,Nancy,Jones,F,1965-02-11,GBP,\"\u00a32,540.48\",NO,Deferred\r\nPEN-0300116,Justin,Scott,M,1964-05-23,GBP,\"\u00a31,486.96\",NO,Deferred\r\nPEN-0300174,Jason,Taylor,M,1964-03-31,GBP,\"\u00a32,610.42\",NO,Deferred\r\nPEN-0300184,Anthony,Harris,M,1964-04-26,GBP,\"\u00a32,876.49\",NO,Deferred\r\nPEN-0300199,Jason,Smith,M,1964-03-17,GBP,\"\u00a32,865.59\",NO,Deferred\r\nPEN-0300054,Donald,Roberts,M,1964-02-03,GBP,\u00a3818.51,NO,Deferred\r\nPEN-0300001,Stephanie,Brown,F,1964-06-03,GBP,\"\u00a32,945.88\",NO,Deferred\r\nPEN-0300166,Julie,Martinez,F,1963-03-02,GBP,\"\u00a32,989.26\",NO,Deferred\r\nPEN-0300030,Anthony,Allen,M,1962-03-14,GBP,\"\u00a31,919.53\",NO,Deferred\r\nPEN-0300140,Sharon,Mitchell,F,1962-06-22,GBP,\"\u00a31,918.29\",NO,Deferred\r\nPEN-0300005,Ryan,Roberts,M,1962-04-04,GBP,\"\u00a31,172.49\",NO,Deferred\r\nPEN-0300007,Sandra,Davis,F,1962-04-10,GBP,\"\u00a33,618.30\",NO,Deferred\r\nPEN-0300004,Diane,Hall,F,1962-06-08,GBP,\"\u00a31,439.12\",NO,Deferred\r\nPEN-0300042,Donna,Harris,F,1962-06-29,GBP,\u00a3982.24,NO,Deferred\r\nPEN-0300118,Michelle,Jackson,F,1961-03-27,GBP,\"\u00a31,969.95\",NO,Active\r\nPEN-0300122,Susan,Lopez,F,1961-03-27,GBP,\"\u00a32,053.09\",NO,Active\r\nPEN-0300064,Eric,Robinson,M,1961-05-07,GBP,\"\u00a31,930.58\",NO,Active\r\nPEN-0300175,Nicole,Lee,F,1961-03-03,GBP,\"\u00a31,602.89\",NO,Active\r\nPEN-0300143,Melissa,Hall,F,1960-02-17,GBP,\"\u00a33,260.69\",NO,Active\r\nPEN-0300035,Patrick,Flores,M,1960-02-13,GBP,\"\u00a31,033.02\",NO,Active\r\nPEN-0300110,Patricia,Harris,F,1959-02-26,GBP,\"\u00a32,475.97\",NO,Active\r\nPEN-0300022,Jeffrey,Davis,M,1959-03-01,GBP,\u00a3924.66,NO,Active\r\nPEN-0300099,Scott,Martin,M,1959-06-10,GBP,\"\u00a33,608.51\",NO,Active\r\nPEN-0300041,Helen,Taylor,F,1959-03-01,GBP,\"\u00a31,185.99\",NO,Deceased\r\nPEN-0300163,Raymond,Young,M,1958-02-11,GBP,\u00a3868.95,NO,Active\r\nPEN-0300125,Mary,White,F,1958-03-10,GBP,\"\u00a33,646.12\",NO,Active\r\nPEN-0300024,Brandon,Walker,M,1958-05-18,GBP,\"\u00a32,903.41\",NO,Active\r\nPEN-0300168,Carol,Jackson,F,1957-01-11,GBP,\"\u00a32,684.50\",NO,Active\r\nPEN-0300111,Melissa,Lewis,F,1957-03-19,GBP,\"\u00a31,841.30\",NO,Active\r\nPEN-0300075,Eric,Green,M,1957-05-06,GBP,\"\u00a32,965.19\",NO,Active\r\nPEN-0300191,Patrick,Nelson,M,1957-06-07,GBP,\"\u00a32,459.31\",NO,Active\r\nPEN-0300170,Emily,Williams,F,1956-01-10,GBP,\"\u00a33,684.18\",NO,Deceased\r\nPEN-0300085,Samuel,Robinson,M,1955-01-13,GBP,\"\u00a32,631.87\",NO,Active\r\nPEN-0300169,Anna,Rodriguez,F,1955-02-04,GBP,\"\u00a31,056.72\",NO,Active\r\nPEN-0300113,Angela,Martin,F,1954-04-25,GBP,\"\u00a33,071.43\",NO,Active\r\nPEN-0300131,Edward,Hernandez,M,1954-06-16,GBP,\"\u00a33,714.47\",NO,Active\r\nPEN-0300017,Sandra,Baker,F,1954-03-25,GBP,\"\u00a32,377.44\",NO,Active\r\nPEN-0300120,Kevin,Anderson,M,1954-04-27,GBP,\"\u00a32,277.36\",NO,Active\r\nPEN-0300178,Samuel,Adams,M,1954-02-01,GBP,\"\u00a33,122.56\",NO,Active\r\nPEN-0300172,Nicholas,Taylor,M,1954-03-12,GBP,\"\u00a31,939.51\",NO,Active\r\nPEN-0300182,Kimberly,Jones,F,1954-05-07,GBP,\"\u00a31,798.28\",NO,Active\r\nPEN-0300072,Barbara,Hernandez,F,1953-03-22,GBP,\"\u00a32,896.22\",NO,Active\r\nPEN-0300076,George,Hill,M,1953-03-30,GBP,\u00a3855.08,NO,Active\r\nPEN-0300154,Kathleen,White,F,1953-04-04,GBP,\"\u00a31,973.20\",NO,Active\r\nPEN-0300080,Shirley,Jones,F,1953-06-19,GBP,\"\u00a31,360.61\",NO,Active\r\nPEN-0300006,Julie,Thomas,F,1953-02-21,GBP,\"\u00a32,628.97\",NO,Active\r\nPEN-0300018,Sandra,Lewis,F,1952-04-29,GBP,\"\u00a31,955.21\",NO,Active\r\nPEN-0300183,Brenda,Baker,F,1952-06-24,GBP,\"\u00a31,106.87\",NO,Active\r\nPEN-0300151,Cynthia,Wilson,F,1951-04-02,GBP,\"\u00a31,679.40\",NO,Active\r\nPEN-0300149,Jessica,Johnson,F,1951-04-22,GBP,\"\u00a31,414.12\",NO,Active\r\nPEN-0300145,Olivia,Ramirez,F,1951-02-22,GBP,\"\u00a31,917.37\",NO,Active\r\nPEN-0300156,Timothy,Thomas,M,1951-06-08,GBP,\"\u00a31,622.54\",NO,Active\r\nPEN-0300059,Barbara,Moore,F,1951-02-27,GBP,\"\u00a31,336.16\",NO,Active\r\nPEN-0300009,Jonathan,Adams,M,1951-02-24,GBP,\"\u00a33,319.45\",NO,Active\r\nPEN-0300100,Olivia,Hernandez,F,1950-06-27,GBP,\"\u00a31,529.45\",NO,Active\r\nPEN-0300038,Jason,White,M,1950-06-16,GBP,\"\u00a32,371.59\",NO,Active\r\nPEN-0300162,Benjamin,Adams,M,1950-03-01,GBP,\"\u00a32,735.40\",NO,Active\r\nPEN-0300044,Betty,Ramirez,F,1950-04-16,GBP,\"\u00a33,275.15\",NO,Active\r\nPEN-0300144,Shirley,Lee,F,1949-05-24,GBP,\"\u00a31,640.38\",NO,Active\r\nPEN-0300133,Ronald,Lewis,M,1949-06-08,GBP,\"\u00a33,172.13\",NO,Deceased\r\nPEN-0300103,James,Johnson,M,1949-05-14,GBP,\"\u00a32,909.75\",NO,Active\r\nPEN-0300098,Joseph,Taylor,M,1948-04-11,GBP,\"\u00a31,364.94\",NO,Active\r\nPEN-0300197,John,Young,M,1948-06-07,GBP,\"\u00a31,625.34\",NO,Active\r\nPEN-0300002,Dennis,Moore,M,1948-04-18,GBP,\"\u00a32,348.70\",NO,Active\r\nPEN-0300020,Maria,Rivera,F,1948-03-16,GBP,\"\u00a31,469.39\",NO,Active\r\nPEN-0300021,Michelle,Williams,F,1948-03-19,GBP,\"\u00a33,455.04\",NO,Active\r\nPEN-0300090,Charles,Flores,M,1948-04-06,GBP,\"\u00a31,012.75\",NO,Active\r\nPEN-0300097,Emma,Torres,F,1948-04-13,GBP,\"\u00a31,215.34\",NO,Active\r\nPEN-0300134,Jerry,Taylor,M,1948-02-20,GBP,\"\u00a33,121.38\",NO,Active\r\nPEN-0300087,Benjamin,Jackson,M,1947-05-02,GBP,\"\u00a31,726.53\",NO,Active\r\nPEN-0300138,Karen,King,F,1947-02-27,GBP,\"\u00a32,658.41\",NO,Active\r\nPEN-0300053,Timothy,Williams,M,1947-03-13,GBP,\"\u00a32,934.62\",NO,Active\r\nPEN-0300067,Lisa,Adams,F,1947-02-21,GBP,\u00a3809.96,NO,Active\r\nPEN-0300137,Ashley,Williams,F,1947-03-12,GBP,\"\u00a33,184.68\",NO,Active\r\nPEN-0300190,Kimberly,Johnson,F,1947-02-27,GBP,\"\u00a33,015.70\",NO,Active\r\nPEN-0300040,Ryan,Johnson,M,1946-05-08,GBP,\"\u00a32,569.38\",NO,Active\r\nPEN-0300193,Samuel,Rivera,M,1946-06-06,GBP,\"\u00a32,972.26\",NO,Deceased\r\nPEN-0300173,Eric,Perez,M,1946-02-06,GBP,\"\u00a31,958.90\",NO,Active\r\nPEN-0300061,Donald,Davis,M,1946-01-01,GBP,\"\u00a32,062.37\",NO,Active\r\nPEN-0300065,Helen,Hill,F,1946-03-11,GBP,\"\u00a32,874.80\",NO,Active\r\nPEN-0300158,Sarah,Anderson,F,1945-01-25,GBP,\"\u00a31,513.26\",NO,Active\r\nPEN-0300126,Rebecca,Martinez,F,1945-01-13,GBP,\"\u00a32,967.37\",NO,Active\r\nPEN-0300146,Eric,Gonzalez,M,1945-06-22,GBP,\"\u00a32,424.46\",NO,Active\r\nPEN-0300180,Diane,Jones,F,1945-04-19,GBP,\"\u00a32,297.04\",NO,Active\r\nPEN-0300034,Scott,Hill,M,1945-01-12,GBP,\"\u00a33,736.66\",NO,Active\r\nPEN-0300039,Helen,Lopez,F,1945-04-01,GBP,\"\u00a31,781.00\",NO,Active\r\nPEN-0300105,Cynthia,Wright,F,1945-05-06,GBP,\"\u00a31,391.61\",NO,Active\r\nPEN-0300176,Mary,Taylor,F,1944-06-03,GBP,\"\u00a33,704.98\",NO,Active\r\nPEN-0300115,Nicholas,Johnson,M,1944-03-24,GBP,\"\u00a32,341.82\",NO,Active\r\nPEN-0300058,Cynthia,Robinson,F,1943-01-26,GBP,\"\u00a31,273.46\",NO,Active\r\nPEN-0300132,Mark,Hall,M,1943-05-20,GBP,\"\u00a31,936.44\",NO,Active\r\nPEN-0300082,Richard,Davis,M,1942-03-30,GBP,\"\u00a32,815.56\",NO,Active\r\nPEN-0300026,Larry,Hernandez,M,1942-03-23,GBP,\"\u00a32,702.49\",NO,Active\r\nPEN-0300106,Gary,Baker,M,1942-03-18,GBP,\"\u00a31,961.31\",NO,Active\r\nPEN-0300102,George,Scott,M,1942-06-24,GBP,\u00a3907.41,NO,Active\r\nPEN-0300139,David,Clark,M,1942-01-22,GBP,\"\u00a32,168.31\",NO,Active\r\nPEN-0300029,Jason,Ramirez,M,1942-04-24,GBP,\"\u00a32,910.32\",NO,Active\r\nPEN-0300157,Daniel,Hall,M,1941-01-21,GBP,\"\u00a32,658.96\",NO,Deceased\r\nPEN-0300124,Andrew,Robinson,M,1941-06-14,GBP,\"\u00a33,221.97\",NO,Active\r\nPEN-0300078,Patrick,Jones,M,1940-05-08,GBP,\"\u00a31,125.01\",NO,Active\r\nPEN-0300153,Cynthia,White,F,1940-06-21,GBP,\"\u00a32,749.08\",NO,Active\r\nPEN-0300056,Larry,Moore,M,1940-01-17,GBP,\"\u00a31,226.83\",NO,Active\r\nPEN-0300187,Sandra,Wright,F,1940-01-15,GBP,\"\u00a32,113.77\",NO,Active\r\nPEN-0300071,Eric,Davis,M,1940-05-11,GBP,\"\u00a31,260.61\",NO,Active\r\nPEN-0300008,Brenda,Lee,F,1940-04-05,GBP,\"\u00a33,453.46\",NO,Active\r\nPEN-0300049,Mary,Wilson,F,1940-01-01,GBP,\"\u00a31,445.93\",NO,Active\r\nPEN-0300195,Tyler,Allen,M,1940-03-17,GBP,\"\u00a32,323.33\",NO,Active\r\nPEN-0300015,Thomas,Martinez,M,1940-06-21,GBP,\"\u00a32,577.30\",NO,Active\r\nPEN-0300167,Nancy,Anderson,F,1939-05-27,GBP,\"\u00a32,304.28\",NO,Active\r\nPEN-0300027,Kimberly,Gonzalez,F,1939-03-10,GBP,\"\u00a31,751.22\",NO,Active\r\nPEN-0300012,Jacob,Lewis,M,1939-03-21,GBP,\"\u00a31,327.92\",NO,Active\r\nPEN-0300052,Nicole,Garcia,F,1938-05-15,GBP,\"\u00a31,722.12\",NO,Active\r\nPEN-0300062,Jeffrey,Walker,M,1938-01-09,GBP,\"\u00a32,704.41\",NO,Active\r\nPEN-0300023,Karen,Robinson,F,1938-05-04,GBP,\"\u00a31,244.11\",NO,Active\r\nPEN-0300135,Gary,Perez,M,1937-03-20,GBP,\"\u00a32,099.62\",NO,Active\r\nPEN-0300011,Amanda,Flores,F,1937-04-03,GBP,\"\u00a31,192.81\",NO,Active\r\nPEN-0300043,Maria,Torres,F,1937-06-23,GBP,\"\u00a33,692.30\",NO,Active\r\nPEN-0300025,John,Jackson,M,1937-02-15,GBP,\"\u00a33,407.76\",NO,Active\r\nPEN-0300091,Jacob,Young,M,1937-03-25,GBP,\"\u00a31,693.36\",NO,Active\r\nPEN-0300160,Rebecca,Allen,F,1937-02-18,GBP,\"\u00a31,625.52\",NO,Active\r\nPEN-0300016,Donna,Sanchez,F,1936-05-18,GBP,\"\u00a32,819.28\",NO,Active\r\nPEN-0300198,Kimberly,Jackson,F,1936-05-01,GBP,\u00a3816.85,NO,Active\r\nPEN-0300179,Rebecca,Davis,F,1936-06-03,GBP,\"\u00a32,431.97\",NO,Active\r\nPEN-0300121,Anthony,White,M,1936-04-14,GBP,\"\u00a31,873.26\",NO,Active\r\nPEN-0300114,Pamela,Scott,F,1936-06-11,GBP,\"\u00a31,490.68\",NO,Active\r\nPEN-0300089,Jack,Wright,M,1936-04-15,GBP,\"\u00a33,555.35\",NO,Active\r\nPEN-0300055,Rebecca,Perez,F,1936-04-18,GBP,\"\u00a33,288.00\",NO,Active\r\nPEN-0300079,Eric,Taylor,M,1935-03-23,GBP,\"\u00a32,962.14\",NO,Active\r\nPEN-0300014,Jessica,Scott,F,1935-04-19,GBP,\"\u00a31,129.85\",NO,Active\r\nPEN-0300051,Patrick,Harris,M,1935-01-20,GBP,\"\u00a33,309.99\",NO,Active\r\nPEN-0300171,Jason,Lewis,M,1935-06-15,GBP,\"\u00a31,451.65\",NO,Active\r\nPEN-0300128,Elizabeth,Carter,F,1935-04-27,GBP,\"\u00a31,297.06\",NO,Active\r\nPEN-0300142,Ryan,Flores,M,1935-06-28,GBP,\"\u00a31,179.02\",NO,Active\r\nPEN-0300188,Elizabeth,Martinez,F,1935-06-12,GBP,\u00a3964.92,NO,Active\r\nPEN-0300010,Gregory,Thompson,M,1935-01-18,GBP,\"\u00a31,291.94\",NO,Active\r\nPEN-0300130,Jack,King,M,1935-02-12,GBP,\"\u00a32,338.98\",NO,Active\r\nPEN-0300127,Michael,Gonzalez,M,1935-03-20,GBP,\"\u00a32,237.44\",NO,Active\r\nPEN-0300177,Sandra,Smith,F,1935-02-17,GBP,\"\u00a32,485.06\",NO,Active\r\n",
+    "manual_file_type": null
   },
   "CES-2026-005": {
     "pipeline_session_id": "pipe-95e6b70e-bf82-4a14-ad14-ecfd2537fe5a",

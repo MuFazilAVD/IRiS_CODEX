@@ -5,7 +5,7 @@ import io
 import json
 import logging
 from collections.abc import Iterable
-from datetime import UTC, date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 
 from app.errors import IrisAPIError
@@ -14,6 +14,7 @@ from app.schemas.audit import AuditSearchRequest
 
 
 logger = logging.getLogger(__name__)
+UTC = timezone.utc
 
 
 class AuditService:
