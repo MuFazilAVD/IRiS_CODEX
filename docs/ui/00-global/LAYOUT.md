@@ -165,7 +165,7 @@ Style: light blue background `#EBF5FB`, border `#AED6F1`, sparkle icon, `text-sm
 - Input: fixed bottom, text field + send button
 - Empty state: "Ask me anything about your contracts, settlements, or cedants."
 
-**API call:** POST `/api/v1/chatbot/message` on send.
+**API call:** POST `/iris/api/v1/chatbot/message` on send.
 
 **Navigation support:** If response contains `[NAV: /path]`, show a clickable "Go to →" chip in the response bubble that triggers `navigate(path)`.
 

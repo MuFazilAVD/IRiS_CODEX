@@ -255,6 +255,6 @@ Insured lives across active reinsurance contracts
 
 **[Upload cedant file] button:** Opens file upload modal → redirects to cession file pipeline.
 
-**Cedant + Contract dropdowns:** Cascade — selecting cedant populates contract dropdown. API: `GET /api/v1/underwriting/population?cedent_id=CED-1042&contract_id=LSC-2024-019`
+**Cedant + Contract dropdowns:** Cascade — selecting cedant populates contract dropdown. API: `GET /iris/api/v1/underwriting/population?cedent_id=CED-1042&contract_id=LSC-2024-019`
 
 **Pagination:** Show 50 per page. "14 members" count updates with filter.

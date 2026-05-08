@@ -1,6 +1,6 @@
 # IRiS — Admin API
 
-## Base URL: `/api/v1/admin`
+## Base URL: `/iris/api/v1/admin`
 Accessible to roles: `admin`, `super_admin`
 
 > Most Admin module features are out of scope for POC. Endpoints return mock data.

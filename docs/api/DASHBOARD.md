@@ -1,6 +1,6 @@
 # IRiS — Dashboard API
 
-## Base URL: `/api/v1/dashboard`
+## Base URL: `/iris/api/v1/dashboard`
 All endpoints require JWT. Role is read from token to return role-specific data.
 
 ---

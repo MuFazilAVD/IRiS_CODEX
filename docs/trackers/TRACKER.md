@@ -17,11 +17,12 @@
 | Backend scaffold (FastAPI + SQLAlchemy) | Working | `backend/` created |
 | Tailwind + design token foundation | Working | Colors, spacing, shared utility classes, and shell layout tokens added |
 | Root health endpoint | Working | `GET /` returns `{"status":"ok","version":"1.0.0"}` |
+| Deployment API routing | Working | Backend routers mount under `/iris/api/v1` by default, frontend production requests default to `http://d3sok4f0t46eww.cloudfront.net/iris/api/v1`, and backend CORS allows all origins/methods/headers |
 | Python 3.10 backend startup compatibility | Working | Backend services now use `timezone.utc` under the existing `UTC` alias instead of importing Python 3.11-only `datetime.UTC` |
 | Login with email/password | Working | Seeded demo users authenticate, persist JWT sessions, and only redirect into the workspace after the restored session is revalidated |
 | Mock SSO button | Mock | Returns seeded `super_admin` session |
-| `GET /api/v1/auth/me` | Working | JWT decode and user lookup |
-| JWT-protected app routes | Working | ProtectedRoute now validates persisted sessions through `GET /api/v1/auth/me` before rendering protected pages, and frontend `401` responses clear stale auth back to `/login` |
+| `GET /iris/api/v1/auth/me` | Working | JWT decode and user lookup |
+| JWT-protected app routes | Working | ProtectedRoute now validates persisted sessions through `GET /iris/api/v1/auth/me` before rendering protected pages, and frontend `401` responses clear stale auth back to `/login` |
 | Logout | Working | Clears persisted auth state |
 | User registration UI | Not started | Backend endpoint exists, no UI yet |
 | MFA | Not started | Future phase |
@@ -37,7 +38,7 @@
 | Super admin role switcher | Working | Drives role-aware dashboard/worklist payloads without limiting route access |
 | Protected route skeleton | Working | All phase routes registered |
 | Later-phase route placeholders | Working | Cedants, Contracts, Population, Cession Files, Settlements, Calculation Engine, Compliance Sanctions, Audit, Reports, and Admin routes are now implemented |
-| IRiS chatbot | Working | Floating `IRiS Assist` drawer, Phase 16 header/copy updates, Phase 17 admin/compliance role-specific quick-action chips, route-aware location chip, expanded module navigation permissions, audit quick-action lookups seeded from `audit_events`, safe Markdown response rendering, and `/api/v1/chatbot/message` are implemented; the backend now uses the shared OpenAI client from `.env` to plan read-only SQL against the live runtime tables, execute the generated queries, repair invalid SQL once when needed, and answer from returned database context instead of the earlier hybrid hardcoded intent routing |
+| IRiS chatbot | Working | Floating `IRiS Assist` drawer, Phase 16 header/copy updates, Phase 17 admin/compliance role-specific quick-action chips, route-aware location chip, expanded module navigation permissions, audit quick-action lookups seeded from `audit_events`, safe Markdown response rendering, and `/iris/api/v1/chatbot/message` are implemented; the backend now uses the shared OpenAI client from `.env` to plan read-only SQL against the live runtime tables, execute the generated queries, repair invalid SQL once when needed, and answer from returned database context instead of the earlier hybrid hardcoded intent routing |
 
 ---
 
@@ -115,7 +116,7 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Sanctions screening page | Working | Phase 13a is implemented with the sanctions workspace, KPI/graph panels, active-hit drawer, queued `POST /sanctions/bulk-screen`, `GET /sanctions/hits`, persisted `PATCH /sanctions/hits/{screening_ref}` resolution actions, `GET /sanctions/overview`, `GET /sanctions/cedents/{cedent_id}`, legacy `POST /sanctions/trigger`, and pipeline-facing `GET /sanctions/screen`; single-entity screening verification now uses cedent identity context from DB fields plus a mock address overlay for missing schema fields before OpenAI/fallback validation, and the active-hit drawer shows identity match/mismatch evidence; export remains a frontend-generated CSV because the compliance additions spec does not define a dedicated export endpoint |
-| Audit & Traceability workspace | Working | Phase 13b is implemented at `/compliance/audit` with the screenshot-backed 10-item left nav, dashboard/search/risk-governance/data-access/reporting sections, role-gated `/api/v1/audit/*` endpoints, and mock-backed export downloads; the additions/build-plan text says 9 sub-sections, but the UI spec and screenshot include Export Audit Reports as a 10th item, so the screenshot-backed navigation was used |
+| Audit & Traceability workspace | Working | Phase 13b is implemented at `/compliance/audit` with the screenshot-backed 10-item left nav, dashboard/search/risk-governance/data-access/reporting sections, role-gated `/iris/api/v1/audit/*` endpoints, and mock-backed export downloads; the additions/build-plan text says 9 sub-sections, but the UI spec and screenshot include Export Audit Reports as a 10th item, so the screenshot-backed navigation was used |
 | Cedant-level screening | Partial | Implemented inside Cedant Detail and the onboarding wizard; the backend single-entity watchlist verification path is now OpenAI-backed with deterministic fallback, while the broader onboarding/detail UX remains partial/mock-backed |
 
 ---
@@ -131,7 +132,7 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Admin workflow screens | Working | Phase 15 is complete: `/admin/users` and `/admin/library` are implemented with screenshot-aligned tabs, modals, drawers, and sidebar routing; users flow reads/writes the `users` table, permissions and approval matrix remain deliberate static POC responses per the spec, access logs now read from seeded `audit_events`, and the reference library now reads from seeded `reference_data_versions` plus `screening_cache_lists` tables |
-| User management UI | Working | Users list, create invite, role/status edit, revoke flow, temp-password response, and the six Phase 15 seed users are aligned to `/api/v1/admin/users*` |
+| User management UI | Working | Users list, create invite, role/status edit, revoke flow, temp-password response, and the six Phase 15 seed users are aligned to `/iris/api/v1/admin/users*` |
 
 ---
 

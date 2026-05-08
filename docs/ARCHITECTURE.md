@@ -177,6 +177,8 @@ Compliance & Audit (section label — visible to compliance, super_admin)
 4. **All AI calls are server-side** — API key never leaves backend
 5. **Mock data served from JSON** — dashboards, graphs, intelligence feeds read from `/mock_data/*.json`
 6. **Worklist for Ops is real** — `worklist_items` table, filtered by `assigned_role = 'claims_ops'`
+7. **Deployment API path is prefixed** — API v1 routes mount at `/iris/api/v1` by default for the CloudFront deployment path.
+8. **CORS is open for deployment** — backend CORS allows all origins, methods, and headers.
 
 ## Environment Variables
 
@@ -186,4 +188,6 @@ ANTHROPIC_API_KEY=sk-ant-...
 JWT_SECRET=super-secret-key
 JWT_EXPIRE_MINUTES=480
 ENVIRONMENT=development
+API_V1_PREFIX=/iris/api/v1
+VITE_API_URL=http://d3sok4f0t46eww.cloudfront.net/iris/api/v1
 ```

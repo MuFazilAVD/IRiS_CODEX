@@ -1,6 +1,6 @@
 # IRiS — Underwriting API
 
-## Base URL: `/api/v1/underwriting`
+## Base URL: `/iris/api/v1/underwriting`
 Accessible to roles: `underwriter`, `super_admin`
 
 ---

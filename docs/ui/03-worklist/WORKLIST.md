@@ -122,7 +122,7 @@ Navigates to a full-page worklist item detail OR expands inline (depends on impl
 
 ### Claims Ops View
 - Tasks: settlement variances, SFTP failures, mapping failures, file exceptions
-- Data: **LIVE from DB** — `GET /api/v1/claims/worklist`
+- Data: **LIVE from DB** — `GET /iris/api/v1/claims/worklist`
 - Real-time: poll every 30s, show "X tasks updated" banner
 - Demo tasks (seeded in DB):
   - WL-9202: Settlement variance breach — Northstar Q1-2026 (Critical, Overdue)

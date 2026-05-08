@@ -19,10 +19,10 @@ Renders role-specific content. `super_admin` uses role dropdown to switch view.
 ```
 
 Data sources:
-- KPIs: `GET /api/v1/dashboard/kpis` → role from JWT
-- Intelligence: `GET /api/v1/dashboard/intelligence`
-- Graphs: `GET /api/v1/dashboard/graphs`
-- Recent Activities (admin only): `GET /api/v1/dashboard/recent-activities`
+- KPIs: `GET /iris/api/v1/dashboard/kpis` → role from JWT
+- Intelligence: `GET /iris/api/v1/dashboard/intelligence`
+- Graphs: `GET /iris/api/v1/dashboard/graphs`
+- Recent Activities (admin only): `GET /iris/api/v1/dashboard/recent-activities`
 
 ---
 
@@ -79,7 +79,7 @@ Second row:
 ### Recent Activities Section
 Tabbed: **Team Activities (7)** | **IRiS AI (6)** | **Escalations (3)**  
 Filter pills: All / FYA / FYI | All processes dropdown | All people dropdown  
-Activity feed items: see `GET /api/v1/dashboard/recent-activities` response format.
+Activity feed items: see `GET /iris/api/v1/dashboard/recent-activities` response format.
 
 ---
 

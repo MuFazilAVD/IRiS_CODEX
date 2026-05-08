@@ -89,7 +89,7 @@ Manual or SFTP-staged. Choose AI auto-detection or pick file type explicitly.
 Sample files are clickable (POC demo files).  
 After file selection: shows filename + size + [Continue →]
 
-**API call:** `POST /api/v1/claims/cession-files/upload` (multipart)
+**API call:** `POST /iris/api/v1/claims/cession-files/upload` (multipart)
 
 ---
 
@@ -115,7 +115,7 @@ No ambiguity flags raised.
 Override dropdowns let user correct AI detection.  
 [Continue →] proceeds to next step.
 
-**API call:** `POST /api/v1/claims/cession-files/{file_id}/pipeline/detect`
+**API call:** `POST /iris/api/v1/claims/cession-files/{file_id}/pipeline/detect`
 
 ---
 
@@ -234,7 +234,7 @@ IRiS is applying all validated and resolved data...
 ⏳ Updating settlement schedule...
 ```
 
-Progress bar with live steps. Streams via polling `GET /api/v1/claims/cession-files/{id}/pipeline-status`.
+Progress bar with live steps. Streams via polling `GET /iris/api/v1/claims/cession-files/{id}/pipeline-status`.
 
 ---
 

@@ -20,16 +20,16 @@ The screenshots show a **full-page pipeline** with left-nav steps, not a 10-step
 - `[Abort Process]` button top right
 
 ### Backend
-1. `GET /api/v1/operations/pipelines` — active pipelines list
-2. `GET /api/v1/operations/pipelines/{process_id}` — full pipeline state
-3. `GET /api/v1/operations/pipelines/{process_id}/normalization` — normalization tabs data
-4. `GET /api/v1/operations/pipelines/{process_id}/calculations`
-5. `GET /api/v1/operations/pipelines/{process_id}/variance`
-6. `GET /api/v1/operations/pipelines/{process_id}/screening`
-7. `GET /api/v1/operations/pipelines/{process_id}/ai-decision`
-8. `GET /api/v1/operations/pipelines/{process_id}/outcome`
-9. `POST /api/v1/operations/pipelines/{process_id}/advance`
-10. `POST /api/v1/operations/pipelines/{process_id}/abort`
+1. `GET /iris/api/v1/operations/pipelines` — active pipelines list
+2. `GET /iris/api/v1/operations/pipelines/{process_id}` — full pipeline state
+3. `GET /iris/api/v1/operations/pipelines/{process_id}/normalization` — normalization tabs data
+4. `GET /iris/api/v1/operations/pipelines/{process_id}/calculations`
+5. `GET /iris/api/v1/operations/pipelines/{process_id}/variance`
+6. `GET /iris/api/v1/operations/pipelines/{process_id}/screening`
+7. `GET /iris/api/v1/operations/pipelines/{process_id}/ai-decision`
+8. `GET /iris/api/v1/operations/pipelines/{process_id}/outcome`
+9. `POST /iris/api/v1/operations/pipelines/{process_id}/advance`
+10. `POST /iris/api/v1/operations/pipelines/{process_id}/abort`
 
 ### Frontend Components
 1. `CessionFilesPage.tsx` — file queue + metrics (same as before)
@@ -38,7 +38,7 @@ The screenshots show a **full-page pipeline** with left-nav steps, not a 10-step
 4. `NormalizationStep.tsx` — with 5 inner tabs
 5. `CalculationsStep.tsx`
 6. `VarianceAnalysisStep.tsx`
-7. `ScreeningStep.tsx` — calls `/api/v1/compliance/sanctions/screen` per entity
+7. `ScreeningStep.tsx` — calls `/iris/api/v1/compliance/sanctions/screen` per entity
 8. `AIDecisionStep.tsx`
 9. `OutcomeStep.tsx`
 10. `WorklistDetailPage.tsx` — full-page worklist item detail (from IMG_1985)
@@ -134,9 +134,9 @@ The audit trail reads from audit_events table (seeded)
 **POC:** Fully mock. Table of reports from `reports` DB table. Clicking Open → shows static mock data.
 
 ### Backend
-- `GET /api/v1/reports` → query reports table, filter by role
-- `GET /api/v1/reports/{report_id}` → return hardcoded mock report data
-- `POST /api/v1/reports/export` → return static mock file
+- `GET /iris/api/v1/reports` → query reports table, filter by role
+- `GET /iris/api/v1/reports/{report_id}` → return hardcoded mock report data
+- `POST /iris/api/v1/reports/export` → return static mock file
 
 ### Frontend
 - `ReportsPage.tsx` — category sidebar + global filters + report table

@@ -4,7 +4,7 @@
 ---
 
 # COMPLIANCE API — UPDATED
-## Base URL: `/api/v1/compliance`
+## Base URL: `/iris/api/v1/compliance`
 
 ### GET `/sanctions/screen`
 Run screening for a single entity using the 2-step flow (keyword → LLM).
@@ -128,7 +128,7 @@ Resolve a screening hit.
 ---
 
 # AUDIT & TRACEABILITY API
-## Base URL: `/api/v1/audit`
+## Base URL: `/iris/api/v1/audit`
 
 ### GET `/dashboard`
 Returns audit dashboard KPIs and today's timeline.
@@ -302,7 +302,7 @@ Returns a mock CSV/JSON file download (pre-generated static file for POC).
 ---
 
 # REPORTS API
-## Base URL: `/api/v1/reports`
+## Base URL: `/iris/api/v1/reports`
 
 ### GET `/`
 Returns all reports filtered by user's role.
@@ -349,7 +349,7 @@ Mock export — returns a pre-generated static file.
 ---
 
 # ADMIN API — UPDATED
-## Base URL: `/api/v1/admin`
+## Base URL: `/iris/api/v1/admin`
 
 ### GET `/users`
 **Response 200:**
@@ -446,7 +446,7 @@ Returns the approval thresholds table (hardcoded for POC).
 ---
 
 # PIPELINE API — UPDATED (New V2 Format)
-## Base URL: `/api/v1/operations`
+## Base URL: `/iris/api/v1/operations`
 
 The Operations pipeline now follows the new 6-step structure (from screenshots):
 **Normalization → Calculations → Variance Analysis → Screening → AI Decision → Outcome**
@@ -529,7 +529,7 @@ Returns normalization step data: input preview, column mapping, rules, validatio
 ---
 
 ### GET `/pipelines/{process_id}/calculations`
-Returns actuarial engine results (same as `/api/v1/claims/calculations/run` response).
+Returns actuarial engine results (same as `/iris/api/v1/claims/calculations/run` response).
 
 ---
 

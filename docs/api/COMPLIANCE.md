@@ -1,6 +1,6 @@
 # IRiS — Worklist API (Shared)
 
-## Base URL: `/api/v1/worklist`
+## Base URL: `/iris/api/v1/worklist`
 All roles can access; items are filtered by requesting user's role.
 
 ### GET `/`
@@ -12,7 +12,7 @@ See `CLAIMS.md` for full spec — same endpoint, role-aware filtering.
 
 # IRiS — Compliance API
 
-## Base URL: `/api/v1/compliance`
+## Base URL: `/iris/api/v1/compliance`
 Accessible to roles: `compliance`, `super_admin`
 
 ### GET `/sanctions/overview`
@@ -55,7 +55,7 @@ Trigger bulk screening run across all active cedants.
 
 # IRiS — Admin API
 
-## Base URL: `/api/v1/admin`
+## Base URL: `/iris/api/v1/admin`
 Accessible to roles: `admin`, `super_admin`
 
 ### GET `/users`
@@ -100,7 +100,7 @@ Returns pending admin approval requests (mock).
 
 # IRiS — Chatbot API
 
-## Base URL: `/api/v1/chatbot`
+## Base URL: `/iris/api/v1/chatbot`
 
 ### POST `/message`
 Send a message to the IRiS AI assistant.

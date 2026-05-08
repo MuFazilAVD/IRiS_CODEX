@@ -154,7 +154,7 @@ Table category value:
 
 Action:
 - **Open / View** -> opens a popup table preview parsed from the generated CSV
-- **Download** -> `GET /api/v1/reports/settlement-artifacts/{artifact_id}/download`
+- **Download** -> `GET /iris/api/v1/reports/settlement-artifacts/{artifact_id}/download`
 
 Generated files are stored in the backend generated reports repository and indexed by `settlement_report_artifacts.json`.
 

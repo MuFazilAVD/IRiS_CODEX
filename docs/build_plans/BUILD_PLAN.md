@@ -24,9 +24,9 @@ Each phase assumes all previous phases are working.
 **Goal:** Login → JWT → Role → Redirect to Dashboard
 
 ### Backend
-1. `POST /api/v1/auth/login` — validate email/password, return JWT with role claim
-2. `POST /api/v1/auth/sso` — return super_admin JWT (no body needed)
-3. `GET /api/v1/auth/me` — decode JWT, return user object
+1. `POST /iris/api/v1/auth/login` — validate email/password, return JWT with role claim
+2. `POST /iris/api/v1/auth/sso` — return super_admin JWT (no body needed)
+3. `GET /iris/api/v1/auth/me` — decode JWT, return user object
 4. JWT middleware on all other routes
 
 ### Frontend
@@ -85,10 +85,10 @@ Each phase assumes all previous phases are working.
 **Goal:** All 4 role dashboards working with KPI cards + graphs
 
 ### Backend
-1. `GET /api/v1/dashboard/kpis` — read from `dashboard_kpis.json`, filter by role
-2. `GET /api/v1/dashboard/intelligence` — read from `intelligence_feeds.json`
-3. `GET /api/v1/dashboard/graphs` — read from `graph_data.json`
-4. `GET /api/v1/dashboard/recent-activities` — read from `recent_activities.json`
+1. `GET /iris/api/v1/dashboard/kpis` — read from `dashboard_kpis.json`, filter by role
+2. `GET /iris/api/v1/dashboard/intelligence` — read from `intelligence_feeds.json`
+3. `GET /iris/api/v1/dashboard/graphs` — read from `graph_data.json`
+4. `GET /iris/api/v1/dashboard/recent-activities` — read from `recent_activities.json`
 
 ### Frontend
 1. `DashboardPage.tsx` — role-conditional rendering
@@ -111,10 +111,10 @@ Each phase assumes all previous phases are working.
 **Goal:** Worklist page functional for all roles (Ops = live, others = mock)
 
 ### Backend
-1. `GET /api/v1/worklist` — role-aware:
+1. `GET /iris/api/v1/worklist` — role-aware:
    - `claims_ops`: query `worklist_items` table WHERE `assigned_role = 'claims_ops'`
    - others: return mock JSON
-2. `PATCH /api/v1/worklist/{wl_id}` — update status
+2. `PATCH /iris/api/v1/worklist/{wl_id}` — update status
 
 ### Frontend
 1. `WorklistPage.tsx` with:
@@ -135,13 +135,13 @@ Each phase assumes all previous phases are working.
 **Goal:** Cedants list + full detail with all 13 tabs + New Cedant wizard
 
 ### Backend
-1. `GET /api/v1/underwriting/cedents` — from DB + joins
-2. `GET /api/v1/underwriting/cedents/:id` — full object with all section data
-3. `POST /api/v1/underwriting/cedents` — create new
-4. `PATCH /api/v1/underwriting/cedents/:id/:section` — section update
-5. `POST /api/v1/underwriting/cedents/ai-extract` — Claude API call
-6. `POST /api/v1/underwriting/cedents/:id/sanction-screening` — mock screening
-7. `GET /api/v1/underwriting/cedents/:id/sanction-screening/history`
+1. `GET /iris/api/v1/underwriting/cedents` — from DB + joins
+2. `GET /iris/api/v1/underwriting/cedents/:id` — full object with all section data
+3. `POST /iris/api/v1/underwriting/cedents` — create new
+4. `PATCH /iris/api/v1/underwriting/cedents/:id/:section` — section update
+5. `POST /iris/api/v1/underwriting/cedents/ai-extract` — Claude API call
+6. `POST /iris/api/v1/underwriting/cedents/:id/sanction-screening` — mock screening
+7. `GET /iris/api/v1/underwriting/cedents/:id/sanction-screening/history`
 
 ### Frontend
 1. `CedantsPage.tsx` — table with search/filter, all columns
@@ -171,12 +171,12 @@ const handleFileUpload = async (file: File) => {
 **Goal:** Contracts list + detail with all 11 tabs
 
 ### Backend
-1. `GET /api/v1/underwriting/contracts` — list
-2. `GET /api/v1/underwriting/contracts/:id` — full detail
-3. `PATCH /api/v1/underwriting/contracts/:id/:section` — section update (with lock check)
-4. `POST /api/v1/underwriting/contracts/:id/amend` — create amendment
-5. `GET /api/v1/underwriting/contracts/:id/details-performance`
-6. `GET /api/v1/underwriting/contracts/:id/calculations`
+1. `GET /iris/api/v1/underwriting/contracts` — list
+2. `GET /iris/api/v1/underwriting/contracts/:id` — full detail
+3. `PATCH /iris/api/v1/underwriting/contracts/:id/:section` — section update (with lock check)
+4. `POST /iris/api/v1/underwriting/contracts/:id/amend` — create amendment
+5. `GET /iris/api/v1/underwriting/contracts/:id/details-performance`
+6. `GET /iris/api/v1/underwriting/contracts/:id/calculations`
 
 ### Frontend
 1. `ContractsPage.tsx` — table, all columns
@@ -193,9 +193,9 @@ const handleFileUpload = async (file: File) => {
 **Goal:** Population screen with filters + member history
 
 ### Backend
-1. `GET /api/v1/underwriting/population` — with cedent/contract/status filters
-2. `GET /api/v1/underwriting/population/:member_id/history`
-3. `PATCH /api/v1/underwriting/population/:member_id/defer`
+1. `GET /iris/api/v1/underwriting/population` — with cedent/contract/status filters
+2. `GET /iris/api/v1/underwriting/population/:member_id/history`
+3. `PATCH /iris/api/v1/underwriting/population/:member_id/defer`
 
 ### Frontend
 1. `PopulationPage.tsx` — cascading dropdowns + table
@@ -208,12 +208,12 @@ const handleFileUpload = async (file: File) => {
 **Goal:** File queue + full 10-step pipeline modal
 
 ### Backend
-1. `GET /api/v1/claims/cession-files` — with metrics + queue
-2. `POST /api/v1/claims/cession-files/upload` — multipart
-3. `GET /api/v1/claims/cession-files/:id` — full detail
-4. `POST /api/v1/claims/cession-files/:id/pipeline/:stage` — advance stage
-5. `GET /api/v1/claims/cession-files/:id/pipeline-status` — poll
-6. `GET /api/v1/claims/cession-files/:id/summary`
+1. `GET /iris/api/v1/claims/cession-files` — with metrics + queue
+2. `POST /iris/api/v1/claims/cession-files/upload` — multipart
+3. `GET /iris/api/v1/claims/cession-files/:id` — full detail
+4. `POST /iris/api/v1/claims/cession-files/:id/pipeline/:stage` — advance stage
+5. `GET /iris/api/v1/claims/cession-files/:id/pipeline-status` — poll
+6. `GET /iris/api/v1/claims/cession-files/:id/summary`
 7. Background task: AI classification via Claude API (Detect stage)
 
 **AI Detect (backend service):**
@@ -246,10 +246,10 @@ async def detect_file_type(filename: str, columns: list[str]) -> dict:
 **Goal:** Settlements list + approval + calculation engine
 
 ### Backend
-1. `GET /api/v1/claims/settlements` — from mock data
-2. `GET /api/v1/claims/settlements/:id`
-3. `POST /api/v1/claims/settlements/:id/approve`
-4. `POST /api/v1/claims/calculations/run`
+1. `GET /iris/api/v1/claims/settlements` — from mock data
+2. `GET /iris/api/v1/claims/settlements/:id`
+3. `POST /iris/api/v1/claims/settlements/:id/approve`
+4. `POST /iris/api/v1/claims/calculations/run`
 
 ### Frontend
 1. `SettlementsPage.tsx` — metrics + table (mock data)
@@ -262,7 +262,7 @@ async def detect_file_type(filename: str, columns: list[str]) -> dict:
 **Goal:** Floating chatbot with Claude-powered responses
 
 ### Backend
-1. `POST /api/v1/chatbot/message`:
+1. `POST /iris/api/v1/chatbot/message`:
    - Build system prompt (role, page, DB schema summary)
    - Pass conversation history to Claude API
    - Parse navigation intents from response

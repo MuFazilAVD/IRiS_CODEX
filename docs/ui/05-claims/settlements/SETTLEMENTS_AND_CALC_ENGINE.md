@@ -88,7 +88,7 @@ Source:   CES-2025-09-015 (Northstar Q1 2025)
 [Approve Settlement]  [Hold Payment]  [Raise Dispute]
 ```
 
-**[Approve Settlement]** → `POST /api/v1/claims/settlements/{id}/approve` → status = `Approved`  
+**[Approve Settlement]** → `POST /iris/api/v1/claims/settlements/{id}/approve` → status = `Approved`
 **[Hold Payment]** → status = `Held` + creates worklist item  
 **[Raise Dispute]** → opens reason textarea → status = `Disputed` + creates worklist item
 
@@ -141,7 +141,7 @@ LSC-2024-019 · Northstar Pension Trust · Q1 2025
 - **Contract dropdown:** All active contracts from DB
 - **Calculation Type:** Settlement | Fixed Leg Only | Floating Leg Only | A/E Analysis | BEL
 - **Period From/To:** Quarter labels (Q1 2024 → Q4 2026)
-- **[Run Calculation]** → `POST /api/v1/claims/calculations/run` → returns result object
+- **[Run Calculation]** → `POST /iris/api/v1/claims/calculations/run` → returns result object
 
 ### Additional Outputs (below main panel)
 - **A/E Ratio:** e.g. 1.018 (observed/expected deaths)

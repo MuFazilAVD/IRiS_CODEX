@@ -1,6 +1,6 @@
 # IRiS — Auth API
 
-## Base URL: `/api/v1/auth`
+## Base URL: `/iris/api/v1/auth`
 
 ---
 

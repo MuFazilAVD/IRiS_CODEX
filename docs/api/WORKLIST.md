@@ -1,6 +1,6 @@
 # IRiS — Worklist API (Shared)
 
-## Base URL: `/api/v1/worklist`
+## Base URL: `/iris/api/v1/worklist`
 All roles can access. Items filtered by JWT role.
 
 ## Behaviour

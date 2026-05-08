@@ -117,7 +117,7 @@ Then shows: "✓ 14 fields pre-filled across 3 sections. 2 low-confidence fields
 Each extracted field in subsequent steps shows: value + `[confidence %]` chip + citation tooltip  
 Low-confidence: amber border + warning icon
 
-**API call:** `POST /api/v1/underwriting/cedents/ai-extract`
+**API call:** `POST /iris/api/v1/underwriting/cedents/ai-extract`
 
 ---
 

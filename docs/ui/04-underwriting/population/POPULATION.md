@@ -10,7 +10,7 @@
 ## Quick Reference
 - Cedant dropdown → cascades to Contract dropdown → Status filter
 - Table: Member ID | Contract | Age | Gender | Annuity | Status | Last Verified | Actions
-- [Defer] button → PATCH `/api/v1/underwriting/population/{member_id}/defer`
+- [Defer] button → PATCH `/iris/api/v1/underwriting/population/{member_id}/defer`
 - [History] button → slide-in drawer with SCD2 history timeline
 - [Upload cedant file] → opens FileProcessingModal
-- API: `GET /api/v1/underwriting/population`
+- API: `GET /iris/api/v1/underwriting/population`

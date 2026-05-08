@@ -3812,3 +3812,55 @@ View is not working, Show it in a popup as a table (since it is a csv)
 
 ### Status
 ✅ Completed
+
+## [2026-05-08 10:08:26 +00:00]
+
+### Prompt
+Can you set a prefix iris before api/v1?
+Also get the frontend to send requests to http://d3sok4f0t46eww.cloudfront.net/iris
+
+Because I will deploying it there.
+Also change the cors policy and all to *, to accept from everywhere
+ After that, push the changes
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/api/*.md
+  - docs/ui/*.md endpoint references
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/build_plans/BUILD_PLAN_ADDITIONS.md
+  - docs/trackers/TRACKER.md
+  - backend/app/config.py
+  - backend/app/main.py
+  - frontend/src/api/client.ts
+
+### Actions Taken
+- Changed the backend API v1 mount from `/api/v1` to `/iris/api/v1` via `API_V1_PREFIX`.
+- Changed backend CORS to allow all origins, methods, and headers.
+- Set the frontend production API default and env example to `http://d3sok4f0t46eww.cloudfront.net/iris/api/v1`.
+- Updated API/build/UI documentation endpoint references to the `/iris/api/v1` prefix.
+- Updated tracker and architecture notes for deployment routing and open CORS.
+- Verified frontend production build and backend route/CORS smoke behavior.
+
+### Files Modified
+- backend/app/config.py
+- backend/app/main.py
+- backend/.env.example
+- frontend/src/api/client.ts
+- frontend/.env.example
+- docs/ARCHITECTURE.md
+- docs/api/*.md
+- docs/build_plans/BUILD_PLAN.md
+- docs/build_plans/BUILD_PLAN_ADDITIONS.md
+- docs/ui endpoint reference files
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Frontend requests target `http://d3sok4f0t46eww.cloudfront.net/iris/api/v1` so the requested CloudFront `/iris` deployment path lines up with the backend `/iris/api/v1` API mount.
+- The first backend smoke attempt used system Python and failed because `pandas` was not installed there; rerunning with the repo `venv` passed.
+
+### Status
+✅ Completed

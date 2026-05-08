@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title=settings.app_name, version=settings.version)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.frontend_origins,
-    allow_origin_regex=settings.frontend_origin_regex,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_origin_regex=None,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -42,9 +42,8 @@ async def iris_api_error_handler(_: Request, exc: IrisAPIError) -> JSONResponse:
 @app.on_event("startup")
 def startup() -> None:
     logger.info("Initializing application database")
-    logger.info("Configured frontend origins: %s", ", ".join(settings.frontend_origins))
-    if settings.frontend_origin_regex:
-        logger.info("Configured frontend origin regex: %s", settings.frontend_origin_regex)
+    logger.info("Configured API prefix: %s", settings.api_v1_prefix)
+    logger.info("Configured CORS policy: origins=*, methods=*, headers=*")
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         seed_database(db)

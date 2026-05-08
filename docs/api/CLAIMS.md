@@ -1,6 +1,6 @@
 # IRiS — Claims & Settlement API
 
-## Base URL: `/api/v1/claims`
+## Base URL: `/iris/api/v1/claims`
 Accessible to roles: `claims_ops`, `super_admin`
 
 ---

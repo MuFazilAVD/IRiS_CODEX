@@ -3,12 +3,18 @@ import type { AxiosError } from 'axios'
 
 import { useAuthStore } from '../store/authStore'
 
+const deployedApiBaseUrl = 'http://d3sok4f0t46eww.cloudfront.net/iris/api/v1'
+
 function getDefaultBaseUrl() {
-  if (typeof window === 'undefined') {
-    return 'http://localhost:8000/api/v1'
+  if (import.meta.env.PROD) {
+    return deployedApiBaseUrl
   }
 
-  return `http://${window.location.hostname}:8000/api/v1`
+  if (typeof window === 'undefined') {
+    return 'http://localhost:8000/iris/api/v1'
+  }
+
+  return `http://${window.location.hostname}:8000/iris/api/v1`
 }
 
 const baseURL = import.meta.env.VITE_API_URL ?? getDefaultBaseUrl()

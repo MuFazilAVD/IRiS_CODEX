@@ -10,6 +10,6 @@
 - Contract selector dropdown (live from DB)
 - Calculation Type: Settlement | Fixed Leg | Floating Leg | A/E Ratio
 - Period From / Period To dropdowns (quarters)
-- [Run Calculation] → `POST /api/v1/claims/calculations/run`
+- [Run Calculation] → `POST /iris/api/v1/claims/calculations/run`
 - Result panel: Fixed Leg | Floating Leg | Net | A/E | BEL | Lives | Deaths
 - [Export to Settlement] | [Save Calculation]
