@@ -3,21 +3,33 @@ import type { AxiosError } from 'axios'
 
 import { useAuthStore } from '../store/authStore'
 
-const deployedApiBaseUrl = 'http://d3sok4f0t46eww.cloudfront.net/iris/api/v1'
+const apiPath = '/api/v1'
+const deployedBackendUrl = 'http://d3sok4f0t46eww.cloudfront.net/iris'
 
-function getDefaultBaseUrl() {
+function getDefaultBackendUrl() {
   if (import.meta.env.PROD) {
-    return deployedApiBaseUrl
+    return deployedBackendUrl
   }
 
   if (typeof window === 'undefined') {
-    return 'http://localhost:8000/iris/api/v1'
+    return 'http://localhost:8000/iris'
   }
 
-  return `http://${window.location.hostname}:8000/iris/api/v1`
+  return `http://${window.location.hostname}:8000/iris`
 }
 
-const baseURL = import.meta.env.VITE_API_URL ?? getDefaultBaseUrl()
+function toApiBaseUrl(backendUrl: string) {
+  const normalizedBackendUrl = backendUrl.replace(/\/+$/, '')
+
+  if (normalizedBackendUrl.endsWith(apiPath)) {
+    return normalizedBackendUrl
+  }
+
+  return `${normalizedBackendUrl}${apiPath}`
+}
+
+const backendURL = import.meta.env.VITE_BACKEND_URL ?? import.meta.env.VITE_API_URL ?? getDefaultBackendUrl()
+const baseURL = toApiBaseUrl(backendURL)
 
 export const api = axios.create({
   baseURL,

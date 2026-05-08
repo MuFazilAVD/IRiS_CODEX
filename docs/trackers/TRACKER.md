@@ -17,7 +17,7 @@
 | Backend scaffold (FastAPI + SQLAlchemy) | Working | `backend/` created |
 | Tailwind + design token foundation | Working | Colors, spacing, shared utility classes, and shell layout tokens added |
 | Root health endpoint | Working | `GET /` returns `{"status":"ok","version":"1.0.0"}` |
-| Deployment API routing | Working | Backend routers mount under `/iris/api/v1` by default, frontend production requests default to `http://d3sok4f0t46eww.cloudfront.net/iris/api/v1`, and backend CORS allows all origins/methods/headers |
+| Deployment API routing | Working | Backend routers mount under `/iris/api/v1` by default, frontend production backend URL defaults to `http://d3sok4f0t46eww.cloudfront.net/iris` and appends `/api/v1` for requests, and backend CORS allows all origins/methods/headers |
 | Python 3.10 backend startup compatibility | Working | Backend services now use `timezone.utc` under the existing `UTC` alias instead of importing Python 3.11-only `datetime.UTC` |
 | Login with email/password | Working | Seeded demo users authenticate, persist JWT sessions, and only redirect into the workspace after the restored session is revalidated |
 | Mock SSO button | Mock | Returns seeded `super_admin` session |

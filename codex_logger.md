@@ -3864,3 +3864,36 @@ Also change the cors policy and all to *, to accept from everywhere
 
 ### Status
 ✅ Completed
+
+## [2026-05-08 10:32:06 +00:00]
+
+### Prompt
+use this as backend url and push
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/api/client.ts
+  - frontend/.env.example
+
+### Actions Taken
+- Changed the frontend deployment configuration to use `http://d3sok4f0t46eww.cloudfront.net/iris` as the backend URL.
+- Added frontend API base derivation so `/api/v1` is appended to the backend URL for Axios requests.
+- Kept `VITE_API_URL` backward-compatible while documenting `VITE_BACKEND_URL` as the preferred env value.
+- Updated architecture and tracker notes to reflect backend URL usage.
+- Verified the frontend production build.
+
+### Files Modified
+- frontend/src/api/client.ts
+- frontend/.env.example
+- docs/ARCHITECTURE.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The frontend still sends actual API calls to `/iris/api/v1/...`; the configured backend URL is now the requested `/iris` base and the client appends `/api/v1`.
+
+### Status
+✅ Completed

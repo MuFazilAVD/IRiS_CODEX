@@ -189,5 +189,5 @@ JWT_SECRET=super-secret-key
 JWT_EXPIRE_MINUTES=480
 ENVIRONMENT=development
 API_V1_PREFIX=/iris/api/v1
-VITE_API_URL=http://d3sok4f0t46eww.cloudfront.net/iris/api/v1
+VITE_BACKEND_URL=http://d3sok4f0t46eww.cloudfront.net/iris
 ```
