@@ -546,7 +546,7 @@ function RulesConfigurationTab({
               <div className="space-y-4">
                 {section.key === 'economic_terms' && detail.economic_terms.is_locked ? (
                   <div className="rounded-xl border border-[#F9E79F] bg-[#FEF9E7] px-4 py-3 text-[13px] text-[#7D6608]">
-                    Economic terms are locked after inception. The backend will reject edits with a structured 403 response.
+                    Economic terms are locked after inception.
                   </div>
                 ) : null}
                 <FieldGridReadOnly fields={fieldsForSection(section.key)} values={toRecord(detail[section.key] as unknown)} />

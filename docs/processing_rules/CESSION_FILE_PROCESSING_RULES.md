@@ -23,6 +23,21 @@ These rules are the runtime contract for the Claims > Cession Files pipeline.
 - Validate currency against the confirmed contract currency.
 - Processing produces settlement-impacting output and routes exceptions to Claims Ops.
 
+## Settlement
+- Required fields: `Calculation Period`, `Payment Date`, `Pensioner Movement`, `Applicable Indexation/Escalation`, `Fixed Leg`, `Floating Leg`, `Fee`, `Interest on Over/Underpayment from Prior Period`, `Net Settlement Amount`.
+- Header aliases such as `Applicable Indexation / Escalation` and `Fee (Admin)` are valid Settlement headers after normalization.
+- CSV and tab-delimited CSV uploads are parsed using detected delimiters.
+- Detect as `Settlement` only when every required settlement header is present.
+- Match by confirmed cedent and contract before reconciliation.
+- Compare uploaded fixed leg and floating leg against IRiS expected values for the mapped contract-period.
+- Recompute net as `floating - fixed + fee + interest`, treating fee and interest as signed file values.
+- Matching is exact after currency amount normalization to cents.
+- Exact matches create/update a `pending_approval` settlement with IRiS recommendation `accept`; final approval remains the existing human settlement approval workflow.
+- Exceptions are strictly data validation issues such as missing required fields, invalid periods, invalid dates, or non-numeric amounts.
+- Fixed-leg, floating-leg, or net reconciliation mismatches are not validation exceptions; they are highlighted in the summary and routed to a Claims Ops reconciliation worklist item with IRiS recommendation `review`.
+- Processing generates two repo-backed report output files for Reports > Settlement reports: Cash Settlements Tracker CSV and GRDR Load Form CSV.
+- If contract-period expected values are not tracked, use a deterministic `MOCK IMPLEMENTATION` fallback and store the fallback in mock settlement override data.
+
 ## Mortality Report
 - Validate mortality rows against the confirmed contract population.
 - Death rows require a valid death date and evidence fields where available.

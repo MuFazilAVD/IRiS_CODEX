@@ -9,6 +9,7 @@ import {
   Clock3,
   DollarSign,
   Download,
+  Eye,
   FileSpreadsheet,
   FileText,
   Filter,
@@ -17,6 +18,7 @@ import {
   Search,
   Shield,
   Users,
+  X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -33,6 +35,8 @@ import type {
   ReportsCatalogItem,
   ReportsCatalogPayload,
   ReportCategory,
+  SettlementReportArtifact,
+  SettlementReportArtifactsPayload,
 } from '../../types/api'
 
 interface CatalogFilters {
@@ -72,7 +76,46 @@ const MOVEMENT_TYPE_OPTIONS = ['all', 'Death', 'Deferred', 'Active', 'Spouse']
 const COMPLIANCE_STATUS_OPTIONS = ['all', 'Clear', 'Review', 'Escalated']
 const APPROVAL_STATUS_OPTIONS = ['all', 'Pending', 'Approved', 'Disputed']
 
-const CATEGORY_ICONS: Record<ReportCategory, LucideIcon> = {
+type ReportsViewCategory = ReportCategory | 'Settlement'
+
+interface ReportCategoryNavItem {
+  category: ReportsViewCategory
+  label: string
+  count: number
+}
+
+interface BaseReportRow {
+  key: string
+  name: string
+  description: string
+  navigationCategory: ReportsViewCategory
+  tableCategory: string
+  cadence: string
+  distribution: string[]
+  sensitivity: 'Standard' | 'Sensitive'
+}
+
+interface CatalogReportRow extends BaseReportRow {
+  kind: 'catalog'
+  report: ReportsCatalogItem
+  reportId: string
+}
+
+interface SettlementReportRow extends BaseReportRow {
+  kind: 'settlement'
+  artifact: SettlementReportArtifact
+  reportId: string
+}
+
+type ReportTableRow = CatalogReportRow | SettlementReportRow
+
+interface SettlementReportPreview {
+  artifact: SettlementReportArtifact
+  columns: string[]
+  rows: string[][]
+}
+
+const CATEGORY_ICONS: Record<ReportsViewCategory, LucideIcon> = {
   All: FileText,
   Historical: Clock3,
   Dynamic: LineChartIcon,
@@ -81,6 +124,7 @@ const CATEGORY_ICONS: Record<ReportCategory, LucideIcon> = {
   Compliance: Shield,
   Financial: DollarSign,
   Admin: Users,
+  Settlement: FileSpreadsheet,
 }
 
 export function ReportsPage() {
@@ -89,9 +133,11 @@ export function ReportsPage() {
   const pushToast = useUiStore((state) => state.pushToast)
 
   const [showFilters, setShowFilters] = useState(true)
-  const [selectedCategory, setSelectedCategory] = useState<ReportCategory>('All')
+  const [selectedCategory, setSelectedCategory] = useState<ReportsViewCategory>('All')
   const [selectedReportIds, setSelectedReportIds] = useState<string[]>([])
   const [busyFormat, setBusyFormat] = useState<string | null>(null)
+  const [settlementReportPreview, setSettlementReportPreview] = useState<SettlementReportPreview | null>(null)
+  const [settlementReportPreviewBusyId, setSettlementReportPreviewBusyId] = useState<string | null>(null)
   const [filters, setFilters] = useState<CatalogFilters>(() => ({
     ...DEFAULT_FILTERS,
     cedentId: searchParams.get('cedent_id') ?? searchParams.get('cedant') ?? DEFAULT_FILTERS.cedentId,
@@ -105,6 +151,11 @@ export function ReportsPage() {
     queryFn: async () => (await api.get<ReportsCatalogPayload>('/reports')).data,
   })
 
+  const settlementReportsQuery = useQuery({
+    queryKey: ['settlement-report-artifacts'],
+    queryFn: async () => (await api.get<SettlementReportArtifactsPayload>('/reports/settlement-artifacts')).data,
+  })
+
   const cedentsQuery = useQuery({
     queryKey: ['reports-cedents'],
     queryFn: async () => (await api.get<CedentsListPayload>('/underwriting/cedents', { params: { status: 'all', page: 1, page_size: 100 } })).data,
@@ -116,11 +167,73 @@ export function ReportsPage() {
   })
 
   const catalogItems = reportsQuery.data?.items ?? []
-  const categoryItems = useMemo(() => reportsQuery.data?.categories ?? [], [reportsQuery.data?.categories])
+  const settlementReportItems = settlementReportsQuery.data?.items ?? []
+  const baseCategoryItems = useMemo(() => reportsQuery.data?.categories ?? [], [reportsQuery.data?.categories])
+
+  const catalogRows = useMemo<ReportTableRow[]>(
+    () =>
+      catalogItems.map((item) => ({
+        kind: 'catalog',
+        key: item.report_id,
+        report: item,
+        reportId: item.report_id,
+        name: item.name,
+        description: item.description,
+        navigationCategory: item.category,
+        tableCategory: item.category,
+        cadence: item.cadence,
+        distribution: item.distribution,
+        sensitivity: item.sensitivity,
+      })),
+    [catalogItems],
+  )
+
+  const settlementRows = useMemo<ReportTableRow[]>(
+    () =>
+      settlementReportItems.map((item) => ({
+        kind: 'settlement',
+        key: `settlement:${item.artifact_id}`,
+        artifact: item,
+        reportId: item.artifact_id,
+        name: item.report_type,
+        description: `${item.filename} · ${item.settlement_id} · ${item.contract_id} · ${item.cedent} · ${item.period}`,
+        navigationCategory: 'Settlement',
+        tableCategory: 'Operations',
+        cadence: 'Generated',
+        distribution: ['Claims Ops', 'Admin'],
+        sensitivity: 'Standard',
+      })),
+    [settlementReportItems],
+  )
+
+  const reportRows = useMemo(() => [...catalogRows, ...settlementRows], [catalogRows, settlementRows])
+  const categoryItems = useMemo<ReportCategoryNavItem[]>(() => {
+    const categories = baseCategoryItems.map((item) => ({
+      category: item.category,
+      label: item.label,
+      count: item.category === 'All' ? item.count + settlementRows.length : item.count,
+    }))
+    const settlementCategory: ReportCategoryNavItem = {
+      category: 'Settlement',
+      label: 'Settlement Reports',
+      count: settlementRows.length,
+    }
+    const historicalIndex = categories.findIndex((item) => item.category === 'Historical')
+
+    if (historicalIndex === -1) {
+      return [...categories, settlementCategory]
+    }
+
+    return [
+      ...categories.slice(0, historicalIndex + 1),
+      settlementCategory,
+      ...categories.slice(historicalIndex + 1),
+    ]
+  }, [baseCategoryItems, settlementRows.length])
 
   const filteredItems = useMemo(() => {
-    return catalogItems.filter((item) => {
-      if (selectedCategory !== 'All' && item.category !== selectedCategory) {
+    return reportRows.filter((item) => {
+      if (selectedCategory !== 'All' && item.navigationCategory !== selectedCategory) {
         return false
       }
       if (filters.sensitivity !== 'all' && item.sensitivity !== filters.sensitivity) {
@@ -128,25 +241,27 @@ export function ReportsPage() {
       }
       const normalizedSearch = deferredSearch.trim().toLowerCase()
       if (normalizedSearch) {
-        const haystack = [item.report_id, item.name, item.description, item.category, item.cadence].join(' ').toLowerCase()
+        const haystack = [item.reportId, item.name, item.description, item.navigationCategory, item.tableCategory, item.cadence].join(' ').toLowerCase()
         if (!haystack.includes(normalizedSearch)) {
           return false
         }
       }
       return true
     })
-  }, [catalogItems, deferredSearch, filters.sensitivity, selectedCategory])
+  }, [deferredSearch, filters.sensitivity, reportRows, selectedCategory])
 
-  const selectedVisibleCount = filteredItems.filter((item) => selectedReportIds.includes(item.report_id)).length
-  const allVisibleSelected = filteredItems.length > 0 && filteredItems.every((item) => selectedReportIds.includes(item.report_id))
+  const selectableFilteredItems = filteredItems.filter((item): item is CatalogReportRow => item.kind === 'catalog')
+  const selectedVisibleCount = selectableFilteredItems.filter((item) => selectedReportIds.includes(item.reportId)).length
+  const allVisibleSelected = selectableFilteredItems.length > 0 && selectableFilteredItems.every((item) => selectedReportIds.includes(item.reportId))
+  const tableIsLoading = reportsQuery.isLoading || (selectedCategory === 'Settlement' && settlementReportsQuery.isLoading)
 
   const kpis = useMemo(() => {
-    const sensitiveCount = catalogItems.filter((item) => item.sensitivity === 'Sensitive').length
+    const sensitiveCount = reportRows.filter((item) => item.sensitivity === 'Sensitive').length
     const scheduledCount = catalogItems.filter((item) => Boolean(item.cadence)).length
     return [
       {
         label: 'Available reports',
-        value: String(catalogItems.length),
+        value: String(reportRows.length),
         subtitle: 'role-filtered entitlements',
       },
       {
@@ -165,7 +280,7 @@ export function ReportsPage() {
         subtitle: 'auto-distribution',
       },
     ]
-  }, [catalogItems, categoryItems])
+  }, [catalogItems, categoryItems, reportRows])
 
   async function handleExport(format: 'excel' | 'pdf' | 'zip' | 'csv', reportIds: string[]) {
     if (!reportIds.length) {
@@ -196,12 +311,47 @@ export function ReportsPage() {
     }
   }
 
+  async function handleSettlementReportDownload(item: SettlementReportArtifact) {
+    try {
+      const response = await api.get<Blob>(`/reports/settlement-artifacts/${item.artifact_id}/download`, { responseType: 'blob' })
+      const disposition = response.headers['content-disposition']
+      const filename = extractFilename(disposition) ?? item.filename
+      downloadBlob(response.data, filename)
+      pushToast({ tone: 'success', message: `${item.report_type} downloaded.` })
+    } catch (caughtError: unknown) {
+      pushToast({ tone: 'error', message: extractErrorMessage(caughtError) ?? 'Settlement report download could not be completed.' })
+    }
+  }
+
+  async function handleSettlementReportView(item: SettlementReportArtifact) {
+    setSettlementReportPreviewBusyId(item.artifact_id)
+    try {
+      const response = await api.get<Blob>(`/reports/settlement-artifacts/${item.artifact_id}/download`, { responseType: 'blob' })
+      const rows = parseCsvRows(await response.data.text())
+      const [rawColumns = [], ...bodyRows] = rows
+      const columns = rawColumns.map((column, index) => (index === 0 ? column.replace(/^\uFEFF/, '') : column))
+      if (!columns.length) {
+        pushToast({ tone: 'warning', message: `${item.report_type} did not contain any previewable CSV columns.` })
+        return
+      }
+      setSettlementReportPreview({
+        artifact: item,
+        columns,
+        rows: bodyRows,
+      })
+    } catch (caughtError: unknown) {
+      pushToast({ tone: 'error', message: extractErrorMessage(caughtError) ?? 'Settlement report view could not be opened.' })
+    } finally {
+      setSettlementReportPreviewBusyId(null)
+    }
+  }
+
   function handleTopExport() {
     void handleExport('excel', selectedReportIds)
   }
 
   function handleQuickExport(format: 'excel' | 'pdf') {
-    const ids = selectedReportIds.length ? selectedReportIds : filteredItems.map((item) => item.report_id)
+    const ids = selectedReportIds.length ? selectedReportIds : selectableFilteredItems.map((item) => item.reportId)
     void handleExport(format, ids)
   }
 
@@ -240,11 +390,11 @@ export function ReportsPage() {
 
   function handleSelectAll(checked: boolean) {
     if (!checked) {
-      setSelectedReportIds((current) => current.filter((id) => !filteredItems.some((item) => item.report_id === id)))
+      setSelectedReportIds((current) => current.filter((id) => !selectableFilteredItems.some((item) => item.reportId === id)))
       return
     }
 
-    setSelectedReportIds((current) => Array.from(new Set([...current, ...filteredItems.map((item) => item.report_id)])))
+    setSelectedReportIds((current) => Array.from(new Set([...current, ...selectableFilteredItems.map((item) => item.reportId)])))
   }
 
   function handleSelectOne(reportId: string, checked: boolean) {
@@ -480,12 +630,12 @@ export function ReportsPage() {
               <span className="font-semibold">{selectedVisibleCount}</span> selected
             </div>
             <label className="inline-flex items-center gap-2 rounded-md border border-[#D7E1E8] bg-white px-3 py-2 text-[12px] font-medium text-iris-text-primary">
-              <input checked={allVisibleSelected} onChange={(event) => handleSelectAll(event.target.checked)} type="checkbox" />
+              <input checked={allVisibleSelected} disabled={!selectableFilteredItems.length} onChange={(event) => handleSelectAll(event.target.checked)} type="checkbox" />
               Select all
             </label>
           </div>
 
-          {reportsQuery.isLoading ? (
+          {tableIsLoading ? (
             <section className="mt-3 rounded-lg border border-[#D7E1E8] bg-white p-4">
               <TableSkeleton columns={7} rows={7} />
             </section>
@@ -504,15 +654,19 @@ export function ReportsPage() {
                   </thead>
                   <tbody>
                     {filteredItems.map((item) => {
-                      const ItemIcon = CATEGORY_ICONS[item.category]
+                      const ItemIcon = CATEGORY_ICONS[item.navigationCategory]
                       return (
-                        <tr key={item.report_id} className="border-t border-[#E8EEF3] align-top">
+                        <tr key={item.key} className="border-t border-[#E8EEF3] align-top">
                           <td className="px-4 py-3.5">
-                            <input
-                              checked={selectedReportIds.includes(item.report_id)}
-                              onChange={(event) => handleSelectOne(item.report_id, event.target.checked)}
-                              type="checkbox"
-                            />
+                            {item.kind === 'catalog' ? (
+                              <input
+                                checked={selectedReportIds.includes(item.reportId)}
+                                onChange={(event) => handleSelectOne(item.reportId, event.target.checked)}
+                                type="checkbox"
+                              />
+                            ) : (
+                              <span className="text-[11px] text-iris-text-muted">-</span>
+                            )}
                           </td>
                           <td className="px-4 py-3.5">
                             <div className="flex items-start gap-2.5">
@@ -520,26 +674,48 @@ export function ReportsPage() {
                               <div className="min-w-0">
                                 <p className="text-[14px] font-medium leading-5 text-iris-text-primary">{item.name}</p>
                                 <p className="mt-0.5 text-[12px] leading-5 text-[#51697A]">
-                                  {item.report_id} · {item.description}
+                                  {item.reportId} · {item.description}
                                 </p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3.5 text-[12px] text-iris-text-primary">{item.category}</td>
+                          <td className="px-4 py-3.5 text-[12px] text-iris-text-primary">{item.tableCategory}</td>
                           <td className="px-4 py-3.5 text-[12px] text-iris-text-primary">{item.cadence}</td>
                           <td className="px-4 py-3.5 text-[12px] leading-5 text-iris-text-secondary">{item.distribution.join(', ')}</td>
                           <td className="px-4 py-3.5">
                             <StatusBadge status={item.sensitivity}>{item.sensitivity}</StatusBadge>
                           </td>
                           <td className="px-4 py-3.5">
-                            <button
-                              className="inline-flex items-center gap-1 rounded-md border border-[#D7E1E8] bg-white px-3 py-1.5 text-[12px] font-medium text-iris-text-primary transition hover:bg-iris-bg"
-                              onClick={() => openReport(item)}
-                              type="button"
-                            >
-                              Open
-                              <ChevronRight className="h-3.5 w-3.5" />
-                            </button>
+                            {item.kind === 'catalog' ? (
+                              <button
+                                className="inline-flex items-center gap-1 rounded-md border border-[#D7E1E8] bg-white px-3 py-1.5 text-[12px] font-medium text-iris-text-primary transition hover:bg-iris-bg"
+                                onClick={() => openReport(item.report)}
+                                type="button"
+                              >
+                                Open
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              </button>
+                            ) : (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  className="inline-flex items-center gap-1 rounded-md border border-[#D7E1E8] bg-white px-3 py-1.5 text-[12px] font-medium text-iris-text-primary transition hover:bg-iris-bg"
+                                  disabled={settlementReportPreviewBusyId === item.artifact.artifact_id}
+                                  onClick={() => void handleSettlementReportView(item.artifact)}
+                                  type="button"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                  {settlementReportPreviewBusyId === item.artifact.artifact_id ? 'Opening...' : 'View'}
+                                </button>
+                                <button
+                                  className="inline-flex items-center gap-1 rounded-md border border-[#D7E1E8] bg-white px-3 py-1.5 text-[12px] font-medium text-iris-text-primary transition hover:bg-iris-bg"
+                                  onClick={() => void handleSettlementReportDownload(item.artifact)}
+                                  type="button"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                  Download
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       )
@@ -559,6 +735,13 @@ export function ReportsPage() {
           )}
         </div>
       </div>
+      {settlementReportPreview ? (
+        <SettlementReportPreviewModal
+          preview={settlementReportPreview}
+          onClose={() => setSettlementReportPreview(null)}
+          onDownload={() => void handleSettlementReportDownload(settlementReportPreview.artifact)}
+        />
+      ) : null}
     </div>
   )
 }
@@ -617,6 +800,92 @@ function QuickActionButton({
   )
 }
 
+function SettlementReportPreviewModal({
+  onClose,
+  onDownload,
+  preview,
+}: {
+  onClose: () => void
+  onDownload: () => void
+  preview: SettlementReportPreview
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D1B2A]/35 p-4" role="dialog" aria-modal="true">
+      <section className="flex max-h-[88vh] w-full max-w-[1120px] flex-col overflow-hidden rounded-lg border border-[#D7E1E8] bg-white shadow-2xl">
+        <div className="flex flex-col gap-3 border-b border-[#E8EEF3] px-5 py-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <p className="text-[16px] font-semibold text-iris-text-primary">{preview.artifact.report_type}</p>
+            <p className="mt-1 truncate font-mono text-[11px] text-iris-text-secondary">{preview.artifact.filename}</p>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-iris-text-secondary">
+              <span>{preview.artifact.settlement_id}</span>
+              <span>{preview.artifact.contract_id}</span>
+              <span>{preview.artifact.cedent}</span>
+              <span>{preview.artifact.period}</span>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              className="inline-flex items-center gap-1 rounded-md border border-[#D7E1E8] bg-white px-3 py-1.5 text-[12px] font-medium text-iris-text-primary transition hover:bg-iris-bg"
+              onClick={onDownload}
+              type="button"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Download
+            </button>
+            <button
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D7E1E8] bg-white text-iris-text-primary transition hover:bg-iris-bg"
+              onClick={onClose}
+              type="button"
+              aria-label="Close settlement report preview"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto">
+          <table className="min-w-full text-[12px]">
+            <thead className="sticky top-0 z-10 border-b border-[#E8EEF3] bg-[#F8FAFC]">
+              <tr>
+                {preview.columns.map((column, index) => (
+                  <th
+                    key={`${column}-${index}`}
+                    className="whitespace-nowrap border-r border-[#E8EEF3] px-3 py-2.5 text-left text-[11px] font-semibold text-iris-text-secondary last:border-r-0"
+                  >
+                    {column || `Column ${index + 1}`}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {preview.rows.length ? (
+                preview.rows.map((row, rowIndex) => (
+                  <tr key={`${preview.artifact.artifact_id}-${rowIndex}`} className="border-t border-[#EEF2F5] align-top">
+                    {preview.columns.map((column, columnIndex) => (
+                      <td
+                        key={`${preview.artifact.artifact_id}-${rowIndex}-${column}-${columnIndex}`}
+                        className="max-w-[260px] border-r border-[#EEF2F5] px-3 py-2 text-iris-text-primary last:border-r-0"
+                      >
+                        <span className="block whitespace-nowrap">{row[columnIndex] ?? ''}</span>
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr className="border-t border-[#EEF2F5]">
+                  <td className="px-3 py-4 text-[12px] text-iris-text-secondary" colSpan={Math.max(preview.columns.length, 1)}>
+                    No data rows were found in this CSV.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function buildExportFilters(filters: CatalogFilters) {
   return {
     cedent_id: filters.cedentId,
@@ -648,6 +917,59 @@ function downloadBlob(blob: Blob, filename: string) {
   anchor.download = filename
   anchor.click()
   window.URL.revokeObjectURL(url)
+}
+
+function parseCsvRows(input: string) {
+  const rows: string[][] = []
+  let row: string[] = []
+  let field = ''
+  let inQuotes = false
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index]
+    const nextChar = input[index + 1]
+
+    if (inQuotes) {
+      if (char === '"' && nextChar === '"') {
+        field += '"'
+        index += 1
+      } else if (char === '"') {
+        inQuotes = false
+      } else {
+        field += char
+      }
+      continue
+    }
+
+    if (char === '"') {
+      inQuotes = true
+    } else if (char === ',') {
+      row.push(field)
+      field = ''
+    } else if (char === '\n') {
+      row.push(field)
+      rows.push(row)
+      row = []
+      field = ''
+    } else if (char === '\r') {
+      if (nextChar === '\n') {
+        index += 1
+      }
+      row.push(field)
+      rows.push(row)
+      row = []
+      field = ''
+    } else {
+      field += char
+    }
+  }
+
+  if (field || row.length || input.endsWith(',')) {
+    row.push(field)
+    rows.push(row)
+  }
+
+  return rows.filter((candidate) => candidate.some((value) => value.trim() !== ''))
 }
 
 function normalizePeriod(value: string | null) {

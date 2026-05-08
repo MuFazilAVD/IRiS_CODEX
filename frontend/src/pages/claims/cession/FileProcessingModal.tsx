@@ -73,6 +73,7 @@ const PIPELINE_STEPS: Array<{ id: ClaimsStep; label: string }> = [
 
 const FILE_TYPE_OPTIONS = [
   'Pension Status',
+  'Settlement',
   'Fixed Leg',
   'Mortality Report',
   'Spouse Events',
@@ -109,6 +110,12 @@ const SAMPLE_FILES: Array<{ name: string; content: string; type: string }> = [
     type: 'text/csv',
     content:
       'row_id,period,fixed_leg_amount,currency,fee_amount,value_date,contract_id\n100,Q1-2025,8914200,EUR,412300,2025-03-30,LSC-2025-002\n237,Q1-2025,8914200,EUR,412300,2025-03-30,LSC-2025-002\n374,Q1-2025,8914200,EUR,412300,2025-03-30,LSC-2025-002\n511,Q1-2025,8914200,EUR,412300,2025-03-30,LSC-2025-002\n',
+  },
+  {
+    name: 'bavarian_settlement_2025Q1.csv',
+    type: 'text/csv',
+    content:
+      'Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount,contract_id\nQ1 2025,2025-04-30,None,None,51200000,50980000,0,0,-220000,LSC-2025-002\n',
   },
   {
     name: 'boe_discount_curve_2025Q1.csv',
@@ -1096,17 +1103,25 @@ function SummaryStep({
   detail: ClaimsCessionDetailPayload
   onApprove: () => void
 }) {
+  const isSettlementFile = detail.summary.file_type === 'Settlement'
+
   return (
     <div className="space-y-5">
       <SectionHeading title="Processing Summary" subtitle="Business impact, exceptions, IRiS insights" />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <KpiCard accent="neutral" title="Liability Impact" value={signedCompactCurrency(detail.summary.liability_impact ?? 0, detail.summary.settlement_impact?.currency ?? 'EUR')} />
-        <KpiCard
-          accent="teal"
-          title="Fixed Leg Recomputed"
-          value={detail.summary.fixed_leg_recomputed ? signedCompactCurrency(detail.summary.fixed_leg_recomputed, detail.summary.settlement_impact?.currency ?? 'EUR') : '—'}
-        />
-      </div>
+      {!isSettlementFile ? (
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <KpiCard accent="neutral" title="Liability Impact" value={signedCompactCurrency(detail.summary.liability_impact ?? 0, detail.summary.settlement_impact?.currency ?? 'EUR')} />
+          <KpiCard
+            accent="teal"
+            title="Fixed Leg Recomputed"
+            value={detail.summary.fixed_leg_recomputed ? signedCompactCurrency(detail.summary.fixed_leg_recomputed, detail.summary.settlement_impact?.currency ?? 'EUR') : '—'}
+          />
+        </div>
+      ) : null}
+
+      {isSettlementFile && detail.summary.settlement_reconciliation ? (
+        <SettlementReconciliationPanel reconciliation={detail.summary.settlement_reconciliation} />
+      ) : null}
 
       <div className="rounded-[22px] border border-[#B8E2E0] bg-[#F4FBFB] px-5 py-4 text-[13px] text-iris-text-primary">
         <div className="mb-2 flex items-center gap-2 font-semibold text-[#117A65]">
@@ -1130,6 +1145,68 @@ function SummaryStep({
         <button className="btn-secondary opacity-60" disabled type="button">
           Escalate
         </button>
+      </div>
+    </div>
+  )
+}
+
+function SettlementReconciliationPanel({
+  reconciliation,
+}: {
+  reconciliation: NonNullable<ClaimsCessionDetailPayload['summary']['settlement_reconciliation']>
+}) {
+  const decisionTone = reconciliation.decision === 'accept' ? 'bg-[#E8F6EF] text-[#117A65]' : 'bg-[#FEF5E7] text-[#B9770E]'
+  const rows: Array<[string, number, number]> = [
+    ['Fixed Leg', reconciliation.uploaded.fixed_leg, reconciliation.system.fixed_leg],
+    ['Floating Leg', reconciliation.uploaded.floating_leg, reconciliation.system.floating_leg],
+    ['Fee', reconciliation.uploaded.fee, reconciliation.system.fee],
+    ['Prior Interest', reconciliation.uploaded.interest_prior_period, reconciliation.system.interest_prior_period],
+    ['Net Settlement', reconciliation.uploaded.net_settlement_amount, reconciliation.system.net_settlement_amount],
+  ]
+
+  return (
+    <div className="rounded-[22px] border border-[#D6DEE5] bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[15px] font-semibold text-iris-text-primary">Settlement Reconciliation</p>
+          <p className="mt-1 text-[12px] text-iris-text-secondary">
+            {reconciliation.settlement_id} Â· {reconciliation.calculation_period} Â· {reconciliation.expected_source}
+          </p>
+        </div>
+        <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${decisionTone}`}>{formatSettlementDecision(reconciliation.decision)}</span>
+      </div>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="min-w-full text-[13px]">
+          <thead className="bg-[#F7F9FB]">
+            <tr>
+              {['Measure', 'Uploaded', 'IRiS', 'Delta'].map((label) => (
+                <th key={label} className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([label, uploaded, system]) => {
+              const delta = uploaded - system
+              return (
+                <tr key={label} className="border-t border-[#EEF2F5]">
+                  <td className="px-3 py-2 font-medium text-iris-text-primary">{label}</td>
+                  <td className="px-3 py-2 text-iris-text-secondary">{formatCurrency(uploaded, reconciliation.currency)}</td>
+                  <td className="px-3 py-2 text-iris-text-secondary">{formatCurrency(system, reconciliation.currency)}</td>
+                  <td className={delta === 0 ? 'px-3 py-2 text-iris-text-secondary' : 'px-3 py-2 font-medium text-[#B9770E]'}>
+                    {formatCurrency(delta, reconciliation.currency)}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-[#E5EBF0] bg-[#FAFBFC] px-4 py-3 text-[13px] text-iris-text-secondary">
+        {reconciliation.mismatches.length ? reconciliation.mismatches.map((item) => <p key={`${item.field}-${item.issue_type}`}>{item.message}</p>) : <p>All settlement values match exactly.</p>}
       </div>
     </div>
   )
@@ -1478,6 +1555,10 @@ function titleCase(value: string) {
     .split(' ')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+}
+
+function formatSettlementDecision(value: string) {
+  return value === 'accept' ? 'Recommend Approve' : 'Review Required'
 }
 
 function formatConfidence(value: number) {

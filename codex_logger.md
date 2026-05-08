@@ -233,6 +233,119 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-08T06:38:33Z]
+
+### Prompt
+PLEASE IMPLEMENT THIS PLAN:
+# Settlement File Processing Plan
+
+## Summary
+Add `Settlement` as a claims cession file type. Detect it only when all required settlement headers are present, map it to the cedant/contract through the existing detect/map pipeline, reconcile uploaded amounts against IRiS-calculated fixed/floating legs, and produce an IRiS recommendation without auto-approving the settlement.
+
+## Key Changes
+- Add `Settlement` to backend and frontend file type options.
+- Detect `Settlement` before `Fixed Leg`/`Fee Schedule` when these normalized columns all exist:
+  `Calculation Period`, `Payment Date`, `Pensioner Movement`, `Applicable Indexation/Escalation`, `Fixed Leg`, `Floating Leg`, `Fee`, `Interest on Over/Underpayment from Prior Period`, `Net Settlement Amount`.
+- Add settlement column aliases and parsers for case/spacing variants, currency symbols, commas, and signed numeric values.
+- Add a settlement-specific pipeline branch:
+  - Record uploaded settlement rows in `cession_file_records`.
+  - Validate required columns and exact amount matches.
+  - Compare uploaded fixed/floating amounts against IRiS expected values using Decimal cents.
+  - Recompute uploaded net as `floating - fixed + fee + interest`, treating fee/interest as signed file values.
+  - Flag critical exceptions for any fixed, floating, or net mismatch.
+- Expected value lookup order:
+  - Existing DB/mock settlement row for the mapped contract and calculation period.
+  - Existing calculation helpers using contract terms and current population.
+  - Deterministic mock fallback only when values are not tracked, stored through existing settlement override/mock data with clear `MOCK IMPLEMENTATION` metadata.
+- On exact match and no unresolved exceptions:
+  - Create/update the settlement row as `pending_approval`.
+  - Set `iris_recommendation` to `accept`.
+  - Create the Claims Ops settlement approval worklist item.
+- On mismatch:
+  - Do not recommend approval.
+  - Keep processing blocked by critical validation exceptions until corrected or explicitly resolved.
+- Add an optional settlement reconciliation object to cession summary/detail payloads for uploaded/system fixed leg, floating leg, fee, interest, net, decision, and mismatch messages.
+- Update the cession summary UI to show settlement reconciliation when `file_type === "Settlement"`.
+- Add a `Settlement` sample upload in the cession file workflow.
+- Update generated contract file templates to include a `Settlement` template row.
+- Preserve the existing dirty `backend/app/mock_data/cession_pipeline_overrides.json` content while merging any needed mock metadata.
+
+## Logging And Tracking
+- Add `logger.info`, `logger.debug`, and `logger.error` coverage for settlement detection, mapping, expected-value lookup, reconciliation decision, mock fallback, and settlement/worklist creation.
+- Update `docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md` with the Settlement rules.
+- Update `docs/trackers/TRACKER.md` to mark Settlement file processing as working with mock fallback where contract-period expectations are not tracked.
+- Append the required session entry to `codex_logger.md` with the exact prompt, context used, actions, files modified, deviations, and status.
+
+## Test Plan
+- Backend smoke with FastAPI `TestClient`:
+  - Upload a settlement CSV with all required columns and exact matching values.
+  - Advance `detect → map-contract → clauses → validate → process → summary`.
+  - Assert detected file type is `Settlement`.
+  - Assert zero critical validation errors.
+  - Assert summary decision is recommend approve and settlement is `pending_approval`.
+  - Assert settlement list/detail includes the created/updated row with `iris_recommendation: accept`.
+- Backend negative smoke:
+  - Upload the same file with mismatched fixed leg, floating leg, and net values.
+  - Assert critical exceptions are created and process returns the existing unresolved-exceptions error.
+- Manual override smoke:
+  - Upload with manual file type `Settlement` and confirm detect accepts it.
+- Frontend verification:
+  - Run production build.
+  - Confirm manual file type dropdown includes `Settlement`.
+  - Confirm settlement summary renders reconciliation values without breaking existing file types.
+
+## Assumptions
+- Approval policy: matching files only receive an IRiS `accept` recommendation; final approval remains the existing human/API approval workflow.
+- Matching tolerance: exact amount after Decimal normalization to cents.
+- Net rule: `floating - fixed + fee + interest`, with fee and interest treated as signed values from the uploaded file.
+- No schema migration is planned; missing per-contract/per-period expectations use documented mock fallback data rather than inventing new tables.
+
+### Context Used
+- Files referred:
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/api/CLAIMS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+  - docs/trackers/TRACKER.md
+  - backend/app/services/claims_service.py
+  - backend/app/repositories/claims_repository.py
+  - backend/app/models/settlement.py
+  - backend/app/services/underwriting_service.py
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Added `Settlement` as a backend/manual frontend file type and sample upload.
+- Added required settlement-header detection before Fixed Leg/Fee Schedule detection.
+- Added settlement column aliases, exact Decimal cent parsing, period/date parsing, and signed fee/interest net reconciliation.
+- Added Settlement-specific clauses, validation records, exception generation, summary reconciliation payload, settlement upsert, and settlement approval worklist routing.
+- Added expected-value lookup from existing settlement rows, then contract/population calculations, with deterministic mock fallback metadata when untracked.
+- Added a frontend reconciliation panel for uploaded vs IRiS fixed/floating/fee/interest/net values.
+- Added Settlement to generated contract file template rows.
+- Updated claims API docs, processing rules, tracker notes, and this session log.
+- Verified backend compile, isolated FastAPI smoke coverage, and frontend production build.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- backend/app/services/underwriting_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- frontend/src/types/api.ts
+- docs/api/CLAIMS.md
+- docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No schema migration was added; missing contract-period expectations use the documented deterministic mock fallback path.
+- The pre-existing dirty `backend/app/mock_data/cession_pipeline_overrides.json` file was preserved and not rewritten by the isolated smoke test.
+- Settlement final approval remains a human/API action; exact matches set IRiS recommendation to `accept` and status to `pending_approval`.
+
+### Status
+✅ Completed
+
 ## [2026-05-07 23:11:08 +05:30]
 
 ### Prompt
@@ -3293,6 +3406,409 @@ fix the issues, log this processing rules for each file typeand perform the oper
 ### Issues / Deviations
 - The docs define richer contract child tables and fixed-leg schedules, but the current SQLAlchemy layer only exposes contract economic fields directly on `contracts`; settlement fixed leg therefore uses those DB contract fields.
 - Some non-Pension file-type processing remains rule-logged and routed but not fully live beyond existing behavior.
+
+### Status
+✅ Completed
+
+## [2026-05-08T06:55:52Z]
+
+### Prompt
+can you create a dummy file for me to test?
+
+### Context Used
+- Files referred:
+  - docs/mock_data/
+  - backend/app/mock_data/settlements_seed.json
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Created a settlement CSV test file with the required detection headers and seeded Bavarian Q1 2025 amounts.
+- Used contract `LSC-2025-002` values that should reconcile exactly against the seeded settlement row.
+
+### Files Modified
+- docs/mock_data/bavarian_settlement_2025Q1.csv
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-08T07:09:51Z]
+
+### Prompt
+create two failure cases as well
+
+### Context Used
+- Files referred:
+  - docs/mock_data/bavarian_settlement_2025Q1.csv
+  - backend/app/mock_data/settlements_seed.json
+
+### Actions Taken
+- Created one settlement CSV with mismatched fixed leg, floating leg, and net reconciliation values.
+- Created one settlement CSV where fixed and floating legs match but fee/interest make the uploaded net fail reconciliation.
+
+### Files Modified
+- docs/mock_data/bavarian_settlement_2025Q1_amount_mismatch.csv
+- docs/mock_data/bavarian_settlement_2025Q1_net_mismatch.csv
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-08T07:26:13Z]
+
+### Prompt
+A file with fields Calculation Period	Payment Date	Pensioner Movement	Applicable Indexation / Escalation	Fixed Leg	Floating Leg	Fee (Admin)	Interest on Over/Underpayment from Prior Period	Net Settlement Amount
+went unclassified.. why??
+
+Also exception doesnt mean mismatches in fixed leg/floating leg or anything. Exception strictly means data validation / missing value issues. Those kind of issues  wil be highlighted in summary andn worklist item will be created accroding to that
+
+### Context Used
+- Files referred:
+  - backend/app/services/claims_service.py
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - docs/api/CLAIMS.md
+  - docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+  - docs/trackers/TRACKER.md
+  - docs/db/SCHEMA.md
+  - docs/mock_data/bavarian_settlement_2025Q1.csv
+
+### Actions Taken
+- Added delimiter detection for CSV-style cession uploads so tab-delimited CSV headers are parsed as separate fields.
+- Added Settlement aliases for `Applicable Indexation / Escalation` and `Fee (Admin)`.
+- Stopped converting settlement fixed/floating/net reconciliation mismatches into validation exceptions.
+- Kept settlement data exceptions limited to missing required fields, invalid periods/dates, and invalid numeric values.
+- Routed Settlement mismatches to summary reconciliation and a Claims Ops `Reconciliation Mismatch` worklist item with IRiS recommendation `review`.
+- Updated the frontend sample upload and added a tab-delimited Settlement sample using the reported headers.
+- Updated processing rules, API notes, and tracker status.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/mock_data/bavarian_settlement_2025Q1_fee_admin_tab.csv
+- docs/api/CLAIMS.md
+- docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Global `python` lacks `pandas`, so the targeted parser smoke was rerun with `venv\Scripts\python.exe`.
+- Settlement DB schema documents a narrower status CHECK than the current frontend/service statuses; existing runtime model already uses flexible string status and supports `pending_reconciliation`.
+
+### Status
+✅ Completed
+
+## [2026-05-08T07:41:01Z]
+
+### Prompt
+Let the newly created settlment case item come on top in the table
+
+### Context Used
+- Files referred:
+  - backend/app/services/claims_service.py
+  - frontend/src/pages/claims/settlements/SettlementsPage.tsx
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/api/CLAIMS.md
+  - docs/trackers/TRACKER.md
+
+### Actions Taken
+- Changed the settlements list endpoint to sort by latest settlement update timestamp first.
+- Kept payment due date and settlement ID as stable secondary ordering.
+- Added a debug log that records the top settlement ID returned after ordering.
+- Updated the tracker to note that newly created cession settlement cases appear first in the settlement register.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-08T08:09:43Z]
+
+### Prompt
+Now we need to create 2 output files (if the file type is settlement)
+Create these two files and save it in a repo, that can be viewed in reports section.
+In reports, you can create a new section , settlmenet reports, and let these files be viewed there.
+
+Here is the file fields with examples, do not dwell on examples, it is to help you understand the file structure :
+
+     '''   11.6 Recordkeeping process for booking/reporting of premium and claim for settlements [Current state manual process to be revised and enhanced through various stages of automation over the next 1-2 years] 
+
+            11.6.1 Enter details about the payment on the UKL - Cash Settlements Tracker Excel sheet located in J:\UKL Ops. 
+Cash Settlements Tracker Column Name 	Require Input (Y/N)	Auto populated (Y/N)	Notes
+Treaty ID	Y	N	
+Cedant	Y	N	
+Case Name	Y	N	
+Accounting Period End Date	Y	N	
+Payment Due Date	Y	N	
+Date Received	Y	N	
+Quarter	N	Y	This is a formula
+Payment Late 	N	Y	This is a formula that generates a True/False flag
+FY/RY Code	Y	Y	This is a formula
+Fixed Leg (GBP)	Y	N	Sold Case Financial File
+Floating Leg (GBP)	Y	N	Sold Case Financial File
+Fee (GBP)	Y	N	Sold Case Financial File
+Interest (If applicable)	Y	N	
+GBP Premium 	N	Y	This is a formula
+GBP Claim 	N	Y	This is a formula
+GBP Amount Received 	Y	N	Wire Report
+USD Premium 	N	Y	This is a formula
+USD Claim 	N	Y	This is a formula
+USD Received 	N	Y	This is a formula
+Exchange Rate 	Y	N	JP Morgan Wire Report or
+PeopleSoft ledger after transaction posts for BNYM account 
+Amount Received = Amount Due	N	Y	This is a formula that generates a True/False flag
+PeopleSoft Journal ID	Y	N	From GRDR Report
+GRDR Source Code	Y	N	MLR for JP Morgan account
+GLR for BNY Mellon account
+Bank Account	Y	N	
+Comments	N	N	Include comments about any additional information that is relevant to the transaction. For example, due to rounding in certain situations, there may be instances of being off by one penny. Guidance from FCU Operations team was to adjust the penny manually on the premium on the load form. 
+
+            11.6.2 Fill out manual GRDR load form. 
+
+                • A single form can be used for multiple wires received on the same day (even for different treaties/Cedants), but separate forms must be used for multiple dates.
+
+The load form requires the information outlined below. Please note that each component of a single transaction requires its own row in the load form (i.e., Premium and Claim should be on two different rows)
+Field Name 	Guideline (JP Morgan Chase)	 Guideline (BNY Mellon)
+Treaty ID		
+Legal Entity Code 	This is LR	This is LR
+Coverage Type Code	Always “BASE”	Always “BASE”
+Product Line Code	This is GD200005	This is GD200005
+Subsegment	Leave Blank	Leave Blank
+Closed Block Sub Segment	Leave Blank	Leave Blank
+Closed Block Ind 	This is "N"	This is "N"
+Renewal Code:		
+    i. If row is for Premium or Premium Reversal	This should be "FY" (First Year) until the one-year anniversary of the Treaty effective date. After that “RY” (Renewal Year)	This should be "FY" (First Year) until the one-year anniversary of the Treaty effective date. After that “RY” (Renewal Year)
+    ii. If row is for any other amount type	Should always be "NA”	Should always be "NA”
+Contract Participation Code, Pension Indicator and Reinsurance Distribution	Should always be "NA"	Should always be "NA"
+Pension Indicator	Should always be "NA"	Should always be "NA"
+Reinsurance Distribution	Should always be "NA”	Should always be "NA”
+Experience Number 	Leave Blank	Leave Blank
+Months Settled Count	Leave Blank	Leave Blank
+Paid to Date	Leave Blank	Leave Blank
+Open Item Key 	Enter the following information: Treaty ID, Period (Month/Quarter) and "Premium" or "Benefits"	Enter the following information: Treaty ID, Period (Month/Quarter) and "Premium" or "Benefits"
+Description	Enter the following information: Treaty ID, Period (Month/Quarter) and "Premium" or "Benefits"	Enter the following information: Treaty ID, Period (Month/Quarter) and "Premium" or "Benefits"
+Original Bill Date 	This is the last day of the relevant accounting period for which the cash was received	This is the last day of the relevant accounting period for which the cash was received
+Currency Code 	This should be "USD"	This should be "GBP"
+Exchange Method 	This should be "As of Date"	This should be "Current Date” 
+Exchange Date 	This should be the date we received the funds.	[Blank]
+Exchange Rate	Leave Blank	Leave Blank
+CHARTFIELD3	Leave Blank	Leave Blank
+Contract Number	Leave Blank	Leave Blank
+Contract Sub Number	Leave Blank	Leave Blank
+Contract Suffix	Leave Blank	Leave Blank
+Intercompany Accounting	Leave Blank	Leave Blank
+Cash Legal Entity	Leave Blank	Leave Blank
+Cash Accounting Number	Leave Blank	Leave Blank
+Sub product code2	Leave Blank	Leave Blank
+Inforce Count	Leave Blank	Leave Blank
+Funds Withheld	Should be “0”	Should be “0”
+Misc Interest Exp	Should be “0”	Should be “0”
+Premium column on premium row 	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to enter here is the following: (Fixed Leg + Fee) * (Exchange Rate from JPMC Wire Detail Report)	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to enter here is the following: Fixed Leg + Fee (in GBP)
+Paid Claim column on Benefits Row 	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to enter here is the following: (Floating Leg) * (Exchange Rate from JPMC Wire Detail Report)	This is a number, must be only two digits after the decimal point, no currency and no formulas
+The amount to enter here is the following: Floating Leg (in GBP)
+
+Expense Allowance	Should be “0”	Should be “0”
+Commission	Should be “0”	Should be “0”
+Modco Adjust	Should be “0”	Should be “0”
+Experience Refund	Should be “0”	Should be “0”
+Premium Tax	Should be “0”	Should be “0”
+Claim Interest (Interest Paid)	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to enter here is interest owed to the Cedant due to underpaid claims in the prior periods	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to enter here is interest owed to the Cedant due to underpaid claims in the prior periods
+Misc Interest Income (Interest Received)	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to enter is here is interest owed to MetLife due to overpaid claims from the prior period	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to enter is here is interest owed to MetLife due to overpaid claims from the prior period
+Erdr Unpaid Claims	Should be “0”	Should be “0”
+Premium Reversal (Refund)	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to here is the amount that needs to be sent back to the Cedant for any inadvertent overpayments	This is a number, must be only two digits after the decimal point, no currency and no formulas. 
+The amount to here is the amount that needs to be sent back to the Cedant for any inadvertent overpayments
+Net Due on Premium row 	This is a number, must be only two digits after the decimal point, no currency and no formulas. The amount to enter here is same amount as the Premium column on the Premium row.             	This is a number, must be only two digits after the decimal point, no currency and no formulas. The amount to enter here is same amount as the Premium column on the Premium row.              
+Net Due on Benefits row 	This is a number, must be only two digits after the decimal point, no currency and no formulas. The amount to enter here is the inverse of the amount as the Paid Claim column on the Benefits row.	This is a number, must be only two digits after the decimal point, no currency and no formulas. The amount to enter here is the inverse of the amount as the Paid Claim column on the Benefits row.
+
+       '''
+
+### Context Used
+- Files referred:
+  - docs/ui/08-reports/REPORTS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/db/SCHEMA.md
+  - docs/trackers/TRACKER.md
+  - backend/app/services/claims_service.py
+  - backend/app/services/reports_service.py
+  - backend/app/routers/reports.py
+  - backend/app/models/contract.py
+  - frontend/src/pages/reports/ReportsPage.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Added repo-backed generation of Cash Settlements Tracker CSV and GRDR Load Form CSV whenever a Settlement file is processed.
+- Added a generated settlement report registry and download helpers shared by Claims and Reports services.
+- Added Reports API endpoints to list and download generated settlement artifacts.
+- Added a Settlement reports section to the Reports page with generated file downloads.
+- Documented the new Reports endpoints and UI section.
+- Updated processing rules and tracker notes.
+
+### Files Modified
+- backend/app/services/settlement_report_files.py
+- backend/app/services/claims_service.py
+- backend/app/services/reports_service.py
+- backend/app/routers/reports.py
+- frontend/src/pages/reports/ReportsPage.tsx
+- frontend/src/types/api.ts
+- docs/api/REPORTS.md
+- docs/ui/08-reports/REPORTS.md
+- docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No schema migration was added; generated files are stored in the repo-backed `backend/app/generated_reports/settlements` directory and indexed by mock-data registry metadata.
+- A focused smoke generated temporary files and registry rows; those smoke artifacts were removed after verification so the Reports section starts clean.
+
+### Status
+✅ Completed
+## [2026-05-08 09:29:08 UTC]
+
+### Prompt
+From where are you fetching these values?
+They dont seem to match any values I see in the UI
+contracts ?? or DB ??
+If it exists, show me where.
+Also why there is staggering diff between fixed and
+floating? (4m and 11k?) it will mostly in close range.
+Also what is liability and fixed leg recomputed ?
+If it is meaning less, remove it
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/db/SCHEMA.md
+  - docs/api/CLAIMS.md
+  - docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - backend/app/services/claims_service.py
+  - backend/app/mock_data/cession_pipeline_overrides.json
+  - backend/app/mock_data/settlement_overrides.json
+
+### Actions Taken
+- Traced the displayed settlement values to uploaded cession file records, settlement override data, contract terms, and current `policy_register` aggregation.
+- Removed the `Liability Impact` and `Fixed Leg Recomputed` KPI cards from Settlement summaries while preserving them for Fixed Leg/Pension Status flows.
+- Fixed `CA$` settlement currency detection so Maple Leaf settlement values render as CAD instead of USD.
+- Prevented incomplete sample `policy_register` populations from being used as full settlement expected values; deterministic mock settlement expectations are used when contract-period expected values are not tracked.
+- Refreshed the stored Maple Leaf settlement override so the current processed file no longer carries the stale USD / 11,635 floating-leg reconciliation.
+- Verified the Maple Leaf summary now reports CAD, no liability/fixed-leg KPI values, and close-range fixed/floating reconciliation values.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- backend/app/mock_data/cession_pipeline_overrides.json
+- backend/app/mock_data/settlement_overrides.json
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- `LSC-2024-044` has only 4 current `policy_register` sample rows for an 8,900-life contract, so it cannot support a real floating-leg expected value.
+- Contract-period settlement expectations remain mock-backed where no tracked settlement register row exists.
+
+### Status
+✅ Completed
+
+## [2026-05-08 09:47:42 +00:00]
+
+### Prompt
+You have given a new card for settlement reports , which in unnecessary, below that, you can see a section , categories, include a category settlment reports there and place the newly created settlement reports of the file processing there. Category will be Operations and actions will have bowth open/view and download. Makw these changes
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/db/SCHEMA.md
+  - docs/api/REPORTS.md
+  - docs/ui/08-reports/REPORTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/reports/ReportsPage.tsx
+  - backend/app/services/reports_service.py
+  - backend/app/routers/reports.py
+  - backend/app/mock_data/settlement_report_artifacts.json
+
+### Actions Taken
+- Removed the standalone Settlement reports card from the Reports page.
+- Added a `Settlement Reports` category to the existing category rail with runtime generated-file counts.
+- Rendered generated settlement artifacts inside the main report table with `Operations` as the table category.
+- Added row-level `View` and `Download` actions for generated settlement files.
+- Updated the Reports UI/API documentation and tracker to reflect category-based placement.
+- Verified the frontend production build.
+
+### Files Modified
+- frontend/src/pages/reports/ReportsPage.tsx
+- docs/ui/08-reports/REPORTS.md
+- docs/api/REPORTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No separate view endpoint was added; the UI reuses the existing generated CSV download endpoint as a blob for the `Open / View` action, documented in `docs/api/REPORTS.md`.
+
+### Status
+✅ Completed
+
+## [2026-05-08 09:55:48 +00:00]
+
+### Prompt
+View is not working, Show it in a popup as a table (since it is a csv)
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/db/SCHEMA.md
+  - docs/api/REPORTS.md
+  - docs/ui/08-reports/REPORTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/reports/ReportsPage.tsx
+
+### Actions Taken
+- Replaced the settlement report View action's browser-tab blob open with an in-page popup preview.
+- Added CSV parsing for quoted fields, escaped quotes, commas, and CRLF/LF rows.
+- Rendered generated settlement CSV columns and rows in a scrollable modal table with close and download actions.
+- Updated Reports UI/API documentation and tracker wording to reflect popup table preview behavior.
+- Verified the frontend production build.
+
+### Files Modified
+- frontend/src/pages/reports/ReportsPage.tsx
+- docs/ui/08-reports/REPORTS.md
+- docs/api/REPORTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No backend endpoint was added; the existing settlement artifact download endpoint is still used to fetch CSV content for the popup preview.
 
 ### Status
 ✅ Completed

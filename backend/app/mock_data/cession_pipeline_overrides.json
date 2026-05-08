@@ -1414,5 +1414,1581 @@
         "timestamp": "2026-05-07T12:47:26.274483Z"
       }
     ]
+  },
+  "CES-2026-012": {
+    "pipeline_session_id": "pipe-baa0f7c1-e700-47cc-bcfb-c1ba0d8869f9",
+    "active_step": "validate",
+    "source_filename": "atlas_member_movement_q2_2025_unique.xlsx",
+    "source_size_bytes": 15159,
+    "source_content_text": "Member ID,First Name,Last Name,Gender,Date of Birth,Annuity Currency,Monthly Pension Amount,Spouse Flag,Member Status\r\nPEN-0300123,Stephanie,Gonzalez,F,1975-03-29,GBP,\"\u00a33,577.95\",NO,Deferred\r\nPEN-0300028,Christopher,Green,M,1975-01-17,GBP,\"\u00a32,176.55\",NO,Deferred\r\nPEN-0300050,Tyler,Hall,M,1975-01-28,GBP,\"\u00a31,409.01\",NO,Deferred\r\nPEN-0300136,Amanda,Baker,F,1975-04-05,GBP,\"\u00a32,020.61\",NO,Deferred\r\nPEN-0300057,Mark,Davis,M,1975-06-05,GBP,\"\u00a32,860.40\",NO,Deferred\r\nPEN-0300096,Brandon,Lopez,M,1975-04-14,GBP,\"\u00a32,241.52\",NO,Deferred\r\nPEN-0300077,Kevin,Nelson,M,1975-04-05,GBP,\"\u00a32,269.83\",NO,Deferred\r\nPEN-0300084,Joshua,Hernandez,M,1975-01-15,GBP,\"\u00a31,418.24\",NO,Deferred\r\nPEN-0300047,Amanda,Brown,F,1975-02-08,GBP,\"\u00a33,139.35\",NO,Deferred\r\nPEN-0300107,Sharon,Gonzalez,F,1974-02-06,GBP,\"\u00a33,265.86\",NO,Deferred\r\nPEN-0300181,Mary,Thomas,F,1974-06-17,GBP,\"\u00a32,933.65\",NO,Deferred\r\nPEN-0300117,Cynthia,King,F,1974-01-27,GBP,\"\u00a33,254.01\",NO,Deferred\r\nPEN-0300165,Amy,Rivera,F,1974-04-17,GBP,\"\u00a32,521.07\",NO,Deferred\r\nPEN-0300101,Deborah,Walker,F,1974-05-03,GBP,\"\u00a31,472.52\",NO,Deferred\r\nPEN-0300013,Nicholas,Martinez,M,1974-04-01,GBP,\"\u00a33,660.43\",NO,Deferred\r\nPEN-0300194,Charles,Rodriguez,M,1974-04-29,GBP,\"\u00a32,786.65\",NO,Deferred\r\nPEN-0300093,Joshua,Rivera,M,1974-06-01,GBP,\"\u00a33,476.30\",NO,Deferred\r\nPEN-0300141,Sarah,Miller,F,1974-05-17,GBP,\"\u00a33,412.76\",NO,Deferred\r\nPEN-0300119,Barbara,Harris,F,1973-03-11,GBP,\"\u00a32,178.49\",NO,Deferred\r\nPEN-0300048,Patrick,Wilson,M,1973-04-12,GBP,\"\u00a33,726.54\",NO,Deferred\r\nPEN-0300033,Shirley,Johnson,F,1973-04-23,GBP,\"\u00a31,233.38\",NO,Deferred\r\nPEN-0300083,George,Torres,M,1973-03-20,GBP,\"\u00a32,139.06\",NO,Deferred\r\nPEN-0300108,Emma,Hill,F,1973-04-06,GBP,\"\u00a32,246.74\",NO,Deferred\r\nPEN-0300095,Dorothy,Martin,F,1973-06-14,GBP,\"\u00a33,675.14\",NO,Deferred\r\nPEN-0300019,Jonathan,Carter,M,1972-05-26,GBP,\"\u00a33,421.37\",NO,Deferred\r\nPEN-0300081,Amanda,Clark,F,1972-04-02,GBP,\u00a3838.07,NO,Deferred\r\nPEN-0300046,Samantha,Martin,F,1972-04-26,GBP,\"\u00a33,613.17\",NO,Deferred\r\nPEN-0300148,Mark,Clark,M,1972-03-02,GBP,\"\u00a32,276.05\",NO,Deferred\r\nPEN-0300109,Michael,Lee,M,1972-02-17,GBP,\"\u00a31,816.57\",NO,Deferred\r\nPEN-0300155,Sharon,Hall,F,1971-06-10,GBP,\"\u00a31,446.66\",NO,Deferred\r\nPEN-0300161,Barbara,Scott,F,1971-01-24,GBP,\"\u00a31,118.39\",NO,Deferred\r\nPEN-0300066,Joshua,Martinez,M,1970-01-12,GBP,\u00a3889.99,NO,Deferred\r\nPEN-0300129,Anna,Gonzalez,F,1970-06-08,GBP,\"\u00a32,590.62\",NO,Deferred\r\nPEN-0300003,Heather,Johnson,F,1970-04-16,GBP,\"\u00a31,540.25\",NO,Deferred\r\nPEN-0300069,Sarah,Green,F,1970-04-02,GBP,\"\u00a32,625.95\",NO,Deferred\r\nPEN-0300185,Maria,Allen,F,1970-06-23,GBP,\"\u00a31,217.60\",NO,Deferred\r\nPEN-0300164,Sarah,Mitchell,F,1970-04-10,GBP,\"\u00a33,132.75\",NO,Deferred\r\nPEN-0300196,Alexander,Flores,M,1969-05-10,GBP,\"\u00a33,427.51\",NO,Deferred\r\nPEN-0300189,Barbara,Hall,F,1969-03-17,GBP,\"\u00a32,231.50\",NO,Deferred\r\nPEN-0300045,Justin,Lewis,M,1969-02-09,GBP,\"\u00a31,432.95\",NO,Deferred\r\nPEN-0300070,Dennis,Smith,M,1969-01-28,GBP,\"\u00a31,171.40\",NO,Deferred\r\nPEN-0300073,Carol,Hernandez,F,1969-02-23,GBP,\"\u00a33,277.36\",NO,Deferred\r\nPEN-0300031,Deborah,Hill,F,1969-02-16,GBP,\"\u00a32,784.59\",NO,Deferred\r\nPEN-0300086,Angela,Mitchell,F,1969-04-19,GBP,\"\u00a31,664.86\",NO,Deferred\r\nPEN-0300104,Raymond,Hall,M,1968-04-08,GBP,\"\u00a33,112.52\",NO,Deferred\r\nPEN-0300037,Olivia,Adams,F,1968-01-10,GBP,\u00a3950.40,NO,Deferred\r\nPEN-0300074,Melissa,Lee,F,1968-04-12,GBP,\"\u00a33,493.87\",NO,Deferred\r\nPEN-0300150,Edward,Lewis,M,1968-04-23,GBP,\"\u00a31,420.20\",NO,Deferred\r\nPEN-0300159,Samantha,Sanchez,F,1967-05-11,GBP,\"\u00a32,619.85\",NO,Deferred\r\nPEN-0300036,Brandon,Sanchez,M,1967-02-10,GBP,\"\u00a32,674.30\",NO,Deferred\r\nPEN-0300063,Matthew,White,M,1967-02-23,GBP,\"\u00a32,487.12\",NO,Deferred\r\nPEN-0300147,Joshua,Young,M,1967-03-14,GBP,\"\u00a32,280.26\",NO,Deferred\r\nPEN-0300000,Olivia,Roberts,F,1966-05-29,GBP,\"\u00a32,114.78\",NO,Deferred\r\nPEN-0300092,Jason,Wilson,M,1966-01-27,GBP,\"\u00a32,080.97\",NO,Deferred\r\nPEN-0300068,Amanda,Rodriguez,F,1966-01-06,GBP,\"\u00a31,068.66\",NO,Deferred\r\nPEN-0300192,Richard,Mitchell,M,1966-06-15,GBP,\u00a3824.28,NO,Deferred\r\nPEN-0300032,Stephanie,Baker,F,1966-03-07,GBP,\"\u00a33,554.24\",NO,Deferred\r\nPEN-0300094,Carol,Lewis,F,1965-02-16,GBP,\"\u00a32,977.97\",NO,Deferred\r\nPEN-0300112,Gregory,Thomas,M,1965-02-25,GBP,\"\u00a32,963.81\",NO,Deferred\r\nPEN-0300152,Nancy,Baker,F,1965-03-06,GBP,\"\u00a33,555.13\",NO,Deferred\r\nPEN-0300060,Maria,Perez,F,1965-06-24,GBP,\u00a3969.52,NO,Deferred\r\nPEN-0300186,Jonathan,Brown,M,1965-01-10,GBP,\"\u00a32,426.38\",NO,Deferred\r\nPEN-0300088,Nancy,Jones,F,1965-02-11,GBP,\"\u00a32,540.48\",NO,Deferred\r\nPEN-0300116,Justin,Scott,M,1964-05-23,GBP,\"\u00a31,486.96\",NO,Deferred\r\nPEN-0300174,Jason,Taylor,M,1964-03-31,GBP,\"\u00a32,610.42\",NO,Deferred\r\nPEN-0300184,Anthony,Harris,M,1964-04-26,GBP,\"\u00a32,876.49\",NO,Deferred\r\nPEN-0300199,Jason,Smith,M,1964-03-17,GBP,\"\u00a32,865.59\",NO,Deferred\r\nPEN-0300054,Donald,Roberts,M,1964-02-03,GBP,\u00a3818.51,NO,Deferred\r\nPEN-0300001,Stephanie,Brown,F,1964-06-03,GBP,\"\u00a32,945.88\",NO,Deferred\r\nPEN-0300166,Julie,Martinez,F,1963-03-02,GBP,\"\u00a32,989.26\",NO,Deferred\r\nPEN-0300030,Anthony,Allen,M,1962-03-14,GBP,\"\u00a31,919.53\",NO,Deferred\r\nPEN-0300140,Sharon,Mitchell,F,1962-06-22,GBP,\"\u00a31,918.29\",NO,Deferred\r\nPEN-0300005,Ryan,Roberts,M,1962-04-04,GBP,\"\u00a31,172.49\",NO,Deferred\r\nPEN-0300007,Sandra,Davis,F,1962-04-10,GBP,\"\u00a33,618.30\",NO,Deferred\r\nPEN-0300004,Diane,Hall,F,1962-06-08,GBP,\"\u00a31,439.12\",NO,Deferred\r\nPEN-0300042,Donna,Harris,F,1962-06-29,GBP,\u00a3982.24,NO,Deferred\r\nPEN-0300118,Michelle,Jackson,F,1961-03-27,GBP,\"\u00a31,969.95\",NO,Active\r\nPEN-0300122,Susan,Lopez,F,1961-03-27,GBP,\"\u00a32,053.09\",NO,Active\r\nPEN-0300064,Eric,Robinson,M,1961-05-07,GBP,\"\u00a31,930.58\",NO,Active\r\nPEN-0300175,Nicole,Lee,F,1961-03-03,GBP,\"\u00a31,602.89\",NO,Active\r\nPEN-0300143,Melissa,Hall,F,1960-02-17,GBP,\"\u00a33,260.69\",NO,Active\r\nPEN-0300035,Patrick,Flores,M,1960-02-13,GBP,\"\u00a31,033.02\",NO,Active\r\nPEN-0300110,Patricia,Harris,F,1959-02-26,GBP,\"\u00a32,475.97\",NO,Active\r\nPEN-0300022,Jeffrey,Davis,M,1959-03-01,GBP,\u00a3924.66,NO,Active\r\nPEN-0300099,Scott,Martin,M,1959-06-10,GBP,\"\u00a33,608.51\",NO,Active\r\nPEN-0300041,Helen,Taylor,F,1959-03-01,GBP,\"\u00a31,185.99\",NO,Deceased\r\nPEN-0300163,Raymond,Young,M,1958-02-11,GBP,\u00a3868.95,NO,Active\r\nPEN-0300125,Mary,White,F,1958-03-10,GBP,\"\u00a33,646.12\",NO,Active\r\nPEN-0300024,Brandon,Walker,M,1958-05-18,GBP,\"\u00a32,903.41\",NO,Active\r\nPEN-0300168,Carol,Jackson,F,1957-01-11,GBP,\"\u00a32,684.50\",NO,Active\r\nPEN-0300111,Melissa,Lewis,F,1957-03-19,GBP,\"\u00a31,841.30\",NO,Active\r\nPEN-0300075,Eric,Green,M,1957-05-06,GBP,\"\u00a32,965.19\",NO,Active\r\nPEN-0300191,Patrick,Nelson,M,1957-06-07,GBP,\"\u00a32,459.31\",NO,Active\r\nPEN-0300170,Emily,Williams,F,1956-01-10,GBP,\"\u00a33,684.18\",NO,Deceased\r\nPEN-0300085,Samuel,Robinson,M,1955-01-13,GBP,\"\u00a32,631.87\",NO,Active\r\nPEN-0300169,Anna,Rodriguez,F,1955-02-04,GBP,\"\u00a31,056.72\",NO,Active\r\nPEN-0300113,Angela,Martin,F,1954-04-25,GBP,\"\u00a33,071.43\",NO,Active\r\nPEN-0300131,Edward,Hernandez,M,1954-06-16,GBP,\"\u00a33,714.47\",NO,Active\r\nPEN-0300017,Sandra,Baker,F,1954-03-25,GBP,\"\u00a32,377.44\",NO,Active\r\nPEN-0300120,Kevin,Anderson,M,1954-04-27,GBP,\"\u00a32,277.36\",NO,Active\r\nPEN-0300178,Samuel,Adams,M,1954-02-01,GBP,\"\u00a33,122.56\",NO,Active\r\nPEN-0300172,Nicholas,Taylor,M,1954-03-12,GBP,\"\u00a31,939.51\",NO,Active\r\nPEN-0300182,Kimberly,Jones,F,1954-05-07,GBP,\"\u00a31,798.28\",NO,Active\r\nPEN-0300072,Barbara,Hernandez,F,1953-03-22,GBP,\"\u00a32,896.22\",NO,Active\r\nPEN-0300076,George,Hill,M,1953-03-30,GBP,\u00a3855.08,NO,Active\r\nPEN-0300154,Kathleen,White,F,1953-04-04,GBP,\"\u00a31,973.20\",NO,Active\r\nPEN-0300080,Shirley,Jones,F,1953-06-19,GBP,\"\u00a31,360.61\",NO,Active\r\nPEN-0300006,Julie,Thomas,F,1953-02-21,GBP,\"\u00a32,628.97\",NO,Active\r\nPEN-0300018,Sandra,Lewis,F,1952-04-29,GBP,\"\u00a31,955.21\",NO,Active\r\nPEN-0300183,Brenda,Baker,F,1952-06-24,GBP,\"\u00a31,106.87\",NO,Active\r\nPEN-0300151,Cynthia,Wilson,F,1951-04-02,GBP,\"\u00a31,679.40\",NO,Active\r\nPEN-0300149,Jessica,Johnson,F,1951-04-22,GBP,\"\u00a31,414.12\",NO,Active\r\nPEN-0300145,Olivia,Ramirez,F,1951-02-22,GBP,\"\u00a31,917.37\",NO,Active\r\nPEN-0300156,Timothy,Thomas,M,1951-06-08,GBP,\"\u00a31,622.54\",NO,Active\r\nPEN-0300059,Barbara,Moore,F,1951-02-27,GBP,\"\u00a31,336.16\",NO,Active\r\nPEN-0300009,Jonathan,Adams,M,1951-02-24,GBP,\"\u00a33,319.45\",NO,Active\r\nPEN-0300100,Olivia,Hernandez,F,1950-06-27,GBP,\"\u00a31,529.45\",NO,Active\r\nPEN-0300038,Jason,White,M,1950-06-16,GBP,\"\u00a32,371.59\",NO,Active\r\nPEN-0300162,Benjamin,Adams,M,1950-03-01,GBP,\"\u00a32,735.40\",NO,Active\r\nPEN-0300044,Betty,Ramirez,F,1950-04-16,GBP,\"\u00a33,275.15\",NO,Active\r\nPEN-0300144,Shirley,Lee,F,1949-05-24,GBP,\"\u00a31,640.38\",NO,Active\r\nPEN-0300133,Ronald,Lewis,M,1949-06-08,GBP,\"\u00a33,172.13\",NO,Deceased\r\nPEN-0300103,James,Johnson,M,1949-05-14,GBP,\"\u00a32,909.75\",NO,Active\r\nPEN-0300098,Joseph,Taylor,M,1948-04-11,GBP,\"\u00a31,364.94\",NO,Active\r\nPEN-0300197,John,Young,M,1948-06-07,GBP,\"\u00a31,625.34\",NO,Active\r\nPEN-0300002,Dennis,Moore,M,1948-04-18,GBP,\"\u00a32,348.70\",NO,Active\r\nPEN-0300020,Maria,Rivera,F,1948-03-16,GBP,\"\u00a31,469.39\",NO,Active\r\nPEN-0300021,Michelle,Williams,F,1948-03-19,GBP,\"\u00a33,455.04\",NO,Active\r\nPEN-0300090,Charles,Flores,M,1948-04-06,GBP,\"\u00a31,012.75\",NO,Active\r\nPEN-0300097,Emma,Torres,F,1948-04-13,GBP,\"\u00a31,215.34\",NO,Active\r\nPEN-0300134,Jerry,Taylor,M,1948-02-20,GBP,\"\u00a33,121.38\",NO,Active\r\nPEN-0300087,Benjamin,Jackson,M,1947-05-02,GBP,\"\u00a31,726.53\",NO,Active\r\nPEN-0300138,Karen,King,F,1947-02-27,GBP,\"\u00a32,658.41\",NO,Active\r\nPEN-0300053,Timothy,Williams,M,1947-03-13,GBP,\"\u00a32,934.62\",NO,Active\r\nPEN-0300067,Lisa,Adams,F,1947-02-21,GBP,\u00a3809.96,NO,Active\r\nPEN-0300137,Ashley,Williams,F,1947-03-12,GBP,\"\u00a33,184.68\",NO,Active\r\nPEN-0300190,Kimberly,Johnson,F,1947-02-27,GBP,\"\u00a33,015.70\",NO,Active\r\nPEN-0300040,Ryan,Johnson,M,1946-05-08,GBP,\"\u00a32,569.38\",NO,Active\r\nPEN-0300193,Samuel,Rivera,M,1946-06-06,GBP,\"\u00a32,972.26\",NO,Deceased\r\nPEN-0300173,Eric,Perez,M,1946-02-06,GBP,\"\u00a31,958.90\",NO,Active\r\nPEN-0300061,Donald,Davis,M,1946-01-01,GBP,\"\u00a32,062.37\",NO,Active\r\nPEN-0300065,Helen,Hill,F,1946-03-11,GBP,\"\u00a32,874.80\",NO,Active\r\nPEN-0300158,Sarah,Anderson,F,1945-01-25,GBP,\"\u00a31,513.26\",NO,Active\r\nPEN-0300126,Rebecca,Martinez,F,1945-01-13,GBP,\"\u00a32,967.37\",NO,Active\r\nPEN-0300146,Eric,Gonzalez,M,1945-06-22,GBP,\"\u00a32,424.46\",NO,Active\r\nPEN-0300180,Diane,Jones,F,1945-04-19,GBP,\"\u00a32,297.04\",NO,Active\r\nPEN-0300034,Scott,Hill,M,1945-01-12,GBP,\"\u00a33,736.66\",NO,Active\r\nPEN-0300039,Helen,Lopez,F,1945-04-01,GBP,\"\u00a31,781.00\",NO,Active\r\nPEN-0300105,Cynthia,Wright,F,1945-05-06,GBP,\"\u00a31,391.61\",NO,Active\r\nPEN-0300176,Mary,Taylor,F,1944-06-03,GBP,\"\u00a33,704.98\",NO,Active\r\nPEN-0300115,Nicholas,Johnson,M,1944-03-24,GBP,\"\u00a32,341.82\",NO,Active\r\nPEN-0300058,Cynthia,Robinson,F,1943-01-26,GBP,\"\u00a31,273.46\",NO,Active\r\nPEN-0300132,Mark,Hall,M,1943-05-20,GBP,\"\u00a31,936.44\",NO,Active\r\nPEN-0300082,Richard,Davis,M,1942-03-30,GBP,\"\u00a32,815.56\",NO,Active\r\nPEN-0300026,Larry,Hernandez,M,1942-03-23,GBP,\"\u00a32,702.49\",NO,Active\r\nPEN-0300106,Gary,Baker,M,1942-03-18,GBP,\"\u00a31,961.31\",NO,Active\r\nPEN-0300102,George,Scott,M,1942-06-24,GBP,\u00a3907.41,NO,Active\r\nPEN-0300139,David,Clark,M,1942-01-22,GBP,\"\u00a32,168.31\",NO,Active\r\nPEN-0300029,Jason,Ramirez,M,1942-04-24,GBP,\"\u00a32,910.32\",NO,Active\r\nPEN-0300157,Daniel,Hall,M,1941-01-21,GBP,\"\u00a32,658.96\",NO,Deceased\r\nPEN-0300124,Andrew,Robinson,M,1941-06-14,GBP,\"\u00a33,221.97\",NO,Active\r\nPEN-0300078,Patrick,Jones,M,1940-05-08,GBP,\"\u00a31,125.01\",NO,Active\r\nPEN-0300153,Cynthia,White,F,1940-06-21,GBP,\"\u00a32,749.08\",NO,Active\r\nPEN-0300056,Larry,Moore,M,1940-01-17,GBP,\"\u00a31,226.83\",NO,Active\r\nPEN-0300187,Sandra,Wright,F,1940-01-15,GBP,\"\u00a32,113.77\",NO,Active\r\nPEN-0300071,Eric,Davis,M,1940-05-11,GBP,\"\u00a31,260.61\",NO,Active\r\nPEN-0300008,Brenda,Lee,F,1940-04-05,GBP,\"\u00a33,453.46\",NO,Active\r\nPEN-0300049,Mary,Wilson,F,1940-01-01,GBP,\"\u00a31,445.93\",NO,Active\r\nPEN-0300195,Tyler,Allen,M,1940-03-17,GBP,\"\u00a32,323.33\",NO,Active\r\nPEN-0300015,Thomas,Martinez,M,1940-06-21,GBP,\"\u00a32,577.30\",NO,Active\r\nPEN-0300167,Nancy,Anderson,F,1939-05-27,GBP,\"\u00a32,304.28\",NO,Active\r\nPEN-0300027,Kimberly,Gonzalez,F,1939-03-10,GBP,\"\u00a31,751.22\",NO,Active\r\nPEN-0300012,Jacob,Lewis,M,1939-03-21,GBP,\"\u00a31,327.92\",NO,Active\r\nPEN-0300052,Nicole,Garcia,F,1938-05-15,GBP,\"\u00a31,722.12\",NO,Active\r\nPEN-0300062,Jeffrey,Walker,M,1938-01-09,GBP,\"\u00a32,704.41\",NO,Active\r\nPEN-0300023,Karen,Robinson,F,1938-05-04,GBP,\"\u00a31,244.11\",NO,Active\r\nPEN-0300135,Gary,Perez,M,1937-03-20,GBP,\"\u00a32,099.62\",NO,Active\r\nPEN-0300011,Amanda,Flores,F,1937-04-03,GBP,\"\u00a31,192.81\",NO,Active\r\nPEN-0300043,Maria,Torres,F,1937-06-23,GBP,\"\u00a33,692.30\",NO,Active\r\nPEN-0300025,John,Jackson,M,1937-02-15,GBP,\"\u00a33,407.76\",NO,Active\r\nPEN-0300091,Jacob,Young,M,1937-03-25,GBP,\"\u00a31,693.36\",NO,Active\r\nPEN-0300160,Rebecca,Allen,F,1937-02-18,GBP,\"\u00a31,625.52\",NO,Active\r\nPEN-0300016,Donna,Sanchez,F,1936-05-18,GBP,\"\u00a32,819.28\",NO,Active\r\nPEN-0300198,Kimberly,Jackson,F,1936-05-01,GBP,\u00a3816.85,NO,Active\r\nPEN-0300179,Rebecca,Davis,F,1936-06-03,GBP,\"\u00a32,431.97\",NO,Active\r\nPEN-0300121,Anthony,White,M,1936-04-14,GBP,\"\u00a31,873.26\",NO,Active\r\nPEN-0300114,Pamela,Scott,F,1936-06-11,GBP,\"\u00a31,490.68\",NO,Active\r\nPEN-0300089,Jack,Wright,M,1936-04-15,GBP,\"\u00a33,555.35\",NO,Active\r\nPEN-0300055,Rebecca,Perez,F,1936-04-18,GBP,\"\u00a33,288.00\",NO,Active\r\nPEN-0300079,Eric,Taylor,M,1935-03-23,GBP,\"\u00a32,962.14\",NO,Active\r\nPEN-0300014,Jessica,Scott,F,1935-04-19,GBP,\"\u00a31,129.85\",NO,Active\r\nPEN-0300051,Patrick,Harris,M,1935-01-20,GBP,\"\u00a33,309.99\",NO,Active\r\nPEN-0300171,Jason,Lewis,M,1935-06-15,GBP,\"\u00a31,451.65\",NO,Active\r\nPEN-0300128,Elizabeth,Carter,F,1935-04-27,GBP,\"\u00a31,297.06\",NO,Active\r\nPEN-0300142,Ryan,Flores,M,1935-06-28,GBP,\"\u00a31,179.02\",NO,Active\r\nPEN-0300188,Elizabeth,Martinez,F,1935-06-12,GBP,\u00a3964.92,NO,Active\r\nPEN-0300010,Gregory,Thompson,M,1935-01-18,GBP,\"\u00a31,291.94\",NO,Active\r\nPEN-0300130,Jack,King,M,1935-02-12,GBP,\"\u00a32,338.98\",NO,Active\r\nPEN-0300127,Michael,Gonzalez,M,1935-03-20,GBP,\"\u00a32,237.44\",NO,Active\r\nPEN-0300177,Sandra,Smith,F,1935-02-17,GBP,\"\u00a32,485.06\",NO,Active\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Activity Report",
+      "cedent_id": "CED-1133",
+      "completed_at": "2026-05-08T05:25:51.093533Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2025-009",
+      "completed_at": "2026-05-08T05:29:17.206059Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-08T05:24:19.712003Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "atlas_member_movement_q2_2025_unique.xlsx"
+      },
+      {
+        "timestamp": "2026-05-08T05:25:51.124415Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Activity Report\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T05:25:51.149258Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Atlas Corporate Pensions",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T05:29:17.242234Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2025-009 v1.0",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-08T05:29:21.027464Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 2 clauses",
+        "detail": "1 flagged"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-08T05:24:19.712003Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-08T05:25:51.099463Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-08T05:25:51.105049Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-08T05:29:17.222133Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-08T05:29:21.009042Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-08T05:24:19.712003Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-08T05:25:51.111003Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-08T05:29:17.228046Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-08T05:29:21.014974Z"
+      },
+      {
+        "stage": "validate",
+        "status": "in_progress",
+        "timestamp": "2026-05-08T05:29:21.021296Z"
+      }
+    ]
+  },
+  "CES-2026-013": {
+    "pipeline_session_id": "pipe-8275031f-57c7-459f-bbba-48de84b73d41",
+    "active_step": "summary",
+    "source_filename": "bavarian_settlement_2025Q1.csv",
+    "source_size_bytes": 265,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation/Escalation,Fixed Leg,Floating Leg,Fee,Interest on Over/Underpayment from Prior Period,Net Settlement Amount,contract_id\nQ1 2025,2025-04-30,None,None,51200000,50980000,0,0,-220000,LSC-2025-002\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1201",
+      "completed_at": "2026-05-08T07:00:58.684959Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2025-002",
+      "completed_at": "2026-05-08T07:01:05.284888Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-08T07:00:48.917946Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "bavarian_settlement_2025Q1.csv"
+      },
+      {
+        "timestamp": "2026-05-08T07:00:58.713805Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T07:00:58.738203Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Bavarian Industrial Fund",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T07:01:05.307993Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2025-002 v1.0",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-08T07:01:06.656565Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-08T07:01:09.167474Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "0 critical, 0 warnings"
+      },
+      {
+        "timestamp": "2026-05-08T07:01:17.330853Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "1 records applied"
+      },
+      {
+        "timestamp": "2026-05-08T07:01:17.356240Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9216"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-08T07:00:48.917946Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-08T07:00:58.691163Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-08T07:00:58.696667Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-08T07:01:05.290932Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-08T07:01:06.639289Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-08T07:01:09.150456Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-08T07:01:17.307146Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-08T07:01:17.313033Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:00:48.917946Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:00:58.702632Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:01:05.296784Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:01:06.645173Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:01:09.156289Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:01:17.318980Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-08T07:01:17.324995Z"
+      }
+    ],
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2025-Q1-002",
+      "settlement_display_id": "STL-2025-Q1-002",
+      "contract_id": "LSC-2025-002",
+      "contract_display_id": "LSC-2025-002",
+      "contract_name": "Bavarian Industrial Fund Longevity Swap 2025",
+      "contract_version": "v1.0",
+      "cedent_id": "CED-1201",
+      "cedent_name": "Bavarian Industrial Fund",
+      "period_label": "Q1 2025",
+      "period_start": "2025-01-01",
+      "period_end": "2025-03-31",
+      "fixed_leg_amount": 51200000.0,
+      "floating_leg_amount": 50980000.0,
+      "net_amount": -220000.0,
+      "currency": "EUR",
+      "direction": "cedant_to_reinsurer",
+      "payment_due_date": "2025-04-30",
+      "status": "pending_approval",
+      "iris_recommendation": "accept",
+      "source": "Created from reconciled Settlement file CES-2026-013",
+      "last_updated": "2026-05-08T07:01:17.173779Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2025-Q1-002",
+        "decision": "accept",
+        "calculation_period": "Q1 2025",
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "payment_date": "2025-04-30",
+        "currency": "EUR",
+        "expected_source": "existing settlement register",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 51200000.0,
+          "floating_leg": 50980000.0,
+          "fee": 0.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": -220000.0,
+          "recomputed_net": -220000.0
+        },
+        "system": {
+          "fixed_leg": 51200000.0,
+          "floating_leg": 50980000.0,
+          "fee": 0.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": -220000.0
+        },
+        "mismatches": []
+      }
+    }
+  },
+  "CES-2026-014": {
+    "pipeline_session_id": "pipe-9a19284d-ac72-438e-ad18-1859688c5c3f",
+    "active_step": "summary",
+    "source_filename": "bavarian_settlement_2025Q1_net_mismatch.csv",
+    "source_size_bytes": 270,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation/Escalation,Fixed Leg,Floating Leg,Fee,Interest on Over/Underpayment from Prior Period,Net Settlement Amount,contract_id\nQ1 2025,2025-04-30,None,None,51200000,50980000,1000,500,-220000,LSC-2025-002\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1201",
+      "completed_at": "2026-05-08T07:15:34.155135Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2025-002",
+      "completed_at": "2026-05-08T07:15:35.854362Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-08T07:15:30.407405Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "bavarian_settlement_2025Q1_net_mismatch.csv"
+      },
+      {
+        "timestamp": "2026-05-08T07:15:34.186503Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T07:15:34.214902Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Bavarian Industrial Fund",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T07:15:35.886498Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2025-002 v1.0",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-08T07:15:41.792459Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-08T07:15:43.281420Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "2 critical, 0 warnings"
+      },
+      {
+        "timestamp": "2026-05-08T07:15:52.142568Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Exception handling updated",
+        "detail": "2 actions saved"
+      },
+      {
+        "timestamp": "2026-05-08T07:16:00.500454Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "1 records applied"
+      },
+      {
+        "timestamp": "2026-05-08T07:16:00.540360Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9217"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-08T07:15:30.407405Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-08T07:15:34.161323Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-08T07:15:34.167302Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-08T07:15:35.868497Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-08T07:15:41.774237Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-08T07:15:43.261035Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-08T07:15:52.130275Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-08T07:16:00.467059Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-08T07:16:00.473398Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:15:30.407405Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:15:34.174064Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:15:35.874531Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:15:41.780574Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:15:43.268775Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:15:52.123958Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:16:00.479544Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-08T07:16:00.494208Z"
+      }
+    ],
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2025-Q1-002",
+      "settlement_display_id": "STL-2025-Q1-002",
+      "contract_id": "LSC-2025-002",
+      "contract_display_id": "LSC-2025-002",
+      "contract_name": "Bavarian Industrial Fund Longevity Swap 2025",
+      "contract_version": "v1.0",
+      "cedent_id": "CED-1201",
+      "cedent_name": "Bavarian Industrial Fund",
+      "period_label": "Q1 2025",
+      "period_start": "2025-01-01",
+      "period_end": "2025-03-31",
+      "fixed_leg_amount": 51200000.0,
+      "floating_leg_amount": 50980000.0,
+      "net_amount": -220000.0,
+      "currency": "EUR",
+      "direction": "cedant_to_reinsurer",
+      "payment_due_date": "2025-04-30",
+      "status": "pending_approval",
+      "iris_recommendation": "review",
+      "source": "Created from reconciled Settlement file CES-2026-014",
+      "last_updated": "2026-05-08T07:16:00.288724Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2025-Q1-002",
+        "decision": "review",
+        "calculation_period": "Q1 2025",
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "payment_date": "2025-04-30",
+        "currency": "EUR",
+        "expected_source": "existing settlement register",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 51200000.0,
+          "floating_leg": 50980000.0,
+          "fee": 1000.0,
+          "interest_prior_period": 500.0,
+          "net_settlement_amount": -220000.0,
+          "recomputed_net": -218500.0
+        },
+        "system": {
+          "fixed_leg": 51200000.0,
+          "floating_leg": 50980000.0,
+          "fee": 1000.0,
+          "interest_prior_period": 500.0,
+          "net_settlement_amount": -218500.0
+        },
+        "mismatches": [
+          {
+            "field": "net_settlement_amount",
+            "uploaded": -220000.0,
+            "expected": -218500.0,
+            "issue_type": "net_formula_mismatch",
+            "message": "Uploaded Net Settlement Amount does not equal floating minus fixed plus signed fee and interest."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": -220000.0,
+            "expected": -218500.0,
+            "issue_type": "net_reconciliation_mismatch",
+            "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+          }
+        ]
+      }
+    }
+  },
+  "CES-2026-015": {
+    "pipeline_session_id": "pipe-18c10192-d95d-4637-8945-ad10725e913b",
+    "active_step": "summary",
+    "source_filename": "bavarian_settlement_2025Q1_amount_mismatch.csv",
+    "source_size_bytes": 265,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation/Escalation,Fixed Leg,Floating Leg,Fee,Interest on Over/Underpayment from Prior Period,Net Settlement Amount,contract_id\nQ1 2025,2025-04-30,None,None,51210000,50970000,0,0,-220000,LSC-2025-002\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1201",
+      "completed_at": "2026-05-08T07:18:58.729311Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2025-002",
+      "completed_at": "2026-05-08T07:19:00.945179Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-08T07:18:56.158566Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "bavarian_settlement_2025Q1_amount_mismatch.csv"
+      },
+      {
+        "timestamp": "2026-05-08T07:18:58.770182Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T07:18:58.791905Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Bavarian Industrial Fund",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T07:19:00.971804Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2025-002 v1.0",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-08T07:19:02.243690Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-08T07:19:03.441197Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "3 critical, 0 warnings"
+      },
+      {
+        "timestamp": "2026-05-08T07:19:16.471836Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Exception handling updated",
+        "detail": "3 actions saved"
+      },
+      {
+        "timestamp": "2026-05-08T07:21:46.025154Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "1 records applied"
+      },
+      {
+        "timestamp": "2026-05-08T07:21:46.052895Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9218"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-08T07:18:56.158566Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-08T07:18:58.743844Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-08T07:18:58.750132Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-08T07:19:00.952832Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-08T07:19:02.221620Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-08T07:19:03.421989Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-08T07:19:16.457870Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-08T07:21:45.988635Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-08T07:21:45.996587Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:18:56.158566Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:18:58.756627Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:19:00.959201Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:19:02.228792Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:19:03.428386Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:19:16.450885Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:21:46.003387Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-08T07:21:46.010215Z"
+      }
+    ],
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2025-Q1-002",
+      "settlement_display_id": "STL-2025-Q1-002",
+      "contract_id": "LSC-2025-002",
+      "contract_display_id": "LSC-2025-002",
+      "contract_name": "Bavarian Industrial Fund Longevity Swap 2025",
+      "contract_version": "v1.0",
+      "cedent_id": "CED-1201",
+      "cedent_name": "Bavarian Industrial Fund",
+      "period_label": "Q1 2025",
+      "period_start": "2025-01-01",
+      "period_end": "2025-03-31",
+      "fixed_leg_amount": 51210000.0,
+      "floating_leg_amount": 50970000.0,
+      "net_amount": -220000.0,
+      "currency": "EUR",
+      "direction": "cedant_to_reinsurer",
+      "payment_due_date": "2025-04-30",
+      "status": "pending_approval",
+      "iris_recommendation": "review",
+      "source": "Created from reconciled Settlement file CES-2026-015",
+      "last_updated": "2026-05-08T07:21:45.824017Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2025-Q1-002",
+        "decision": "review",
+        "calculation_period": "Q1 2025",
+        "period_start": "2025-01-01",
+        "period_end": "2025-03-31",
+        "payment_date": "2025-04-30",
+        "currency": "EUR",
+        "expected_source": "existing settlement register",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 51210000.0,
+          "floating_leg": 50970000.0,
+          "fee": 0.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": -220000.0,
+          "recomputed_net": -240000.0
+        },
+        "system": {
+          "fixed_leg": 51200000.0,
+          "floating_leg": 50980000.0,
+          "fee": 0.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": -220000.0
+        },
+        "mismatches": [
+          {
+            "field": "fixed_leg",
+            "uploaded": 51210000.0,
+            "expected": 51200000.0,
+            "issue_type": "fixed_leg_mismatch",
+            "message": "Uploaded Fixed Leg does not exactly match IRiS expected Fixed Leg."
+          },
+          {
+            "field": "floating_leg",
+            "uploaded": 50970000.0,
+            "expected": 50980000.0,
+            "issue_type": "floating_leg_mismatch",
+            "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": -220000.0,
+            "expected": -240000.0,
+            "issue_type": "net_formula_mismatch",
+            "message": "Uploaded Net Settlement Amount does not equal floating minus fixed plus signed fee and interest."
+          }
+        ]
+      }
+    }
+  },
+  "CES-2026-016": {
+    "pipeline_session_id": "pipe-a8ec6b20-cc95-4ea0-a0b2-31da60da8216",
+    "active_step": "detect",
+    "source_filename": "Atlas_Settlement_Data.xlsx",
+    "source_size_bytes": 5603,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-30,Death,CPI capped 5% applied to pension tranche,\"US$3,040,000\",\"US$3,046,080\",\"US$2,500\",US$0,\"US$3,580\"\r\n2026 Q1,2026-04-30,Suspension,No escalation applicable during suspension period,\"US$3,040,000\",\"US$3,021,760\",\"US$2,500\",US$0,\"-US$20,740\"\r\n2026 Q1,2026-04-30,Reinstatement,CPI capped 5% reapplied after reinstatement,\"US$3,040,000\",\"US$3,052,160\",\"US$2,500\",US$0,\"US$9,660\"\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": null,
+    "contract_override": null,
+    "audit_events": [
+      {
+        "timestamp": "2026-05-08T07:22:50.113341Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Atlas_Settlement_Data.xlsx"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-08T07:22:50.113341Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:22:50.113341Z"
+      },
+      {
+        "stage": "detect",
+        "status": "in_progress",
+        "timestamp": "2026-05-08T07:22:55.113341Z"
+      }
+    ]
+  },
+  "CES-2026-017": {
+    "pipeline_session_id": "pipe-ed4f165d-a655-4db7-a5df-ab26b4f7e826",
+    "active_step": "summary",
+    "source_filename": "Atlas_Settlement_Data.xlsx",
+    "source_size_bytes": 5603,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-30,Death,CPI capped 5% applied to pension tranche,\"US$3,040,000\",\"US$3,046,080\",\"US$2,500\",US$0,\"US$3,580\"\r\n2026 Q1,2026-04-30,Suspension,No escalation applicable during suspension period,\"US$3,040,000\",\"US$3,021,760\",\"US$2,500\",US$0,\"-US$20,740\"\r\n2026 Q1,2026-04-30,Reinstatement,CPI capped 5% reapplied after reinstatement,\"US$3,040,000\",\"US$3,052,160\",\"US$2,500\",US$0,\"US$9,660\"\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1133",
+      "completed_at": "2026-05-08T07:38:42.113120Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2025-009",
+      "completed_at": "2026-05-08T07:38:44.772532Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-08T07:38:36.943736Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Atlas_Settlement_Data.xlsx"
+      },
+      {
+        "timestamp": "2026-05-08T07:38:42.157071Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T07:38:42.184482Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Atlas Corporate Pensions",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T07:38:44.802104Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2025-009 v1.0",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-08T07:38:47.296415Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-08T07:38:50.748515Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "0 critical, 0 warnings"
+      },
+      {
+        "timestamp": "2026-05-08T07:38:59.338353Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-08T07:38:59.365564Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9219"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-08T07:38:36.943736Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-08T07:38:42.120164Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-08T07:38:42.126903Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-08T07:38:44.779913Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-08T07:38:47.274403Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-08T07:38:50.725428Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-08T07:38:59.291642Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-08T07:38:59.307627Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:38:36.943736Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:38:42.133515Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:38:44.786785Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:38:47.281831Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:38:50.733654Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-08T07:38:59.314866Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-08T07:38:59.322243Z"
+      }
+    ],
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-009",
+      "settlement_display_id": "STL-2026-Q1-009",
+      "contract_id": "LSC-2025-009",
+      "contract_display_id": "LSC-2025-009",
+      "contract_name": "Atlas Corporate Pensions Longevity Swap 2025",
+      "contract_version": "v1.0",
+      "cedent_id": "CED-1133",
+      "cedent_name": "Atlas Corporate Pensions",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 3040000.0,
+      "floating_leg_amount": 3046080.0,
+      "net_amount": 3580.0,
+      "currency": "USD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-30",
+      "status": "pending_reconciliation",
+      "iris_recommendation": "review",
+      "source": "Created from Settlement file CES-2026-017; reconciliation decision=review",
+      "last_updated": "2026-05-08T07:38:59.098594Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-009",
+        "decision": "review",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-30",
+        "currency": "USD",
+        "expected_source": "contract terms and current policy_register population",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 3040000.0,
+          "floating_leg": 3046080.0,
+          "fee": 2500.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": 3580.0,
+          "recomputed_net": 8580.0
+        },
+        "system": {
+          "fixed_leg": 2998356.16,
+          "floating_leg": 14375.0,
+          "fee": 2500.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": -2981481.16
+        },
+        "mismatches": [
+          {
+            "field": "fixed_leg",
+            "uploaded": 3040000.0,
+            "expected": 2998356.16,
+            "issue_type": "fixed_leg_mismatch",
+            "message": "Uploaded Fixed Leg does not exactly match IRiS expected Fixed Leg."
+          },
+          {
+            "field": "floating_leg",
+            "uploaded": 3046080.0,
+            "expected": 14375.0,
+            "issue_type": "floating_leg_mismatch",
+            "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 3580.0,
+            "expected": 8580.0,
+            "issue_type": "net_formula_mismatch",
+            "message": "Uploaded Net Settlement Amount does not equal floating minus fixed plus signed fee and interest."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 3580.0,
+            "expected": -2981481.16,
+            "issue_type": "net_reconciliation_mismatch",
+            "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+          }
+        ]
+      }
+    }
+  },
+  "CES-2026-018": {
+    "pipeline_session_id": "pipe-fa9529ea-d027-49c5-bfba-0b4badad0431",
+    "active_step": "summary",
+    "source_filename": "Maple Leaf Pension Plan_Settlement - 2025Q2.csv",
+    "source_size_bytes": 590,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q2,2025-07-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2025 Q2,2025-07-12,Suspension,No escalation applicable during suspension period,\"CA$4,117,500\",\"CA$4,092,795\",\"CA$2,800\",CA$0,\"-CA$27,505\"\r\n2025 Q2,2025-07-12,Reinstatement,CPI capped 5% reapplied after reinstatement,\"CA$4,117,500\",\"CA$4,133,970\",\"CA$2,800\",CA$0,\"CA$13,670\"",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-08T09:09:51.786231Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-08T09:09:58.516843Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-08T09:09:41.878859Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple Leaf Pension Plan_Settlement - 2025Q2.csv"
+      },
+      {
+        "timestamp": "2026-05-08T09:09:51.830354Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T09:09:51.857102Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T09:09:58.547992Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-08T09:10:01.393128Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-08T09:10:03.037476Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "0 critical, 0 warnings"
+      },
+      {
+        "timestamp": "2026-05-08T09:10:05.128922Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-08T09:10:05.158543Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9220"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-08T09:09:41.878859Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-08T09:09:51.796038Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-08T09:09:51.804175Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-08T09:09:58.524900Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-08T09:10:01.366079Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-08T09:10:03.012119Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-08T09:10:05.095231Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-08T09:10:05.103398Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:09:41.878859Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:09:51.812233Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:09:58.532835Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:10:01.374150Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:10:03.020429Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:10:05.111778Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-08T09:10:05.120241Z"
+      }
+    ],
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2025-Q2-044",
+      "settlement_display_id": "STL-2025-Q2-044",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q2 2025",
+      "period_start": "2025-04-01",
+      "period_end": "2025-06-30",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4125735.0,
+      "net_amount": 5435.0,
+      "currency": "CAD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2025-07-12",
+      "status": "pending_reconciliation",
+      "iris_recommendation": "review",
+      "source": "Created from Settlement file CES-2026-018; reconciliation decision=review",
+      "last_updated": "2026-05-08T09:30:30.105175Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2025-Q2-044",
+        "decision": "review",
+        "calculation_period": "Q2 2025",
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "payment_date": "2025-07-12",
+        "currency": "CAD",
+        "expected_source": "MOCK IMPLEMENTATION - deterministic settlement expectation",
+        "mock_expected": true,
+        "uploaded": {
+          "fixed_leg": 4117500.0,
+          "floating_leg": 4125735.0,
+          "fee": 2800.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": 5435.0,
+          "recomputed_net": 11035.0
+        },
+        "system": {
+          "fixed_leg": 4106219.18,
+          "floating_leg": 4155493.81,
+          "fee": 2800.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": 52074.63
+        },
+        "mismatches": [
+          {
+            "field": "fixed_leg",
+            "uploaded": 4117500.0,
+            "expected": 4106219.18,
+            "issue_type": "fixed_leg_mismatch",
+            "message": "Uploaded Fixed Leg does not exactly match IRiS expected Fixed Leg."
+          },
+          {
+            "field": "floating_leg",
+            "uploaded": 4125735.0,
+            "expected": 4155493.81,
+            "issue_type": "floating_leg_mismatch",
+            "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 5435.0,
+            "expected": 11035.0,
+            "issue_type": "net_formula_mismatch",
+            "message": "Uploaded Net Settlement Amount does not equal floating minus fixed plus signed fee and interest."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 5435.0,
+            "expected": 52074.63,
+            "issue_type": "net_reconciliation_mismatch",
+            "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+          }
+        ]
+      },
+      "settlement_report_artifacts": [
+        {
+          "artifact_id": "ces-2026-018-cash-settlements-tracker",
+          "settlement_id": "SET-2025-Q2-044",
+          "cession_file_id": "CES-2026-018",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q2 2025",
+          "report_type": "Cash Settlements Tracker",
+          "filename": "CES-2026-018_SET-2025-Q2-044_cash_settlements_tracker.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-018_SET-2025-Q2-044_cash_settlements_tracker.csv",
+          "generated_at": "2026-05-08T09:30:30.105175Z",
+          "source_filename": "Maple Leaf Pension Plan_Settlement - 2025Q2.csv",
+          "reconciliation_decision": "review",
+          "mismatch_count": 4,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        },
+        {
+          "artifact_id": "ces-2026-018-grdr-load-form",
+          "settlement_id": "SET-2025-Q2-044",
+          "cession_file_id": "CES-2026-018",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q2 2025",
+          "report_type": "GRDR Load Form",
+          "filename": "CES-2026-018_SET-2025-Q2-044_grdr_load_form.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-018_SET-2025-Q2-044_grdr_load_form.csv",
+          "generated_at": "2026-05-08T09:30:30.105175Z",
+          "source_filename": "Maple Leaf Pension Plan_Settlement - 2025Q2.csv",
+          "reconciliation_decision": "review",
+          "mismatch_count": 4,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        }
+      ]
+    }
+  },
+  "CES-2026-019": {
+    "pipeline_session_id": "pipe-662a7ad9-3e45-454c-8a28-146b4dbc25e7",
+    "active_step": "summary",
+    "source_filename": "Bavarian_Settlement - 2025Q4.csv",
+    "source_size_bytes": 591,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-30,Death,CPI capped 5% applied to pension tranche,\"\u20ac7,140,000\",\"\u20ac7,154,280\",\"\u20ac3,000\",\u20ac0,\"\u20ac11,280\"\r\n2025 Q4,2026-01-30,Suspension,No escalation applicable during suspension period,\"\u20ac7,140,000\",\"\u20ac7,082,880\",\"\u20ac3,000\",\u20ac0,\"-\u20ac60,120\"\r\n2025 Q4,2026-01-30,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac7,140,000\",\"\u20ac7,168,560\",\"\u20ac3,000\",\u20ac0,\"\u20ac25,560\"",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1201",
+      "completed_at": "2026-05-08T09:33:08.902095Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2025-002",
+      "completed_at": "2026-05-08T09:33:11.406325Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-08T09:33:06.005701Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Bavarian_Settlement - 2025Q4.csv"
+      },
+      {
+        "timestamp": "2026-05-08T09:33:08.953387Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T09:33:08.978095Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Bavarian Industrial Fund",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-08T09:33:11.441002Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2025-002 v1.0",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-08T09:33:13.394652Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-08T09:33:22.123754Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "0 critical, 0 warnings"
+      },
+      {
+        "timestamp": "2026-05-08T09:33:35.779824Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-08T09:33:35.806771Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9221"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-08T09:33:06.005701Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-08T09:33:08.913590Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-08T09:33:08.926564Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-08T09:33:11.415836Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-08T09:33:13.369930Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-08T09:33:22.099195Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-08T09:33:35.743531Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-08T09:33:35.752486Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:33:06.005701Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:33:08.935402Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:33:11.424277Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:33:13.378538Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:33:22.107136Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-08T09:33:35.761149Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-08T09:33:35.770229Z"
+      }
+    ],
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2025-Q4-002",
+      "settlement_display_id": "STL-2025-Q4-002",
+      "contract_id": "LSC-2025-002",
+      "contract_display_id": "LSC-2025-002",
+      "contract_name": "Bavarian Industrial Fund Longevity Swap 2025",
+      "contract_version": "v1.0",
+      "cedent_id": "CED-1201",
+      "cedent_name": "Bavarian Industrial Fund",
+      "period_label": "Q4 2025",
+      "period_start": "2025-10-01",
+      "period_end": "2025-12-31",
+      "fixed_leg_amount": 7140000.0,
+      "floating_leg_amount": 7154280.0,
+      "net_amount": 11280.0,
+      "currency": "EUR",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-01-30",
+      "status": "pending_reconciliation",
+      "iris_recommendation": "review",
+      "source": "Created from Settlement file CES-2026-019; reconciliation decision=review",
+      "last_updated": "2026-05-08T09:33:35.573561Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2025-Q4-002",
+        "decision": "review",
+        "calculation_period": "Q4 2025",
+        "period_start": "2025-10-01",
+        "period_end": "2025-12-31",
+        "payment_date": "2026-01-30",
+        "currency": "EUR",
+        "expected_source": "MOCK IMPLEMENTATION - deterministic settlement expectation",
+        "mock_expected": true,
+        "uploaded": {
+          "fixed_leg": 7140000.0,
+          "floating_leg": 7154280.0,
+          "fee": 3000.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": 11280.0,
+          "recomputed_net": 17280.0
+        },
+        "system": {
+          "fixed_leg": 7198684.93,
+          "floating_leg": 7295867.18,
+          "fee": 3000.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": 100182.25
+        },
+        "mismatches": [
+          {
+            "field": "fixed_leg",
+            "uploaded": 7140000.0,
+            "expected": 7198684.93,
+            "issue_type": "fixed_leg_mismatch",
+            "message": "Uploaded Fixed Leg does not exactly match IRiS expected Fixed Leg."
+          },
+          {
+            "field": "floating_leg",
+            "uploaded": 7154280.0,
+            "expected": 7295867.18,
+            "issue_type": "floating_leg_mismatch",
+            "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 11280.0,
+            "expected": 17280.0,
+            "issue_type": "net_formula_mismatch",
+            "message": "Uploaded Net Settlement Amount does not equal floating minus fixed plus signed fee and interest."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 11280.0,
+            "expected": 100182.25,
+            "issue_type": "net_reconciliation_mismatch",
+            "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+          }
+        ]
+      },
+      "settlement_report_artifacts": [
+        {
+          "artifact_id": "ces-2026-019-cash-settlements-tracker",
+          "settlement_id": "SET-2025-Q4-002",
+          "cession_file_id": "CES-2026-019",
+          "contract_id": "LSC-2025-002",
+          "cedent": "Bavarian Industrial Fund",
+          "period": "Q4 2025",
+          "report_type": "Cash Settlements Tracker",
+          "filename": "CES-2026-019_SET-2025-Q4-002_cash_settlements_tracker.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-019_SET-2025-Q4-002_cash_settlements_tracker.csv",
+          "generated_at": "2026-05-08T09:33:35.573561Z",
+          "source_filename": "Bavarian_Settlement - 2025Q4.csv",
+          "reconciliation_decision": "review",
+          "mismatch_count": 4,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        },
+        {
+          "artifact_id": "ces-2026-019-grdr-load-form",
+          "settlement_id": "SET-2025-Q4-002",
+          "cession_file_id": "CES-2026-019",
+          "contract_id": "LSC-2025-002",
+          "cedent": "Bavarian Industrial Fund",
+          "period": "Q4 2025",
+          "report_type": "GRDR Load Form",
+          "filename": "CES-2026-019_SET-2025-Q4-002_grdr_load_form.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-019_SET-2025-Q4-002_grdr_load_form.csv",
+          "generated_at": "2026-05-08T09:33:35.573561Z",
+          "source_filename": "Bavarian_Settlement - 2025Q4.csv",
+          "reconciliation_decision": "review",
+          "mismatch_count": 4,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        }
+      ]
+    }
   }
 }

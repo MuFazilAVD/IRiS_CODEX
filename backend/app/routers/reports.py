@@ -34,6 +34,28 @@ def list_reports(
     return get_service(db).list_reports(current_user.role, category, cedent_id, contract_id, period, sensitivity)
 
 
+@router.get("/settlement-artifacts")
+def list_settlement_report_artifacts(
+    current_user: User = Depends(require_roles(["admin", "underwriter", "claims_ops", "compliance"])),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    return get_service(db).list_settlement_report_artifacts(current_user.role)
+
+
+@router.get("/settlement-artifacts/{artifact_id}/download")
+def download_settlement_report_artifact(
+    artifact_id: str,
+    current_user: User = Depends(require_roles(["admin", "claims_ops"])),
+    db: Session = Depends(get_db),
+) -> Response:
+    artifact_file = get_service(db).download_settlement_report_artifact(artifact_id, current_user.role)
+    return Response(
+        content=artifact_file["content"],
+        media_type=artifact_file["content_type"],
+        headers={"Content-Disposition": f'attachment; filename="{artifact_file["filename"]}"'},
+    )
+
+
 @router.get("/{report_id}")
 def get_report_detail(
     report_id: str,

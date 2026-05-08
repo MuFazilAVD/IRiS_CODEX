@@ -19,8 +19,9 @@ Reporting intelligence layer — historical, financial, operational, compliance,
 LEFT SIDEBAR                    RIGHT CONTENT
 ────────────────────            ──────────────────────────────────────────────────
 Categories                      Global filters panel
-  All Reports       23
+  All Reports       catalog + runtime
   Historical Reports  4          [Global filters]
+  Settlement Reports  runtime    Cedant     Contract   Reporting period  Valuation date  Assumption set
   Dynamic Reports     2          Cedant     Contract   Reporting period  Valuation date  Assumption set
   Debugging Reports   2          [All ▾]    [All ▾]    [2025 Q1 ▾]      [03/31/2025]    [v3.2 ▾]
   Movement Reports    3          Currency   Movement type  Compliance status  Approval status  Search
@@ -28,7 +29,7 @@ Categories                      Global filters panel
   Financial Reports   5
   Admin & Access      4          [Save]  [Reset]
 
-Quick actions                   23 reports · 0 selected              [☐ Select all]
+Quick actions                   runtime report count · 0 selected    [☐ Select all]
   📄 Export Excel
   📄 Export PDF                  Report table
   🔒 Regulatory pack
@@ -50,7 +51,7 @@ Border colors: blue, red, teal, green
 
 ## Report Categories (Left sidebar)
 
-All Reports (23), Historical Reports (4), Dynamic Reports (2), Debugging Reports (2), Movement Reports (3), Compliance Reports (3), Financial Reports (5), Admin & Access Reports (4)
+All Reports (catalog rows plus generated settlement files), Historical Reports (4), Settlement Reports (runtime count), Dynamic Reports (2), Debugging Reports (2), Movement Reports (3), Compliance Reports (3), Financial Reports (5), Admin & Access Reports (4)
 
 ---
 
@@ -135,6 +136,27 @@ Opens a full-page or slide-in showing:
 - [Download CSV] [Download PDF] buttons
 
 **POC:** Each report opens a static mock page with hardcoded sample rows. No real computation.
+
+---
+
+## Settlement Reports Category
+
+The Reports page includes a `Settlement Reports` category in the left category rail. It must not render a separate standalone card above the catalog table.
+
+This category lists generated files created when a Claims > Cession Files upload is processed with file type `Settlement`:
+- Cash Settlements Tracker CSV
+- GRDR Load Form CSV
+
+Generated settlement files render inside the existing report table.
+
+Table category value:
+- **Operations**
+
+Action:
+- **Open / View** -> opens a popup table preview parsed from the generated CSV
+- **Download** -> `GET /api/v1/reports/settlement-artifacts/{artifact_id}/download`
+
+Generated files are stored in the backend generated reports repository and indexed by `settlement_report_artifacts.json`.
 
 ---
 

@@ -984,6 +984,38 @@ export interface ClaimsSettlementImpact {
   settlement_id_created: string
 }
 
+export interface ClaimsSettlementReconciliationAmountSet {
+  fixed_leg: number
+  floating_leg: number
+  fee: number
+  interest_prior_period: number
+  net_settlement_amount: number
+  recomputed_net?: number
+}
+
+export interface ClaimsSettlementReconciliationMismatch {
+  field: string
+  uploaded: number
+  expected: number
+  issue_type: string
+  message: string
+}
+
+export interface ClaimsSettlementReconciliation {
+  settlement_id: string
+  decision: 'accept' | 'review'
+  calculation_period: string
+  period_start: string
+  period_end: string
+  payment_date: string | null
+  currency: string
+  expected_source: string
+  mock_expected: boolean
+  uploaded: ClaimsSettlementReconciliationAmountSet
+  system: ClaimsSettlementReconciliationAmountSet
+  mismatches: ClaimsSettlementReconciliationMismatch[]
+}
+
 export interface ClaimsSummaryPayload {
   file_id: string
   contract_id: string
@@ -999,6 +1031,7 @@ export interface ClaimsSummaryPayload {
   liability_impact: number | null
   fixed_leg_recomputed: number | null
   net_settlement_amount: number | null
+  settlement_reconciliation?: ClaimsSettlementReconciliation | null
   insight: string
 }
 
@@ -1781,6 +1814,27 @@ export interface ReportDetailPayload extends ReportsCatalogItem {
   graph: GraphConfig | null
   table: ReportPreviewTable
   notes: string[]
+}
+
+export interface SettlementReportArtifact {
+  artifact_id: string
+  settlement_id: string
+  cession_file_id: string
+  contract_id: string
+  cedent: string
+  period: string
+  report_type: string
+  filename: string
+  format: string
+  generated_at: string
+  source_filename: string
+  reconciliation_decision: 'accept' | 'review'
+  mismatch_count: number
+}
+
+export interface SettlementReportArtifactsPayload {
+  total: number
+  items: SettlementReportArtifact[]
 }
 
 export interface AdminUserRecord {

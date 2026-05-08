@@ -10,6 +10,11 @@ from typing import Any
 from app.errors import IrisAPIError
 from app.models.report import Report
 from app.repositories.reports_repository import ReportsRepository
+from app.services.settlement_report_files import (
+    get_settlement_report_artifact,
+    list_settlement_report_artifacts,
+    read_settlement_report_artifact_file,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +28,8 @@ CATEGORY_LABELS = {
     "Financial": "Financial Reports",
     "Admin": "Admin & Access Reports",
 }
+
+SETTLEMENT_REPORT_ROLES = {"claims_ops", "admin", "super_admin"}
 
 
 class ReportsService:
@@ -86,6 +93,41 @@ class ReportsService:
             "graph": preview.get("graph"),
             "table": preview.get("table", {"columns": [], "rows": []}),
             "notes": preview.get("notes", []),
+        }
+
+    def list_settlement_report_artifacts(self, role: str) -> dict[str, Any]:
+        logger.info("Loading generated settlement report artifacts")
+        logger.debug("Settlement report artifact list role=%s", role)
+        if role not in SETTLEMENT_REPORT_ROLES and role != "super_admin":
+            return {
+                "total": 0,
+                "items": [],
+            }
+        items = list_settlement_report_artifacts(role)
+        return {
+            "total": len(items),
+            "items": items,
+        }
+
+    def download_settlement_report_artifact(self, artifact_id: str, role: str) -> dict[str, Any]:
+        logger.info("Downloading generated settlement report artifact")
+        logger.debug("Settlement report artifact download role=%s artifact_id=%s", role, artifact_id)
+        if role not in SETTLEMENT_REPORT_ROLES and role != "super_admin":
+            logger.error("Settlement report artifact download forbidden for role=%s artifact_id=%s", role, artifact_id)
+            raise IrisAPIError(403, "Forbidden", "Role is not permitted to download settlement report artifacts")
+        artifact = get_settlement_report_artifact(artifact_id, role)
+        if artifact is None:
+            logger.error("Settlement report artifact not found artifact_id=%s", artifact_id)
+            raise IrisAPIError(404, "Report artifact not found", "The requested settlement report file does not exist")
+        try:
+            content = read_settlement_report_artifact_file(artifact)
+        except FileNotFoundError as exc:
+            logger.error("Settlement report artifact file missing artifact_id=%s path=%s", artifact_id, artifact.get("path"))
+            raise IrisAPIError(404, "Report artifact file missing", "The generated settlement report file is not available on disk") from exc
+        return {
+            "filename": artifact["filename"],
+            "content_type": "text/csv;charset=utf-8;",
+            "content": content,
         }
 
     def export_reports(self, report_ids: list[str], export_format: str, filters: dict[str, Any], role: str) -> dict[str, Any]:

@@ -204,9 +204,12 @@ Returns the processing summary for step 8.
   },
   "population_changes": null,
   "worklist_items_created": 1,
-  "audit_trail_id": "uuid"
+  "audit_trail_id": "uuid",
+  "settlement_reconciliation": null
 }
 ```
+
+For `Settlement` files, `settlement_reconciliation` is populated with uploaded/system fixed leg, floating leg, signed fee, signed prior-period interest, net settlement amount, exact-match decision, and mismatch messages. Reconciliation mismatches are summary/worklist review items, not validation exceptions; validation exceptions are limited to missing or invalid file data.
 
 ---
 
