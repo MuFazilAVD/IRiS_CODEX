@@ -15,7 +15,9 @@ import { CessionFileProcessingPage } from './pages/claims/cession/CessionFilePro
 import { CessionFilesPage } from './pages/claims/cession/CessionFilesPage'
 import { SettlementsPage } from './pages/claims/settlements/SettlementsPage'
 import { AuditPage } from './pages/compliance/AuditPage'
+import { SanctionsCasePage } from './pages/compliance/SanctionsCasePage'
 import { SanctionsPage } from './pages/compliance/SanctionsPage'
+import { ScreeningCachePage } from './pages/compliance/ScreeningCachePage'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { OperationsLandingPage } from './pages/operations/OperationsLandingPage'
 import { PipelinePage } from './pages/operations/PipelinePage'
@@ -162,6 +164,22 @@ export default function App() {
                 element={
                   <RoleGate roles={['compliance', 'super_admin']}>
                     <SanctionsPage />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/compliance/sanctions/:screeningRef"
+                element={
+                  <RoleGate roles={['compliance', 'super_admin']}>
+                    <SanctionsCasePage />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/compliance/screening-cache"
+                element={
+                  <RoleGate roles={['compliance', 'super_admin']}>
+                    <ScreeningCachePage />
                   </RoleGate>
                 }
               />

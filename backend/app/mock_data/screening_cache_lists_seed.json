@@ -6,7 +6,61 @@
     "last_sync": "2025-04-29T04:00:00Z",
     "status": "active",
     "data_payload": {
-      "mock": true
+      "mock": true,
+      "entries": [
+        {
+          "entity_name": "Hans Muller",
+          "aliases": ["Hans Mueller"],
+          "list_identifier": "OFAC-SDN-44821",
+          "entity_type": "Individual",
+          "country": "DE",
+          "street_address": "Friedrichstrasse 91",
+          "city": "Berlin",
+          "postal_code": "10117",
+          "tax_identification_number": null,
+          "company_registration_number": null,
+          "dob": "1962-03-15"
+        },
+        {
+          "entity_name": "Sergei V. Markov",
+          "aliases": ["Sergei Markov"],
+          "list_identifier": "OFAC-SDN-88741",
+          "entity_type": "Individual",
+          "country": "RU",
+          "street_address": "Tverskaya Street 12",
+          "city": "Moscow",
+          "postal_code": "125009",
+          "tax_identification_number": null,
+          "company_registration_number": null,
+          "dob": null
+        },
+        {
+          "entity_name": "Atlas Petroleum Holdings JSC",
+          "aliases": ["Atlas Petroleum", "Atlas"],
+          "list_identifier": "OFAC-SDN-58213",
+          "entity_type": "Oil & Gas",
+          "country": "RU",
+          "street_address": "Nevsky Prospect 28",
+          "city": "Saint Petersburg",
+          "postal_code": "191186",
+          "tax_identification_number": "RU-998877661",
+          "company_registration_number": "RU-OGRN-1133",
+          "dob": null
+        },
+        {
+          "entity_name": "Atlas Insurance",
+          "aliases": ["Atlas Insurance Ltd", "Atlas Insurance Company"],
+          "list_identifier": "OFAC-SDN-99117",
+          "entity_type": "Insurance",
+          "country": "US",
+          "street_address": "200 Liberty Street",
+          "city": "New York",
+          "postal_code": "10281",
+          "tax_identification_number": "US-TIN-99-1170012",
+          "company_registration_number": "US-NY-99117",
+          "dob": null
+        }
+      ]
     }
   },
   {
@@ -16,7 +70,48 @@
     "last_sync": "2025-04-29T04:05:00Z",
     "status": "active",
     "data_payload": {
-      "mock": true
+      "mock": true,
+      "entries": [
+        {
+          "entity_name": "Petra Schmidt",
+          "aliases": ["P. Schmidt"],
+          "list_identifier": "FINCEN-314A-44218",
+          "entity_type": "Individual",
+          "country": "CH",
+          "street_address": "Bahnhofstrasse 44",
+          "city": "Zurich",
+          "postal_code": "8001",
+          "tax_identification_number": null,
+          "company_registration_number": null,
+          "dob": null
+        },
+        {
+          "entity_name": "John A. Whitcomb",
+          "aliases": ["John Whitcomb"],
+          "list_identifier": "FINCEN-314A-59031",
+          "entity_type": "Individual",
+          "country": "US",
+          "street_address": "14 Wall Street",
+          "city": "New York",
+          "postal_code": "10005",
+          "tax_identification_number": null,
+          "company_registration_number": null,
+          "dob": null
+        },
+        {
+          "entity_name": "Meridian Energy Holdings SA",
+          "aliases": ["Meridian", "Meridian Energy Pension Scheme"],
+          "list_identifier": "FINCEN-314A-77104",
+          "entity_type": "Energy Trading",
+          "country": "DE",
+          "street_address": "Karlsplatz 12",
+          "city": "Munich",
+          "postal_code": "80335",
+          "tax_identification_number": "DE-883-914",
+          "company_registration_number": "DE-HRB-77104",
+          "dob": null
+        }
+      ]
     }
   },
   {

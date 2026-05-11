@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.mock_data_loader import load_mock_data
 from app.models.cedent import Cedent
+from app.models.screening_cache_list import ScreeningCacheList
+from app.models.screening_event import ScreeningEvent
 
 
 class ComplianceRepository:
@@ -50,3 +52,40 @@ class ComplianceRepository:
             .limit(1)
         )
         return self.db.scalar(statement)
+
+    def list_screening_events(self) -> list[ScreeningEvent]:
+        statement = select(ScreeningEvent).order_by(ScreeningEvent.created_at.desc(), ScreeningEvent.screening_ref.desc())
+        return list(self.db.scalars(statement))
+
+    def get_screening_event(self, screening_ref: str) -> ScreeningEvent | None:
+        statement = select(ScreeningEvent).where(ScreeningEvent.screening_ref == screening_ref).limit(1)
+        return self.db.scalar(statement)
+
+    def create_screening_event(self, event: ScreeningEvent) -> ScreeningEvent:
+        self.db.add(event)
+        self.db.commit()
+        self.db.refresh(event)
+        return event
+
+    def update_screening_event(self, event: ScreeningEvent) -> ScreeningEvent:
+        self.db.add(event)
+        self.db.commit()
+        self.db.refresh(event)
+        return event
+
+    def list_screening_cache_lists(self, list_names: list[str] | None = None) -> list[ScreeningCacheList]:
+        statement = select(ScreeningCacheList).where(ScreeningCacheList.status == "active")
+        if list_names:
+            statement = statement.where(ScreeningCacheList.list_name.in_(list_names))
+        statement = statement.order_by(ScreeningCacheList.list_name.asc())
+        return list(self.db.scalars(statement))
+
+    def get_screening_cache_list(self, list_name: str) -> ScreeningCacheList | None:
+        statement = select(ScreeningCacheList).where(ScreeningCacheList.list_name == list_name).limit(1)
+        return self.db.scalar(statement)
+
+    def update_screening_cache_list(self, item: ScreeningCacheList) -> ScreeningCacheList:
+        self.db.add(item)
+        self.db.commit()
+        self.db.refresh(item)
+        return item

@@ -584,6 +584,27 @@ Northstar Pension Trust    [Review]
 Concentration risk
 ```
 
+## SANCTION SCREENING WORKSPACE CORRECTION
+
+From `docs/ui-screens/SanctionScreening/SanctionScreening(1).png`, `SanctionScreening(2).png`, and `ScreeningReport(1-3).png`:
+
+- The compliance sanctions page is not a duplicate of the compliance dashboard KPI + graphs layout
+- The main sanctions route is a case-management workspace with:
+  - a 7-card KPI strip
+  - a `Run Ad-Hoc Screening` form
+  - case-status tabs (`All Cases`, `Pending Review`, `Auto-Cleared`, `High-Risk / Blocked`, `Historical`)
+  - search/filter controls
+  - a sanctions cases table
+- The sanctions flow includes a dedicated report/detail page per case rather than the earlier right-side hit drawer pattern
+- The report page contains:
+  - case hero card with trigger/status
+  - `Entity Under Screening`
+  - result summary banner
+  - raw match and IRiS analysis panels
+  - network analysis, decision history, adverse media
+  - audit trail
+- The screenshot-backed sanctions workspace and report flow override the earlier dashboard-style implementation
+
 **Contract Status Distribution donut legend (from screenshot):**
 - Active (navy)
 - Pending (light blue)

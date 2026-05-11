@@ -1,1 +1,932 @@
-{}
+{
+  "screening_cases": {
+    "SCR-2026-05-001": {
+      "country": "DE",
+      "registration_number": "DE-883-914",
+      "aliases": [
+        "Meridian"
+      ],
+      "registered_address": "Leopoldstrasse 20, Munich, 80802",
+      "beneficial_owners": [
+        "H. Bauer"
+      ],
+      "bank_details": "DE89 3704 0044 0532 0130 00",
+      "watchlists_screened": [
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Low",
+      "risk_score": 83,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Adhoc screening \u00b7 Meridian Energy Pension Scheme",
+      "summary": {
+        "headline": "No matches across FinCEN",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 FinCEN",
+        "candidate_name": "Meridian Energy Holdings SA",
+        "candidate_id": "FINCEN-314A-77104",
+        "subtitle": "FinCEN 314(a)",
+        "country": "DE",
+        "entity_type": "Energy Trading",
+        "aggregate_score": 57,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 82
+          },
+          {
+            "label": "Address",
+            "value": 36
+          },
+          {
+            "label": "Country",
+            "value": 100
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Likely Different",
+        "confidence_pct": 83,
+        "headline": "Despite the watchlist record listing an alias identical to the screened name (\u201cMeridian Energy Pension Scheme\u201d), the identity context provided is for \u201cBavarian Industrial Fund / Bavarian IF\u201d in Munich. Key identifiers and core attributes do not align: legal name is different, street address and postal code differ, and the tax identifier differs. The only overlaps are city/country (Munich, DE), which are non-unique. Additionally, the cedent\u2019s registration number value (DE-883-914) matches the watchlist tax identification number, but the cedent labels it as a company registration number while also providing a different tax number (DE-1201-442-008); this inconsistent identifier mapping is insufficient to conclude a true match without corroborating evidence. Overall, the match appears to be a false positive driven by alias/name similarity rather than shared identity.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Auto-clear"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T05:53:37.575621Z",
+          "actor": "compliance@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T05:53:37.575621Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T05:53:37.575621Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 83% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T05:53:37.575621Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-002": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 1.5,
+      "matches_count": 0,
+      "risk_label": "Low",
+      "risk_score": 12,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Onboarding screening \u00b7 Maple",
+      "summary": {
+        "headline": "No matches across OFAC \u00b7 FinCEN",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": null,
+      "analysis": {
+        "label": "High Risk",
+        "confidence_pct": 100,
+        "headline": "No keyword or fuzzy watchlist match exceeded the screening threshold.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Block"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T05:55:04.137361Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T05:55:04.137361Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T05:55:04.137361Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 100% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T05:55:04.137361Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-003": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [
+        "Atlas"
+      ],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Low",
+      "risk_score": 83,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Onboarding screening \u00b7 ATLAS",
+      "summary": {
+        "headline": "No matches across OFAC",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Atlas Petroleum Holdings JSC",
+        "candidate_id": "OFAC-SDN-58213",
+        "subtitle": "OFAC SDN",
+        "country": "RU",
+        "entity_type": "Oil & Gas",
+        "aggregate_score": 36,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 82
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 50
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Likely Different",
+        "confidence_pct": 83,
+        "headline": "Entity-name overlap was found, but the jurisdiction, address or registration context conflicts with the watchlist record. Treating as a likely mismatch for analyst confirmation.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Auto-clear"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T05:58:35.944420Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T05:58:35.944420Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T05:58:35.944420Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 83% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T05:58:35.944420Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-004": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "OFAC"
+      ],
+      "processing_seconds": 3.3,
+      "matches_count": 2,
+      "risk_label": "Medium",
+      "risk_score": 97,
+      "ai_recommendation": "Review",
+      "list_subtitle": "Onboarding screening \u00b7 Atlas Insurance",
+      "summary": {
+        "headline": "Potential match across OFAC \u00b7 OFAC",
+        "description": "Held in analyst review queue pending entity resolution and compliance notes.",
+        "tone": "warning"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Atlas Insurance",
+        "candidate_id": "OFAC-SDN-99117",
+        "subtitle": "OFAC SDN",
+        "country": "US",
+        "entity_type": "Insurance",
+        "aggregate_score": 40,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 100
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 50
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Needs Review",
+        "confidence_pct": 97,
+        "headline": "Exact Atlas Insurance entity match found in the OFAC cache. Hold in pending review for compliance disposition.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "negative"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Review"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T06:39:40.503169Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T06:39:40.503169Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T06:39:40.503169Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 97% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T06:39:40.503169Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Pending review"
+        }
+      ]
+    },
+    "SCR-2026-05-005": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "OFAC"
+      ],
+      "processing_seconds": 3.3,
+      "matches_count": 2,
+      "risk_label": "Low",
+      "risk_score": 83,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Onboarding screening \u00b7 Atlas",
+      "summary": {
+        "headline": "No matches across OFAC \u00b7 OFAC",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Atlas Petroleum Holdings JSC",
+        "candidate_id": "OFAC-SDN-58213",
+        "subtitle": "OFAC SDN",
+        "country": "RU",
+        "entity_type": "Oil & Gas",
+        "aggregate_score": 36,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 82
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 50
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Likely Different",
+        "confidence_pct": 83,
+        "headline": "Entity-name overlap was found, but the jurisdiction, address or registration context conflicts with the watchlist record. Treating as a likely mismatch for analyst confirmation.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Auto-clear"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T08:01:59.647168Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T08:01:59.647168Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T08:01:59.647168Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 83% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T08:01:59.647168Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-006": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 4.2,
+      "matches_count": 3,
+      "risk_label": "Medium",
+      "risk_score": 97,
+      "ai_recommendation": "Review",
+      "list_subtitle": "Onboarding screening \u00b7 Atlas Insurance",
+      "summary": {
+        "headline": "Potential match across OFAC \u00b7 FinCEN",
+        "description": "Held in analyst review queue pending entity resolution and compliance notes.",
+        "tone": "warning"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Atlas Insurance",
+        "candidate_id": "OFAC SDN",
+        "subtitle": "OFAC SDN",
+        "country": "",
+        "entity_type": "Insurance",
+        "aggregate_score": 28,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 100
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 0
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Needs Review",
+        "confidence_pct": 97,
+        "headline": "Exact Atlas Insurance entity match found in the OFAC cache. Hold in pending review for compliance disposition.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "negative"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Review"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T08:25:54.214735Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T08:25:54.214735Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T08:25:54.214735Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 97% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T08:25:54.214735Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Pending review"
+        }
+      ]
+    },
+    "SCR-2026-05-007": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 3.3,
+      "matches_count": 2,
+      "risk_label": "Medium",
+      "risk_score": 97,
+      "ai_recommendation": "Review",
+      "list_subtitle": "Onboarding screening \u00b7 Atlas Insurance",
+      "summary": {
+        "headline": "Potential match across OFAC \u00b7 FinCEN",
+        "description": "Held in analyst review queue pending entity resolution and compliance notes.",
+        "tone": "warning"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Atlas Insurance",
+        "candidate_id": "OFAC-SDN-99117",
+        "subtitle": "OFAC SDN",
+        "country": "US",
+        "entity_type": "Insurance",
+        "aggregate_score": 40,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 100
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 50
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Needs Review",
+        "confidence_pct": 97,
+        "headline": "Exact Atlas Insurance entity match found in the OFAC cache. Hold in pending review for compliance disposition.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "negative"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Review"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T08:28:49.749550Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T08:28:49.749550Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T08:28:49.749550Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 97% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T08:28:49.749550Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Pending review"
+        },
+        {
+          "timestamp": "2026-05-11T08:29:00.214752Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Marked as false positive"
+        }
+      ]
+    },
+    "SCR-2026-05-008": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Medium",
+      "risk_score": 75,
+      "ai_recommendation": "Review",
+      "list_subtitle": "Onboarding screening \u00b7 North Star",
+      "summary": {
+        "headline": "Potential match across OFAC \u00b7 FinCEN",
+        "description": "Held in analyst review queue pending entity resolution and compliance notes.",
+        "tone": "warning"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Northstar Pension Trust",
+        "candidate_id": "OFAC-SDN-58216",
+        "subtitle": "OFAC SDN",
+        "country": "UK",
+        "entity_type": "Insurance",
+        "aggregate_score": 48,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 82
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 100
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Needs Review",
+        "confidence_pct": 75,
+        "headline": "Potential watchlist overlap found against ['OFAC SDN']. Human review is recommended.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 75,
+            "tone": "negative"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Review"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T08:29:26.585405Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T08:29:26.585405Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T08:29:26.585405Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 75% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T08:29:26.585405Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Pending review"
+        }
+      ]
+    }
+  }
+}

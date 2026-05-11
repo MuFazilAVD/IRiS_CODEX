@@ -233,6 +233,98 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-11T05:53:48.9306130Z]
+
+### Prompt
+http://localhost:8000/iris/api/v1/compliance/sanctions/hits/SCR-2026-05-001 404 (Not Found)
+I am getting the above error when running a new ad-hoc screening. Fix this service
+
+### Context Used
+- Files referred:
+  - backend/app/routers/compliance.py
+  - backend/app/repositories/compliance_repository.py
+  - backend/app/services/compliance_service.py
+  - backend/app/database.py
+  - frontend/src/pages/compliance/SanctionsPage.tsx
+  - docs/trackers/TRACKER.md
+
+### Actions Taken
+- Traced the ad-hoc screening flow from `GET /compliance/sanctions/screen` to the follow-up `GET /compliance/sanctions/hits/{screening_ref}` lookup
+- Confirmed the new `screening_events` row was only flushed, not committed, so a fresh request session could not see it
+- Updated the compliance repository write methods to commit and refresh newly created or updated `screening_events`
+- Verified with a two-session backend smoke test that `SCR-2026-05-001` can be created and then immediately fetched by the detail service
+
+### Files Modified
+- backend/app/repositories/compliance_repository.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The failure was transactional rather than routing-related: the route existed, but the new ad-hoc screening case was not durable across requests until the repository commit was added
+
+### Status
+✅ Completed
+
+## [2026-05-11T05:44:01.5759460Z]
+
+### Prompt
+Currently the screening page under the compliance section seems like a duplication of the compliance dashboard(development mistake). Check the screenshots in the following folders:
+docs/ui_screens/SanctionScreening
+There you can see two screenshots of the main page, and three screenshots of the processing page(Report) where we run ad-hoc screening on any enity.
+Now change the ui and the services to align with the current screens, also make the processing service use the OFAC /FinCen wachtlist cache.
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/db/SCHEMA_ADDITIONS.md
+  - docs/api/COMPLIANCE.md
+  - docs/api/API_ADDITIONS.md
+  - docs/ui/06-compliance/SANCTIONS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/ui-screens/SanctionScreening/SanctionScreening(1).png
+  - docs/ui-screens/SanctionScreening/SanctionScreening(2).png
+  - docs/ui-screens/SanctionScreening/ScreeningReport(1).png
+  - docs/ui-screens/SanctionScreening/ScreeningReport(2).png
+  - docs/ui-screens/SanctionScreening/ScreeningReport(3).png
+
+### Actions Taken
+- Replaced the sanctions dashboard-clone UI with a screenshot-backed sanctions case workspace at `/compliance/sanctions`
+- Added the sanctions case report/detail route at `/compliance/sanctions/:screeningRef`
+- Added persisted `screening_events` support plus sanctions case detail payload assembly in the compliance service layer
+- Updated single-entity screening to read OFAC / FinCEN watchlist entries from `screening_cache_lists` with a seed fallback for older local DB rows
+- Seeded sanctions case records and sanctions case context overlays to align the workspace/report screenshots
+- Updated the tracker and screenshot-corrections documentation
+
+### Files Modified
+- backend/app/mock_data/screening_cache_lists_seed.json
+- backend/app/mock_data/screening_events_seed.json
+- backend/app/mock_data/screening_case_context_seed.json
+- backend/app/models/__init__.py
+- backend/app/models/screening_event.py
+- backend/app/repositories/compliance_repository.py
+- backend/app/routers/compliance.py
+- backend/app/schemas/compliance.py
+- backend/app/seed.py
+- backend/app/services/compliance_service.py
+- frontend/src/App.tsx
+- frontend/src/pages/compliance/SanctionsPage.tsx
+- frontend/src/pages/compliance/SanctionsCasePage.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+
+### Issues / Deviations
+- The current schema additions define `screening_events` but do not define dedicated columns for the screenshot-only ad-hoc form context fields such as aliases, beneficial owners, and bank details
+- Those screenshot-only context fields are therefore stored through a documented mock JSON overlay keyed by `screening_ref`, while the screening event lifecycle itself is persisted in `screening_events`
+- Existing local databases may already contain older `screening_cache_lists` rows without cached `entries`; this pass backfills those rows on seed and also falls back to the seed payload at runtime for the OFAC / FinCEN processing path
+
+### Status
+✅ Completed
+
 ## [2026-05-08T06:38:33Z]
 
 ### Prompt
@@ -3865,6 +3957,83 @@ Also change the cors policy and all to *, to accept from everywhere
 ### Status
 ✅ Completed
 
+## [2026-05-11 06:10:46 UTC]
+
+### Prompt
+Screening page and processing screening page's style is different compared to other pages, texts and content are bigger (especially table) , make it align with the rest of the pages, refer any other normal page and adjust the content size
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/DESIGN.md
+  - docs/ui/06-compliance/SANCTIONS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/compliance/SanctionsPage.tsx
+  - frontend/src/pages/compliance/SanctionsCasePage.tsx
+  - frontend/src/pages/worklist/WorklistPage.tsx
+  - frontend/src/pages/reports/ReportsPage.tsx
+
+### Actions Taken
+- Compared the sanctions workspace and sanctions case report pages against shared pages with normal content density.
+- Reduced sanctions page-local typography where it was oversized, especially case-table entity text, trigger chips, and case-report content blocks.
+- Kept the shared layout/components intact and limited the change to the sanctions workspace/report styling.
+- Updated the tracker note for the sanctions page to reflect the typography alignment pass.
+- Verified the frontend production build.
+
+### Files Modified
+- frontend/src/pages/compliance/SanctionsPage.tsx
+- frontend/src/pages/compliance/SanctionsCasePage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No spec deviation was required; this was a screenshot/design consistency correction within the existing sanctions workspace implementation.
+- Frontend build passed, with the existing Vite large-chunk warning still present but unrelated to this styling change.
+
+### Status
+✅ Completed
+
+## [2026-05-11 06:31:34 UTC]
+
+### Prompt
+I need you to add the insurance company "Atlas Insurance" in the OFAC list, so that when i run the sanction screening for that company it should show the status as pending in the sanction screening case list saying that match has been found for that particular company. Also this pending entity should be visible in the worklist as well.
+Make necessary changes in the backend code to make this work
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/api/COMPLIANCE.md
+  - docs/trackers/TRACKER.md
+  - backend/app/mock_data/screening_cache_lists_seed.json
+  - backend/app/services/compliance_service.py
+  - backend/app/services/worklist_service.py
+  - backend/app/repositories/worklist_repository.py
+  - backend/app/mock_data/worklist_register.json
+
+### Actions Taken
+- Added `Atlas Insurance` to the OFAC screening cache seed payload.
+- Updated sanctions screening cache loading so active DB cache rows are merged with the seed payload, allowing new watchlist entries to work even on older local databases.
+- Added a deterministic backend rule that marks an exact OFAC cache hit for `Atlas Insurance` as a genuine review case, producing `Pending Review` in the sanctions workspace.
+- Added dynamic compliance worklist overlays for newly persisted sanctions-review cases so runtime ad-hoc screening matches appear in the worklist without rebuilding the mock register.
+- Verified with a backend smoke that `Atlas Insurance` returns `review`, shows `Pending Review` in the case list, and appears in the worklist as `WL-SCR-ATLAS-TEST`; the smoke cleaned up its temporary record afterward.
+- Verified Python compilation for the touched backend files.
+
+### Files Modified
+- backend/app/mock_data/screening_cache_lists_seed.json
+- backend/app/services/compliance_service.py
+- backend/app/services/worklist_service.py
+- backend/app/repositories/worklist_repository.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The compliance worklist remains mock-backed overall, so the new screening task is surfaced through a documented runtime overlay rather than a brand-new persisted worklist write path.
+- The local database in this environment still uses an older seeded user set, so the verification smoke selected the live `compliance` role user from the DB instead of assuming the newer demo email fixture.
+
+### Status
+✅ Completed
+
 ## [2026-05-08 10:32:06 +00:00]
 
 ### Prompt
@@ -3894,6 +4063,56 @@ use this as backend url and push
 
 ### Issues / Deviations
 - The frontend still sends actual API calls to `/iris/api/v1/...`; the configured backend URL is now the requested `/iris` base and the client appends `/api/v1`.
+
+### Status
+✅ Completed
+
+## [2026-05-11 08:21:53 +00:00]
+
+### Prompt
+1. Move These two excels to a different page under complaince, let it be the 3rd page under compliance
+2. Also editing it is not working, causing error :   result = context.run(func, *args)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\routers\compliance.py", line 135, in update_cache_workbook
+    return get_service(db).update_screening_cache_workbook(list_name, [entry.model_dump() for entry in payload.entries], current_user)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\services\compliance_service.py", line 389, in update_screening_cache_workbook
+    item = self.repository.get_screening_cache_list(list_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ComplianceRepository' object has no attribute 'get_screening_cache_list'. Did you mean: 'list_screening_cache_lists'?
+2026-05-11 08:05:00,907 INFO app.services.compliance_service Loading sanctions screening workspace
+3. Also in the result page, only OFAC is shown, show FinCEN too
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/compliance/SanctionsPage.tsx
+  - frontend/src/pages/compliance/ScreeningCachePage.tsx
+  - frontend/src/App.tsx
+  - frontend/src/components/layout/Sidebar.tsx
+  - backend/app/repositories/compliance_repository.py
+  - backend/app/services/compliance_service.py
+
+### Actions Taken
+- Moved the editable OFAC and FinCEN workbook UI out of `/compliance/sanctions` and into the new third Compliance page at `/compliance/screening-cache`.
+- Added the Compliance sidebar item and protected route for the new Screening Cache page.
+- Added the missing repository `get_screening_cache_list` and `update_screening_cache_list` methods used by workbook saves.
+- Updated persisted sanctions case context so newly run screenings preserve all selected source labels, allowing result pages to display both OFAC and FinCEN when both were screened.
+- Verified backend Python compilation and frontend production build.
+- Updated the compliance tracker entry.
+
+### Files Modified
+- backend/app/repositories/compliance_repository.py
+- backend/app/services/compliance_service.py
+- frontend/src/App.tsx
+- frontend/src/components/layout/Sidebar.tsx
+- frontend/src/pages/compliance/SanctionsPage.tsx
+- frontend/src/pages/compliance/ScreeningCachePage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No new spec file for a standalone screening-cache page was present; implementation follows the existing Compliance module structure and preserves the existing workbook API contracts.
+- Existing historical screening cases without saved `watchlists_screened` context may continue to show only their matched list; newly run screenings store the selected OFAC / FinCEN sources.
 
 ### Status
 ✅ Completed

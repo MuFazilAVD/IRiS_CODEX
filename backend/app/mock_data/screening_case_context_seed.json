@@ -1,0 +1,154 @@
+{
+  "SCR-2025-09-210": {
+    "country": "UK",
+    "registration_number": "345678",
+    "aliases": ["Atlas"],
+    "registered_address": "12 Cornhill, London EC3V 0BN",
+    "beneficial_owners": ["J. Whitefield"],
+    "bank_details": "GBTY 456 DFHJ 78",
+    "watchlists_screened": ["OFAC", "FinCEN", "FIS Prime"],
+    "processing_seconds": 17.5,
+    "matches_count": 0,
+    "risk_label": "Low",
+    "risk_score": 12,
+    "ai_recommendation": "Auto-clear",
+    "list_subtitle": "Cedant onboarding · Zurich",
+    "summary": {
+      "headline": "No matches across OFAC · FinCEN · FIS Prime",
+      "description": "Auto-cleared by Decision Engine. No analyst review required.",
+      "tone": "positive"
+    },
+    "raw_match": {
+      "title": "Raw Match · OFAC",
+      "candidate_name": "Atlas Petroleum Holdings JSC",
+      "candidate_id": "OFAC-SDN-58213",
+      "subtitle": "SDN — Russia/Ukraine EO 14024",
+      "country": "RU",
+      "entity_type": "Oil & Gas",
+      "aggregate_score": 42,
+      "field_scores": [
+        { "label": "Name", "value": 71 },
+        { "label": "Address", "value": 5 },
+        { "label": "Country", "value": 0 },
+        { "label": "Type", "value": 10 }
+      ]
+    },
+    "analysis": {
+      "label": "Likely Different",
+      "confidence_pct": 93,
+      "headline": "Match is name-only. Subject is a UK pension fund; the SDN entity is a Russian oil & gas company under EO 14024.",
+      "body": "No geographic, industry or ownership linkage was detected. The case has been reviewed historically and consistently cleared.",
+      "factors": [
+        { "text": "Jurisdiction mismatch — UK vs RU", "weight_pct": 32, "tone": "positive" },
+        { "text": "Entity-type mismatch — Pension fund vs Oil & Gas", "weight_pct": 28, "tone": "positive" },
+        { "text": "No UBO linkage — Different ownership chain", "weight_pct": 18, "tone": "positive" },
+        { "text": "Name token overlap — \"Atlas\" is a common token", "weight_pct": 22, "tone": "negative" }
+      ],
+      "checks": [
+        { "label": "Geographic Match", "passed": true },
+        { "label": "Entity Type Match", "passed": true },
+        { "label": "Industry Match", "passed": true },
+        { "label": "Ownership Link", "passed": true }
+      ],
+      "recommended_action": "Auto-clear"
+    },
+    "network_analysis": {
+      "items": [
+        { "label": "Parent exposure", "value": "Clear" },
+        { "label": "Subsidiary exposure", "value": "Clear" },
+        { "label": "UBO exposure", "value": "Clear" }
+      ],
+      "note": "Atlas Holdings PLC has no OFAC, UN or EU record."
+    },
+    "decision_history": {
+      "times_reviewed": 14,
+      "last_verdict": "False Positive",
+      "note": "Recurring false positive — auto-clear eligible"
+    },
+    "adverse_media": {
+      "severity": "None",
+      "note": "No adverse media in the last 24 months."
+    },
+    "audit_trail": [
+      { "timestamp": "2026-05-05T08:17:23Z", "actor": "you@reinsure.io", "actor_type": "Human", "detail": "Initiated onboarding screening" },
+      { "timestamp": "2026-05-05T08:17:23Z", "actor": "Match Engine", "actor_type": "System", "detail": "No matches" },
+      { "timestamp": "2026-05-05T08:17:23Z", "actor": "IRiS", "actor_type": "AI", "detail": "Resolved at 91% confidence" },
+      { "timestamp": "2026-05-05T08:17:23Z", "actor": "Decision Engine", "actor_type": "System", "detail": "Auto-cleared" }
+    ]
+  },
+  "SCR-2025-09-203": {
+    "country": "CH",
+    "registration_number": "CH-448-220",
+    "aliases": ["Helvetia Foundation"],
+    "registered_address": "Rue du Rhone 14, Geneva 1204",
+    "beneficial_owners": ["M. Perrin", "L. Vogel"],
+    "bank_details": "CH12 0900 0000 4482 2000 4",
+    "watchlists_screened": ["OFAC", "FinCEN", "FIS Prime", "UN"],
+    "processing_seconds": 4.3,
+    "matches_count": 1,
+    "risk_label": "Medium",
+    "risk_score": 48,
+    "ai_recommendation": "Review",
+    "list_subtitle": "Cedant onboarding · Helvetia Pension Foundation"
+  },
+  "SCR-2025-09-187": {
+    "country": "DE",
+    "registration_number": "DE-883-914",
+    "aliases": ["Meridian Energy Pension Sch."],
+    "registered_address": "Leopoldstrasse 20, Munich 80802",
+    "beneficial_owners": ["H. Bauer"],
+    "bank_details": "DE89 3704 0044 0532 0130 00",
+    "watchlists_screened": ["OFAC", "FinCEN", "FIS Prime", "EU"],
+    "processing_seconds": 3.9,
+    "matches_count": 1,
+    "risk_label": "Medium",
+    "risk_score": 38,
+    "ai_recommendation": "Review",
+    "list_subtitle": "Cedant onboarding · Meridian Energy Pension Sch..."
+  },
+  "SCR-2025-09-155": {
+    "country": "US",
+    "registration_number": "US-AT-1133",
+    "aliases": ["Atlas Corporate Pensions"],
+    "registered_address": "200 Liberty Street, New York NY 10281",
+    "beneficial_owners": ["N. Volkov", "D. Sidorov"],
+    "bank_details": "US11 METL 1133 5588 1002",
+    "watchlists_screened": ["OFAC", "FinCEN"],
+    "processing_seconds": 2.8,
+    "matches_count": 2,
+    "risk_label": "High",
+    "risk_score": 91,
+    "ai_recommendation": "Block",
+    "list_subtitle": "Periodic screening · Atlas Corporate Pensions Ltd"
+  },
+  "SCR-2025-09-144": {
+    "country": "UK",
+    "registration_number": "NS-1042",
+    "aliases": ["Northstar Trust"],
+    "registered_address": "22 Bishopsgate, London EC2N 4BQ",
+    "beneficial_owners": ["A. Morgan"],
+    "bank_details": "GB21 MTLF 1042 0011 2211 09",
+    "watchlists_screened": ["OFAC", "FinCEN", "FIS Prime"],
+    "processing_seconds": 1.9,
+    "matches_count": 1,
+    "risk_label": "Low",
+    "risk_score": 18,
+    "ai_recommendation": "Auto-clear",
+    "list_subtitle": "Periodic screening · Northstar Pension Trust"
+  },
+  "SCR-2025-09-130": {
+    "country": "CA",
+    "registration_number": "CA-1156-220",
+    "aliases": ["Maple Leaf Plan"],
+    "registered_address": "100 King Street West, Toronto M5X 1A9",
+    "beneficial_owners": ["S. Clarke"],
+    "bank_details": "CA88 1002 4455 7788 2211",
+    "watchlists_screened": ["OFAC", "FinCEN"],
+    "processing_seconds": 0.6,
+    "matches_count": 1,
+    "risk_label": "Low",
+    "risk_score": 16,
+    "ai_recommendation": "Auto-clear",
+    "list_subtitle": "Ad-hoc screening · Maple Leaf Pension Plan"
+  }
+}

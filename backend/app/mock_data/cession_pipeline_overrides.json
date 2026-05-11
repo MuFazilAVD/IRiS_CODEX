@@ -2722,7 +2722,7 @@
   },
   "CES-2026-019": {
     "pipeline_session_id": "pipe-662a7ad9-3e45-454c-8a28-146b4dbc25e7",
-    "active_step": "summary",
+    "active_step": "map-contract",
     "source_filename": "Bavarian_Settlement - 2025Q4.csv",
     "source_size_bytes": 591,
     "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-30,Death,CPI capped 5% applied to pension tranche,\"\u20ac7,140,000\",\"\u20ac7,154,280\",\"\u20ac3,000\",\u20ac0,\"\u20ac11,280\"\r\n2025 Q4,2026-01-30,Suspension,No escalation applicable during suspension period,\"\u20ac7,140,000\",\"\u20ac7,082,880\",\"\u20ac3,000\",\u20ac0,\"-\u20ac60,120\"\r\n2025 Q4,2026-01-30,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac7,140,000\",\"\u20ac7,168,560\",\"\u20ac3,000\",\u20ac0,\"\u20ac25,560\"",
@@ -2730,9 +2730,9 @@
     "manual_contract_id": null,
     "manual_file_type": null,
     "detection_override": {
-      "file_type": "Settlement",
-      "cedent_id": "CED-1201",
-      "completed_at": "2026-05-08T09:33:08.902095Z"
+      "file_type": "Fixed Leg",
+      "cedent_id": null,
+      "completed_at": "2026-05-11T05:34:57.778158Z"
     },
     "contract_override": {
       "contract_id": "LSC-2025-002",
@@ -2794,6 +2794,20 @@
         "type": "System",
         "action": "Created 1 worklist item(s)",
         "detail": "WL-9221"
+      },
+      {
+        "timestamp": "2026-05-11T05:34:57.837175Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Fixed Leg\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-11T05:34:57.880242Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Bavarian Industrial Fund",
+        "detail": "confidence 92%"
       }
     ],
     "stage_history": [
@@ -2839,12 +2853,12 @@
       {
         "stage": "detect",
         "status": "complete",
-        "timestamp": "2026-05-08T09:33:08.935402Z"
+        "timestamp": "2026-05-11T05:34:57.800280Z"
       },
       {
         "stage": "map_contract",
-        "status": "complete",
-        "timestamp": "2026-05-08T09:33:11.424277Z"
+        "status": "in_progress",
+        "timestamp": "2026-05-11T05:34:57.816958Z"
       },
       {
         "stage": "clauses",

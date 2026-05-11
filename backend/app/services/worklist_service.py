@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import json
 import logging
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from app.errors import IrisAPIError
 from app.mock_data_loader import load_mock_data
+from app.models.screening_event import ScreeningEvent
 from app.models.worklist import WorklistItem
 from app.repositories.worklist_repository import WorklistRepository
 
@@ -21,6 +24,8 @@ WORKLIST_VIEWER_EMAILS: dict[str, str] = {
 }
 
 WORKLIST_REGISTER_FILE = "worklist_register.json"
+COMPLIANCE_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "compliance_overrides.json"
+WORKSPACE_TRIGGER_TYPES = {"onboarding", "adhoc", "periodic"}
 
 
 class WorklistService:
@@ -100,6 +105,9 @@ class WorklistService:
             if live_state:
                 item["status"] = live_state.get("status", item["status"])
 
+        dynamic_screening_items = self._build_dynamic_screening_worklist_items(register_items)
+        register_items = dynamic_screening_items + register_items
+
         return {
             "summary": self._build_summary(register_items, role),
             "total": len(register_items),
@@ -117,6 +125,87 @@ class WorklistService:
             for item in db_items
         }
         return self._build_mock_payload(role, live_item_states=live_item_states)
+
+    def _build_dynamic_screening_worklist_items(self, existing_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        logger.info("Building dynamic sanctions screening worklist overlays")
+        screening_cases = self._read_compliance_override_store().get("screening_cases", {})
+        if not screening_cases:
+            logger.debug("No dynamic sanctions screening overrides were found for worklist overlays")
+            return []
+
+        existing_wl_ids = {str(item.get("wl_id") or "") for item in existing_items}
+        existing_titles = {str(item.get("title") or "").strip().lower() for item in existing_items}
+        dynamic_items: list[dict[str, Any]] = []
+
+        for event in self.repository.list_screening_events():
+            if event.trigger_type not in WORKSPACE_TRIGGER_TYPES:
+                continue
+            if event.screening_ref not in screening_cases:
+                continue
+            if event.result != "review":
+                continue
+
+            worklist_item = self._serialize_dynamic_screening_worklist_item(event, screening_cases.get(event.screening_ref, {}))
+            if worklist_item["wl_id"] in existing_wl_ids or worklist_item["title"].strip().lower() in existing_titles:
+                continue
+            dynamic_items.append(worklist_item)
+
+        logger.debug("Dynamic sanctions screening worklist overlays count=%s", len(dynamic_items))
+        return dynamic_items
+
+    def _serialize_dynamic_screening_worklist_item(self, event: ScreeningEvent, context: dict[str, Any]) -> dict[str, Any]:
+        matched_lists = [self._watchlist_label(str(item)) for item in (event.matched_lists or [])]
+        primary_watchlist = matched_lists[0] if matched_lists else "Sanctions"
+        title_watchlist = primary_watchlist if primary_watchlist.endswith("Match") else f"{primary_watchlist} match"
+        confidence_pct = int(round((event.llm_confidence or 0.0) * 100))
+        now = datetime.now(timezone.utc)
+        created_at = event.created_at.replace(tzinfo=timezone.utc) if event.created_at.tzinfo is None else event.created_at.astimezone(timezone.utc)
+        elapsed_minutes = max(int((now - created_at).total_seconds() // 60), 0)
+        hours, minutes = divmod(elapsed_minutes, 60)
+        elapsed_display = f"{hours}h {minutes}m" if hours else f"{minutes}m"
+        review_reason = event.llm_reasoning or "Potential sanctions match found in screening cache."
+        entity_name = event.entity_name
+        return {
+            "wl_id": f"WL-{event.screening_ref}",
+            "title": f"{title_watchlist} - {entity_name}",
+            "description": (
+                f"Potential {primary_watchlist} exposure detected for {entity_name}. "
+                f"Compliance review is required before the case can be cleared. "
+                f"{review_reason}"
+            ),
+            "category": f"{primary_watchlist} Match" if primary_watchlist != "Sanctions" else "Sanctions Match",
+            "priority": "critical" if "OFAC" in matched_lists else "high",
+            "status": "pending_review",
+            "assigned_role": "compliance",
+            "source": "AI Agent",
+            "ai_generated": True,
+            "compliance_hold": True,
+            "elapsed_display": elapsed_display,
+            "is_approaching": False,
+            "is_overdue": False,
+            "breadcrumb": "Compliance Hold - Review Required",
+            "cedent_name": entity_name,
+            "assigned_to_email": WORKLIST_VIEWER_EMAILS["compliance"],
+            "entity_display": entity_name,
+            "financial_impact_display": None,
+            "is_high_impact": False,
+            "confidence_display": f"{confidence_pct}%",
+            "action_label": "Approval req.",
+        }
+
+    def _read_compliance_override_store(self) -> dict[str, Any]:
+        if not COMPLIANCE_OVERRIDES_FILE.exists():
+            return {}
+        with COMPLIANCE_OVERRIDES_FILE.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        return payload if isinstance(payload, dict) else {}
+
+    def _watchlist_label(self, value: str) -> str:
+        if value.startswith("OFAC"):
+            return "OFAC"
+        if value.startswith("FinCEN"):
+            return "FinCEN"
+        return value
 
     def update_worklist_item(self, role: str, wl_id: str, status: str | None, assigned_to: str | None) -> dict:
         logger.info("Updating worklist item")

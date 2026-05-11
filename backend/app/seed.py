@@ -17,6 +17,7 @@ from app.models.population import PolicyRegister
 from app.models.reference_data_version import ReferenceDataVersion
 from app.models.report import Report
 from app.models.screening_cache_list import ScreeningCacheList
+from app.models.screening_event import ScreeningEvent
 from app.models.user import User
 from app.models.worklist import WorklistItem
 from app.services.auth_service import AuthService
@@ -236,9 +237,10 @@ def seed_database(db: Session) -> None:
                 )
             )
 
+    screening_cache_seed = load_mock_data("screening_cache_lists_seed.json")
     if db.scalar(select(ScreeningCacheList.id).limit(1)) is None:
         logger.debug("Seeding screening_cache_lists table from mock data")
-        for record in load_mock_data("screening_cache_lists_seed.json"):
+        for record in screening_cache_seed:
             db.add(
                 ScreeningCacheList(
                     list_name=record["list_name"],
@@ -251,6 +253,62 @@ def seed_database(db: Session) -> None:
                     ),
                     status=record.get("status", "active"),
                     data_payload=record.get("data_payload"),
+                )
+            )
+    else:
+        logger.debug("Backfilling screening_cache_lists seed payloads where older bootstrap rows are missing entries")
+        existing_cache_lists = {
+            item.list_name: item
+            for item in db.scalars(select(ScreeningCacheList))
+        }
+        for record in screening_cache_seed:
+            existing = existing_cache_lists.get(record["list_name"])
+            if existing is None:
+                continue
+            existing_payload = existing.data_payload or {}
+            if existing_payload.get("entries"):
+                continue
+            existing.provider = record["provider"]
+            existing.record_count = record.get("record_count", 0)
+            existing.last_sync = (
+                datetime.fromisoformat(record["last_sync"].replace("Z", "+00:00"))
+                if record.get("last_sync")
+                else None
+            )
+            existing.status = record.get("status", "active")
+            existing.data_payload = record.get("data_payload")
+            existing.updated_at = datetime.now(UTC)
+
+    if db.scalar(select(ScreeningEvent.id).limit(1)) is None:
+        logger.debug("Seeding screening_events table from mock data")
+        for record in load_mock_data("screening_events_seed.json"):
+            db.add(
+                ScreeningEvent(
+                    screening_ref=record["screening_ref"],
+                    trigger_type=record["trigger_type"],
+                    entity_name=record["entity_name"],
+                    entity_type=record.get("entity_type"),
+                    cedent_id=record.get("cedent_id"),
+                    contract_id=record.get("contract_id"),
+                    cession_file_id=record.get("cession_file_id"),
+                    member_id=record.get("member_id"),
+                    keyword_match=record.get("keyword_match", False),
+                    matched_lists=record.get("matched_lists", []),
+                    llm_called=record.get("llm_called", False),
+                    llm_confidence=record.get("llm_confidence"),
+                    llm_reasoning=record.get("llm_reasoning"),
+                    llm_is_genuine=record.get("llm_is_genuine"),
+                    result=record.get("result", "pending"),
+                    reviewed_by=record.get("reviewed_by"),
+                    reviewed_at=(
+                        datetime.fromisoformat(record["reviewed_at"].replace("Z", "+00:00"))
+                        if record.get("reviewed_at")
+                        else None
+                    ),
+                    review_outcome=record.get("review_outcome"),
+                    review_notes=record.get("review_notes"),
+                    created_at=datetime.fromisoformat(record["created_at"].replace("Z", "+00:00")),
+                    updated_at=datetime.fromisoformat(record["updated_at"].replace("Z", "+00:00")),
                 )
             )
 

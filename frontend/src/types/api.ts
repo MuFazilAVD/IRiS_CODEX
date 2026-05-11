@@ -1496,6 +1496,7 @@ export interface ComplianceScreenEntityResponse {
   cedent_id?: string | null
   member_id?: string | null
   cession_file_id?: string | null
+  sources_screened?: string[]
   identity_context?: ComplianceCedentIdentityContext | null
   identity_match_summary?: ComplianceIdentityMatchSummaryItem[]
 }
@@ -1555,28 +1556,36 @@ export interface ChatbotResponsePayload {
   sources: string[]
 }
 
-export interface ComplianceSanctionsKpis {
-  monthly_screening_pending: number
-  ofac_matches: number
-  fincen_matches: number
-  false_positives_pending: number
-  overrides_awaiting_approval: number
-  high_impact_changes: number
-  audit_exceptions_open: number
-  sensitive_export_alerts: number
-  access_violations: number
-  ref_data_changes: number
-  compliance_holds_active: number
-  escalated_tasks: number
-  contracts_under_review: number
-  screening_coverage_pct: number
+export interface SanctionsWorkspaceKpi {
+  id: string
+  label: string
+  value: number
+  subtitle: string
+  tone: 'default' | 'positive' | 'negative' | string
+  suffix?: string
 }
 
-export interface ComplianceAuditRiskRow {
-  area: string
-  low: number
-  medium: number
-  high: number
+export interface SanctionsWorkspaceTab {
+  key: 'all_cases' | 'pending_review' | 'auto_cleared' | 'blocked' | 'historical' | string
+  label: string
+  count: number
+}
+
+export interface SanctionsWorkspaceCase {
+  screening_ref: string
+  entity_name: string
+  entity_subtitle: string
+  trigger: string
+  watchlists: string[]
+  matches_count: number
+  risk_label: string
+  risk_score: number
+  confidence_pct: number
+  ai_recommendation: string
+  status: string
+  started_at: string
+  processing_seconds: number
+  country: string
 }
 
 export interface ComplianceActiveHit {
@@ -1596,6 +1605,31 @@ export interface ComplianceActiveHit {
   resolved_at?: string | null
   identity_context?: ComplianceCedentIdentityContext | null
   identity_match_summary?: ComplianceIdentityMatchSummaryItem[]
+}
+
+export interface ComplianceScreeningCacheWorkbookEntry {
+  entity_name: string
+  aliases: string[]
+  list_identifier: string
+  entity_type: string
+  country: string
+  street_address: string
+  city: string
+  postal_code: string
+  tax_identification_number: string
+  company_registration_number: string
+  dob: string
+}
+
+export interface ComplianceScreeningCacheWorkbook {
+  list_name: string
+  display_name: string
+  provider: string
+  record_count: number
+  last_sync: string
+  status: string
+  filename: string
+  entries: ComplianceScreeningCacheWorkbookEntry[]
 }
 
 export interface ComplianceCedentIdentityContext {
@@ -1621,12 +1655,15 @@ export interface ComplianceIdentityMatchSummaryItem {
 export interface ComplianceSanctionsOverviewPayload {
   title: string
   subtitle: string
-  insight: string
-  quick_actions: QuickAction[]
-  kpis: ComplianceSanctionsKpis
-  charts: GraphConfig[]
-  audit_risk_heatmap: ComplianceAuditRiskRow[]
-  active_hits: ComplianceActiveHit[]
+  workspace_note: string
+  kpis: SanctionsWorkspaceKpi[]
+  tabs: SanctionsWorkspaceTab[]
+  filters: {
+    trigger_options: string[]
+    country_options: string[]
+  }
+  screening_cache_workbooks: ComplianceScreeningCacheWorkbook[]
+  cases: SanctionsWorkspaceCase[]
 }
 
 export interface ComplianceActiveHitsPayload {
@@ -1655,6 +1692,108 @@ export interface ComplianceBulkScreeningJobResponse {
   job_id: string
   status: string
   estimated_duration_seconds: number
+}
+
+export interface SanctionsCaseEntitySection {
+  entity_name: string
+  aliases: string[]
+  registration_number: string
+  registered_address: string
+  country: string
+  entity_descriptor: string
+  bank_details: string
+  beneficial_owners: string[]
+  identity_context?: ComplianceCedentIdentityContext | null
+}
+
+export interface SanctionsCaseSummary {
+  headline: string
+  description: string
+  tone: 'positive' | 'warning' | 'negative' | string
+}
+
+export interface SanctionsCaseFieldScore {
+  label: string
+  value: number
+}
+
+export interface SanctionsCaseRawMatch {
+  title: string
+  candidate_name: string
+  candidate_id: string
+  subtitle: string
+  country: string
+  entity_type: string
+  aggregate_score: number
+  field_scores: SanctionsCaseFieldScore[]
+}
+
+export interface SanctionsCaseAnalysisFactor {
+  text: string
+  weight_pct: number
+  tone: 'positive' | 'negative' | string
+}
+
+export interface SanctionsCaseAnalysisCheck {
+  label: string
+  passed: boolean
+}
+
+export interface SanctionsCaseAnalysis {
+  label: string
+  confidence_pct: number
+  headline: string
+  body: string
+  factors: SanctionsCaseAnalysisFactor[]
+  checks: SanctionsCaseAnalysisCheck[]
+  recommended_action: string
+}
+
+export interface SanctionsCaseSimpleItem {
+  label: string
+  value: string
+}
+
+export interface SanctionsCaseDecisionHistory {
+  times_reviewed: number
+  last_verdict: string
+  note: string
+}
+
+export interface SanctionsCaseAdverseMedia {
+  severity: string
+  note: string
+}
+
+export interface SanctionsCaseAuditEvent {
+  timestamp: string
+  actor: string
+  actor_type: string
+  detail: string
+}
+
+export interface ComplianceSanctionsCaseDetailPayload {
+  screening_ref: string
+  entity_name: string
+  title: string
+  subtitle: string
+  status: string
+  trigger: string
+  watchlists_screened: string[]
+  started_at: string
+  processing_seconds: number
+  entity_under_screening: SanctionsCaseEntitySection
+  summary: SanctionsCaseSummary
+  raw_match: SanctionsCaseRawMatch | null
+  analysis: SanctionsCaseAnalysis | null
+  network_analysis: {
+    items: SanctionsCaseSimpleItem[]
+    note: string
+  }
+  decision_history: SanctionsCaseDecisionHistory
+  adverse_media: SanctionsCaseAdverseMedia
+  audit_trail: SanctionsCaseAuditEvent[]
+  sources_screened?: string[]
 }
 
 export interface ComplianceHitResolutionResponse {
