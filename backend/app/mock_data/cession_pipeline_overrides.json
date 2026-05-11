@@ -3004,5 +3004,383 @@
         }
       ]
     }
+  },
+  "CES-2026-020": {
+    "pipeline_session_id": "pipe-9bf8a357-4c57-40a4-b425-4b9283b54091",
+    "active_step": "summary",
+    "source_filename": "Atlas_Settlement_Data.xlsx",
+    "source_size_bytes": 5603,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-30,Death,CPI capped 5% applied to pension tranche,\"US$3,040,000\",\"US$3,046,080\",\"US$2,500\",US$0,\"US$3,580\"\r\n2026 Q1,2026-04-30,Suspension,No escalation applicable during suspension period,\"US$3,040,000\",\"US$3,021,760\",\"US$2,500\",US$0,\"-US$20,740\"\r\n2026 Q1,2026-04-30,Reinstatement,CPI capped 5% reapplied after reinstatement,\"US$3,040,000\",\"US$3,052,160\",\"US$2,500\",US$0,\"US$9,660\"\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1133",
+      "completed_at": "2026-05-11T09:02:57.474793Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2025-009",
+      "completed_at": "2026-05-11T09:03:09.472232Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-11T09:02:50.651543Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Atlas_Settlement_Data.xlsx"
+      },
+      {
+        "timestamp": "2026-05-11T09:02:57.520900Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-11T09:02:57.546867Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Atlas Corporate Pensions",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-11T09:03:09.510565Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2025-009 v1.0",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-11T09:03:34.846261Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-11T09:03:47.953134Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "0 critical, 0 warnings"
+      },
+      {
+        "timestamp": "2026-05-11T09:04:01.978122Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-11T09:04:02.010617Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9222"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-11T09:02:50.651543Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-11T09:02:57.485182Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-11T09:02:57.494776Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-11T09:03:09.483913Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-11T09:03:34.820870Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-11T09:03:47.927263Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-11T09:04:01.936801Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-11T09:04:01.948963Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-11T09:02:50.651543Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-11T09:02:57.503628Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-11T09:03:09.493581Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-11T09:03:34.829080Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-11T09:03:47.935983Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-11T09:04:01.958975Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-11T09:04:01.967732Z"
+      }
+    ],
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-009",
+      "settlement_display_id": "STL-2026-Q1-009",
+      "contract_id": "LSC-2025-009",
+      "contract_display_id": "LSC-2025-009",
+      "contract_name": "Atlas Corporate Pensions Longevity Swap 2025",
+      "contract_version": "v1.0",
+      "cedent_id": "CED-1133",
+      "cedent_name": "Atlas Corporate Pensions",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 3040000.0,
+      "floating_leg_amount": 3046080.0,
+      "net_amount": 3580.0,
+      "currency": "USD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-30",
+      "status": "pending_reconciliation",
+      "iris_recommendation": "review",
+      "source": "Created from Settlement file CES-2026-020; reconciliation decision=review",
+      "last_updated": "2026-05-11T09:04:01.754608Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-009",
+        "decision": "review",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-30",
+        "currency": "USD",
+        "expected_source": "existing settlement register",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 3040000.0,
+          "floating_leg": 3046080.0,
+          "fee": 2500.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": 3580.0,
+          "recomputed_net": 8580.0
+        },
+        "system": {
+          "fixed_leg": 3040000.0,
+          "floating_leg": 3046080.0,
+          "fee": 2500.0,
+          "interest_prior_period": 0.0,
+          "net_settlement_amount": 8580.0
+        },
+        "mismatches": [
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 3580.0,
+            "expected": 8580.0,
+            "issue_type": "net_formula_mismatch",
+            "message": "Uploaded Net Settlement Amount does not equal floating minus fixed plus signed fee and interest."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 3580.0,
+            "expected": 8580.0,
+            "issue_type": "net_reconciliation_mismatch",
+            "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+          }
+        ]
+      },
+      "settlement_report_artifacts": [
+        {
+          "artifact_id": "ces-2026-020-cash-settlements-tracker",
+          "settlement_id": "SET-2026-Q1-009",
+          "cession_file_id": "CES-2026-020",
+          "contract_id": "LSC-2025-009",
+          "cedent": "Atlas Corporate Pensions",
+          "period": "Q1 2026",
+          "report_type": "Cash Settlements Tracker",
+          "filename": "CES-2026-020_SET-2026-Q1-009_cash_settlements_tracker.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-020_SET-2026-Q1-009_cash_settlements_tracker.csv",
+          "generated_at": "2026-05-11T09:04:01.754608Z",
+          "source_filename": "Atlas_Settlement_Data.xlsx",
+          "reconciliation_decision": "review",
+          "mismatch_count": 2,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        },
+        {
+          "artifact_id": "ces-2026-020-grdr-load-form",
+          "settlement_id": "SET-2026-Q1-009",
+          "cession_file_id": "CES-2026-020",
+          "contract_id": "LSC-2025-009",
+          "cedent": "Atlas Corporate Pensions",
+          "period": "Q1 2026",
+          "report_type": "GRDR Load Form",
+          "filename": "CES-2026-020_SET-2026-Q1-009_grdr_load_form.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-020_SET-2026-Q1-009_grdr_load_form.csv",
+          "generated_at": "2026-05-11T09:04:01.754608Z",
+          "source_filename": "Atlas_Settlement_Data.xlsx",
+          "reconciliation_decision": "review",
+          "mismatch_count": 2,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        }
+      ]
+    }
+  },
+  "CES-2026-021": {
+    "pipeline_session_id": "pipe-611f8b5b-4db5-4d54-83e2-e31b7ca2df94",
+    "active_step": "exceptions",
+    "source_filename": "Maple Leaf Pension - Q4-25.csv",
+    "source_size_bytes": 532,
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\nQ4- 2025,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-11T11:55:50.482744Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-11T11:55:53.289004Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-11T11:55:43.600185Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple Leaf Pension - Q4-25.csv"
+      },
+      {
+        "timestamp": "2026-05-11T11:55:50.528478Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-11T11:55:50.556839Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-11T11:55:53.325120Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-11T11:55:55.152263Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-11T11:56:03.706148Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "3 critical, 0 warnings"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-11T11:55:43.600185Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-11T11:55:50.492226Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-11T11:55:50.501493Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-11T11:55:53.298426Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-11T11:55:55.125647Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-11T11:56:03.677099Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-11T11:55:43.600185Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-11T11:55:50.510710Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-11T11:55:53.307620Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-11T11:55:55.134470Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-11T11:56:03.686684Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "in_progress",
+        "timestamp": "2026-05-11T11:56:03.696597Z"
+      }
+    ]
   }
 }

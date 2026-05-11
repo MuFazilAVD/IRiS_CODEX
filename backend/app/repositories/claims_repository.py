@@ -186,6 +186,14 @@ class ClaimsRepository:
         self.db.commit()
         return self.list_file_records(cession_file_db_id)
 
+    def update_file_records(self, records: list[CessionFileRecord]) -> list[CessionFileRecord]:
+        for item in records:
+            self.db.add(item)
+        self.db.commit()
+        if not records:
+            return []
+        return self.list_file_records(records[0].cession_file_id)
+
     def list_file_exceptions(self, cession_file_db_id: str) -> list[CessionFileException]:
         statement = (
             select(CessionFileException)

@@ -1163,24 +1163,21 @@ class ComplianceService:
         matches: list[dict[str, Any]],
         identity_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
-        normalized_name = self._normalize_name(entity_name)
-        atlas_ofac_match = next(
-            (
-                item
-                for item in matches
-                if normalized_name == self._normalize_name("Atlas Insurance")
-                and self._normalize_name(str(item.get("entity_name") or "")) == self._normalize_name("Atlas Insurance")
-                and str(item.get("list_name") or "").startswith("OFAC")
-            ),
-            None,
-        )
-        if atlas_ofac_match is not None:
-            logger.info("Applying deterministic Atlas Insurance OFAC screening rule")
+        conservative_exact_match = self._find_conservative_exact_match(entity_name, matches, identity_context)
+        if conservative_exact_match is not None:
+            logger.info(
+                "Applying conservative exact watchlist screening rule entity_name=%s list_name=%s",
+                entity_name,
+                conservative_exact_match["list_name"],
+            )
             return {
                 "is_genuine_match": True,
                 "confidence": 0.97,
-                "reasoning": "Exact Atlas Insurance entity match found in the OFAC cache. Hold in pending review for compliance disposition.",
-                "identity_match_summary": self._identity_match_summary(identity_context, [atlas_ofac_match]),
+                "reasoning": (
+                    f"Exact {entity_name} entity match found in the {conservative_exact_match['list_name']} cache "
+                    "with aligned jurisdiction context. Hold in pending review for compliance disposition."
+                ),
+                "identity_match_summary": self._identity_match_summary(identity_context, [conservative_exact_match]),
                 "llm_called": False,
             }
 
@@ -1207,7 +1204,9 @@ class ComplianceService:
                     "tax identifiers, company registration number, and aliases when available to detect genuine "
                     "matches or false positives. Return JSON only with keys is_genuine_match (boolean), "
                     "confidence (number between 0 and 1), reasoning (string), and identity_match_summary "
-                    "(array of field/status objects). Use conservative compliance judgment."
+                    "(array of field/status objects). Use conservative compliance judgment. If there is an exact "
+                    "legal-name match against a watchlist row and the jurisdiction does not conflict, prefer "
+                    "pending-review treatment even when registration or address fields are sparse."
                 ),
                 input=json.dumps(
                     {
@@ -1264,7 +1263,7 @@ class ComplianceService:
                 "identity_match_summary": identity_summary,
             }
 
-        if normalized_name in {self._normalize_name("Petra Schmidt"), self._normalize_name("Northstar Pension Trust"), self._normalize_name("Maple Leaf Pension Plan")}:
+        if normalized_name in {self._normalize_name("Petra Schmidt"), self._normalize_name("Maple Leaf Pension Plan")}:
             return {
                 "is_genuine_match": False,
                 "confidence": 0.88,
@@ -1289,6 +1288,54 @@ class ComplianceService:
             "reasoning": f"Potential watchlist overlap found against {[item['list_name'] for item in matches]}. Human review is recommended.",
             "identity_match_summary": identity_summary,
         }
+
+    def _find_conservative_exact_match(
+        self,
+        entity_name: str,
+        matches: list[dict[str, Any]],
+        identity_context: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        normalized_name = self._normalize_name(entity_name)
+        if not normalized_name:
+            return None
+
+        identity_country = self._normalize_name(str((identity_context or {}).get("country") or ""))
+        identity_tax_identifier = self._normalize_name(str((identity_context or {}).get("ssn_tin") or ""))
+        identity_company_number = self._normalize_name(str((identity_context or {}).get("uk_company_registration_number") or ""))
+
+        for item in matches:
+            if self._normalize_name(str(item.get("entity_name") or "")) != normalized_name:
+                continue
+
+            match_country = self._normalize_name(str(item.get("country") or ""))
+            if identity_country and match_country and identity_country != match_country:
+                logger.debug(
+                    "Skipping conservative exact watchlist rule because country mismatched entity_name=%s identity_country=%s match_country=%s",
+                    entity_name,
+                    identity_country,
+                    match_country,
+                )
+                continue
+
+            match_tax_identifier = self._normalize_name(str(item.get("tax_identification_number") or ""))
+            if identity_tax_identifier and match_tax_identifier and identity_tax_identifier != match_tax_identifier:
+                logger.debug(
+                    "Skipping conservative exact watchlist rule because tax identifier mismatched entity_name=%s",
+                    entity_name,
+                )
+                continue
+
+            match_company_number = self._normalize_name(str(item.get("company_registration_number") or ""))
+            if identity_company_number and match_company_number and identity_company_number != match_company_number:
+                logger.debug(
+                    "Skipping conservative exact watchlist rule because company registration mismatched entity_name=%s",
+                    entity_name,
+                )
+                continue
+
+            return item
+
+        return None
 
     def _identity_match_summary(
         self,

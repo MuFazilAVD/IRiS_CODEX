@@ -337,9 +337,12 @@ export interface ScreeningHistoryItem {
   id: string
   screening_date: string
   source: string
+  scan_type?: string
   result: string
   reference_id: string
   matches: number
+  reviewer?: string
+  notes?: string
 }
 
 export interface SanctionScreeningSection {

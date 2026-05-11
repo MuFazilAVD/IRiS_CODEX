@@ -80,10 +80,10 @@ async def ai_extract(
 def trigger_sanction_screening(
     cedent_id: str,
     payload: ScreeningTriggerRequest,
-    _: User = Depends(require_roles(["underwriter"])),
+    current_user: User = Depends(require_roles(["underwriter"])),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    return get_service(db).trigger_sanction_screening(cedent_id, payload.sources)
+    return get_service(db).trigger_sanction_screening(cedent_id, payload.sources, current_user)
 
 
 @router.get("/cedents/{cedent_id}/sanction-screening/history")

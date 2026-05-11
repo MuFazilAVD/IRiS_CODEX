@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import uuid
+from collections import Counter
 from copy import deepcopy
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -150,12 +151,13 @@ COLUMN_ALIASES_BY_FIELD = {
         "applicable_indexation_escalation",
         "applicable_indexation/escalation",
         "applicable_indexation_/_escalation",
+        "applicable_indexation___escalation",
         "indexation_escalation",
         "escalation_tranche",
         "indexation_tranche",
     ),
-    "fixed_leg": ("fixed_leg", "fixed_leg_amount", "fixed_amount"),
-    "floating_leg": ("floating_leg", "floating_leg_amount", "floating_amount"),
+    "fixed_leg": ("fixed_leg", "fixed_leg_amount", "fixed_amount", "fixed_leg_value"),
+    "floating_leg": ("floating_leg", "floating_leg_amount", "floating_amount", "floating_leg_value"),
     "fee": ("fee", "fee_admin", "fee_amount", "admin_fee", "quarterly_fee"),
     "interest_prior_period": (
         "interest_on_over_underpayment_from_prior_period",
@@ -824,6 +826,7 @@ class ClaimsService:
 
     def _handle_process_exceptions(self, cession_file: CessionFile, payload: dict[str, Any]) -> dict[str, Any]:
         self._ensure_records_and_exceptions(cession_file)
+        detected_file_type = self._build_detection_payload(cession_file)["file_type"]
         resolutions = payload.get("exception_resolutions", [])
         exceptions_by_id = {
             exception.id: exception for exception in self.repository.list_file_exceptions(cession_file.id)
@@ -865,6 +868,7 @@ class ClaimsService:
             updated_exceptions.append(exception)
 
         self.repository.update_file_exceptions(updated_exceptions)
+        self._apply_filetype_exception_resolutions(cession_file, detected_file_type, updated_exceptions)
         self._apply_exception_counts_to_file(cession_file)
         pending = self._count_unresolved_by_severity(cession_file)
         cession_file.stage = "validated" if sum(pending.values()) == 0 else "exceptions"
@@ -2276,62 +2280,21 @@ class ClaimsService:
             return []
 
         parsed_rows = self._parse_upload_dict_rows(content)
+        repair_context = self._build_settlement_repair_context(parsed_rows)
         templates: list[dict[str, Any]] = []
         for row_index, raw_data in enumerate(parsed_rows, start=1):
             row_number = self._settlement_row_number(raw_data, row_index)
-            period_raw = self._aliased_raw_value(raw_data, "calculation_period")
-            period_label = self._normalize_period_label(period_raw)
-            payment_date_raw = self._aliased_raw_value(raw_data, "payment_date")
-            payment_date = self._parse_flexible_date(payment_date_raw)
-            uploaded_fixed = self._parse_settlement_decimal(self._aliased_raw_value(raw_data, "fixed_leg"))
-            uploaded_floating = self._parse_settlement_decimal(self._aliased_raw_value(raw_data, "floating_leg"))
-            uploaded_fee = self._parse_settlement_decimal(self._aliased_raw_value(raw_data, "fee"))
-            uploaded_interest = self._parse_settlement_decimal(self._aliased_raw_value(raw_data, "interest_prior_period"))
-            uploaded_net = self._parse_settlement_decimal(self._aliased_raw_value(raw_data, "net_settlement_amount"))
+            normalized_row = self._normalize_settlement_row(raw_data, repair_context)
+            period_label = normalized_row["calculation_period"]
+            payment_date = normalized_row["payment_date"]
+            uploaded_fixed = normalized_row["fixed_leg"]
+            uploaded_floating = normalized_row["floating_leg"]
+            uploaded_fee = normalized_row["fee"]
+            uploaded_interest = normalized_row["interest_prior_period"]
+            uploaded_net = normalized_row["net_settlement_amount"]
             currency = self._settlement_currency(raw_data, contract.currency or "USD")
-
-            issues = self._build_settlement_required_issues(raw_data)
-            if period_raw and not period_label:
-                issues.append(
-                    self._validation_issue(
-                        "calculation_period",
-                        "critical",
-                        "invalid_period",
-                        "Calculation Period must identify a quarter such as Q1 2025.",
-                        period_raw,
-                    )
-                )
-            if payment_date_raw and payment_date is None:
-                issues.append(
-                    self._validation_issue(
-                        "payment_date",
-                        "critical",
-                        "invalid_date",
-                        "Payment Date must be a valid date.",
-                        payment_date_raw,
-                    )
-                )
-
-            amount_fields = {
-                "fixed_leg": uploaded_fixed,
-                "floating_leg": uploaded_floating,
-                "fee": uploaded_fee,
-                "interest_prior_period": uploaded_interest,
-                "net_settlement_amount": uploaded_net,
-            }
-            for field_name, amount in amount_fields.items():
-                raw_value = self._aliased_raw_value(raw_data, field_name)
-                if raw_value and amount is None:
-                    issues.append(
-                        self._validation_issue(
-                            field_name,
-                            "critical",
-                            "invalid_amount",
-                            f"{field_name} must be a numeric settlement amount.",
-                            raw_value,
-                        )
-                    )
-
+            unresolved_issues = list(normalized_row["exception_issues"])
+            validation_issues = list(normalized_row["validation_issues"])
             reconciliation = None
             if (
                 period_label
@@ -2362,26 +2325,289 @@ class ClaimsService:
                     "raw_data": raw_data,
                     "mapped_data": {
                         "contract_id": contract_id,
-                        "calculation_period": period_label or period_raw,
-                        "payment_date": payment_date.isoformat() if payment_date else payment_date_raw,
-                        "pensioner_movement": self._aliased_raw_value(raw_data, "pensioner_movement"),
-                        "applicable_indexation_escalation": self._aliased_raw_value(raw_data, "applicable_indexation_escalation"),
-                        "fixed_leg": self._decimal_payload(uploaded_fixed),
-                        "floating_leg": self._decimal_payload(uploaded_floating),
-                        "fee": self._decimal_payload(uploaded_fee),
-                        "interest_prior_period": self._decimal_payload(uploaded_interest),
-                        "net_settlement_amount": self._decimal_payload(uploaded_net),
+                        "calculation_period": period_label,
+                        "payment_date": payment_date.isoformat() if payment_date else None,
+                        "pensioner_movement": normalized_row["pensioner_movement"],
+                        "applicable_indexation_escalation": normalized_row["applicable_indexation_escalation"],
+                        "fixed_leg": self._settlement_decimal_payload(uploaded_fixed),
+                        "floating_leg": self._settlement_decimal_payload(uploaded_floating),
+                        "fee": self._settlement_decimal_payload(uploaded_fee),
+                        "interest_prior_period": self._settlement_decimal_payload(uploaded_interest),
+                        "net_settlement_amount": self._settlement_decimal_payload(uploaded_net),
                         "currency": currency,
                         "settlement_reconciliation": reconciliation,
+                        "agentic_fix_count": sum(1 for issue in validation_issues if issue.get("auto_resolved")),
                     },
-                    "validation_status": self._validation_status_from_issues(issues),
-                    "validation_issues": issues,
+                    "validation_status": self._validation_status_from_issues(unresolved_issues),
+                    "validation_issues": validation_issues,
+                    "exception_issues": unresolved_issues,
                 }
             )
 
         logger.info("Built Settlement reconciliation records")
         logger.debug("Settlement record templates file_id=%s rows=%s", cession_file.file_id, len(templates))
         return templates
+
+    def _build_settlement_repair_context(self, parsed_rows: list[dict[str, str]]) -> dict[str, Any]:
+        period_labels = [
+            normalized
+            for row in parsed_rows
+            if (normalized := self._normalize_period_label(self._aliased_raw_value(row, "calculation_period")))
+        ]
+        payment_dates = [
+            parsed_date
+            for row in parsed_rows
+            if (parsed_date := self._parse_flexible_date(self._aliased_raw_value(row, "payment_date")))
+        ]
+        pensioner_movements = [
+            value
+            for row in parsed_rows
+            if (value := self._aliased_raw_value(row, "pensioner_movement"))
+        ]
+        indexation_values = [
+            value
+            for row in parsed_rows
+            if (value := self._aliased_raw_value(row, "applicable_indexation_escalation"))
+        ]
+        return {
+            "calculation_period": self._most_frequent_text(period_labels),
+            "payment_date": self._most_frequent_date(payment_dates),
+            "pensioner_movement": self._most_frequent_text(pensioner_movements),
+            "applicable_indexation_escalation": self._most_frequent_text(indexation_values),
+        }
+
+    def _normalize_settlement_row(self, raw_data: dict[str, str], repair_context: dict[str, Any]) -> dict[str, Any]:
+        validation_issues: list[dict[str, Any]] = []
+        exception_issues: list[dict[str, Any]] = []
+
+        calculation_period = self._normalize_period_label(self._aliased_raw_value(raw_data, "calculation_period"))
+        calculation_period, period_issues = self._repair_settlement_text_field(
+            field_name="calculation_period",
+            raw_value=self._aliased_raw_value(raw_data, "calculation_period"),
+            normalized_value=calculation_period,
+            repair_value=repair_context.get("calculation_period"),
+            missing_description="Calculation Period is required for Settlement files.",
+            invalid_description="Calculation Period must identify a quarter such as Q1 2025.",
+        )
+        validation_issues.extend(period_issues["all"])
+        exception_issues.extend(period_issues["unresolved"])
+
+        payment_date = self._parse_flexible_date(self._aliased_raw_value(raw_data, "payment_date"))
+        payment_date, payment_date_issues = self._repair_settlement_date_field(
+            field_name="payment_date",
+            raw_value=self._aliased_raw_value(raw_data, "payment_date"),
+            normalized_value=payment_date,
+            repair_value=repair_context.get("payment_date"),
+            missing_description="Payment Date is required for Settlement files.",
+            invalid_description="Payment Date must be a valid ISO date (YYYY-MM-DD).",
+        )
+        validation_issues.extend(payment_date_issues["all"])
+        exception_issues.extend(payment_date_issues["unresolved"])
+
+        pensioner_movement, movement_issues = self._repair_settlement_text_field(
+            field_name="pensioner_movement",
+            raw_value=self._aliased_raw_value(raw_data, "pensioner_movement"),
+            normalized_value=self._aliased_raw_value(raw_data, "pensioner_movement") or None,
+            repair_value=repair_context.get("pensioner_movement"),
+            missing_description="Pensioner Movement is required for Settlement files.",
+            invalid_description=None,
+        )
+        validation_issues.extend(movement_issues["all"])
+        exception_issues.extend(movement_issues["unresolved"])
+
+        applicable_indexation_escalation, indexation_issues = self._repair_settlement_text_field(
+            field_name="applicable_indexation_escalation",
+            raw_value=self._aliased_raw_value(raw_data, "applicable_indexation_escalation"),
+            normalized_value=self._aliased_raw_value(raw_data, "applicable_indexation_escalation") or None,
+            repair_value=repair_context.get("applicable_indexation_escalation"),
+            missing_description="Applicable Indexation / Escalation is required for Settlement files.",
+            invalid_description=None,
+        )
+        validation_issues.extend(indexation_issues["all"])
+        exception_issues.extend(indexation_issues["unresolved"])
+
+        amount_fields = {
+            "fixed_leg": "Fixed Leg is required for Settlement files.",
+            "floating_leg": "Floating Leg is required for Settlement files.",
+            "fee": "Fee is required for Settlement files.",
+            "interest_prior_period": "Interest on Over/Underpayment from Prior Period is required for Settlement files.",
+            "net_settlement_amount": "Net Settlement Amount is required for Settlement files.",
+        }
+        normalized_amounts: dict[str, Decimal | None] = {}
+        for field_name, missing_description in amount_fields.items():
+            normalized_amounts[field_name], amount_issues = self._repair_settlement_amount_field(
+                field_name=field_name,
+                raw_value=self._aliased_raw_value(raw_data, field_name),
+                missing_description=missing_description,
+            )
+            validation_issues.extend(amount_issues["all"])
+            exception_issues.extend(amount_issues["unresolved"])
+
+        return {
+            "calculation_period": calculation_period,
+            "payment_date": payment_date,
+            "pensioner_movement": pensioner_movement,
+            "applicable_indexation_escalation": applicable_indexation_escalation,
+            "fixed_leg": normalized_amounts["fixed_leg"],
+            "floating_leg": normalized_amounts["floating_leg"],
+            "fee": normalized_amounts["fee"],
+            "interest_prior_period": normalized_amounts["interest_prior_period"],
+            "net_settlement_amount": normalized_amounts["net_settlement_amount"],
+            "validation_issues": validation_issues,
+            "exception_issues": exception_issues,
+        }
+
+    def _repair_settlement_text_field(
+        self,
+        *,
+        field_name: str,
+        raw_value: str,
+        normalized_value: str | None,
+        repair_value: str | None,
+        missing_description: str,
+        invalid_description: str | None,
+    ) -> tuple[str | None, dict[str, list[dict[str, Any]]]]:
+        all_issues: list[dict[str, Any]] = []
+        unresolved: list[dict[str, Any]] = []
+        normalized_text = str(normalized_value or "").strip() or None
+        raw_text = str(raw_value or "").strip()
+        if normalized_text:
+            return normalized_text, {"all": all_issues, "unresolved": unresolved}
+        if repair_value:
+            all_issues.append(
+                self._settlement_auto_fix_issue(
+                    field_name,
+                    raw_text,
+                    str(repair_value),
+                    f"{field_name} was {'imputed from the most frequent file value' if not raw_text else 'normalized using the most frequent valid file value'}.",
+                )
+            )
+            return str(repair_value), {"all": all_issues, "unresolved": unresolved}
+
+        issue_type = "missing_required_field" if not raw_text else "invalid_value"
+        description = missing_description if not raw_text else (invalid_description or missing_description)
+        issue = self._validation_issue(
+            field_name,
+            "critical",
+            issue_type,
+            description,
+            raw_text,
+        )
+        all_issues.append(issue)
+        unresolved.append(issue)
+        return None, {"all": all_issues, "unresolved": unresolved}
+
+    def _repair_settlement_date_field(
+        self,
+        *,
+        field_name: str,
+        raw_value: str,
+        normalized_value: date | None,
+        repair_value: date | None,
+        missing_description: str,
+        invalid_description: str,
+    ) -> tuple[date | None, dict[str, list[dict[str, Any]]]]:
+        all_issues: list[dict[str, Any]] = []
+        unresolved: list[dict[str, Any]] = []
+        raw_text = str(raw_value or "").strip()
+        if normalized_value is not None:
+            if raw_text and raw_text != normalized_value.isoformat():
+                all_issues.append(
+                    self._settlement_auto_fix_issue(
+                        field_name,
+                        raw_text,
+                        normalized_value.isoformat(),
+                        f"{field_name} was normalized to ISO format before settlement processing.",
+                    )
+                )
+            return normalized_value, {"all": all_issues, "unresolved": unresolved}
+        if repair_value is not None:
+            all_issues.append(
+                self._settlement_auto_fix_issue(
+                    field_name,
+                    raw_text,
+                    repair_value.isoformat(),
+                    f"{field_name} was imputed from the most frequent valid file date.",
+                )
+            )
+            return repair_value, {"all": all_issues, "unresolved": unresolved}
+
+        issue = self._validation_issue(
+            field_name,
+            "critical",
+            "missing_required_field" if not raw_text else "invalid_date",
+            missing_description if not raw_text else invalid_description,
+            raw_text,
+        )
+        all_issues.append(issue)
+        unresolved.append(issue)
+        return None, {"all": all_issues, "unresolved": unresolved}
+
+    def _repair_settlement_amount_field(
+        self,
+        *,
+        field_name: str,
+        raw_value: str,
+        missing_description: str,
+    ) -> tuple[Decimal | None, dict[str, list[dict[str, Any]]]]:
+        all_issues: list[dict[str, Any]] = []
+        unresolved: list[dict[str, Any]] = []
+        raw_text = str(raw_value or "").strip()
+        parsed_amount = self._parse_settlement_decimal(raw_text)
+        if parsed_amount is not None:
+            normalized_amount = self._settlement_amount_text(parsed_amount)
+            if raw_text and raw_text != normalized_amount:
+                all_issues.append(
+                    self._settlement_auto_fix_issue(
+                        field_name,
+                        raw_text,
+                        normalized_amount,
+                        f"{field_name} was normalized by stripping currency/formatting and coercing the amount before validation.",
+                    )
+                )
+            return parsed_amount, {"all": all_issues, "unresolved": unresolved}
+
+        issue = self._validation_issue(
+            field_name,
+            "critical",
+            "missing_required_field" if not raw_text else "invalid_amount",
+            missing_description if not raw_text else f"{field_name} must be a numeric settlement amount.",
+            raw_text,
+        )
+        all_issues.append(issue)
+        unresolved.append(issue)
+        return None, {"all": all_issues, "unresolved": unresolved}
+
+    def _settlement_auto_fix_issue(
+        self,
+        field_name: str,
+        current_value: Any,
+        resolved_value: Any,
+        description: str,
+    ) -> dict[str, Any]:
+        issue = self._validation_issue(
+            field_name,
+            "info",
+            "auto_fix_applied",
+            description,
+            current_value,
+            resolved_value,
+            1.0,
+        )
+        issue["auto_resolved"] = True
+        issue["resolved_value"] = None if resolved_value is None else str(resolved_value)
+        return issue
+
+    def _most_frequent_text(self, values: list[str]) -> str | None:
+        cleaned = [str(value).strip() for value in values if str(value).strip()]
+        if not cleaned:
+            return None
+        return Counter(cleaned).most_common(1)[0][0]
+
+    def _most_frequent_date(self, values: list[date]) -> date | None:
+        if not values:
+            return None
+        return Counter(values).most_common(1)[0][0]
 
     def _parse_upload_dict_rows(self, content: str) -> list[dict[str, str]]:
         try:
@@ -2472,19 +2698,19 @@ class ClaimsService:
             "expected_source": expected["source"],
             "mock_expected": expected["mock_expected"],
             "uploaded": {
-                "fixed_leg": self._decimal_payload(uploaded_fixed),
-                "floating_leg": self._decimal_payload(uploaded_floating),
-                "fee": self._decimal_payload(uploaded_fee),
-                "interest_prior_period": self._decimal_payload(uploaded_interest),
-                "net_settlement_amount": self._decimal_payload(uploaded_net),
-                "recomputed_net": self._decimal_payload(uploaded_recomputed_net),
+                "fixed_leg": self._settlement_decimal_payload(uploaded_fixed),
+                "floating_leg": self._settlement_decimal_payload(uploaded_floating),
+                "fee": self._settlement_decimal_payload(uploaded_fee),
+                "interest_prior_period": self._settlement_decimal_payload(uploaded_interest),
+                "net_settlement_amount": self._settlement_decimal_payload(uploaded_net),
+                "recomputed_net": self._settlement_decimal_payload(uploaded_recomputed_net),
             },
             "system": {
-                "fixed_leg": self._decimal_payload(expected["fixed_leg"]),
-                "floating_leg": self._decimal_payload(expected["floating_leg"]),
-                "fee": self._decimal_payload(uploaded_fee),
-                "interest_prior_period": self._decimal_payload(uploaded_interest),
-                "net_settlement_amount": self._decimal_payload(system_net),
+                "fixed_leg": self._settlement_decimal_payload(expected["fixed_leg"]),
+                "floating_leg": self._settlement_decimal_payload(expected["floating_leg"]),
+                "fee": self._settlement_decimal_payload(uploaded_fee),
+                "interest_prior_period": self._settlement_decimal_payload(uploaded_interest),
+                "net_settlement_amount": self._settlement_decimal_payload(system_net),
             },
             "mismatches": mismatches,
         }
@@ -2503,8 +2729,8 @@ class ClaimsService:
         mismatches.append(
             {
                 "field": field_name,
-                "uploaded": self._decimal_payload(uploaded),
-                "expected": self._decimal_payload(expected),
+                "uploaded": self._settlement_decimal_payload(uploaded),
+                "expected": self._settlement_decimal_payload(expected),
                 "issue_type": issue_type,
                 "message": message,
             }
@@ -2648,6 +2874,15 @@ class ClaimsService:
     ) -> dict[str, Any] | None:
         raw_data = json.loads(record.raw_data or "{}")
         mapped_data = json.loads(record.mapped_data or "{}")
+        return self._build_settlement_reconciliation_from_payload(cession_file, contract, raw_data, mapped_data)
+
+    def _build_settlement_reconciliation_from_payload(
+        self,
+        cession_file: CessionFile,
+        contract: Contract,
+        raw_data: dict[str, Any],
+        mapped_data: dict[str, Any],
+    ) -> dict[str, Any] | None:
         period_raw = self._aliased_raw_value(raw_data, "calculation_period") or mapped_data.get("calculation_period")
         period_label = self._normalize_period_label(period_raw)
         if not period_label:
@@ -2692,6 +2927,110 @@ class ClaimsService:
         if value is None:
             return None
         return self._decimal_cents(value)
+
+    def _apply_filetype_exception_resolutions(
+        self,
+        cession_file: CessionFile,
+        file_type: str,
+        updated_exceptions: list[CessionFileException],
+    ) -> None:
+        if file_type == "Settlement":
+            self._apply_settlement_exception_resolutions(cession_file, updated_exceptions)
+            return
+        # Placeholder for future file-type-specific resolution mutation.
+
+    def _apply_settlement_exception_resolutions(
+        self,
+        cession_file: CessionFile,
+        updated_exceptions: list[CessionFileException],
+    ) -> None:
+        if not cession_file.contract_id:
+            return
+        contract = self.repository.get_contract(cession_file.contract_id)
+        if contract is None:
+            return
+
+        records_by_row = {record.row_number: record for record in self.repository.list_file_records(cession_file.id)}
+        records_to_update: list[CessionFileRecord] = []
+        for exception in updated_exceptions:
+            if exception.resolution not in {"accepted", "overridden"}:
+                continue
+            record = records_by_row.get(exception.row_number)
+            if record is None:
+                continue
+            raw_data = json.loads(record.raw_data or "{}")
+            mapped_data = json.loads(record.mapped_data or "{}")
+            validation_issues = json.loads(record.validation_issues or "[]")
+
+            self._apply_settlement_field_override(raw_data, mapped_data, exception.field_name, exception.current_value)
+            mapped_data["settlement_reconciliation"] = self._build_settlement_reconciliation_from_payload(
+                cession_file,
+                contract,
+                raw_data,
+                mapped_data,
+            )
+            remaining_issues = [
+                issue
+                for issue in validation_issues
+                if not (
+                    issue.get("field_name") == exception.field_name
+                    and issue.get("issue_type") == exception.issue_type
+                )
+            ]
+            record.raw_data = json.dumps(raw_data)
+            record.mapped_data = json.dumps(mapped_data)
+            record.validation_issues = json.dumps(remaining_issues)
+            record.validation_status = self._validation_status_from_issues(
+                [issue for issue in remaining_issues if not issue.get("auto_resolved")]
+            )
+            records_to_update.append(record)
+
+        if records_to_update:
+            self.repository.update_file_records(records_to_update)
+
+    def _apply_settlement_field_override(
+        self,
+        raw_data: dict[str, Any],
+        mapped_data: dict[str, Any],
+        field_name: str,
+        value: Any,
+    ) -> None:
+        serialized_value = self._settlement_override_value(field_name, value)
+        if serialized_value is None:
+            return
+
+        mapped_data[field_name] = serialized_value
+        normalized_aliases = [self._normalize_column_name(alias) for alias in COLUMN_ALIASES_BY_FIELD.get(field_name, (field_name,))]
+        updated_any_alias = False
+        for alias in normalized_aliases:
+            if alias in raw_data:
+                raw_data[alias] = self._settlement_override_raw_text(field_name, serialized_value)
+                updated_any_alias = True
+        if not updated_any_alias:
+            raw_data[self._normalize_column_name(field_name)] = self._settlement_override_raw_text(field_name, serialized_value)
+
+    def _settlement_override_value(self, field_name: str, value: Any) -> Any:
+        if field_name == "calculation_period":
+            normalized = self._normalize_period_label(value)
+            return normalized or (str(value).strip() if value is not None else None)
+        if field_name == "payment_date":
+            parsed = self._parse_flexible_date(value)
+            return parsed.isoformat() if parsed else (str(value).strip() if value is not None else None)
+        if field_name in {"pensioner_movement", "applicable_indexation_escalation", "currency"}:
+            text = str(value or "").strip()
+            return text.upper() if field_name == "currency" else text
+        if field_name in {"fixed_leg", "floating_leg", "fee", "interest_prior_period", "net_settlement_amount"}:
+            parsed_amount = self._parse_settlement_decimal(value)
+            return self._settlement_decimal_payload(parsed_amount) if parsed_amount is not None else None
+        return str(value or "").strip() or None
+
+    def _settlement_override_raw_text(self, field_name: str, value: Any) -> str:
+        if value is None:
+            return ""
+        if field_name in {"fixed_leg", "floating_leg", "fee", "interest_prior_period", "net_settlement_amount"}:
+            parsed_amount = self._parse_settlement_decimal(value)
+            return self._settlement_amount_text(parsed_amount) if parsed_amount is not None else str(value)
+        return str(value)
 
     def _store_mock_settlement_expectation(self, settlement_id: str, payload: dict[str, Any]) -> None:
         store = self._read_settlement_override_store()
@@ -2770,14 +3109,38 @@ class ClaimsService:
             return None
         return float(self._decimal_cents(value))
 
+    def _settlement_decimal_payload(self, value: Decimal | float | int | None) -> int | float | None:
+        if value is None:
+            return None
+        normalized = self._decimal_cents(value)
+        return int(normalized) if normalized == normalized.to_integral_value() else float(normalized)
+
+    def _settlement_amount_text(self, value: Decimal | float | int | None) -> str:
+        if value is None:
+            return ""
+        normalized = self._decimal_cents(value)
+        return str(int(normalized)) if normalized == normalized.to_integral_value() else format(normalized, "f")
+
     def _parse_flexible_date(self, value: Any) -> date | None:
         text = str(value or "").strip()
         if not text:
             return None
+        text = re.sub(r"\([^)]*\)", "", text).strip()
+        text = re.sub(r"\s+", " ", text)
         parsed_iso = self._parse_iso_date(text)
         if parsed_iso:
             return parsed_iso
-        for date_format in ("%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%m-%d-%Y", "%d %b %Y", "%d %B %Y"):
+        for date_format in (
+            "%Y/%m/%d",
+            "%Y.%m.%d",
+            "%d/%m/%Y",
+            "%m/%d/%Y",
+            "%d-%m-%Y",
+            "%m-%d-%Y",
+            "%d.%m.%Y",
+            "%d %b %Y",
+            "%d %B %Y",
+        ):
             try:
                 return datetime.strptime(text, date_format).date()
             except ValueError:
@@ -3219,7 +3582,7 @@ class ClaimsService:
         if file_type == "Settlement":
             exceptions: list[dict[str, Any]] = []
             for record in template_records:
-                for issue in record.get("validation_issues", []):
+                for issue in record.get("exception_issues", record.get("validation_issues", [])):
                     exceptions.append(
                         {
                             "row_number": record["row_number"],

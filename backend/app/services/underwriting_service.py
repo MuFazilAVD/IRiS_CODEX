@@ -15,6 +15,7 @@ from app.models.audit_event import AuditEvent
 from app.models.cedent import Cedent
 from app.models.contract import Contract
 from app.models.population import PolicyRegister
+from app.models.user import User
 from app.models.worklist import WorklistItem
 from app.repositories.underwriting_repository import UnderwritingRepository
 from app.services.population_csv import PopulationCsvNormalizedRow, parse_population_file
@@ -224,54 +225,86 @@ class UnderwritingService:
             "low_confidence_fields": ["lei", "tax_identification_number"],
         }
 
-    def trigger_sanction_screening(self, cedent_id: str, sources: list[str]) -> dict[str, Any]:
+    def trigger_sanction_screening(self, cedent_id: str, sources: list[str], actor: User) -> dict[str, Any]:
         logger.info("Triggering cedant sanctions screening")
-        logger.debug("Sanctions screening cedent_id=%s sources=%s", cedent_id, sources)
+        logger.debug("Sanctions screening cedent_id=%s sources=%s actor=%s", cedent_id, sources, actor.email)
         cedent = self.repository.get_cedent(cedent_id)
         if cedent is None:
             logger.error("Sanctions screening failed for missing cedent_id=%s", cedent_id)
             raise IrisAPIError(404, "Cedant not found", f"{cedent_id} does not exist")
 
+        from app.repositories.compliance_repository import ComplianceRepository
+        from app.services.compliance_service import ComplianceService
+
+        normalized_sources = self._normalize_cedent_screening_sources(sources)
+        compliance_service = ComplianceService(ComplianceRepository(self.repository.db))
+        screening_result = compliance_service.screen_entity(
+            screening_ref=None,
+            entity_name=cedent.legal_entity_name,
+            dob=None,
+            cedent_id=cedent.cedent_id,
+            member_id=None,
+            trigger_type="onboarding" if cedent.status == "onboarding" else "adhoc",
+            cession_file_id=None,
+            country=cedent.country_of_registration,
+            registration_number=cedent.registered_company_number,
+            aliases=", ".join([value for value in [cedent.trading_name] if value]),
+            registered_address=None,
+            beneficial_owners=None,
+            bank_details=None,
+            sources=normalized_sources,
+            persist_case=True,
+            actor=actor,
+        )
+
         store = self._read_detail_store()
         payload = self._build_cedent_payload(cedent, self.repository.list_contracts_for_cedent(cedent_id))
         screening = deepcopy(payload["sanction_screening"])
         now = datetime.now(UTC)
-        screening_status = "cleared"
+        screening_ref = str(screening_result["screening_ref"])
+        matched_source_labels = {
+            self._cedent_screening_source_label(item)
+            for item in screening_result.get("matched_lists", [])
+        }
+        result = str(screening_result.get("result") or "cleared")
+        any_match = result == "review"
 
-        for source in sources:
-            source_key = source.upper()
-            if cedent_id == "CED-1133" and source_key == "OFAC":
-                result = "review"
-                matches = 1
-                reference_id = f"REF-{now.strftime('%H%M%S')}"
-                screening_status = "review"
-            else:
-                result = "cleared"
-                matches = 0
-                reference_id = f"REF-{now.strftime('%H%M%S')}"
+        for source in normalized_sources:
+            source_label = self._cedent_screening_source_label(source)
+            source_matched = source_label in matched_source_labels
+            row_result = "Pending Review" if any_match and source_matched else "Cleared"
+            matches = 1 if source_matched else 0
+            notes = (
+                str(screening_result.get("llm_reasoning") or "Potential watchlist match found; waiting for compliance approval.")
+                if source_matched
+                else "No potential matches found"
+            )
 
             screening["history"].insert(
                 0,
                 {
-                    "id": f"{cedent_id}-{source_key}-{now.strftime('%Y%m%d%H%M%S')}",
+                    "id": f"{screening_ref}-{source_label}",
                     "screening_date": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "source": source_key,
-                    "result": result,
-                    "reference_id": reference_id,
+                    "source": source_label,
+                    "scan_type": "Adhoc",
+                    "result": row_result,
+                    "reference_id": screening_ref,
                     "matches": matches,
+                    "reviewer": actor.email,
+                    "notes": notes,
                 },
             )
-            existing = next((item for item in screening["source_status"] if item["source"] == source_key), None)
+            existing = next((item for item in screening["source_status"] if self._cedent_screening_source_label(item["source"]) == source_label), None)
             updated_source = {
-                "source": source_key,
-                "status": "Review" if result == "review" else "Cleared",
+                "source": source_label,
+                "status": "Pending Review" if source_matched else "Cleared",
                 "last_scan": now.strftime("%Y-%m-%d"),
-                "reference": reference_id,
+                "reference": screening_ref,
                 "matches": matches,
             }
             if existing:
                 screening["source_status"] = [
-                    updated_source if item["source"] == source_key else item for item in screening["source_status"]
+                    updated_source if self._cedent_screening_source_label(item["source"]) == source_label else item for item in screening["source_status"]
                 ]
             else:
                 screening["source_status"].append(updated_source)
@@ -280,7 +313,7 @@ class UnderwritingService:
         screening["open_hits"] = sum(1 for item in screening["history"] if item["matches"] > 0)
         screening["sources_monitored"] = len(screening["source_status"])
 
-        cedent.screening_status = screening_status
+        cedent.screening_status = "pending" if any_match else "cleared"
         cedent.updated_at = datetime.utcnow()
         self.repository.update_cedent(cedent)
         store.setdefault(cedent_id, {})["sanction_screening"] = screening
@@ -291,15 +324,17 @@ class UnderwritingService:
                 "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
                 "actor": "IRiS Screening Engine",
                 "action": "Triggered sanction screening",
-                "detail": ", ".join(sources),
+                "detail": f"{', '.join(normalized_sources)} - {screening_ref} - {'pending review' if any_match else 'cleared'}",
             },
         )
         self._write_detail_store(store)
 
         return {
-            "screening_id": f"scr-{cedent_id.lower()}-{now.strftime('%Y%m%d%H%M%S')}",
-            "status": "initiated",
-            "estimated_completion_seconds": 5,
+            "screening_id": screening_ref,
+            "status": "pending_review" if any_match else "cleared",
+            "estimated_completion_seconds": 0,
+            "matched_lists": screening_result.get("matched_lists", []),
+            "result": result,
         }
 
     def get_sanction_screening_history(self, cedent_id: str) -> dict[str, Any]:
@@ -321,6 +356,22 @@ class UnderwritingService:
             "next_periodic_due": screening["next_periodic_due"],
             "history": screening["history"],
         }
+
+    def _normalize_cedent_screening_sources(self, sources: list[str]) -> list[str]:
+        normalized: list[str] = []
+        for source in sources or ["OFAC", "FinCEN"]:
+            label = self._cedent_screening_source_label(source)
+            if label not in normalized:
+                normalized.append(label)
+        return normalized or ["OFAC", "FinCEN"]
+
+    def _cedent_screening_source_label(self, value: str) -> str:
+        normalized = (value or "").strip().lower()
+        if normalized.startswith("ofac"):
+            return "OFAC"
+        if normalized.startswith("fincen"):
+            return "FinCEN"
+        return value
 
     def update_status(self, cedent_id: str, status: str, reason: str) -> dict[str, Any]:
         logger.info("Updating cedant status")

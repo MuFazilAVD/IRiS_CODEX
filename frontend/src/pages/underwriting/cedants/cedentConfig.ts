@@ -91,10 +91,10 @@ export const cedentDetailSections: SectionNavItem[] = [
   { key: 'operational_connectivity', title: 'Operational Connectivity', index: '09', group: 'Master Data', editable: true },
   { key: 'actuarial_preferences', title: 'Actuarial Preferences', index: '10', group: 'Master Data', editable: true },
   { key: 'access_beneficiary_rules', title: 'Access & Beneficiary Rules', index: '11', group: 'Master Data', editable: true },
-  { key: 'sanction_screening', title: 'Sanction Screening', index: '12', group: 'Master Data', editable: false },
-  { key: 'audit_approval', title: 'Audit & Approval', index: '13', group: 'Master Data', editable: false },
+  { key: 'audit_approval', title: 'Audit & Approval', index: '12', group: 'Master Data', editable: false },
   { key: 'mapped_contracts', title: 'Mapped Contracts', index: 'A', group: 'Linked Data', editable: false },
   { key: 'calculations', title: 'Calculations', index: 'B', group: 'Linked Data', editable: false },
+  { key: 'sanction_screening', title: 'Sanction Screening', index: 'C', group: 'Linked Data', editable: false },
 ]
 
 export const wizardSteps: WizardStep[] = [

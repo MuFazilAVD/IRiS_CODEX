@@ -99,10 +99,10 @@
     ]
   },
   "SET-2026-Q1-009": {
-    "source": "CES-2026-017 (Atlas_Settlement_Data.xlsx)",
+    "source": "CES-2026-020 (Atlas_Settlement_Data.xlsx)",
     "iris_recommendation": "review",
     "status": "pending_reconciliation",
-    "last_updated": "2026-05-08T07:38:59.098594Z",
+    "last_updated": "2026-05-11T09:04:01.754608Z",
     "settlement_reconciliation": {
       "settlement_id": "SET-2026-Q1-009",
       "decision": "review",
@@ -111,7 +111,7 @@
       "period_end": "2026-03-31",
       "payment_date": "2026-04-30",
       "currency": "USD",
-      "expected_source": "contract terms and current policy_register population",
+      "expected_source": "existing settlement register",
       "mock_expected": false,
       "uploaded": {
         "fixed_leg": 3040000.0,
@@ -122,27 +122,13 @@
         "recomputed_net": 8580.0
       },
       "system": {
-        "fixed_leg": 2998356.16,
-        "floating_leg": 14375.0,
+        "fixed_leg": 3040000.0,
+        "floating_leg": 3046080.0,
         "fee": 2500.0,
         "interest_prior_period": 0.0,
-        "net_settlement_amount": -2981481.16
+        "net_settlement_amount": 8580.0
       },
       "mismatches": [
-        {
-          "field": "fixed_leg",
-          "uploaded": 3040000.0,
-          "expected": 2998356.16,
-          "issue_type": "fixed_leg_mismatch",
-          "message": "Uploaded Fixed Leg does not exactly match IRiS expected Fixed Leg."
-        },
-        {
-          "field": "floating_leg",
-          "uploaded": 3046080.0,
-          "expected": 14375.0,
-          "issue_type": "floating_leg_mismatch",
-          "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
-        },
         {
           "field": "net_settlement_amount",
           "uploaded": 3580.0,
@@ -153,7 +139,7 @@
         {
           "field": "net_settlement_amount",
           "uploaded": 3580.0,
-          "expected": -2981481.16,
+          "expected": 8580.0,
           "issue_type": "net_reconciliation_mismatch",
           "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
         }
@@ -187,6 +173,13 @@
         "type": "System",
         "action": "Settlement file reconciled",
         "detail": "decision=review; mismatches=4"
+      },
+      {
+        "timestamp": "2026-05-11T09:04:01.754608Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=review; mismatches=2"
       }
     ]
   },
@@ -309,6 +302,28 @@
       "fixed_leg_amount": 7198684.93,
       "floating_leg_amount": 7295867.18,
       "net_amount": 100182.25,
+      "currency": "EUR",
+      "source": "MOCK IMPLEMENTATION - deterministic settlement expectation"
+    },
+    "SET-2026-Q1-009": {
+      "contract_id": "LSC-2025-009",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 2998356.16,
+      "floating_leg_amount": 3016346.3,
+      "net_amount": 20490.14,
+      "currency": "USD",
+      "source": "MOCK IMPLEMENTATION - deterministic settlement expectation"
+    },
+    "SET-2025-Q2-002": {
+      "contract_id": "LSC-2025-002",
+      "period_label": "Q2 2025",
+      "period_start": "2025-04-01",
+      "period_end": "2025-06-30",
+      "fixed_leg_amount": 7120438.36,
+      "floating_leg_amount": 7216564.28,
+      "net_amount": 98925.92,
       "currency": "EUR",
       "source": "MOCK IMPLEMENTATION - deterministic settlement expectation"
     }

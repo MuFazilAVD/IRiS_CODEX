@@ -233,6 +233,107 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-11T11:53:49Z]
+
+### Prompt
+now fix the validation and exception stages of cession file processing pipeline.
+The below guidelines are strictly to be followed for and only for filetype, "settlements"
+
+Our target schema:
+- Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount
+
+Sample data :
+2025 Q2,2025-07-12(YYYY-MM-DD),Reinstatement,CPI capped 5% reapplied after reinstatement,4117500,4133970,2800,0,13670
+
+Check the date format, etc.
+
+While validation-exception and fixing runs, you should be using strategies like fix dd format, impute data (most frequest date etc.), reemove currency tag and make amounts integer, change columns names to target scehma like fixed amount -> fixed leg etc.
+Fix this is an agentic manner before processing the file
+
+remember this criterias are strictly for settlment files, for the rest, keep if anything is there already, otherwise keep a placeholder where we can add in future
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+  - docs/api/CLAIMS.md
+  - docs/db/SCHEMA.md
+  - backend/app/services/claims_service.py
+  - backend/app/repositories/claims_repository.py
+  - docs/mock_data/bavarian_settlement_2025Q1.csv
+  - docs/mock_data/bavarian_settlement_2025Q1_amount_mismatch.csv
+  - docs/mock_data/bavarian_settlement_2025Q1_fee_admin_tab.csv
+
+### Actions Taken
+- Added settlement-only agentic repair logic before unresolved validation exceptions are created.
+- Normalized settlement aliases into the target schema, including `Fixed Amount` to `Fixed Leg` and tab-delimited header variants already supported by the pipeline.
+- Normalized settlement dates into ISO format, including annotated inputs such as `2025-07-12(YYYY-MM-DD)`, and added file-level most-frequent-value imputation for missing settlement period/date/text fields.
+- Normalized settlement numeric fields by stripping currency/formatting noise and storing integer JSON payloads when the values are whole numbers.
+- Updated settlement exception handling so accepted or overridden settlement exceptions mutate the underlying file record state and refresh the reconciliation payload used by downstream processing.
+- Added a repository helper for updating existing cession file records.
+- Verified Python compilation and ran a focused backend smoke script against the settlement samples plus a malformed synthetic settlement file.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- backend/app/repositories/claims_repository.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Settlement auto-repair/imputation was intentionally scoped to Settlement files only, per request; non-settlement file types keep their current behavior and only have a placeholder hook for future file-type-specific exception mutation.
+
+### Status
+✅ Completed
+
+## [2026-05-11 11:29:40 UTC]
+
+### Prompt
+northstar is getting treated as false positive sometimes despite me adding a sanction in db:
+
+'''Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.'''
+
+
+either update db to make it more aligned or make the prompt harder so that it will be detected and status will be pending review instead of cleared
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/api/COMPLIANCE.md
+  - docs/api/API_ADDITIONS.md
+  - docs/ui/06-compliance/SANCTIONS.md
+  - docs/db/SCHEMA_ADDITIONS.md
+  - backend/app/services/compliance_service.py
+  - backend/app/services/underwriting_service.py
+  - backend/app/repositories/compliance_repository.py
+  - backend/app/models/screening_cache_list.py
+  - backend/iris.db
+
+### Actions Taken
+- Traced the sanctions screening flow from cedant onboarding into the compliance screening engine and confirmed the tracker/spec path before changing behavior.
+- Inspected the live SQLite data and verified that `screening_cache_lists` already contains an exact `Northstar Pension Trust` OFAC row with matching `UK` jurisdiction.
+- Confirmed the recent screening events were being persisted as `cleared` with the fallback false-positive reasoning and without an LLM call.
+- Replaced the narrow Atlas-only deterministic rule with a conservative exact-watchlist rule so exact DB-backed entity-name hits with aligned jurisdiction and no conflicting identifiers are treated as genuine matches and sent to pending review.
+- Tightened the OpenAI screening instruction so exact legal-name matches with non-conflicting jurisdiction are handled conservatively if the model path is used.
+- Removed `Northstar Pension Trust` from the fallback hardcoded false-positive bucket.
+- Verified the updated service by compiling `backend/app/services/compliance_service.py` and running a targeted smoke check that now returns `result='review'` for `Northstar Pension Trust`.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/services/compliance_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No DB row update was required because the local `screening_cache_lists` table already contains the Northstar sanction entry; the mismatch came from service logic that was too permissive for exact-name hits when identity fields were sparse.
+- The OpenAI verification path was not relied upon for the fix because recent persisted events showed `llm_called = false`; the conservative service rule now covers that runtime path safely.
+
+### Status
+✅ Completed
+
 ## [2026-05-11T05:53:48.9306130Z]
 
 ### Prompt
@@ -4113,6 +4214,59 @@ AttributeError: 'ComplianceRepository' object has no attribute 'get_screening_ca
 ### Issues / Deviations
 - No new spec file for a standalone screening-cache page was present; implementation follows the existing Compliance module structure and preserves the existing workbook API contracts.
 - Existing historical screening cases without saved `watchlists_screened` context may continue to show only their matched list; newly run screenings store the selected OFAC / FinCEN sources.
+
+### Status
+✅ Completed
+
+## [2026-05-11 11:06:01 +00:00]
+
+### Prompt
+I need to make a few changes in the cedent section:
+1) In the detailed view of cedent, the sanction screening section looks different from what was provided as reference. Refer the attached screenshot to change the view accordingly
+2) Inside this page there is a button on the top right corner above the screening history called "Run Adhoc Screening-All Sources". When we click on that button the corresponding cedent screening should happen using the OFAC and FinCEN database, like how we did in the sanctionScreening page
+3) These details should be appended in the screening history as well
+4) For exisiting cedent as well as New cedent this button should work for the screening task
+5) If the screening passed and didnt find any potential match in both OFAC and FinCEN then the flow will automatically move forward with the next process and if potential match is found, then it will show pending, waiting for human approval
+
+### Context Used
+- Files referred:
+  - docs/ui/04-underwriting/cedents/CEDENTS.md
+  - docs/ui-screens/Cedants/Cedent_SanctionScreening(1).png
+  - docs/ui-screens/Cedants/Cedent_SanctionScreening(2).png
+  - docs/api/UNDERWRITING.md
+  - docs/db/SCHEMA.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/underwriting/cedants/CedentDetailPage.tsx
+  - frontend/src/pages/underwriting/cedants/CedentSectionContent.tsx
+  - frontend/src/pages/underwriting/cedants/NewCedantWizard.tsx
+  - frontend/src/pages/underwriting/cedants/cedentConfig.ts
+  - backend/app/routers/underwriting.py
+  - backend/app/services/underwriting_service.py
+  - backend/app/services/compliance_service.py
+
+### Actions Taken
+- Restyled the cedent Sanction Screening section to match the reference screenshot structure: KPI cards, Source Status panel, all-source CTA above history, rectangular filters, and the expanded history table columns.
+- Moved Sanction Screening under the linked-data section as item C to align with the reference screenshot.
+- Rewired cedent sanction screening to delegate to the compliance sanctions engine so it uses the editable OFAC and FinCEN cache rows.
+- Appended per-source screening results back into cedent screening history with reference, type, reviewer, and notes.
+- Updated cedent screening status to cleared or pending based on the real screening result.
+- Updated the New Cedent wizard so a cleared all-source screening advances automatically to the next step, while a potential match remains pending for human approval.
+- Verified backend Python compilation and frontend production build.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/routers/underwriting.py
+- backend/app/services/underwriting_service.py
+- frontend/src/pages/underwriting/cedants/CedentSectionContent.tsx
+- frontend/src/pages/underwriting/cedants/NewCedantWizard.tsx
+- frontend/src/pages/underwriting/cedants/cedentConfig.ts
+- frontend/src/components/common/StatusBadge.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The standalone cedent sanction history remains stored in the existing cedent detail overlay because `docs/db/SCHEMA.md` does not define a dedicated cedent screening history table; the actual screening case is persisted through the shared compliance `screening_events` path.
 
 ### Status
 ✅ Completed

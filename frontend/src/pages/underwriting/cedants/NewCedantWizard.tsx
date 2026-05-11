@@ -218,13 +218,16 @@ export function NewCedantWizard({ open, suggestedCedentId, onClose }: NewCedantW
 
     try {
       const cedentId = await ensureCedentRecord()
-      await api.post(`/underwriting/cedents/${cedentId}/sanction-screening`, { sources })
+      const screeningResponse = await api.post<{ status: string }>(`/underwriting/cedents/${cedentId}/sanction-screening`, { sources })
       const { data } = await api.get<CedentDetailPayload>(`/underwriting/cedents/${cedentId}`)
       setDraft((currentDraft) => ({
         ...currentDraft,
         sanction_screening: data.sanction_screening,
         audit_approval: data.audit_approval,
       }))
+      if (screeningResponse.data.status === 'cleared' && currentStep.key === 'sanction_screening') {
+        setStep((current) => Math.min(current + 1, wizardSteps.length - 1))
+      }
     } catch {
       setError('Sanction screening could not be triggered.')
     } finally {

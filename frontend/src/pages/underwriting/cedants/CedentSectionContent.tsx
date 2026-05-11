@@ -520,59 +520,80 @@ export function SanctionScreeningPanel({
         <MetricChip label="Next Periodic Due" value={formatDisplayValue(data.next_periodic_due)} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        {data.source_status.map((source) => (
-          <div key={source.source} className="rounded-xl border border-iris-border bg-[#FAFBFC] p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-[15px] font-semibold text-iris-text-primary">{source.source}</p>
-              <StatusBadge status={source.status}>{source.status}</StatusBadge>
+      <section className="rounded-xl border border-iris-border bg-white p-4">
+        <div className="mb-4">
+          <h3 className="text-[14px] font-semibold text-iris-text-primary">Source Status</h3>
+          <p className="mt-1 text-[12px] text-iris-text-secondary">Latest result from each watchlist provider.</p>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          {data.source_status.map((source) => (
+            <div key={source.source} className="rounded-md border border-[#D9E3EA] bg-white p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-[15px] font-semibold text-iris-text-primary">{displaySourceName(source.source)}</p>
+                <StatusBadge status={source.status}>{source.status}</StatusBadge>
+              </div>
+              <div className="space-y-1.5 text-[12px] text-iris-text-primary">
+                <p>
+                  <span className="text-iris-text-secondary">Last scan:</span> {formatDisplayValue(source.last_scan)}
+                </p>
+                <p>
+                  <span className="text-iris-text-secondary">Reference:</span> {formatDisplayValue(source.reference)}
+                </p>
+                <p>
+                  <span className="text-iris-text-secondary">Matches:</span> {source.matches}
+                </p>
+              </div>
+              {onTrigger ? (
+                <button
+                  className="btn-secondary mt-4 w-full justify-center"
+                  disabled={disabled}
+                  onClick={() => onTrigger([displaySourceName(source.source)])}
+                  type="button"
+                >
+                  {busySource === displaySourceName(source.source) ? 'Running...' : `Trigger ${displaySourceName(source.source)} Scan`}
+                </button>
+              ) : null}
             </div>
-            <div className="space-y-2 text-[13px] text-iris-text-secondary">
-              <p>Last scan: {formatDisplayValue(source.last_scan)}</p>
-              <p>Reference: {formatDisplayValue(source.reference)}</p>
-              <p>Matches: {source.matches}</p>
-            </div>
-            {onTrigger ? (
-              <button
-                className="btn-secondary mt-4"
-                disabled={disabled}
-                onClick={() => onTrigger([source.source])}
-                type="button"
-              >
-                {busySource === source.source ? 'Running...' : `Trigger ${source.source} Scan`}
-              </button>
-            ) : null}
+          ))}
+        </div>
+
+        {onTrigger ? (
+          <div className="mt-3 flex justify-end">
+            <button className="btn-primary" disabled={disabled} onClick={() => onTrigger(['OFAC', 'FinCEN'])} type="button">
+              {busySource === 'ALL' ? 'Running...' : 'Run Adhoc Screening - All Sources'}
+            </button>
           </div>
-        ))}
-      </div>
+        ) : null}
+      </section>
 
-      {onTrigger ? (
-        <button className="btn-primary" disabled={disabled} onClick={() => onTrigger(['OFAC', 'FinCEN'])} type="button">
-          {busySource === 'ALL' ? 'Running...' : 'Run Adhoc Screening - All Sources'}
-        </button>
-      ) : null}
+      <section className="rounded-xl border border-iris-border bg-white p-4">
+        <div className="mb-3">
+          <h3 className="text-[14px] font-semibold text-iris-text-primary">Screening History</h3>
+          <p className="mt-1 text-[12px] text-iris-text-secondary">Periodic and adhoc scan results across all watchlist providers.</p>
+        </div>
 
-      <div>
         <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-[12px] text-iris-text-secondary">Filter:</span>
           {(['all', 'OFAC', 'FinCEN'] as const).map((option) => (
             <button
               key={option}
-              className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold ${
-                filter === option ? 'border-iris-blue bg-[#EBF5FB] text-iris-blue' : 'border-iris-border bg-white text-iris-text-secondary'
+              className={`rounded-md border px-3 py-1.5 text-[12px] font-semibold ${
+                filter === option ? 'border-iris-navy bg-iris-navy text-white' : 'border-iris-border bg-white text-iris-text-primary'
               }`}
               onClick={() => onFilterChange(option)}
               type="button"
             >
-              {option}
+              {option === 'all' ? 'ALL' : option}
             </button>
           ))}
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-iris-border">
+        <div className="overflow-x-auto">
           <table className="min-w-full bg-white text-[13px]">
             <thead className="bg-[#F8F9FA]">
               <tr>
-                {['Date', 'Source', 'Result', 'Reference ID', 'Matches', 'Action'].map((label) => (
+                {['Date', 'Source', 'Type', 'Result', 'Matches', 'Reference', 'Reviewer', 'Notes'].map((label) => (
                   <th
                     key={label}
                     className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary"
@@ -585,28 +606,30 @@ export function SanctionScreeningPanel({
             <tbody>
               {filteredHistory.length === 0 ? (
                 <tr>
-                  <td className="px-3 py-5 text-iris-text-secondary" colSpan={6}>
+                  <td className="px-3 py-5 text-iris-text-secondary" colSpan={8}>
                     No screening history for this source filter yet.
                   </td>
                 </tr>
               ) : (
                 filteredHistory.map((item) => (
                   <tr key={item.id} className="border-t border-[#EEF2F5]">
-                    <td className="px-3 py-2.5">{formatDisplayValue(item.screening_date)}</td>
-                    <td className="px-3 py-2.5">{item.source}</td>
+                    <td className="px-3 py-2.5 font-mono text-[12px]">{formatHistoryDate(item.screening_date)}</td>
+                    <td className="px-3 py-2.5">{displaySourceName(item.source)}</td>
+                    <td className="px-3 py-2.5">{item.scan_type ?? 'Periodic'}</td>
                     <td className="px-3 py-2.5">
                       <StatusBadge status={item.result}>{item.result}</StatusBadge>
                     </td>
-                    <td className="px-3 py-2.5">{item.reference_id}</td>
                     <td className="px-3 py-2.5">{item.matches}</td>
-                    <td className="px-3 py-2.5 text-iris-blue">{item.matches > 0 ? 'Review required' : 'Cleared'}</td>
+                    <td className="px-3 py-2.5 font-mono text-[12px]">{item.reference_id}</td>
+                    <td className="px-3 py-2.5">{item.reviewer ?? 'm.patel@reinsure.io'}</td>
+                    <td className="max-w-[220px] px-3 py-2.5 text-iris-text-secondary">{item.notes ?? (item.matches > 0 ? 'Under analyst review' : 'No watchlist matches found')}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
@@ -727,11 +750,33 @@ function ReadOnlyField({
 
 function MetricChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-iris-border bg-[#FAFBFC] px-4 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{label}</p>
+    <div className="rounded-md border border-iris-border bg-white px-4 py-4">
+      <p className="text-[11px] text-iris-text-secondary">{label}</p>
       <p className="mt-2 text-[22px] font-bold text-iris-text-primary">{value}</p>
     </div>
   )
+}
+
+function displaySourceName(value: string) {
+  const normalized = value.toLowerCase()
+  if (normalized.startsWith('ofac')) {
+    return 'OFAC'
+  }
+  if (normalized.startsWith('fincen')) {
+    return 'FinCEN'
+  }
+  return value
+}
+
+function formatHistoryDate(value: string) {
+  if (!value) {
+    return '-'
+  }
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+  return `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, '0')}-${String(parsed.getUTCDate()).padStart(2, '0')}`
 }
 
 function formatDisplayValue(value: unknown) {
