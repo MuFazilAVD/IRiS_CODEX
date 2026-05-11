@@ -144,7 +144,7 @@ COLUMN_ALIASES_BY_FIELD = {
     "verification_reference": ("verification_reference", "verified_by", "evidence_ref"),
     "period": ("period", "quarter", "reporting_period"),
     "fixed_leg_amount": ("fixed_leg_amount", "fixed_amount"),
-    "calculation_period": ("calculation_period", "period", "quarter", "reporting_period"),
+    "calculation_period": ("calculation_period", "settlement_period", "period", "quarter", "reporting_period"),
     "payment_date": ("payment_date", "value_date", "settlement_date"),
     "pensioner_movement": ("pensioner_movement", "pensioner_movement_e.g._death_suspension_reinstatement", "movement", "movement_type"),
     "applicable_indexation_escalation": (
@@ -226,6 +226,18 @@ FILE_PROCESSING_RULES = {
         "Validate fees against contract economic terms.",
         "Route settlement-impacting differences to Claims Ops review.",
     ],
+}
+
+SETTLEMENT_TARGET_HEADER_LABELS = {
+    "calculation_period": "Calculation Period",
+    "payment_date": "Payment Date",
+    "pensioner_movement": "Pensioner Movement",
+    "applicable_indexation_escalation": "Applicable Indexation / Escalation",
+    "fixed_leg": "Fixed Leg",
+    "floating_leg": "Floating Leg",
+    "fee": "Fee (Admin)",
+    "interest_prior_period": "Interest on Over/Underpayment from Prior Period",
+    "net_settlement_amount": "Net Settlement Amount",
 }
 
 
@@ -888,8 +900,8 @@ class ClaimsService:
             {
                 "actor": "Claims Ops",
                 "type": "Human",
-                "action": "Exception handling updated",
-                "detail": f'{len(updated_exceptions)} actions saved',
+                "action": "Resolution handling updated",
+                "detail": f'{len(updated_exceptions)} resolutions saved',
             },
         )
         return {
@@ -1742,8 +1754,8 @@ class ClaimsService:
         exceptions = self.repository.list_file_exceptions(cession_file.id)
         unresolved_counts = self._count_unresolved_by_severity(cession_file)
         return {
-            "title": "Exception Handling",
-            "subtitle": f'{sum(unresolved_counts.values())} unresolved Â· IRiS suggestions available Â· every action audited',
+            "title": "Resolution Handling",
+            "subtitle": f'{sum(unresolved_counts.values())} unresolved · actions required · every action audited',
             "critical": sum(1 for item in exceptions if item.severity == "critical"),
             "warnings": sum(1 for item in exceptions if item.severity == "warning"),
             "informational": sum(1 for item in exceptions if item.severity == "info"),
@@ -1792,7 +1804,7 @@ class ClaimsService:
                 "Prepare worklist actions for downstream review",
             ]
         return {
-            "title": f"Processing â€” {file_type}",
+            "title": f"Processing {file_type}",
             "subtitle": "Click Continue to execute. Engine logic depends on file type.",
             "engine_plan": plan,
             "iris_note": "IRiS will compute before/after population, financial impact and anomaly detection on the next step.",
@@ -2336,7 +2348,7 @@ class ClaimsService:
                         "net_settlement_amount": self._settlement_decimal_payload(uploaded_net),
                         "currency": currency,
                         "settlement_reconciliation": reconciliation,
-                        "agentic_fix_count": sum(1 for issue in validation_issues if issue.get("auto_resolved")),
+                        "agentic_fix_count": sum(1 for issue in validation_issues if issue.get("ai_suggestion")),
                     },
                     "validation_status": self._validation_status_from_issues(unresolved_issues),
                     "validation_issues": validation_issues,
@@ -2474,14 +2486,21 @@ class ClaimsService:
         if normalized_text:
             return normalized_text, {"all": all_issues, "unresolved": unresolved}
         if repair_value:
-            all_issues.append(
-                self._settlement_auto_fix_issue(
-                    field_name,
-                    raw_text,
-                    str(repair_value),
-                    f"{field_name} was {'imputed from the most frequent file value' if not raw_text else 'normalized using the most frequent valid file value'}.",
-                )
+            issue = self._validation_issue(
+                field_name,
+                "critical",
+                "missing_required_field" if not raw_text else "invalid_value",
+                (
+                    f"{SETTLEMENT_TARGET_HEADER_LABELS.get(field_name, field_name)} is missing; use the most frequent valid file value."
+                    if not raw_text
+                    else f"{SETTLEMENT_TARGET_HEADER_LABELS.get(field_name, field_name)} is invalid; use the most frequent valid file value."
+                ),
+                raw_text,
+                str(repair_value),
+                0.95,
             )
+            all_issues.append(issue)
+            unresolved.append(issue)
             return str(repair_value), {"all": all_issues, "unresolved": unresolved}
 
         issue_type = "missing_required_field" if not raw_text else "invalid_value"
@@ -2512,24 +2531,34 @@ class ClaimsService:
         raw_text = str(raw_value or "").strip()
         if normalized_value is not None:
             if raw_text and raw_text != normalized_value.isoformat():
-                all_issues.append(
-                    self._settlement_auto_fix_issue(
-                        field_name,
-                        raw_text,
-                        normalized_value.isoformat(),
-                        f"{field_name} was normalized to ISO format before settlement processing.",
-                    )
+                issue = self._validation_issue(
+                    field_name,
+                    "warning",
+                    "date_format_normalization",
+                    f"{SETTLEMENT_TARGET_HEADER_LABELS.get(field_name, field_name)} is not in ISO format (YYYY-MM-DD).",
+                    raw_text,
+                    normalized_value.isoformat(),
+                    1.0,
                 )
+                all_issues.append(issue)
+                unresolved.append(issue)
             return normalized_value, {"all": all_issues, "unresolved": unresolved}
         if repair_value is not None:
-            all_issues.append(
-                self._settlement_auto_fix_issue(
-                    field_name,
-                    raw_text,
-                    repair_value.isoformat(),
-                    f"{field_name} was imputed from the most frequent valid file date.",
-                )
+            issue = self._validation_issue(
+                field_name,
+                "critical",
+                "missing_required_field" if not raw_text else "invalid_date",
+                (
+                    f"{SETTLEMENT_TARGET_HEADER_LABELS.get(field_name, field_name)} is missing; use the mode of the file date column."
+                    if not raw_text
+                    else f"{SETTLEMENT_TARGET_HEADER_LABELS.get(field_name, field_name)} is invalid; use the mode of the file date column."
+                ),
+                raw_text,
+                repair_value.isoformat(),
+                0.96,
             )
+            all_issues.append(issue)
+            unresolved.append(issue)
             return repair_value, {"all": all_issues, "unresolved": unresolved}
 
         issue = self._validation_issue(
@@ -2557,14 +2586,17 @@ class ClaimsService:
         if parsed_amount is not None:
             normalized_amount = self._settlement_amount_text(parsed_amount)
             if raw_text and raw_text != normalized_amount:
-                all_issues.append(
-                    self._settlement_auto_fix_issue(
-                        field_name,
-                        raw_text,
-                        normalized_amount,
-                        f"{field_name} was normalized by stripping currency/formatting and coercing the amount before validation.",
-                    )
+                issue = self._validation_issue(
+                    field_name,
+                    "warning",
+                    "amount_format_normalization",
+                    f"{SETTLEMENT_TARGET_HEADER_LABELS.get(field_name, field_name)} contains currency or formatting and should be normalized to an integer amount.",
+                    raw_text,
+                    normalized_amount,
+                    1.0,
                 )
+                all_issues.append(issue)
+                unresolved.append(issue)
             return parsed_amount, {"all": all_issues, "unresolved": unresolved}
 
         issue = self._validation_issue(
@@ -2577,26 +2609,6 @@ class ClaimsService:
         all_issues.append(issue)
         unresolved.append(issue)
         return None, {"all": all_issues, "unresolved": unresolved}
-
-    def _settlement_auto_fix_issue(
-        self,
-        field_name: str,
-        current_value: Any,
-        resolved_value: Any,
-        description: str,
-    ) -> dict[str, Any]:
-        issue = self._validation_issue(
-            field_name,
-            "info",
-            "auto_fix_applied",
-            description,
-            current_value,
-            resolved_value,
-            1.0,
-        )
-        issue["auto_resolved"] = True
-        issue["resolved_value"] = None if resolved_value is None else str(resolved_value)
-        return issue
 
     def _most_frequent_text(self, values: list[str]) -> str | None:
         cleaned = [str(value).strip() for value in values if str(value).strip()]
@@ -2630,6 +2642,17 @@ class ClaimsService:
             if any(normalized.values()):
                 rows.append(normalized)
         return rows
+
+    def _original_upload_headers(self, content: str) -> list[str]:
+        cleaned_content = content.lstrip("\ufeff").strip()
+        if not cleaned_content:
+            return []
+        try:
+            reader = csv.reader(io.StringIO(cleaned_content), delimiter=self._detect_tabular_delimiter(cleaned_content))
+            headers = next(reader, [])
+        except csv.Error:
+            return []
+        return [str(header).strip() for header in headers if str(header).strip()]
 
     def _settlement_row_number(self, raw_data: dict[str, str], fallback: int) -> int:
         row_id = raw_data.get("row_id") or raw_data.get("row_number") or raw_data.get("id")
@@ -2980,9 +3003,7 @@ class ClaimsService:
             record.raw_data = json.dumps(raw_data)
             record.mapped_data = json.dumps(mapped_data)
             record.validation_issues = json.dumps(remaining_issues)
-            record.validation_status = self._validation_status_from_issues(
-                [issue for issue in remaining_issues if not issue.get("auto_resolved")]
-            )
+            record.validation_status = self._validation_status_from_issues(remaining_issues)
             records_to_update.append(record)
 
         if records_to_update:
@@ -3596,6 +3617,7 @@ class ClaimsService:
                             "resolution": "pending",
                         }
                     )
+            exceptions.extend(self._build_settlement_header_mapping_exceptions(cession_file))
             return exceptions
 
         if file_type == "Pension Status":
@@ -3646,6 +3668,44 @@ class ClaimsService:
                 "resolution": "pending",
             }
         ]
+
+    def _build_settlement_header_mapping_exceptions(self, cession_file: CessionFile) -> list[dict[str, Any]]:
+        source_content = self._get_override(cession_file.file_id).get("source_content_text", "")
+        original_headers = self._original_upload_headers(source_content)
+        if not original_headers:
+            return []
+
+        expected_header_fields = ("calculation_period", "fixed_leg", "floating_leg")
+        exceptions: list[dict[str, Any]] = []
+        for original_header in original_headers:
+            normalized_header = self._normalize_column_name(str(original_header))
+            matched_field = next(
+                (
+                    field_name
+                    for field_name in expected_header_fields
+                    if normalized_header in {self._normalize_column_name(alias) for alias in COLUMN_ALIASES_BY_FIELD.get(field_name, (field_name,))}
+                ),
+                None,
+            )
+            if not matched_field:
+                continue
+            target_header = SETTLEMENT_TARGET_HEADER_LABELS[matched_field]
+            if normalized_header == self._normalize_column_name(target_header):
+                continue
+            exceptions.append(
+                {
+                    "row_number": 0,
+                    "field_name": matched_field,
+                    "severity": "warning",
+                    "issue_type": "header_mapping_normalization",
+                    "description": f'Settlement header "{original_header}" should map to "{target_header}".',
+                    "current_value": str(original_header),
+                    "ai_suggestion": target_header,
+                    "ai_confidence": 1.0,
+                    "resolution": "pending",
+                }
+            )
+        return exceptions
 
     def _build_missing_active_member_exceptions(
         self,

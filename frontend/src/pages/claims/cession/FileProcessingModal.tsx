@@ -28,7 +28,7 @@ type ClaimsStep =
   | 'audit'
 
 type UploadMode = 'auto' | 'manual'
-type ExceptionChoice = 'accept' | 'override' | 'manual'
+type ExceptionChoice = 'pending' | 'accept' | 'override' | 'manual'
 
 type ModalNotice = {
   tone: 'success' | 'error'
@@ -63,8 +63,8 @@ const PIPELINE_STEPS: Array<{ id: ClaimsStep; label: string }> = [
   { id: 'detect', label: 'Detect' },
   { id: 'map-contract', label: 'Map Contract' },
   { id: 'clauses', label: 'Clauses' },
-  { id: 'validate', label: 'Validate' },
-  { id: 'exceptions', label: 'Exceptions' },
+  { id: 'validate', label: 'Anomalies' },
+  { id: 'exceptions', label: 'Resolutions' },
   { id: 'process', label: 'Process' },
   { id: 'summary', label: 'Summary' },
   { id: 'worklist', label: 'Worklist' },
@@ -217,10 +217,13 @@ export function CessionFileProcessingWorkflow({
       setMappedContractId(visibleContracts[0].contract_id)
     }
   }, [mappedContractId, visibleContracts])
+  const pendingResolutionCount = detail ? countPendingResolutionActions(detail.exceptions.items, exceptionActions) : 0
+  const invalidOverrideCount = detail ? countInvalidOverrideActions(detail.exceptions.items, exceptionActions) : 0
   const canContinue =
     !busy &&
     (currentStep !== 'upload' || Boolean(selectedFile)) &&
-    (currentStep !== 'exceptions' || detail?.exceptions.items.length !== 0)
+    (currentStep !== 'exceptions' ||
+      ((detail?.exceptions.items.length ?? 0) !== 0 && pendingResolutionCount === 0 && invalidOverrideCount === 0))
 
   async function handleContinue() {
     setNotice(null)
@@ -272,12 +275,27 @@ export function CessionFileProcessingWorkflow({
       }
 
       if (currentStep === 'exceptions') {
+        if (pendingResolutionCount > 0) {
+          setNotice({
+            tone: 'error',
+            message: 'Choose an action for every resolution item before continuing.',
+          })
+          return
+        }
+        if (invalidOverrideCount > 0) {
+          setNotice({
+            tone: 'error',
+            message: 'Enter a manual override value for every item marked Override before continuing.',
+          })
+          return
+        }
         const payload = buildExceptionResolutionPayload(detail?.exceptions.items ?? [], exceptionActions)
         await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/process-exceptions`, {
           exception_resolutions: payload,
         })
-        await detailQuery.refetch()
-        setSelectedStep('process')
+        const refreshed = await detailQuery.refetch()
+        setExceptionActions(buildExceptionState(refreshed.data?.exceptions.items ?? []))
+        setSelectedStep((refreshed.data?.current_step as ClaimsStep | undefined) ?? 'process')
         return
       }
 
@@ -919,7 +937,7 @@ function ValidateStep({ detail }: { detail: ClaimsCessionDetailPayload }) {
 
   return (
     <div className="space-y-5">
-      <SectionHeading title="Data Validation Results" subtitle={`${formatCount(validation.records)} records · ${validation.columns_mapped} columns auto-mapped`} />
+      <SectionHeading title="Detected Anomalies" subtitle={`${formatCount(validation.records)} records · ${validation.columns_mapped} columns auto-mapped`} />
 
       <div className="grid gap-3 md:grid-cols-4">
         <SummaryChip label="Records" value={formatCount(validation.records)} />
@@ -933,7 +951,7 @@ function ValidateStep({ detail }: { detail: ClaimsCessionDetailPayload }) {
           <table className="min-w-full text-[13px]">
             <thead className="bg-[#F7F9FB]">
               <tr>
-                {['Sev', 'Row', 'Field', 'Issue', 'Current', 'AI Suggestion'].map((label) => (
+                {['Sev', 'Row', 'Field', 'Issue', 'Current', 'Reference'].map((label) => (
                   <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
                     {label}
                   </th>
@@ -951,8 +969,7 @@ function ValidateStep({ detail }: { detail: ClaimsCessionDetailPayload }) {
                   <td className="px-4 py-3 text-iris-text-secondary">{item.issue}</td>
                   <td className="px-4 py-3">{item.current_value ?? '—'}</td>
                   <td className="px-4 py-3 text-iris-text-secondary">
-                    <span className="font-medium text-iris-text-primary">{item.ai_suggestion ?? '—'}</span>
-                    <span className="ml-2 text-[12px]">conf {Math.round(item.ai_confidence * 100)}%</span>
+                    {item.clause_reference}
                   </td>
                 </tr>
               ))}
@@ -978,7 +995,7 @@ function ExceptionsStep({
       ...exceptionActions,
       [exceptionId]: {
         choice,
-        manualValue: exceptionActions[exceptionId]?.manualValue ?? '',
+        manualValue: choice === 'accept' ? '' : exceptionActions[exceptionId]?.manualValue ?? '',
       },
     })
   }
@@ -993,7 +1010,7 @@ function ExceptionsStep({
     })
   }
 
-  function resolveCriticalWithAi() {
+  function acceptAllCriticalFixes() {
     const nextState = { ...exceptionActions }
     for (const item of detail.exceptions.items) {
       if (item.severity === 'critical') {
@@ -1018,7 +1035,7 @@ function ExceptionsStep({
           <table className="min-w-full text-[13px]">
             <thead className="bg-[#F7F9FB]">
               <tr>
-                {['Sev', 'Row', 'Field', 'Issue', 'Current', 'AI suggestion', 'Action'].map((label) => (
+                {['Sev', 'Row', 'Field', 'Issue', 'Current', 'Reference', 'Action'].map((label) => (
                   <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
                     {label}
                   </th>
@@ -1027,7 +1044,7 @@ function ExceptionsStep({
             </thead>
             <tbody>
               {detail.exceptions.items.map((item) => {
-                const state = exceptionActions[item.exception_id] ?? { choice: 'accept' as ExceptionChoice, manualValue: '' }
+                const state = exceptionActions[item.exception_id] ?? { choice: 'pending' as ExceptionChoice, manualValue: '' }
                 return (
                   <tr key={item.exception_id} className="border-t border-[#EEF2F5] align-top">
                     <td className="px-4 py-3">
@@ -1037,16 +1054,15 @@ function ExceptionsStep({
                     <td className="px-4 py-3">{item.field}</td>
                     <td className="px-4 py-3 text-iris-text-secondary">{item.issue}</td>
                     <td className="px-4 py-3">{item.current_value ?? '—'}</td>
-                    <td className="px-4 py-3 text-iris-text-secondary">
-                      <span className="font-medium text-iris-text-primary">{item.ai_suggestion ?? '—'}</span>
-                      <div className="mt-1 text-[12px]">{item.clause_reference}</div>
-                    </td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{item.clause_reference}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
                         <ActionChoiceButton active={state.choice === 'accept'} label="Accept" onClick={() => updateChoice(item.exception_id, 'accept')} />
                         <ActionChoiceButton active={state.choice === 'override'} label="Override" onClick={() => updateChoice(item.exception_id, 'override')} />
                         <ActionChoiceButton active={state.choice === 'manual'} label="Manual" onClick={() => updateChoice(item.exception_id, 'manual')} />
                       </div>
+                      {state.choice === 'accept' ? <div className="mt-2 text-[12px] text-[#117A65]"></div> : null}
+                      {state.choice === 'manual' ? <div className="mt-2 text-[12px] text-iris-text-secondary">Marked for manual follow-up.</div> : null}
                       {state.choice === 'override' ? (
                         <input
                           className="field-input mt-3"
@@ -1064,8 +1080,8 @@ function ExceptionsStep({
         </div>
       </div>
 
-      <button className="btn-secondary" onClick={resolveCriticalWithAi} type="button">
-        Resolve All Critical with AI suggestions
+      <button className="btn-secondary" onClick={acceptAllCriticalFixes} type="button">
+        Accept All Critical Fixes
       </button>
     </div>
   )
@@ -1107,7 +1123,7 @@ function SummaryStep({
 
   return (
     <div className="space-y-5">
-      <SectionHeading title="Processing Summary" subtitle="Business impact, exceptions, IRiS insights" />
+      <SectionHeading title="Processing Summary" subtitle="Business impact, resolutions, IRiS insights" />
       {!isSettlementFile ? (
         <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <KpiCard accent="neutral" title="Liability Impact" value={signedCompactCurrency(detail.summary.liability_impact ?? 0, detail.summary.settlement_impact?.currency ?? 'EUR')} />
@@ -1493,7 +1509,8 @@ function PipelineStageBadge({ stage }: { stage: string }) {
     approved: 'bg-[#D5F5E3] text-[#1E8449]',
     rejected: 'bg-[#FDEDEC] text-[#922B21]',
   }
-  return <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${classes[normalized] ?? 'bg-[#EEF1F4] text-[#566573]'}`}>{titleCase(stage)}</span>
+  const label = normalized === 'validated' ? 'Anomalies' : normalized === 'exceptions' ? 'Resolutions' : titleCase(stage)
+  return <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${classes[normalized] ?? 'bg-[#EEF1F4] text-[#566573]'}`}>{label}</span>
 }
 
 function buildExceptionState(items: ClaimsExceptionItem[]): ExceptionActionState {
@@ -1501,7 +1518,14 @@ function buildExceptionState(items: ClaimsExceptionItem[]): ExceptionActionState
     items.map((item) => [
       item.exception_id,
       {
-        choice: item.resolution === 'overridden' ? 'override' : item.resolution === 'rejected' ? 'manual' : 'accept',
+        choice:
+          item.resolution === 'overridden'
+            ? 'override'
+            : item.resolution === 'rejected'
+              ? 'manual'
+              : item.resolution === 'accepted'
+                ? 'accept'
+                : 'pending',
         manualValue: item.resolution === 'overridden' ? item.current_value ?? '' : '',
       },
     ]),
@@ -1510,7 +1534,7 @@ function buildExceptionState(items: ClaimsExceptionItem[]): ExceptionActionState
 
 function buildExceptionResolutionPayload(items: ClaimsExceptionItem[], state: ExceptionActionState) {
   return items.map((item) => {
-    const itemState = state[item.exception_id] ?? { choice: 'accept' as ExceptionChoice, manualValue: '' }
+    const itemState = state[item.exception_id] ?? { choice: 'pending' as ExceptionChoice, manualValue: '' }
     if (itemState.choice === 'override') {
       return {
         exception_id: item.exception_id,
@@ -1531,6 +1555,17 @@ function buildExceptionResolutionPayload(items: ClaimsExceptionItem[], state: Ex
       override_value: null,
     }
   })
+}
+
+function countPendingResolutionActions(items: ClaimsExceptionItem[], state: ExceptionActionState) {
+  return items.filter((item) => (state[item.exception_id]?.choice ?? 'pending') === 'pending').length
+}
+
+function countInvalidOverrideActions(items: ClaimsExceptionItem[], state: ExceptionActionState) {
+  return items.filter((item) => {
+    const itemState = state[item.exception_id]
+    return itemState?.choice === 'override' && !itemState.manualValue.trim()
+  }).length
 }
 
 function mapHistoryStageToStep(stage: string): ClaimsStep | null {

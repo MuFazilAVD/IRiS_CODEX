@@ -233,6 +233,94 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-11 12:38:03 +00:00]
+
+### Prompt
+Change the name validations to anomalies. In this page you dont need to show AI suggestions. Just display the identifies issues as they are. And also change the name of exceptions to resolutions. The accept buttons in this section are currently not working, make them work and continue the processing with the fixed data.
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/pages/claims/cession/CessionFileProcessingPage.tsx
+  - frontend/src/types/api.ts
+  - backend/app/services/claims_service.py
+
+### Actions Taken
+- Renamed the cession pipeline Validate and Exceptions UI stages to `Anomalies` and `Resolutions`.
+- Removed AI suggestion display from the anomalies and resolutions tables so the page now shows the identified issue data and reference only.
+- Changed resolution selection state so every unresolved item starts as pending and must be explicitly marked Accept, Override, or Manual before processing can continue.
+- Fixed the resolution Continue flow so accepted fixes are posted to `process-exceptions`, the file detail is refetched, and the pipeline advances using the refreshed backend step with the repaired record data.
+- Updated the backend resolution payload copy and audit wording to use `Resolution Handling` terminology instead of `Exception Handling`.
+- Verified backend Python compilation and frontend production build.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The underlying API and persistence layer still use existing `exceptions` field names and routes for compatibility; the user-facing workflow labels now present them as `Resolutions`.
+
+### Status
+✅ Completed
+
+## [2026-05-11T12:05:57Z]
+
+### Prompt
+It did not work>
+
+For this file:
+
+Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount
+2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,"CA$4,117,500","CA$4,125,735","CA$2,800",CA$0,"CA$5,435"
+Q4- 2025,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740
+2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,"€4,117,500",4133970,2800,0,13670
+
+
+I was expecting the following exceptions and fixes:
+
+1) settlement period -> map and change name to calculation period
+2) Floating amount -> Floating leg
+3) fixed amount -> fixed leg
+4) For one entry payment date was missing, replace it with mode of that column
+5) One of the dat format is dd/mm/yyyy, fix to our og format
+6) In of the the entries, currency denotation is there with amount, remove it and make them integeres
+
+
+But these actions are not done / suggested on the file while processing. These error should be detected in validation phase, and fixed (with manual approval) in exception page. Make these changes
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+  - docs/api/CLAIMS.md
+  - backend/app/services/claims_service.py
+  - backend/app/repositories/claims_repository.py
+  - docs/db/SCHEMA.md
+
+### Actions Taken
+- Changed the Settlement validation flow so repairable issues are surfaced as validation/exception suggestions instead of being silently auto-cleared before the exception step.
+- Added `Settlement Period` as a Settlement header alias for `calculation_period`.
+- Added Settlement-specific header-mapping exceptions for `Settlement Period` -> `Calculation Period`, `Fixed Amount` -> `Fixed Leg`, and `Floating Amount` -> `Floating Leg`.
+- Changed Settlement date handling so missing dates generate a suggested mode-based replacement and non-ISO dates like `12/01/2026` generate a suggested ISO fix.
+- Changed Settlement amount handling so currency/formatted values such as `CA$4,117,500` generate suggested integer-normalization fixes in validation/exceptions.
+- Verified the corrected behavior with the exact user-provided sample shape through a focused backend smoke script.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Settlement suggestions now appear as row-level exceptions plus row `0` header-mapping exceptions so the current pipeline UI can present column-mapping fixes without inventing a new exception table or schema.
+
+### Status
+✅ Completed
+
 ## [2026-05-11T11:53:49Z]
 
 ### Prompt

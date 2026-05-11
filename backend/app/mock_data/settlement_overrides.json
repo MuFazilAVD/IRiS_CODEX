@@ -326,6 +326,17 @@
       "net_amount": 98925.92,
       "currency": "EUR",
       "source": "MOCK IMPLEMENTATION - deterministic settlement expectation"
+    },
+    "SET-2025-Q4-044": {
+      "contract_id": "LSC-2024-044",
+      "period_label": "Q4 2025",
+      "period_start": "2025-10-01",
+      "period_end": "2025-12-31",
+      "fixed_leg_amount": 4151342.47,
+      "floating_leg_amount": 4201158.58,
+      "net_amount": 52616.11,
+      "currency": "CAD",
+      "source": "MOCK IMPLEMENTATION - deterministic settlement expectation"
     }
   },
   "SET-2025-Q4-002": {
@@ -413,6 +424,105 @@
       },
       {
         "timestamp": "2026-05-08T09:33:35.573561Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=review; mismatches=4"
+      }
+    ]
+  },
+  "SET-2025-Q4-044": {
+    "source": "CES-2026-022 (Maple Leaf Pension - Q4-25.csv)",
+    "iris_recommendation": "review",
+    "status": "pending_reconciliation",
+    "last_updated": "2026-05-11T12:42:06.091640Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2025-Q4-044",
+      "decision": "review",
+      "calculation_period": "Q4 2025",
+      "period_start": "2025-10-01",
+      "period_end": "2025-12-31",
+      "payment_date": "2026-01-12",
+      "currency": "CAD",
+      "expected_source": "MOCK IMPLEMENTATION - deterministic settlement expectation",
+      "mock_expected": true,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4125735,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 5435,
+        "recomputed_net": 11035
+      },
+      "system": {
+        "fixed_leg": 4151342.47,
+        "floating_leg": 4201158.58,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 52616.11
+      },
+      "mismatches": [
+        {
+          "field": "fixed_leg",
+          "uploaded": 4117500,
+          "expected": 4151342.47,
+          "issue_type": "fixed_leg_mismatch",
+          "message": "Uploaded Fixed Leg does not exactly match IRiS expected Fixed Leg."
+        },
+        {
+          "field": "floating_leg",
+          "uploaded": 4125735,
+          "expected": 4201158.58,
+          "issue_type": "floating_leg_mismatch",
+          "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
+        },
+        {
+          "field": "net_settlement_amount",
+          "uploaded": 5435,
+          "expected": 11035,
+          "issue_type": "net_formula_mismatch",
+          "message": "Uploaded Net Settlement Amount does not equal floating minus fixed plus signed fee and interest."
+        },
+        {
+          "field": "net_settlement_amount",
+          "uploaded": 5435,
+          "expected": 52616.11,
+          "issue_type": "net_reconciliation_mismatch",
+          "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+        }
+      ]
+    },
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-16T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2025-Q4-044"
+      },
+      {
+        "timestamp": "2026-05-16T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-16T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-11T12:25:10.146252Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=review; mismatches=4"
+      },
+      {
+        "timestamp": "2026-05-11T12:42:06.091640Z",
         "actor": "Settlement Reconciliation Engine",
         "type": "System",
         "action": "Settlement file reconciled",

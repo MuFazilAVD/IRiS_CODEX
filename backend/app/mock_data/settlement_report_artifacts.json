@@ -1,5 +1,47 @@
 [
   {
+    "artifact_id": "ces-2026-022-cash-settlements-tracker",
+    "settlement_id": "SET-2025-Q4-044",
+    "cession_file_id": "CES-2026-022",
+    "contract_id": "LSC-2024-044",
+    "cedent": "Maple Leaf Pension Plan",
+    "period": "Q4 2025",
+    "report_type": "Cash Settlements Tracker",
+    "filename": "CES-2026-022_SET-2025-Q4-044_cash_settlements_tracker.csv",
+    "format": "csv",
+    "path": "generated_reports/settlements/CES-2026-022_SET-2025-Q4-044_cash_settlements_tracker.csv",
+    "generated_at": "2026-05-11T12:42:06.091640Z",
+    "source_filename": "Maple Leaf Pension - Q4-25.csv",
+    "reconciliation_decision": "review",
+    "mismatch_count": 4,
+    "roles_with_access": [
+      "claims_ops",
+      "admin",
+      "super_admin"
+    ]
+  },
+  {
+    "artifact_id": "ces-2026-022-grdr-load-form",
+    "settlement_id": "SET-2025-Q4-044",
+    "cession_file_id": "CES-2026-022",
+    "contract_id": "LSC-2024-044",
+    "cedent": "Maple Leaf Pension Plan",
+    "period": "Q4 2025",
+    "report_type": "GRDR Load Form",
+    "filename": "CES-2026-022_SET-2025-Q4-044_grdr_load_form.csv",
+    "format": "csv",
+    "path": "generated_reports/settlements/CES-2026-022_SET-2025-Q4-044_grdr_load_form.csv",
+    "generated_at": "2026-05-11T12:42:06.091640Z",
+    "source_filename": "Maple Leaf Pension - Q4-25.csv",
+    "reconciliation_decision": "review",
+    "mismatch_count": 4,
+    "roles_with_access": [
+      "claims_ops",
+      "admin",
+      "super_admin"
+    ]
+  },
+  {
     "artifact_id": "ces-2026-020-cash-settlements-tracker",
     "settlement_id": "SET-2026-Q1-009",
     "cession_file_id": "CES-2026-020",
