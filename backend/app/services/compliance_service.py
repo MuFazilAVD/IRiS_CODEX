@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 UTC = timezone.utc
 
 DEFAULT_WATCHLISTS = ["OFAC SDN", "FinCEN 314(a)"]
-WORKSPACE_TRIGGER_TYPES = {"onboarding", "adhoc", "periodic"}
+WORKSPACE_TRIGGER_TYPES = {"onboarding", "adhoc", "periodic", "cession_file"}
 SCREENING_CACHE_COLUMN_HEADERS = [
     "entity_name",
     "aliases",
@@ -126,7 +126,7 @@ class ComplianceService:
                 {"key": "historical", "label": "Historical", "count": counts["historical"]},
             ],
             "filters": {
-                "trigger_options": ["All", "Onboarding", "Ad-hoc", "Periodic"],
+                "trigger_options": ["All", "Onboarding", "Ad-hoc", "Periodic", "Cession File"],
                 "country_options": ["All", "UK", "US", "CH", "DE", "CA"],
             },
             "screening_cache_workbooks": self._serialize_screening_cache_workbooks(DEFAULT_WATCHLISTS),

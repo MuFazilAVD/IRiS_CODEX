@@ -18,6 +18,7 @@ from app.models.population import PolicyRegister
 from app.models.user import User
 from app.models.worklist import WorklistItem
 from app.repositories.underwriting_repository import UnderwritingRepository
+from app.services.contract_clause_catalog import get_contract_clause_catalog
 from app.services.population_csv import PopulationCsvNormalizedRow, parse_population_file
 
 
@@ -1090,6 +1091,7 @@ class UnderwritingService:
             "amendments": detail["amendments"],
             "audit_compliance": audit_compliance,
             "member_population": detail["member_population"],
+            "contract_clauses": get_contract_clause_catalog(),
         }
 
     def _update_contract_master_data(self, contract: Contract, payload: dict[str, Any]) -> dict[str, Any]:

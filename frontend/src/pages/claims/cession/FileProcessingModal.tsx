@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, ArrowLeft, Check, Download, Eye, FileUp, RefreshCw, Send, Sparkles, Upload, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 import { api } from '../../../api/client'
 import { formatCurrency, formatRelativeDate } from '../../../utils/formatters'
@@ -1171,9 +1172,7 @@ function ExceptionsStep({
   function acceptAllCriticalFixes() {
     const nextState = { ...exceptionActions }
     for (const item of detail.exceptions.items) {
-      if (item.severity === 'critical') {
-        nextState[item.exception_id] = { choice: 'accept', manualValue: '' }
-      }
+      nextState[item.exception_id] = { choice: 'accept', manualValue: '' }
     }
     onExceptionActionsChange(nextState)
   }
@@ -1189,6 +1188,11 @@ function ExceptionsStep({
       </div>
 
       <div className="overflow-hidden rounded-[22px] border border-[#D9E3EA] bg-white shadow-sm">
+        <div className="flex items-center justify-end border-b border-[#EEF2F5] px-4 py-3">
+          <button className="btn-primary" onClick={acceptAllCriticalFixes} type="button">
+            Accept All Fixes
+          </button>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-[13px]">
             <thead className="bg-[#F7F9FB]">
@@ -1219,7 +1223,11 @@ function ExceptionsStep({
                         <ActionChoiceButton active={state.choice === 'override'} label="Override" onClick={() => updateChoice(item.exception_id, 'override')} />
                         <ActionChoiceButton active={state.choice === 'manual'} label="Manual" onClick={() => updateChoice(item.exception_id, 'manual')} />
                       </div>
-                      {state.choice === 'accept' ? <div className="mt-2 text-[12px] text-[#117A65]"></div> : null}
+                      {state.choice === 'accept' ? (
+                        <div className="mt-2 text-[12px] text-[#117A65]">
+                          {item.ai_suggestion ? `Defaulting to AI suggestion: ${item.ai_suggestion}.` : 'Accept selected as the default action.'}
+                        </div>
+                      ) : null}
                       {state.choice === 'manual' ? <div className="mt-2 text-[12px] text-iris-text-secondary">Marked for manual follow-up.</div> : null}
                       {state.choice === 'override' ? (
                         <input
@@ -1237,10 +1245,6 @@ function ExceptionsStep({
           </table>
         </div>
       </div>
-
-      <button className="btn-secondary" onClick={acceptAllCriticalFixes} type="button">
-        Accept All Critical Fixes
-      </button>
     </div>
   )
 }
@@ -1520,12 +1524,18 @@ function WorklistStep({
                 items.map((item) => (
                   <tr key={item.wl_id} className="border-t border-[#EEF2F5]">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-iris-text-primary">{item.task}</div>
-                      <div className="mt-1 font-mono text-[12px] text-iris-blue">{item.wl_id}</div>
+                      <Link className="font-medium text-iris-text-primary transition hover:text-iris-blue" to={`/worklist/${item.wl_id}`}>
+                        {item.task}
+                      </Link>
+                      <div className="mt-1">
+                        <Link className="font-mono text-[12px] text-iris-blue transition hover:text-iris-navy" to={`/worklist/${item.wl_id}`}>
+                          {item.wl_id}
+                        </Link>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-iris-text-secondary">{item.type}</td>
                     <td className="px-4 py-3 text-iris-text-secondary">{titleCase(item.team)}</td>
-                    <td className="px-4 py-3 text-iris-text-secondary">{item.type === 'Settlement Pending' ? 'Pending' : titleCase(item.status ?? 'open')}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{formatWorklistTaskStatus(item.status ?? 'open')}</td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-[#FEF5E7] px-2.5 py-1 text-[12px] font-semibold text-[#B9770E]">{titleCase(item.priority)}</span>
                     </td>
@@ -1787,9 +1797,9 @@ function buildExceptionState(items: ClaimsExceptionItem[]): ExceptionActionState
             ? 'override'
             : item.resolution === 'rejected'
               ? 'manual'
-              : item.resolution === 'accepted'
+              : item.resolution === 'accepted' || item.resolution === 'pending'
                 ? 'accept'
-                : 'pending',
+                : 'accept',
         manualValue: item.resolution === 'overridden' ? item.current_value ?? '' : '',
       },
     ]),
@@ -1899,6 +1909,13 @@ function titleCase(value: string) {
     .split(' ')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+}
+
+function formatWorklistTaskStatus(value: string) {
+  if (value === 'open') {
+    return 'Not Started'
+  }
+  return titleCase(value)
 }
 
 function formatSettlementDecision(value: string) {

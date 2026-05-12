@@ -233,6 +233,239 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-12 12:25:35 +00:00]
+
+### Prompt
+Actually I meant to create a new settlement item in settl,enents page and create a new sanction case in sanctions page, you have just created cards in worklist, new entires are not created in these page, do this as well please
+
+### Context Used
+- Files referred:
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/ui/06-compliance/SANCTIONS.md
+  - docs/trackers/TRACKER.md
+  - backend/app/repositories/claims_repository.py
+  - backend/app/services/claims_service.py
+  - backend/app/services/compliance_service.py
+  - backend/app/models/settlement.py
+  - backend/app/models/screening_event.py
+  - frontend/src/pages/claims/settlements/SettlementsPage.tsx
+  - frontend/src/pages/compliance/SanctionsPage.tsx
+
+### Actions Taken
+- Changed settlement exact-match processing so it creates a new pipeline settlement record in the Settlements register instead of only reusing the pending baseline quarter row.
+- Kept the pending baseline settlement rows isolated from future ground-truth lookups by excluding cession-file-derived settlement records from the pending-baseline reconciliation query.
+- Added cession-file screening-event persistence in the settlement-processing path so exact-match settlement processing now creates a real sanctions case in `screening_events`.
+- Extended the sanctions workspace to include `cession_file` trigger cases so those newly created screening cases render in `/compliance/sanctions`.
+- Backfilled the current exact-match Maple demo files so the new settlement rows and sanctions cases exist immediately in the local dataset.
+- Verified backend Python compilation plus direct payload checks for the Settlements register and Sanctions workspace.
+
+### Files Modified
+- backend/app/repositories/claims_repository.py
+- backend/app/services/claims_service.py
+- backend/app/services/compliance_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The specs do not define a duplicate-quarter settlement ID format for multiple cession-file-driven settlement records, so pipeline-created settlement rows now use a deterministic cession-file suffix such as `SET-2026-Q1-044-029` while preserving the original baseline pending row `SET-2026-Q1-044` for reconciliation.
+- The persisted cession-file sanctions cases currently auto-clear for the Maple demo data because the watchlist engine found no retained OFAC / FinCEN matches for that cedent.
+
+### Status
+✅ Completed
+
+## [2026-05-12 12:01:44 +00:00]
+
+### Prompt
+1) The newly created worklist item is not reflected in the settlment queue. It should automatically come in the queue with a status which implicate that it is yet to begin.
+For both of the worklist items created embed them with a hyperlink so that we can navigate to the corresponding worklist item upon clicking on it. 
+2) For resolutoin hanfling make the button accept all critical fixes to accept all fixes and move it to the top right corner of the table(for easier visibility and clickability). Also make accept as default for all of the fixes.
+
+### Context Used
+- Files referred:
+  - docs/ui/03-worklist/WORKLIST.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/trackers/TRACKER.md
+  - backend/app/repositories/worklist_repository.py
+  - backend/app/services/worklist_service.py
+  - backend/app/services/claims_service.py
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/pages/worklist/WorklistDetailPage.tsx
+
+### Actions Taken
+- Appended live DB worklist rows into the shared worklist payload when they do not already exist in the seeded register so newly generated settlement and compliance tasks appear immediately in the queue.
+- Enriched serialized live worklist rows with entity and action metadata used by the existing worklist views and detail navigation.
+- Changed exact-match settlement-generated `Settlement Pending` and `Sanction Screening` worklist items to start in `open` so the UI can present them as not started.
+- Backfilled the existing Maple demo settlement/compliance worklist rows from `pending_review` to `open` in the local database so the current positive test case reflects the new behavior immediately.
+- Turned both generated worklist entries in the settlement processing modal into hyperlinks to `/worklist/:wlId`.
+- Renamed and moved the bulk resolution action to a top-right `Accept All Fixes` button and made `Accept` the default action for every resolution row.
+- Verified backend Python compilation, frontend production build, and the live admin worklist payload for the appended settlement-generated rows.
+
+### Files Modified
+- backend/app/repositories/worklist_repository.py
+- backend/app/services/worklist_service.py
+- backend/app/services/claims_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Existing historical settlement-generated worklist rows had already been persisted with the older `pending_review` status, so the local demo database was backfilled to `open` to keep the current screenshot/test flow aligned with the code change.
+
+### Status
+✅ Completed
+
+## [2026-05-12T11:39:26.3760769+00:00]
+
+### Prompt
+In the second screenshot in the pending settlement of the 2026 Q1 movements of the cedent Maple Leaf we are having a set of values.
+I have uploaded a settlment file that has the exact same numbers to test if the processing pipeline is working for settlement files. But it is showing some other random values as the IRIS calculated values which is wrong. Since the Quarter was identifies as 2026 Q1 and the cedent is maple and the contract is correctly mapped, the irsi should be fetching the values calculated for that quarter just as shown in the financial card of the contract screen. Make it aligned so that i can have a positive test case.
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/api/CLAIMS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/services/claims_service.py
+  - backend/app/services/underwriting_service.py
+  - backend/app/repositories/claims_repository.py
+  - backend/app/mock_data/settlements_seed.json
+  - backend/app/mock_data/settlement_overrides.json
+  - backend/app/mock_data/cession_pipeline_overrides.json
+
+### Actions Taken
+- Traced Settlement reconciliation and confirmed the Maple `Q1 2026` upload was falling back to the deterministic settlement baseline cache instead of the contract detail performance quarter row.
+- Reused the contract detail performance source as a settlement expectation lookup so Claims reconciliation now reads the same quarter values shown on the contract financial card before any mock fallback is used.
+- Corrected net settlement recomputation to treat admin fee as a deduction, which aligns the uploaded Maple totals to `CA$5,435`.
+- Changed processed settlement files to recompute reconciliation from stored records instead of staying pinned to stale cached mismatch payloads.
+- Reprocessed the existing Maple test uploads `CES-2026-028` and `CES-2026-029`, refreshed their settlement/worklist outcomes, and verified both now reconcile as exact matches.
+- Verified Python compilation for the updated claims service and validated the service output directly for the Maple `Q1 2026` case.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- backend/app/mock_data/cession_pipeline_overrides.json
+- backend/app/mock_data/settlement_overrides.json
+- backend/iris.db
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Existing unrelated workspace changes remained in place, including pre-existing edits in `backend/app/services/underwriting_service.py` and the untracked `backend/app/services/contract_clause_catalog.py`.
+- Reprocessing the two Maple test files generated fresh settlement report artifacts for `CES-2026-028` and `CES-2026-029`.
+
+### Status
+✅ Completed
+
+## [2026-05-12 11:14:37 UTC]
+
+### Prompt
+In the contract section, under rule configuration add a new card called clauses and hardcode the below clauses for all the contracts:
+
+ID	Category	Clause	Summary &amp; Citation	Applies to Transactions
+CLS-001	Contract Term	Effective Date	Agreement effective from 01-Jan-2025 with 20-year term ending 31-Dec-2044.	All Transactions
+CLS-002	Contract Term	Settlement Frequency	Settlements must occur on a quarterly basis.	Settlement, Reconciliation
+CLS-003	Contract Term	Valuation Frequency	Valuation and actuarial calculations performed monthly.	Valuation, Rollforward, Cashflow Projection
+CLS-004	Population Coverage	Covered Population Definition	Covered population includes active pensioners, deferred members, and eligible surviving spouses from approved population files.	Population Processing, Floating Leg
+CLS-005	Population Coverage	Included Benefits	Covered benefits include pension payments, spouse continuation, GMP obligations, inflation-linked increases.	Floating Leg, Liability Valuation
+CLS-006	Population Coverage	Excluded Benefits	Lump sum death benefits, admin expenses, healthcare benefits excluded from coverage.	Settlement, Liability Calculation
+CLS-007	Data Processing	File Submission Frequency	Cedant must provide operational files at agreed frequencies depending on file type.	File Ingestion, Processing
+CLS-008	Data Processing	Mortality File Frequency	Mortality/death files must be submitted weekly.	Mortality Processing, Floating Leg
+CLS-009	Data Processing	Pension Status Update Frequency	Pension status updates must be submitted monthly.	Population Management
+CLS-010	Data Processing	Settlement Activity Report Frequency	Settlement activity reports must be delivered quarterly.	Settlement, Reconciliation
+CLS-011	Data Processing	Discount Curve Frequency	Future discount factor files must be submitted quarterly.	Valuation, Discounting
+CLS-012	Data Processing	Inflation Assumption Frequency	Inflation assumption files submitted quarterly.	Cashflow Projection, Valuation
+CLS-013	Data Security	SFTP Transfer Requirement	All files transmitted via encrypted SFTP.	File Processing
+CLS-014	Data Security	Encryption Standard	Files must use PGP encryption and SHA-256 checksum validation.	Compliance, Operational Controls
+CLS-015	Data Processing	File Validation Rules	Files validated for duplicates, invalid identifiers, missing mortality status, inconsistent spouse linkage.	Validation, Exception Handling
+CLS-016	Operational SLA	File Ingestion SLA	File ingestion must complete within 2 hours.	Operations
+CLS-017	Operational SLA	Validation SLA	Validation must complete within 4 hours.	Operations
+CLS-018	Operational SLA	Exception Identification SLA	Exceptions identified same business day.	Operations, Worklist
+CLS-019	Operational SLA	Reprocessing SLA	Reprocessing to complete within 1 business day.	File Reprocessing
+CLS-020	Population Processing	Liability Recalculation Trigger	Liability recalculation triggered by death notifications, spouse additions, pension amount changes, deferred-active transitions.	Floating Leg, Settlement
+CLS-021	Fixed Leg	Fixed Leg Definition	Fixed leg represents projected liability cashflows using actuarial assumptions.	Fixed Leg Calculation
+CLS-022	Fixed Leg	Mortality Table Basis	CPM2014 Public Sector mortality table to be used.	Actuarial Calculation
+CLS-023	Fixed Leg	Longevity Improvement Assumption	Longevity improvement assumption fixed at 1.5% annually.	Pricing, Valuation
+CLS-024	Fixed Leg	Inflation Assumption	Long-term inflation assumption fixed at 2.25%.	Cashflow Projection
+CLS-025	Fixed Leg	Discount Curve Source	Discount curve derived from Government of Canada bond yields.	Discounting, PV Calculations
+CLS-026	Fixed Leg	Fixed Leg Formula	Fixed Leg = Present Value(Expected Pension Payments).	Settlement
+CLS-027	Floating Leg	Floating Leg Definition	Floating leg equals actual pension benefit cashflows paid to surviving members.	Settlement
+CLS-028	Floating Leg	Included Floating Leg Components	Includes pension payments, spouse benefits, inflation increases, guaranteed payments.	Floating Leg
+CLS-029	Floating Leg	Floating Leg Formula	Floating Leg = Sum(Actual Eligible Pension Payments).	Settlement
+CLS-030	Floating Leg	Mortality Impact Rule	Mortality events reduce future floating leg obligations effective from date of death.	Mortality Processing
+CLS-031	Settlement	Settlement Currency	All settlements denominated in CAD.	Payments
+CLS-032	Settlement	Settlement Lag	Settlement payments due T+10 business days after quarter end.	Payments
+CLS-033	Settlement	Net Settlement Formula	Net settlement = Floating Leg – Fixed Leg ± Adjustments.	Settlement
+CLS-034	Reconciliation	Settlement Reconciliation Requirement	Reinsurer must compare expected vs actual settlement values.	Reconciliation
+CLS-035	Reconciliation	Auto-Accept Threshold	Variance ≤ 0.50% auto-accepted.	Reconciliation
+CLS-036	Reconciliation	Manual Review Threshold	Variance > 0.50% requires manual review.	Reconciliation
+CLS-037	Reconciliation	Compliance Escalation Threshold	Variance > 2.00% escalated to compliance review.	Compliance
+CLS-038	Reconciliation	Executive Review Threshold	Variance > CAD 2.5M requires executive review.	Governance
+CLS-039	Reconciliation	Reconciliation Triggers	Manual reconciliation triggered by late mortality reporting, assumption changes, duplicate records, benefit corrections.	Reconciliation
+CLS-040	Reconciliation	Historical Variance Review	Repeated variances over 3 consecutive periods trigger operational review.	Governance
+CLS-041	Compliance	Onboarding Screening Requirement	Cedants screened during onboarding.	Compliance
+CLS-042	Compliance	Periodic Screening Requirement	Active cedants screened monthly.	Compliance
+CLS-043	Compliance	Payment Screening Requirement	Screening required before settlement payment release.	Payments, Compliance
+CLS-044	Compliance	Screening Sources	Screening against OFAC, FinCEN, and FIS Prime.	Compliance
+CLS-045	Compliance	Compliance Hold Rule	Unresolved sanction match places settlement on Compliance Hold.	Settlement
+CLS-046	Collateral	Collateral Threshold	Collateral required when exposure exceeds CAD 10M.	Risk Management
+CLS-047	Collateral	Eligible Collateral Types	Cash, government bonds, investment-grade securities permitted.	Treasury
+CLS-048	Commutation	Commutation Eligibility	Either party may request commutation after Year 10.	Contract Termination
+CLS-049	Commutation	Termination Valuation Basis	Termination value based on discount rates, projected liabilities, termination spread.	Termination Calculation
+CLS-050	Audit	Audit Retention Requirement	Operational records retained for 10 years after termination.	Audit, Compliance
+CLS-051	Audit	Audit Scope	Audit records maintained for file processing, calculations, reconciliations, approvals, overrides.	Audit
+CLS-052	AI Governance	AI-Assisted Processing Clause	IRiS AI may be used for file classification, anomaly detection, reconciliation support, sanction prioritization.	AI Operations
+CLS-053	AI Governance	Human Oversight Requirement	All material AI-assisted decisions require human oversight.	Governance
+CLS-054	Default	Failure to Pay Settlement	Failure to pay settlements constitutes event of default.	Settlement
+CLS-055	Default	Material Reporting Failure	Material reporting failures considered default event.	Operations
+CLS-056	Default	Repeated Screening Failure	Repeated sanction screening failures constitute default event.	Compliance
+CLS-057	Default	Regulatory Breach	Regulatory breaches constitute event of default.	Compliance
+CLS-058	Legal	Governing Law	Agreement governed under Ontario, Canada law.	Legal
+CLS-059	Reporting	Settlement Reconciliation SLA	Settlement reconciliation must complete within 2 business days.	Operations
+CLS-060	Reporting	Payment Release SLA	Payment release must complete within T+10 business days.	Payments
+
+And when you are processing any files under cession file processing we will be retrieving these clauses to diplay under the clauses section(refer the screenshot).
+Since now we are processing settlement files it will be the clauses under the category setttlement that coming to the ui.
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/services/underwriting_service.py
+  - backend/app/services/claims_service.py
+  - frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Added a shared backend hardcoded contract clause catalog containing all 60 requested clauses.
+- Exposed the shared clause catalog on contract detail payloads so Rules & Configuration can render a dedicated read-only `Clauses` card for every contract.
+- Added the new contract UI card with a table showing ID, Category, Clause, Summary & Citation, and Applies to Transactions.
+- Switched Settlement cession-file clause payloads to read from the shared catalog and filter to the `Settlement` category rows only.
+- Updated tracker notes to reflect the shared clause catalog and the Settlement-category clause behavior in the cession pipeline.
+- Verified backend Python compilation and frontend production build.
+
+### Files Modified
+- backend/app/services/contract_clause_catalog.py
+- backend/app/services/underwriting_service.py
+- backend/app/services/claims_service.py
+- frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The cession Clauses step now uses the shared catalog for Settlement processing only, because the current request explicitly scoped the live file-processing behavior to Settlement-category clauses; the existing non-settlement clause behavior was preserved rather than inventing additional file-type mappings.
+- The frontend production build passes with the existing Vite chunk-size warning.
+
+### Status
+✅ Completed
+
 ## [2026-05-12T06:02:07.4192785+00:00]
 
 ### Prompt

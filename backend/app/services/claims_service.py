@@ -28,6 +28,7 @@ from app.models.population import PolicyRegister
 from app.models.settlement import Settlement
 from app.models.worklist import WorklistItem
 from app.repositories.claims_repository import ClaimsRepository
+from app.services.contract_clause_catalog import get_contract_clauses_by_category, serialize_contract_clause_for_claims
 from app.services.population_csv import (
     ALLOWED_POPULATION_STATUSES,
     PopulationCsvIssue,
@@ -1247,8 +1248,9 @@ class ClaimsService:
             raise IrisAPIError(400, "Invalid calculation period", "Settlement calculation period could not be parsed")
 
         now = datetime.now(UTC)
-        settlement = self.repository.get_settlement(reconciliation["settlement_id"]) or Settlement(
-            settlement_id=reconciliation["settlement_id"],
+        created_settlement_id = self._pipeline_settlement_id(reconciliation["settlement_id"], cession_file.file_id)
+        settlement = self.repository.get_settlement(created_settlement_id) or Settlement(
+            settlement_id=created_settlement_id,
             period_start=period_start,
             period_end=period_end,
             created_at=now,
@@ -1268,23 +1270,27 @@ class ClaimsService:
         settlement.payment_date = payment_date
         settlement_status = "pending_approval" if decision == "accept" else "pending_reconciliation"
         settlement.status = settlement_status
-        settlement.notes = f"Created from Settlement file {cession_file.file_id}; reconciliation decision={decision}"
+        settlement.notes = (
+            f"Created from Settlement file {cession_file.file_id}; "
+            f"reconciled against baseline {reconciliation['settlement_id']}; decision={decision}"
+        )
         settlement.updated_at = now
         created = self.repository.upsert_settlement(settlement)
         settlement_row = self._serialize_settlement_model(created)
 
         self._store_settlement_override(
-            reconciliation["settlement_id"],
+            created_settlement_id,
             {
-                "source": f"{cession_file.file_id} ({cession_file.filename})",
+                "source": f"{cession_file.file_id} ({cession_file.filename}) · baseline {reconciliation['settlement_id']}",
                 "iris_recommendation": decision,
                 "status": settlement_status,
                 "last_updated": self._to_iso(now),
                 "settlement_reconciliation": reconciliation,
+                "baseline_settlement_id": reconciliation["settlement_id"],
             },
         )
         self._append_settlement_audit_event(
-            reconciliation["settlement_id"],
+            created_settlement_id,
             {
                 "actor": "Settlement Reconciliation Engine",
                 "type": "System",
@@ -1297,8 +1303,10 @@ class ClaimsService:
         logger.debug("Settlement file upsert file_id=%s settlement=%s", cession_file.file_id, settlement_row)
         settlement_row["iris_recommendation"] = decision
         settlement_row["settlement_reconciliation"] = reconciliation
+        settlement_row["baseline_settlement_id"] = reconciliation["settlement_id"]
         report_artifacts: list[dict[str, Any]] = []
         if decision == "accept":
+            settlement_row["screening_ref"] = self._ensure_cession_file_screening_case(cession_file, contract)
             cedent = self.repository.get_cedent(contract.cedent_id)
             report_artifacts = generate_settlement_report_files(
                 cession_file=cession_file,
@@ -1319,6 +1327,52 @@ class ClaimsService:
             },
         )
         return settlement_row
+
+    def _ensure_cession_file_screening_case(self, cession_file: CessionFile, contract: Contract) -> str:
+        logger.info("Creating sanctions screening workspace case from settlement processing")
+        logger.debug("Settlement sanctions case file_id=%s contract_id=%s", cession_file.file_id, contract.contract_id)
+        cedent = self.repository.get_cedent(contract.cedent_id)
+        entity_name = cedent.legal_entity_name if cedent else contract.contract_name or "Unmapped cedent"
+        existing_event = self.repository.get_screening_event_for_cession_file(cession_file.id, entity_name)
+
+        from app.models.user import User
+        from app.repositories.compliance_repository import ComplianceRepository
+        from app.services.compliance_service import ComplianceService
+
+        system_actor = User(
+            id="system-claims-pipeline",
+            username="claims_pipeline",
+            email="claims.pipeline@iris.local",
+            password_hash="!",
+            full_name="Claims Pipeline",
+            role="compliance",
+            is_active=True,
+        )
+        screening_result = ComplianceService(ComplianceRepository(self.repository.db)).screen_entity(
+            existing_event.screening_ref if existing_event else None,
+            entity_name,
+            None,
+            contract.cedent_id,
+            None,
+            "cession_file",
+            cession_file.id,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            ["OFAC SDN", "FinCEN 314(a)"],
+            True,
+            system_actor,
+        )
+        logger.debug(
+            "Settlement sanctions case persisted file_id=%s screening_ref=%s result=%s",
+            cession_file.file_id,
+            screening_result["screening_ref"],
+            screening_result["result"],
+        )
+        return str(screening_result["screening_ref"])
 
     def _resolved_population_overrides(self, cession_file: CessionFile) -> dict[int, dict[str, Any]]:
         overrides: dict[int, dict[str, Any]] = {}
@@ -1744,40 +1798,14 @@ class ClaimsService:
             }
 
         if file_type == "Settlement":
-            currency = contract_context.get("currency") or mapping["currency"]
+            settlement_clauses = [
+                serialize_contract_clause_for_claims(item) for item in get_contract_clauses_by_category("Settlement")
+            ]
             return {
                 "title": "Applicable Contract Clauses",
-                "subtitle": f'3 SQL-derived settlement reconciliation controls identified for {mapping["contract_id"]}.',
+                "subtitle": f'{len(settlement_clauses)} settlement clauses identified for {mapping["contract_id"]}.',
                 "flagged_count": 0,
-                "clauses_checked": [
-                    {
-                        "clause_id": "SQL-SETTLEMENT-FIXED-FLOATING",
-                        "clause_title": "Fixed and Floating Leg Reconciliation",
-                        "category": "Settlement",
-                        "status": "matched",
-                        "description": "Uploaded fixed and floating legs must exactly match IRiS expected values for the mapped contract-period.",
-                        "fields_affected": ["fixed_leg", "floating_leg"],
-                        "active": True,
-                    },
-                    {
-                        "clause_id": "SQL-SETTLEMENT-NET",
-                        "clause_title": "Net Settlement Formula",
-                        "category": "Settlement",
-                        "status": "matched",
-                        "description": "Net settlement is reconciled as floating leg minus fixed leg plus signed fee and prior-period interest.",
-                        "fields_affected": ["net_settlement_amount", "fee", "interest_prior_period"],
-                        "active": True,
-                    },
-                    {
-                        "clause_id": "SQL-CONTRACT-CURRENCY",
-                        "clause_title": "Settlement Currency",
-                        "category": "Calculation",
-                        "status": "matched",
-                        "description": f"Settlement amounts reconcile in mapped contract currency {currency}.",
-                        "fields_affected": ["fixed_leg", "floating_leg", "net_settlement_amount"],
-                        "active": True,
-                    },
-                ],
+                "clauses_checked": settlement_clauses,
             }
 
 
@@ -1932,7 +1960,8 @@ class ClaimsService:
 
         if file_type == "Settlement":
             reconciliation = self._build_settlement_reconciliation_payload(cession_file)
-            settlement_id = reconciliation["settlement_id"] if reconciliation else settlement["settlement_id"]
+            settlement_summary = self._get_override(cession_file.file_id).get("settlement_processing_summary") or {}
+            settlement_id = settlement_summary.get("settlement_id") or (reconciliation["settlement_id"] if reconciliation else settlement["settlement_id"])
             currency = reconciliation["currency"] if reconciliation else mapping["currency"]
             summary.update(
                 {
@@ -2801,12 +2830,22 @@ class ClaimsService:
         uploaded_net: Decimal,
         expected: dict[str, Any],
     ) -> dict[str, Any]:
-        uploaded_recomputed_net = self._decimal_cents(uploaded_floating - uploaded_fixed + uploaded_fee + uploaded_interest)
+        uploaded_recomputed_net = self._reconciled_settlement_net(
+            uploaded_fixed,
+            uploaded_floating,
+            uploaded_fee,
+            uploaded_interest,
+        )
         expected_net = expected.get("net_settlement_amount")
         system_net = (
             self._decimal_cents(expected_net)
             if expected_net is not None
-            else self._decimal_cents(expected["floating_leg"] - expected["fixed_leg"] + uploaded_fee + uploaded_interest)
+            else self._reconciled_settlement_net(
+                expected["fixed_leg"],
+                expected["floating_leg"],
+                uploaded_fee,
+                uploaded_interest,
+            )
         )
         settlement_id = self._settlement_id_for(contract.contract_id, period_label)
         period_start, period_end = self._period_bounds(period_label)
@@ -2913,13 +2952,27 @@ class ClaimsService:
                 "mock_expected": False,
             }
 
+        contract_performance = self._expected_settlement_values_from_contract_performance(
+            contract,
+            period_label,
+            uploaded_fee,
+            uploaded_interest,
+        )
+        if contract_performance:
+            return contract_performance
+
         tracked = self._find_tracked_settlement_expectation(contract.contract_id, period_start, period_end, cession_file)
         if tracked:
             logger.info("Using tracked settlement register row for expected settlement values")
             logger.debug("Tracked settlement expectation contract_id=%s settlement_id=%s", contract.contract_id, tracked["settlement_id"])
             fixed_leg = self._decimal_cents(tracked.get("fixed_leg_amount"))
             floating_leg = self._decimal_cents(tracked.get("floating_leg_amount"))
-            net_amount = self._decimal_cents(tracked.get("net_amount", floating_leg - fixed_leg + uploaded_fee + uploaded_interest))
+            net_amount = self._decimal_cents(
+                tracked.get(
+                    "net_amount",
+                    self._reconciled_settlement_net(fixed_leg, floating_leg, uploaded_fee, uploaded_interest),
+                )
+            )
             return {
                 "fixed_leg": fixed_leg,
                 "floating_leg": floating_leg,
@@ -2937,7 +2990,12 @@ class ClaimsService:
             return {
                 "fixed_leg": fixed_leg,
                 "floating_leg": floating_leg,
-                "net_settlement_amount": self._decimal_cents(floating_leg - fixed_leg + uploaded_fee + uploaded_interest),
+                "net_settlement_amount": self._reconciled_settlement_net(
+                    fixed_leg,
+                    floating_leg,
+                    uploaded_fee,
+                    uploaded_interest,
+                ),
                 "source": "contract terms and current policy_register population",
                 "mock_expected": False,
             }
@@ -2963,7 +3021,9 @@ class ClaimsService:
             "period_end": period_end.isoformat(),
             "fixed_leg_amount": self._decimal_payload(fixed_leg),
             "floating_leg_amount": self._decimal_payload(floating_leg),
-            "net_amount": self._decimal_payload(floating_leg - fixed_leg + uploaded_fee + uploaded_interest),
+            "net_amount": self._decimal_payload(
+                self._reconciled_settlement_net(fixed_leg, floating_leg, uploaded_fee, uploaded_interest)
+            ),
             "currency": contract.currency or "USD",
             "source": "deterministic settlement baseline",
         }
@@ -2971,9 +3031,63 @@ class ClaimsService:
         return {
             "fixed_leg": fixed_leg,
             "floating_leg": floating_leg,
-            "net_settlement_amount": self._decimal_cents(floating_leg - fixed_leg + uploaded_fee + uploaded_interest),
+            "net_settlement_amount": self._reconciled_settlement_net(
+                fixed_leg,
+                floating_leg,
+                uploaded_fee,
+                uploaded_interest,
+            ),
             "source": "settlement baseline cache",
             "mock_expected": True,
+        }
+
+    def _expected_settlement_values_from_contract_performance(
+        self,
+        contract: Contract,
+        period_label: str,
+        uploaded_fee: Decimal,
+        uploaded_interest: Decimal,
+    ) -> dict[str, Any] | None:
+        logger.info("Checking contract performance quarter for settlement expectation")
+        logger.debug("Contract performance expectation lookup contract_id=%s period=%s", contract.contract_id, period_label)
+        try:
+            from app.repositories.underwriting_repository import UnderwritingRepository
+            from app.services.underwriting_service import UnderwritingService
+
+            performance = UnderwritingService(UnderwritingRepository(self.repository.db)).get_contract_details_performance(
+                contract.contract_id
+            )
+        except IrisAPIError:
+            logger.error("Contract performance expectation lookup failed contract_id=%s", contract.contract_id)
+            return None
+
+        normalized_period = self._normalize_period_label(period_label)
+        settlement_history = performance.get("settlement_history", [])
+        matching_row = next(
+            (
+                row
+                for row in settlement_history
+                if self._normalize_period_label(row.get("period")) == normalized_period
+            ),
+            None,
+        )
+        if matching_row is None:
+            logger.debug("No contract performance settlement row matched contract_id=%s period=%s", contract.contract_id, period_label)
+            return None
+
+        fixed_leg = self._decimal_cents(matching_row.get("fixed_leg"))
+        floating_leg = self._decimal_cents(matching_row.get("floating_leg"))
+        return {
+            "fixed_leg": fixed_leg,
+            "floating_leg": floating_leg,
+            "net_settlement_amount": self._reconciled_settlement_net(
+                fixed_leg,
+                floating_leg,
+                uploaded_fee,
+                uploaded_interest,
+            ),
+            "source": "contract details performance",
+            "mock_expected": False,
         }
 
     def _find_tracked_settlement_expectation(
@@ -2987,6 +3101,8 @@ class ClaimsService:
             if settlement.contract_id != contract_id:
                 continue
             if settlement.period_start != period_start or settlement.period_end != period_end:
+                continue
+            if settlement.cession_file_id is not None:
                 continue
             if str(settlement.status or "").lower() not in {"pending", "pending_approval"}:
                 continue
@@ -3022,8 +3138,6 @@ class ClaimsService:
     def _build_settlement_reconciliation_payload(self, cession_file: CessionFile) -> dict[str, Any] | None:
         stored_summary = self._get_override(cession_file.file_id).get("settlement_processing_summary") or {}
         stored_reconciliation = stored_summary.get("settlement_reconciliation")
-        if stored_reconciliation and cession_file.stage in {"processed", "approved"}:
-            return stored_reconciliation
 
         records = self.repository.list_file_records(cession_file.id)
         if not records:
@@ -4046,7 +4160,7 @@ class ClaimsService:
                     description="Settlement totals matched the pending table row and are awaiting operational approval.",
                     category="Settlement Pending",
                     priority="medium",
-                    status="pending_review",
+                    status="open",
                     assigned_role="claims_ops",
                     contract_id=mapping["contract_id"],
                     cedent_id=detection["cedent_id"],
@@ -4067,7 +4181,7 @@ class ClaimsService:
                     description=f"Run sanctions screening for {detection['cedent']} before downstream settlement release.",
                     category="Sanction Screening",
                     priority="medium",
-                    status="pending_review",
+                    status="open",
                     assigned_role="compliance",
                     contract_id=mapping["contract_id"],
                     cedent_id=detection["cedent_id"],
@@ -4623,6 +4737,14 @@ class ClaimsService:
         if not match:
             return f"SET-{contract_id[-3:]}-{date.today().strftime('%Y%m%d')}"
         return f"SET-{match.group(1)}-Q{match.group(2)}-{contract_id.split('-')[-1]}"
+
+    def _pipeline_settlement_id(self, baseline_settlement_id: str, cession_file_id: str) -> str:
+        file_suffix = re.sub(r"[^A-Za-z0-9]", "", cession_file_id.split("-")[-1]) or "001"
+        candidate = f"{baseline_settlement_id}-{file_suffix}"
+        if len(candidate) <= 30:
+            return candidate
+        max_base_length = max(1, 30 - len(file_suffix) - 1)
+        return f"{baseline_settlement_id[:max_base_length]}-{file_suffix}"
 
     def _fixed_leg_from_contract(self, contract: Contract, period_start: date, period_end: date) -> float:
         notional = self._to_float(contract.notional_amount)
@@ -5414,6 +5536,25 @@ class ClaimsService:
         if value.tzinfo is None:
             value = value.replace(tzinfo=UTC)
         return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+    def _signed_settlement_fee(self, fee_amount: Decimal) -> Decimal:
+        normalized_fee = self._decimal_cents(fee_amount)
+        if normalized_fee > 0:
+            return normalized_fee * Decimal("-1")
+        return normalized_fee
+
+    def _reconciled_settlement_net(
+        self,
+        fixed_leg: Decimal | float | int,
+        floating_leg: Decimal | float | int,
+        fee_amount: Decimal | float | int,
+        interest_amount: Decimal | float | int,
+    ) -> Decimal:
+        fixed_leg_decimal = self._decimal_cents(fixed_leg)
+        floating_leg_decimal = self._decimal_cents(floating_leg)
+        signed_fee = self._signed_settlement_fee(self._decimal_cents(fee_amount))
+        signed_interest = self._decimal_cents(interest_amount)
+        return self._decimal_cents(floating_leg_decimal - fixed_leg_decimal + signed_fee + signed_interest)
 
     def _to_float(self, value: Any) -> float:
         if value is None:

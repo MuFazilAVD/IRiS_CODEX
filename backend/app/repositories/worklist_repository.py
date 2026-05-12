@@ -13,6 +13,10 @@ class WorklistRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def list_live_items(self) -> list[WorklistItem]:
+        statement = select(WorklistItem).order_by(WorklistItem.created_at.desc(), WorklistItem.wl_id.desc())
+        return list(self.db.scalars(statement))
+
     def list_claims_ops_items(self) -> list[WorklistItem]:
         statement = select(WorklistItem).where(WorklistItem.assigned_role == "claims_ops").order_by(WorklistItem.wl_id)
         return list(self.db.scalars(statement))

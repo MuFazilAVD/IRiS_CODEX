@@ -10,6 +10,7 @@ from app.models.cession_file_exception import CessionFileException
 from app.models.cession_file_record import CessionFileRecord
 from app.models.contract import Contract
 from app.models.population import PolicyRegister
+from app.models.screening_event import ScreeningEvent
 from app.models.settlement import Settlement
 from app.models.worklist import WorklistItem
 
@@ -258,6 +259,7 @@ class ClaimsRepository:
             Settlement.period_start == period_start,
             Settlement.period_end == period_end,
             Settlement.status.in_(["pending", "pending_approval"]),
+            Settlement.cession_file_id.is_(None),
         ]
         if cedent_id:
             filters.append(Settlement.cedent_id == cedent_id)
@@ -277,6 +279,25 @@ class ClaimsRepository:
         self.db.commit()
         self.db.refresh(settlement)
         return settlement
+
+    def get_screening_event_for_cession_file(self, cession_file_db_id: str, entity_name: str | None = None) -> ScreeningEvent | None:
+        statement = select(ScreeningEvent).where(ScreeningEvent.cession_file_id == cession_file_db_id)
+        if entity_name:
+            statement = statement.where(ScreeningEvent.entity_name == entity_name)
+        statement = statement.order_by(ScreeningEvent.created_at.desc(), ScreeningEvent.screening_ref.desc()).limit(1)
+        return self.db.scalar(statement)
+
+    def create_screening_event(self, event: ScreeningEvent) -> ScreeningEvent:
+        self.db.add(event)
+        self.db.commit()
+        self.db.refresh(event)
+        return event
+
+    def update_screening_event(self, event: ScreeningEvent) -> ScreeningEvent:
+        self.db.add(event)
+        self.db.commit()
+        self.db.refresh(event)
+        return event
 
     def get_next_worklist_id(self) -> str:
         current_ids = [value for value in self.db.scalars(select(WorklistItem.wl_id))]

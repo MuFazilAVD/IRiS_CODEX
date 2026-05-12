@@ -72,6 +72,8 @@ class WorklistService:
             "breadcrumb": item.breadcrumb,
             "cedent_name": (cedent_names or {}).get(item.cedent_id) if item.cedent_id else None,
             "assigned_to_email": (assigned_user_emails or {}).get(item.assigned_to) if item.assigned_to else None,
+            "entity_display": self._entity_display(item, cedent_names or {}),
+            "action_label": self._action_label(item),
         }
 
     def _build_summary(self, items: list[dict[str, Any]], role: str) -> dict[str, int]:
@@ -98,15 +100,25 @@ class WorklistService:
             ),
         }
 
-    def _build_mock_payload(self, role: str, live_item_states: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+    def _build_mock_payload(self, role: str, live_items: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         register_items = deepcopy(load_mock_data(WORKLIST_REGISTER_FILE))
+        register_ids = {str(item.get("wl_id") or "") for item in register_items}
         for item in register_items:
-            live_state = (live_item_states or {}).get(item["wl_id"])
+            live_state = next((state for state in (live_items or []) if state.get("wl_id") == item["wl_id"]), None)
             if live_state:
                 item["status"] = live_state.get("status", item["status"])
+                item["action_label"] = live_state.get("action_label", item.get("action_label"))
+                item["assigned_role"] = live_state.get("assigned_role", item.get("assigned_role"))
+                item["assigned_to_email"] = live_state.get("assigned_to_email", item.get("assigned_to_email"))
+                item["entity_display"] = live_state.get("entity_display", item.get("entity_display"))
 
         dynamic_screening_items = self._build_dynamic_screening_worklist_items(register_items)
-        register_items = dynamic_screening_items + register_items
+        appended_live_items = [
+            state
+            for state in (live_items or [])
+            if str(state.get("wl_id") or "") not in register_ids
+        ]
+        register_items = appended_live_items + dynamic_screening_items + register_items
 
         return {
             "summary": self._build_summary(register_items, role),
@@ -117,14 +129,29 @@ class WorklistService:
     def get_worklist(self, role: str) -> dict:
         logger.info("Loading worklist for role")
         logger.debug("Worklist role=%s", role)
-        db_items = self.repository.list_claims_ops_items()
+        db_items = self.repository.list_live_items()
         cedent_names = self.repository.list_cedent_names([item.cedent_id for item in db_items if item.cedent_id])
         assigned_user_emails = self.repository.list_user_emails([item.assigned_to for item in db_items if item.assigned_to])
-        live_item_states = {
-            item.wl_id: self._serialize_db_item(item, cedent_names=cedent_names, assigned_user_emails=assigned_user_emails)
+        live_items = [
+            self._serialize_db_item(item, cedent_names=cedent_names, assigned_user_emails=assigned_user_emails)
             for item in db_items
-        }
-        return self._build_mock_payload(role, live_item_states=live_item_states)
+        ]
+        return self._build_mock_payload(role, live_items=live_items)
+
+    def _entity_display(self, item: WorklistItem, cedent_names: dict[str, str]) -> str | None:
+        cedent_name = cedent_names.get(item.cedent_id) if item.cedent_id else None
+        if cedent_name and item.contract_id:
+            return f"{cedent_name}\n· {item.contract_id}"
+        return cedent_name or item.contract_id
+
+    def _action_label(self, item: WorklistItem) -> str | None:
+        category = str(item.category or "").strip().lower()
+        title = str(item.title or "").strip().lower()
+        if category == "settlement pending" or "approval pending" in title:
+            return "Approval req."
+        if category == "sanction screening" or "screening pending" in title:
+            return "Review req."
+        return None
 
     def _build_dynamic_screening_worklist_items(self, existing_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         logger.info("Building dynamic sanctions screening worklist overlays")
