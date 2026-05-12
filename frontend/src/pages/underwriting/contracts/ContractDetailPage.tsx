@@ -555,6 +555,36 @@ function RulesConfigurationTab({
           </PanelCard>
         )
       })}
+
+      <PanelCard
+        subtitle={`${detail.contract_clauses.length} hardcoded clauses currently applied across all contracts.`}
+        title="Clauses"
+      >
+        <div className="overflow-x-auto rounded-xl border border-iris-border">
+          <table className="min-w-full text-[13px]">
+            <thead className="bg-[#F8F9FA]">
+              <tr>
+                {['ID', 'Category', 'Clause', 'Summary & Citation', 'Applies to Transactions'].map((label) => (
+                  <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {detail.contract_clauses.map((item) => (
+                <tr key={item.clause_id} className="border-t border-[#EEF2F5] align-top">
+                  <td className="px-4 py-3 font-mono text-[12px] font-semibold text-iris-blue">{item.clause_id}</td>
+                  <td className="px-4 py-3 text-iris-text-secondary">{item.category}</td>
+                  <td className="px-4 py-3 font-medium text-iris-text-primary">{item.clause_title}</td>
+                  <td className="px-4 py-3 text-iris-text-secondary">{item.summary_citation}</td>
+                  <td className="px-4 py-3 text-iris-text-secondary">{item.applies_to_transactions}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </PanelCard>
     </div>
   )
 }

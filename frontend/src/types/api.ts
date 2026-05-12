@@ -727,6 +727,14 @@ export interface ContractAuditComplianceSection {
   audit_trail: ContractAuditTrailItem[]
 }
 
+export interface ContractClause {
+  clause_id: string
+  category: string
+  clause_title: string
+  summary_citation: string
+  applies_to_transactions: string
+}
+
 export interface ContractMemberSummary {
   total_members: number
   active_members: number
@@ -761,6 +769,7 @@ export interface ContractDetailPayload {
   amendments: ContractAmendment[]
   audit_compliance: ContractAuditComplianceSection
   member_population: ContractMemberSummary
+  contract_clauses: ContractClause[]
 }
 
 export interface ContractCreateResponse {
