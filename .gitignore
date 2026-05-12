@@ -31,10 +31,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Local databases
-*.db
-*.sqlite
-
 # Editors / OS
 .DS_Store
 .idea/

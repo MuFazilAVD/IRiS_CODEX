@@ -1,0 +1,96 @@
+{
+  "atlascorporatepensions": {
+    "severity": "High",
+    "note": "Adverse-media screening flags governance and sanctions-control signals tied to Atlas Corporate Pensions.",
+    "summary_line": "Two recent governance and sanctions-control items remain relevant for analyst review.",
+    "records": [
+      {
+        "published_at": "2025-10-07",
+        "source": "Regulatory Watch Europe",
+        "headline": "Atlas Corporate Pensions named in sanctions-control remediation review",
+        "summary": "Enhanced due-diligence actions were noted after ownership and payments controls were escalated for compliance review."
+      },
+      {
+        "published_at": "2025-08-12",
+        "source": "Market Integrity Brief",
+        "headline": "Atlas pension vehicle linked to repeated governance questions",
+        "summary": "Recurring ownership-transparency questions and delayed KYC remediation milestones were highlighted."
+      }
+    ]
+  },
+  "atlascorporatepensionsltd": {
+    "severity": "High",
+    "note": "Adverse-media screening flags governance and sanctions-control signals tied to Atlas Corporate Pensions.",
+    "summary_line": "Two recent governance and sanctions-control items remain relevant for analyst review.",
+    "records": [
+      {
+        "published_at": "2025-10-07",
+        "source": "Regulatory Watch Europe",
+        "headline": "Atlas Corporate Pensions named in sanctions-control remediation review",
+        "summary": "Enhanced due-diligence actions were noted after ownership and payments controls were escalated for compliance review."
+      },
+      {
+        "published_at": "2025-08-12",
+        "source": "Market Integrity Brief",
+        "headline": "Atlas pension vehicle linked to repeated governance questions",
+        "summary": "Recurring ownership-transparency questions and delayed KYC remediation milestones were highlighted."
+      }
+    ]
+  },
+  "meridianenergypensionscheme": {
+    "severity": "Medium",
+    "note": "Adverse-media screening retains a corporate-linkage article for Meridian Energy Pension Scheme because the name overlaps a FinCEN-screened parent entity.",
+    "summary_line": "A corporate-linkage article remains relevant while ownership-chain analysis is still open.",
+    "records": [
+      {
+        "published_at": "2025-09-18",
+        "source": "Continental Compliance Monitor",
+        "headline": "Meridian group structure remains under enhanced review",
+        "summary": "Ownership-chain clarity between the pension scheme and Meridian Energy Holdings SA remains unresolved."
+      }
+    ]
+  },
+  "bavarianindustrialfund": {
+    "severity": "Low",
+    "note": "Adverse-media screening contains a low-severity governance article for Bavarian Industrial Fund, but nothing that independently confirms a sanctions breach.",
+    "summary_line": "One low-severity governance article is retained for context, with no direct sanctions confirmation.",
+    "records": [
+      {
+        "published_at": "2025-07-03",
+        "source": "DACH Pensions Bulletin",
+        "headline": "Bavarian Industrial Fund expands onboarding checks for cross-border counterparties",
+        "summary": "Additional onboarding checks were noted after a related-party name-similarity review."
+      }
+    ]
+  },
+  "helvetiapensionfoundation": {
+    "severity": "None",
+    "note": "No relevant adverse media identified in the last 24 months.",
+    "summary_line": "Latest review completed with no recent negative press or enforcement coverage identified.",
+    "records": []
+  },
+  "helvetiaretirementfund": {
+    "severity": "None",
+    "note": "No relevant adverse media identified in the last 24 months.",
+    "summary_line": "Latest review completed with no recent negative press or enforcement coverage identified.",
+    "records": []
+  },
+  "northstarpensiontrust": {
+    "severity": "None",
+    "note": "No relevant adverse media identified in the last 24 months.",
+    "summary_line": "Latest review completed with no recent negative press or enforcement coverage identified.",
+    "records": []
+  },
+  "mapleleafpensionplan": {
+    "severity": "None",
+    "note": "No relevant adverse media identified in the last 24 months.",
+    "summary_line": "Latest review completed with no recent negative press or enforcement coverage identified.",
+    "records": []
+  },
+  "zurich": {
+    "severity": "None",
+    "note": "No relevant adverse media identified in the last 24 months.",
+    "summary_line": "Latest review completed with no recent negative press or enforcement coverage identified.",
+    "records": []
+  }
+}

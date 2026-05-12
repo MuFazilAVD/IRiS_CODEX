@@ -102,6 +102,7 @@ def generate_settlement_report_files(
     settlement_row: dict[str, Any],
     reconciliation: dict[str, Any],
     generated_at: datetime,
+    publish: bool = True,
 ) -> list[dict[str, Any]]:
     logger.info("Generating Settlement report output files")
     logger.debug(
@@ -130,10 +131,22 @@ def generate_settlement_report_files(
             rows=_grdr_load_rows(context),
         ),
     ]
-    _upsert_artifacts(artifacts)
+    if publish:
+        artifacts = _mark_artifacts_published(artifacts, generated_at)
+        _upsert_artifacts(artifacts)
     logger.info("Generated Settlement report output files")
     logger.debug("Settlement report artifacts=%s", artifacts)
     return artifacts
+
+
+def publish_settlement_report_artifacts(artifacts: list[dict[str, Any]], published_at: datetime | None = None) -> list[dict[str, Any]]:
+    logger.info("Publishing Settlement report output files")
+    logger.debug("Publishing settlement report artifact_ids=%s", [artifact.get("artifact_id") for artifact in artifacts])
+    if not artifacts:
+        return []
+    marked = _mark_artifacts_published(artifacts, published_at or datetime.now(UTC))
+    _upsert_artifacts(marked)
+    return marked
 
 
 def list_settlement_report_artifacts(role: str) -> list[dict[str, Any]]:
@@ -268,6 +281,8 @@ def _write_csv_artifact(
         "source_filename": context["source_filename"],
         "reconciliation_decision": context["reconciliation_decision"],
         "mismatch_count": context["mismatch_count"],
+        "published": False,
+        "published_at": None,
         "roles_with_access": SETTLEMENT_REPORT_ROLES,
     }
 
@@ -390,6 +405,18 @@ def _upsert_artifacts(artifacts: list[dict[str, Any]]) -> None:
     SETTLEMENT_REPORT_REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
     with SETTLEMENT_REPORT_REGISTRY_FILE.open("w", encoding="utf-8") as handle:
         json.dump(updated, handle, indent=2)
+
+
+def _mark_artifacts_published(artifacts: list[dict[str, Any]], published_at: datetime) -> list[dict[str, Any]]:
+    timestamp = published_at.isoformat().replace("+00:00", "Z")
+    return [
+        {
+            **artifact,
+            "published": True,
+            "published_at": timestamp,
+        }
+        for artifact in artifacts
+    ]
 
 
 def _fy_ry_code(effective_date: date | None, accounting_period_end: date) -> str:

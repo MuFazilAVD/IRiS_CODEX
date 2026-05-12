@@ -278,10 +278,10 @@
           ]
         }
       ],
-      "cumulative_net_variance": 1205839,
+      "cumulative_net_variance": 537210,
       "settlement_history": [
         {
-          "period": "Q1 2024",
+          "period": "Q1 2025",
           "expected_deaths": 221,
           "actual_deaths": 239,
           "ae_ratio": 1.081,
@@ -292,7 +292,7 @@
           "status": "paid"
         },
         {
-          "period": "Q2 2024",
+          "period": "Q2 2025",
           "expected_deaths": 221,
           "actual_deaths": 209,
           "ae_ratio": 0.946,
@@ -303,7 +303,7 @@
           "status": "paid"
         },
         {
-          "period": "Q3 2024",
+          "period": "Q3 2025",
           "expected_deaths": 221,
           "actual_deaths": 216,
           "ae_ratio": 0.977,
@@ -314,7 +314,7 @@
           "status": "paid"
         },
         {
-          "period": "Q4 2024",
+          "period": "Q4 2025",
           "expected_deaths": 221,
           "actual_deaths": 222,
           "ae_ratio": 1.005,
@@ -452,7 +452,7 @@
       "cumulative_net_variance": 474031,
       "settlement_history": [
         {
-          "period": "Q1 2024",
+          "period": "Q1 2025",
           "expected_deaths": 145,
           "actual_deaths": 149,
           "ae_ratio": 1.028,
@@ -463,7 +463,7 @@
           "status": "paid"
         },
         {
-          "period": "Q2 2024",
+          "period": "Q2 2025",
           "expected_deaths": 145,
           "actual_deaths": 142,
           "ae_ratio": 0.979,
@@ -474,7 +474,7 @@
           "status": "paid"
         },
         {
-          "period": "Q3 2024",
+          "period": "Q3 2025",
           "expected_deaths": 145,
           "actual_deaths": 144,
           "ae_ratio": 0.993,
@@ -485,7 +485,7 @@
           "status": "paid"
         },
         {
-          "period": "Q4 2024",
+          "period": "Q4 2025",
           "expected_deaths": 145,
           "actual_deaths": 145,
           "ae_ratio": 1.0,
@@ -496,7 +496,7 @@
           "status": "paid"
         },
         {
-          "period": "Q1 2025",
+          "period": "Q1 2026",
           "expected_deaths": 143,
           "actual_deaths": 146,
           "ae_ratio": 1.021,
@@ -504,7 +504,7 @@
           "floating_leg": 4623989,
           "net_settled": 56489,
           "active_pensioners": 11940,
-          "status": "paid"
+          "status": "pending"
         }
       ]
     },

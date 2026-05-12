@@ -12,17 +12,32 @@ import type { ComplianceScreeningCacheWorkbook, ComplianceScreeningCacheWorkbook
 
 export function ScreeningCachePage() {
   const pushToast = useUiStore((state) => state.pushToast)
+  const [activeWorkbook, setActiveWorkbook] = useState<string | null>(null)
   const workbooksQuery = useQuery({
     queryKey: ['compliance-screening-cache-workbooks'],
     queryFn: async () => (await api.get<{ items: ComplianceScreeningCacheWorkbook[] }>('/compliance/sanctions/cache-workbooks')).data,
   })
 
   const workbooks = workbooksQuery.data?.items ?? []
+  const selectedWorkbook =
+    workbooks.find((workbook) => workbook.list_name === activeWorkbook) ??
+    workbooks[0] ??
+    null
+
+  useEffect(() => {
+    if (!workbooks.length) {
+      setActiveWorkbook(null)
+      return
+    }
+    if (!activeWorkbook || !workbooks.some((workbook) => workbook.list_name === activeWorkbook)) {
+      setActiveWorkbook(workbooks[0].list_name)
+    }
+  }, [activeWorkbook, workbooks])
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Compliance' }, { label: 'Screening Cache' }]} />
-      <PageHeader title="Screening Cache" />
+      <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Compliance' }, { label: 'Screening Database (Demo)' }]} />
+      <PageHeader title="Screening Database (Demo)" />
 
       <section className="mt-6 overflow-hidden rounded-xl border border-iris-border bg-white">
         <div className="border-b border-[#E8EDF2] px-5 py-4">
@@ -32,24 +47,54 @@ export function ScreeningCachePage() {
           </p>
         </div>
 
-        <div className="grid gap-4 px-5 py-5 xl:grid-cols-2">
+        <div className="px-5 py-5">
           {workbooksQuery.isLoading ? (
-            <div className="rounded-xl border border-dashed border-[#D9E3EA] bg-white px-4 py-6 text-[13px] text-iris-text-secondary xl:col-span-2">
+            <div className="rounded-xl border border-dashed border-[#D9E3EA] bg-white px-4 py-6 text-[13px] text-iris-text-secondary">
               Loading screening workbooks...
             </div>
-          ) : workbooks.length ? (
-            workbooks.map((workbook) => (
+          ) : selectedWorkbook ? (
+            <div>
+              <div className="flex flex-wrap gap-2 border-b border-[#E8EDF2] pb-4">
+                {workbooks.map((workbook) => {
+                  const active = workbook.list_name === selectedWorkbook.list_name
+                  return (
+                    <button
+                      key={workbook.list_name}
+                      className={`rounded-lg border px-4 py-3 text-left transition ${
+                        active
+                          ? 'border-iris-navy bg-[#EEF4FA] text-iris-text-primary'
+                          : 'border-[#D9E3EA] bg-white text-iris-text-secondary hover:bg-[#F8FAFC]'
+                      }`}
+                      onClick={() => setActiveWorkbook(workbook.list_name)}
+                      type="button"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-semibold">{workbook.display_name}</span>
+                        <span
+                          className={`rounded-md border px-2 py-0.5 text-[10px] font-medium ${
+                            workbook.status === 'active' ? 'border-[#BCE1C7] bg-[#EAF7EF] text-[#1E8449]' : 'border-[#F3D8A3] bg-[#FFF6E5] text-[#9A6B0A]'
+                          }`}
+                        >
+                          {workbook.status}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px]">{workbook.record_count} rows</p>
+                    </button>
+                  )
+                })}
+              </div>
+
               <ScreeningWorkbookCard
-                key={workbook.list_name}
-                workbook={workbook}
+                key={selectedWorkbook.list_name}
+                workbook={selectedWorkbook}
                 onSaved={async () => {
                   await workbooksQuery.refetch()
                 }}
                 onToast={pushToast}
               />
-            ))
+            </div>
           ) : (
-            <div className="px-5 py-6 xl:col-span-2">
+            <div className="py-6">
               <EmptyState compact title="No screening workbooks are available" description="The current cache does not contain OFAC or FinCEN workbook rows." />
             </div>
           )}
@@ -107,7 +152,7 @@ function ScreeningWorkbookCard({
   }
 
   return (
-    <article className="overflow-hidden rounded-xl border border-[#D9E3EA] bg-[#FBFCFD]">
+    <article className="mt-4 overflow-hidden rounded-xl border border-[#D9E3EA] bg-[#FBFCFD]">
       <div className="border-b border-[#E8EDF2] px-4 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

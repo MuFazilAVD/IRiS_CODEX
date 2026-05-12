@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.mock_data_loader import load_mock_data
 from app.models.cedent import Cedent
+from app.models.contract import Contract
 from app.models.screening_cache_list import ScreeningCacheList
 from app.models.screening_event import ScreeningEvent
 
@@ -30,6 +31,16 @@ class ComplianceRepository:
             select(Cedent)
             .where(Cedent.is_active.is_(True))
             .order_by(Cedent.cedent_id)
+        )
+        return list(self.db.scalars(statement))
+
+    def list_contracts_for_cedent(self, cedent_id: str | None) -> list[Contract]:
+        if not cedent_id:
+            return []
+        statement = (
+            select(Contract)
+            .where(Contract.cedent_id == cedent_id)
+            .order_by(Contract.inception_date.desc(), Contract.contract_id.desc())
         )
         return list(self.db.scalars(statement))
 

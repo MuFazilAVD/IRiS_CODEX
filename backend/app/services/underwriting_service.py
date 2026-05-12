@@ -2099,7 +2099,7 @@ class UnderwritingService:
         summary_deferred = 5 if summary_member_total else 0
         summary_deceased = 2 if summary_member_total else 0
         summary_spouse = 3 if summary_member_total else 0
-        quarter_seed = contract.inception_date.year if contract.inception_date else date.today().year
+        quarter_seed = (contract.inception_date.year if contract.inception_date else date.today().year) + 1
         fixed_leg_amount = round((notional * max(float(contract.fixed_leg_rate or 0), 0.01)) / 4, 2) if notional else 0
         settlement_history = [
             {
@@ -2111,7 +2111,7 @@ class UnderwritingService:
                 "floating_leg": round(fixed_leg_amount * 1.012, 2),
                 "net_settled": round(fixed_leg_amount * 0.012, 2),
                 "active_pensioners": max(lives_count - 41, 0),
-                "status": "paid",
+                "status": "pending" if quarter_seed == 2026 else "paid",
             },
             {
                 "period": f"Q2 {quarter_seed}",
@@ -2155,8 +2155,13 @@ class UnderwritingService:
                 "floating_leg": round(fixed_leg_amount * 1.002, 2),
                 "net_settled": round(fixed_leg_amount * 0.002, 2),
                 "active_pensioners": max(lives_count - 201, 0),
-                "status": "paid",
+                "status": "pending",
             },
+        ]
+        settlement_history = [
+            row
+            for row in settlement_history
+            if not (row["period"].startswith("Q2 2026") or row["period"].startswith("Q3 2026") or row["period"].startswith("Q4 2026") or row["period"].endswith("2027"))
         ]
 
         return {

@@ -47,6 +47,11 @@ SCREENING_CACHE_LABELS = {
     "OFAC SDN": "OFAC",
     "FinCEN 314(a)": "FinCEN",
 }
+QUARTERLY_SCREENING_HISTORY = [
+    {"period": "2025 Q2", "screened_on": "2025-04-18"},
+    {"period": "2025 Q3", "screened_on": "2025-08-07"},
+    {"period": "2025 Q4", "screened_on": "2025-11-14"},
+]
 
 # MOCK IMPLEMENTATION: cedent street/city/postal identifiers are not part of the current cedents schema.
 # These values enrich sanctions verification without inventing new DB columns.
@@ -140,6 +145,7 @@ class ComplianceService:
         context = self._case_context(screening_ref)
         case_row = self._build_case_row(event)
         entity_context = self._build_entity_section(event, context)
+        matches = self._screening_matches_for_event(event, context, entity_context)
         raw_match = context.get("raw_match") or self._build_raw_match_payload(event, entity_context)
         analysis = context.get("analysis") or self._build_analysis_payload(event, raw_match)
         detail = {
@@ -156,9 +162,9 @@ class ComplianceService:
             "summary": context.get("summary") or self._build_summary_payload(event, case_row["watchlists"]),
             "raw_match": raw_match,
             "analysis": analysis,
-            "network_analysis": context.get("network_analysis") or self._default_network_analysis(),
-            "decision_history": context.get("decision_history") or self._build_decision_history(event),
-            "adverse_media": context.get("adverse_media") or {"severity": "None", "note": "No adverse media in the last 24 months."},
+            "network_analysis": self._build_network_analysis(event, context, matches),
+            "decision_history": self._build_decision_history(event, context, case_row["watchlists"], matches),
+            "adverse_media": self._build_adverse_media(event, matches, case_row["watchlists"]),
             "audit_trail": context.get("audit_trail") or self._build_audit_trail(event, analysis),
         }
         return detail
@@ -845,7 +851,7 @@ class ComplianceService:
             event.entity_name,
             entity_section.get("aliases", []),
             entity_section.get("identity_context"),
-            self._watchlist_cache_entries(DEFAULT_WATCHLISTS),
+            self._watchlist_cache_entries(self._event_watchlist_sources(event, {})),
         )
         return self._build_dynamic_raw_match(matches, entity_section.get("identity_context"))
 
@@ -941,22 +947,183 @@ class ComplianceService:
             "tone": "negative",
         }
 
-    def _default_network_analysis(self) -> dict[str, Any]:
+    def _build_network_analysis(self, event: ScreeningEvent, context: dict[str, Any], matches: list[dict[str, Any]]) -> dict[str, Any]:
+        owners = [str(item) for item in context.get("beneficial_owners", [])]
+        owner_match = any(
+            self._name_similarity(owner, str(match.get("entity_name") or ""), [str(alias) for alias in match.get("aliases", [])]) >= 0.8
+            for owner in owners
+            for match in matches
+            if str(match.get("entity_type") or "").lower() == "individual"
+        )
+        exact_entity_match = any(self._normalize_name(str(match.get("entity_name") or "")) == self._normalize_name(event.entity_name) for match in matches)
+        corporate_match = any(str(match.get("entity_type") or "").lower() != "individual" for match in matches)
+
+        if event.result in {"cleared", "false_positive"}:
+            return {
+                "items": [
+                    {"label": "Parent exposure", "value": "Clear"},
+                    {"label": "Subsidiary exposure", "value": "Clear"},
+                    {"label": "UBO exposure", "value": "Clear"},
+                ],
+                "note": "Cleared against the cached OFAC / FinCEN screening lists. No linked sanctions exposure was retained in this network review.",
+            }
+
+        parent_exposure = "Blocked" if event.result == "escalated" and exact_entity_match else "Review" if exact_entity_match or corporate_match else "Clear"
+        subsidiary_exposure = "Review" if corporate_match and not exact_entity_match else "Clear"
+        ubo_exposure = "Blocked" if event.result == "escalated" and owner_match else "Review" if owner_match else "Clear"
+        note = (
+            "Network review retained linked exposure from the cached watchlist hits and requires analyst confirmation."
+            if event.result == "review"
+            else "Network review retained linked exposure from the cached watchlist hits and the case remains blocked pending sign-off."
+        )
         return {
             "items": [
-                {"label": "Parent exposure", "value": "Clear"},
-                {"label": "Subsidiary exposure", "value": "Clear"},
-                {"label": "UBO exposure", "value": "Clear"},
+                {"label": "Parent exposure", "value": parent_exposure},
+                {"label": "Subsidiary exposure", "value": subsidiary_exposure},
+                {"label": "UBO exposure", "value": ubo_exposure},
             ],
-            "note": "No linked sanctions exposure was found in the currently cached records.",
+            "note": note,
         }
 
-    def _build_decision_history(self, event: ScreeningEvent) -> dict[str, Any]:
-        prior_reviews = sum(1 for item in self.repository.list_screening_events() if self._normalize_name(item.entity_name) == self._normalize_name(event.entity_name))
+    def _build_decision_history(
+        self,
+        event: ScreeningEvent,
+        context: dict[str, Any],
+        watchlists: list[str],
+        matches: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        cedent = self.repository.get_cedent(event.cedent_id) if event.cedent_id else self.repository.find_cedent_by_name(event.entity_name)
+        related_events = self._related_screening_events(event)
+        active_contracts = [contract for contract in self.repository.list_contracts_for_cedent(cedent.cedent_id if cedent else None) if contract.status == "active"]
+        watchlist_label = " / ".join(watchlists[:2]) if watchlists else "OFAC / FinCEN"
+
+        if active_contracts:
+            entries = self._build_active_contract_decision_history_entries(event, watchlist_label, bool(matches))
+            note = "Active cedents show the last three quarterly sanctions refreshes for 2025 Q2, Q3 and Q4."
+        elif cedent and cedent.status == "onboarding":
+            screened_on = cedent.onboarded_date.isoformat() if cedent.onboarded_date else self._isoformat(event.created_at)[:10]
+            entries = [
+                {
+                    "period": "Pre-engagement",
+                    "screening_scope": "Onboarding screening",
+                    "screened_on": screened_on,
+                    "watchlists": watchlist_label,
+                    "decision": self._decision_history_label(event.result),
+                    "rationale": "Pre-engagement screening only. Quarterly re-screening begins once a contract moves to active status.",
+                }
+            ]
+            note = "Onboarding cedents only surface the pre-engagement screen until the first active contract is in force."
+        elif related_events:
+            entries = [
+                {
+                    "period": self._period_label(item.created_at),
+                    "screening_scope": self._display_trigger(item.trigger_type),
+                    "screened_on": self._isoformat(item.created_at)[:10],
+                    "watchlists": watchlist_label,
+                    "decision": self._decision_history_label(item.result),
+                    "rationale": self._decision_history_rationale(item.result, bool(matches)),
+                }
+                for item in reversed(related_events[-3:])
+            ]
+            note = "Historical sanctions decisions are replayed from prior screening activity for repeat ad-hoc entities."
+        else:
+            entries = [
+                {
+                    "period": self._period_label(event.created_at),
+                    "screening_scope": self._display_trigger(event.trigger_type),
+                    "screened_on": self._isoformat(event.created_at)[:10],
+                    "watchlists": watchlist_label,
+                    "decision": self._decision_history_label(event.result),
+                    "rationale": self._decision_history_rationale(event.result, bool(matches)),
+                }
+            ]
+            note = "No prior lifecycle history is available for this entity, so only the current screening case is shown."
+
         return {
-            "times_reviewed": prior_reviews,
-            "last_verdict": self._ui_status(event),
-            "note": "Previous decisions are surfaced to speed up repeat screening reviews.",
+            "times_reviewed": len(entries),
+            "last_verdict": entries[-1]["decision"] if entries else self._decision_history_label(event.result),
+            "note": note,
+            "entries": entries,
+        }
+
+    def _build_active_contract_decision_history_entries(
+        self,
+        event: ScreeningEvent,
+        watchlist_label: str,
+        has_matches: bool,
+    ) -> list[dict[str, str]]:
+        if event.result == "escalated":
+            decisions = ["Pending Review", "Pending Review", "Blocked"]
+        elif event.result == "review":
+            decisions = ["Cleared", "Pending Review", "Pending Review"]
+        elif event.result == "false_positive":
+            decisions = ["Cleared", "False Positive", "False Positive"]
+        else:
+            decisions = ["Cleared", "Cleared", "Cleared"] if not has_matches else ["Cleared", "False Positive", "Cleared"]
+
+        entries: list[dict[str, str]] = []
+        for index, period in enumerate(QUARTERLY_SCREENING_HISTORY):
+            decision = decisions[min(index, len(decisions) - 1)]
+            entries.append(
+                {
+                    "period": period["period"],
+                    "screening_scope": "Quarterly sanctions refresh",
+                    "screened_on": period["screened_on"],
+                    "watchlists": watchlist_label,
+                    "decision": decision,
+                    "rationale": self._decision_history_rationale(self._decision_result_key(decision), has_matches),
+                }
+            )
+        return entries
+
+    def _build_adverse_media(
+        self,
+        event: ScreeningEvent,
+        matches: list[dict[str, Any]],
+        watchlists: list[str],
+    ) -> dict[str, Any]:
+        knowledge_base = load_mock_data("adverse_media_knowledge_base.json")
+        entity_key = self._normalize_name(event.entity_name)
+        if entity_key in knowledge_base:
+            payload = deepcopy(knowledge_base[entity_key])
+            payload.setdefault("sources_checked", watchlists)
+            payload.setdefault("last_checked", self._isoformat(event.updated_at or event.created_at)[:10])
+            payload.setdefault(
+                "summary_line",
+                "Recent external coverage remains available for analyst review.",
+            )
+            return payload
+
+        if not matches:
+            return {
+                "severity": "None",
+                "note": "No relevant adverse media identified in the last 24 months.",
+                "summary_line": "Latest review completed with no recent negative press or enforcement coverage identified.",
+                "sources_checked": watchlists,
+                "last_checked": self._isoformat(event.updated_at or event.created_at)[:10],
+                "records": [],
+            }
+
+        primary_sources = [self._watchlist_label(str(match.get("list_name") or "")) for match in matches[:2]]
+        severity = "High" if any(source == "OFAC" for source in primary_sources) else "Medium"
+        records = []
+        for index, match in enumerate(matches[:2]):
+            source_label = self._watchlist_label(str(match.get("list_name") or "Watchlist"))
+            records.append(
+                {
+                    "published_at": "2025-10-07" if index == 0 else "2025-08-12",
+                    "source": f"{source_label} cached watchlist",
+                    "headline": f"{event.entity_name} retained a {source_label} risk-intelligence signal",
+                    "summary": "No entity-specific knowledge-base profile exists, so this adverse-media entry is derived from the current sanctions and risk-screening overlap.",
+                }
+            )
+        return {
+            "severity": severity,
+            "note": "Adverse-media coverage was supplemented from the screened sanctions and risk-intelligence sources because no entity-specific profile exists.",
+            "summary_line": "Related external risk signals remain open and should be reviewed alongside the sanctions match.",
+            "sources_checked": watchlists,
+            "last_checked": self._isoformat(event.updated_at or event.created_at)[:10],
+            "records": records,
         }
 
     def _build_audit_trail(self, event: ScreeningEvent, analysis: dict[str, Any]) -> list[dict[str, str]]:
@@ -979,6 +1146,68 @@ class ComplianceService:
             {"timestamp": timestamp, "actor": "IRiS", "actor_type": "AI", "detail": f"Resolved at {int(round((screening_result['llm_confidence'] or 0.0) * 100))}% confidence"},
             {"timestamp": timestamp, "actor": "Decision Engine", "actor_type": "System", "detail": detail},
         ]
+
+    def _event_watchlist_sources(self, event: ScreeningEvent, context: dict[str, Any]) -> list[str]:
+        candidates = event.matched_lists or context.get("watchlists_screened") or DEFAULT_WATCHLISTS
+        return self._normalize_watchlist_sources([str(item) for item in candidates])
+
+    def _screening_matches_for_event(
+        self,
+        event: ScreeningEvent,
+        context: dict[str, Any],
+        entity_section: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        return self._match_watchlists(
+            event.entity_name,
+            entity_section.get("aliases", []),
+            entity_section.get("identity_context"),
+            self._watchlist_cache_entries(self._event_watchlist_sources(event, context)),
+        )
+
+    def _related_screening_events(self, event: ScreeningEvent) -> list[ScreeningEvent]:
+        related: list[ScreeningEvent] = []
+        for item in self.repository.list_screening_events():
+            same_entity = self._normalize_name(item.entity_name) == self._normalize_name(event.entity_name)
+            same_cedent = bool(event.cedent_id and item.cedent_id and event.cedent_id == item.cedent_id)
+            if same_entity or same_cedent:
+                related.append(item)
+        related.sort(key=lambda item: item.created_at)
+        return related
+
+    def _decision_history_label(self, result: str) -> str:
+        mapping = {
+            "cleared": "Cleared",
+            "false_positive": "False Positive",
+            "review": "Pending Review",
+            "escalated": "Blocked",
+        }
+        return mapping.get(result, "Pending Review")
+
+    def _decision_result_key(self, decision: str) -> str:
+        mapping = {
+            "Cleared": "cleared",
+            "False Positive": "false_positive",
+            "Pending Review": "review",
+            "Blocked": "escalated",
+        }
+        return mapping.get(decision, "review")
+
+    def _decision_history_rationale(self, result: str, has_matches: bool) -> str:
+        if result == "escalated":
+            return "Review retained direct sanctions indicators after name, geography and ownership checks."
+        if result == "review":
+            return "Review found a watchlist overlap that still needs compliance analyst confirmation."
+        if result == "false_positive":
+            return "Review cleared the overlap after country, registration or ownership context did not align."
+        if has_matches:
+            return "Review retained the case as cleared after the overlap was resolved below the sanctions threshold."
+        return "No OFAC or FinCEN overlap exceeded the screening threshold."
+
+    def _period_label(self, value: datetime | None) -> str:
+        if value is None:
+            return "Current"
+        quarter = ((value.month - 1) // 3) + 1
+        return f"{value.year} Q{quarter}"
 
     def _read_override_store(self) -> dict[str, Any]:
         if not COMPLIANCE_OVERRIDES_FILE.exists():

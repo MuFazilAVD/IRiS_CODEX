@@ -1850,6 +1850,218 @@
           "detail": "Pending review"
         }
       ]
+    },
+    "SCR-2026-05-017": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Medium",
+      "risk_score": 97,
+      "ai_recommendation": "Review",
+      "list_subtitle": "Adhoc screening \u00b7 Northstar Pension Trust",
+      "summary": {
+        "headline": "Potential match across OFAC \u00b7 FinCEN",
+        "description": "Held in analyst review queue pending entity resolution and compliance notes.",
+        "tone": "warning"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Northstar Pension Trust",
+        "candidate_id": "OFAC-SDN-58216",
+        "subtitle": "OFAC SDN",
+        "country": "UK",
+        "entity_type": "Insurance",
+        "aggregate_score": 52,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 100
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 100
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Needs Review",
+        "confidence_pct": 97,
+        "headline": "Exact Northstar Pension Trust entity match found in the OFAC SDN cache with aligned jurisdiction context. Hold in pending review for compliance disposition.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "negative"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Review"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T13:20:39.235314Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T13:20:39.235314Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T13:20:39.235314Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 97% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T13:20:39.235314Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Pending review"
+        }
+      ]
+    },
+    "SCR-2026-05-018": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [
+        "Sterling Heritage"
+      ],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 1.5,
+      "matches_count": 0,
+      "risk_label": "Low",
+      "risk_score": 12,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Adhoc screening \u00b7 Sterling Heritage Pensions",
+      "summary": {
+        "headline": "No matches across OFAC \u00b7 FinCEN",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": null,
+      "analysis": {
+        "label": "High Risk",
+        "confidence_pct": 100,
+        "headline": "No keyword or fuzzy watchlist match exceeded the screening threshold.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Block"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-11T13:21:37.983220Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-11T13:21:37.983220Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-11T13:21:37.983220Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 100% confidence"
+        },
+        {
+          "timestamp": "2026-05-11T13:21:37.983220Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
     }
   }
 }

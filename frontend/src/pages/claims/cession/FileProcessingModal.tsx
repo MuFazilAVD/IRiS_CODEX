@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, ArrowLeft, Check, FileUp, RefreshCw, Sparkles, Upload, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, Download, Eye, FileUp, RefreshCw, Send, Sparkles, Upload, X } from 'lucide-react'
 
 import { api } from '../../../api/client'
 import { formatCurrency, formatRelativeDate } from '../../../utils/formatters'
@@ -24,6 +24,7 @@ type ClaimsStep =
   | 'exceptions'
   | 'process'
   | 'summary'
+  | 'files'
   | 'worklist'
   | 'audit'
 
@@ -67,6 +68,7 @@ const PIPELINE_STEPS: Array<{ id: ClaimsStep; label: string }> = [
   { id: 'exceptions', label: 'Resolutions' },
   { id: 'process', label: 'Process' },
   { id: 'summary', label: 'Summary' },
+  { id: 'files', label: 'Files' },
   { id: 'worklist', label: 'Worklist' },
   { id: 'audit', label: 'Audit' },
 ]
@@ -152,6 +154,9 @@ export function CessionFileProcessingWorkflow({
   const [notice, setNotice] = useState<ModalNotice>(null)
   const [busy, setBusy] = useState(false)
   const [pendingManualType, setPendingManualType] = useState<string | null>(null)
+  const [autoValidating, setAutoValidating] = useState(false)
+  const [fileActionBusy, setFileActionBusy] = useState<string | null>(null)
+  const [filePreview, setFilePreview] = useState<{ artifactId: string; filename: string; content: string } | null>(null)
 
   const initializedFileId = useRef<string | null>(null)
 
@@ -192,6 +197,44 @@ export function CessionFileProcessingWorkflow({
 
   const detail = detailQuery.data
   const currentStep = activeFileId ? selectedStep : 'upload'
+
+  useEffect(() => {
+    if (!activeFileId || !detail || currentStep !== 'validate' || detail.stage !== 'clauses' || autoValidating) {
+      return
+    }
+
+    let cancelled = false
+
+    async function hydrateValidationStep() {
+      setAutoValidating(true)
+      try {
+        await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/validate`, {})
+        const refreshed = await detailQuery.refetch()
+        if (cancelled) {
+          return
+        }
+        setExceptionActions(buildExceptionState(refreshed.data?.exceptions.items ?? []))
+      } catch (caughtError: unknown) {
+        if (cancelled) {
+          return
+        }
+        setNotice({
+          tone: 'error',
+          message: extractErrorMessage(caughtError) ?? 'Unable to load anomalies right now.',
+        })
+      } finally {
+        if (!cancelled) {
+          setAutoValidating(false)
+        }
+      }
+    }
+
+    void hydrateValidationStep()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeFileId, autoValidating, currentStep, detail, detailQuery])
   const completedSteps = new Set<ClaimsStep>()
 
   if (detail) {
@@ -219,9 +262,12 @@ export function CessionFileProcessingWorkflow({
   }, [mappedContractId, visibleContracts])
   const pendingResolutionCount = detail ? countPendingResolutionActions(detail.exceptions.items, exceptionActions) : 0
   const invalidOverrideCount = detail ? countInvalidOverrideActions(detail.exceptions.items, exceptionActions) : 0
+  const validationReady = currentStep !== 'validate' || (!autoValidating && detail?.stage !== 'clauses')
   const canContinue =
     !busy &&
+    !autoValidating &&
     (currentStep !== 'upload' || Boolean(selectedFile)) &&
+    validationReady &&
     (currentStep !== 'exceptions' ||
       ((detail?.exceptions.items.length ?? 0) !== 0 && pendingResolutionCount === 0 && invalidOverrideCount === 0))
 
@@ -260,15 +306,15 @@ export function CessionFileProcessingWorkflow({
 
       if (currentStep === 'clauses') {
         await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/clauses`, {})
-        await detailQuery.refetch()
+        await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/validate`, {})
+        const refreshed = await detailQuery.refetch()
+        setExceptionActions(buildExceptionState(refreshed.data?.exceptions.items ?? []))
         setSelectedStep('validate')
         return
       }
 
       if (currentStep === 'validate') {
-        await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/validate`, {})
-        const refreshed = await detailQuery.refetch()
-        const nextExceptions = refreshed.data?.exceptions.items ?? []
+        const nextExceptions = detail?.exceptions.items ?? []
         setExceptionActions(buildExceptionState(nextExceptions))
         setSelectedStep(nextExceptions.length ? 'exceptions' : 'process')
         return
@@ -307,6 +353,11 @@ export function CessionFileProcessingWorkflow({
       }
 
       if (currentStep === 'summary') {
+        setSelectedStep(detail?.downstream_files.items.length ? 'files' : 'worklist')
+        return
+      }
+
+      if (currentStep === 'files') {
         setSelectedStep('worklist')
         return
       }
@@ -378,6 +429,77 @@ export function CessionFileProcessingWorkflow({
     }
   }
 
+  async function handlePushFiles() {
+    if (!activeFileId) {
+      return
+    }
+
+    setFileActionBusy('push')
+    setNotice(null)
+    try {
+      await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/files`, {})
+      await Promise.all([detailQuery.refetch(), Promise.resolve(onRefresh())])
+      setSelectedStep('worklist')
+      setNotice({
+        tone: 'success',
+        message: 'Downstream files pushed to SFTP and released to Reports.',
+      })
+    } catch (caughtError: unknown) {
+      setNotice({
+        tone: 'error',
+        message: extractErrorMessage(caughtError) ?? 'Unable to push downstream files right now.',
+      })
+    } finally {
+      setFileActionBusy(null)
+    }
+  }
+
+  async function handleDownloadArtifact(artifactId: string, filename: string) {
+    if (!activeFileId) {
+      return
+    }
+
+    setFileActionBusy(`download:${artifactId}`)
+    try {
+      const response = await api.get<Blob>(`/claims/cession-files/${activeFileId}/settlement-artifacts/${artifactId}/download`, {
+        responseType: 'blob',
+      })
+      downloadBlob(response.data, filename)
+    } catch (caughtError: unknown) {
+      setNotice({
+        tone: 'error',
+        message: extractErrorMessage(caughtError) ?? 'Unable to download this downstream file.',
+      })
+    } finally {
+      setFileActionBusy(null)
+    }
+  }
+
+  async function handlePreviewArtifact(artifactId: string, filename: string) {
+    if (!activeFileId) {
+      return
+    }
+
+    setFileActionBusy(`preview:${artifactId}`)
+    try {
+      const response = await api.get<Blob>(`/claims/cession-files/${activeFileId}/settlement-artifacts/${artifactId}/download`, {
+        responseType: 'blob',
+      })
+      setFilePreview({
+        artifactId,
+        filename,
+        content: await response.data.text(),
+      })
+    } catch (caughtError: unknown) {
+      setNotice({
+        tone: 'error',
+        message: extractErrorMessage(caughtError) ?? 'Unable to preview this downstream file.',
+      })
+    } finally {
+      setFileActionBusy(null)
+    }
+  }
+
   function handleSelectSample(sampleName: string) {
     const sample = SAMPLE_FILES.find((item) => item.name === sampleName)
     if (!sample) {
@@ -387,7 +509,9 @@ export function CessionFileProcessingWorkflow({
   }
 
   const isPage = presentation === 'page'
-  const pageTitle = activeFileId && detail ? `${detail.file_id} · ${detail.filename}` : 'New Cession File'
+  const showBetaHeader = Boolean(detail && detail.file_type !== 'Settlement')
+  const betaSuffix = showBetaHeader ? ' (beta)' : ''
+  const pageTitle = activeFileId && detail ? `${detail.file_id} · ${detail.filename}${betaSuffix}` : 'New Cession File'
   const pageSubtitle = activeFileId && detail ? `${detail.cedent} · ${detail.file_type} · ${formatCount(detail.records)} records` : 'Upload + AI-assisted ingestion pipeline'
 
   if (isPage) {
@@ -498,6 +622,17 @@ export function CessionFileProcessingWorkflow({
               <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} />
             ) : null}
 
+            {detail && currentStep === 'files' ? (
+              <FilesStep
+                busyAction={fileActionBusy}
+                payload={detail.downstream_files}
+                preview={filePreview}
+                onDownload={(artifactId, filename) => void handleDownloadArtifact(artifactId, filename)}
+                onPreview={(artifactId, filename) => void handlePreviewArtifact(artifactId, filename)}
+                onPush={() => void handlePushFiles()}
+              />
+            ) : null}
+
             {detail && currentStep === 'worklist' ? <WorklistStep items={detail.worklist.items} subtitle={detail.worklist.subtitle} title={detail.worklist.title} /> : null}
 
             {detail && currentStep === 'audit' ? <AuditStep items={detail.audit.items} subtitle={detail.audit.subtitle} title={detail.audit.title} /> : null}
@@ -515,6 +650,12 @@ export function CessionFileProcessingWorkflow({
                   Back to Process
                 </button>
               ) : null}
+              {currentStep === 'files' ? (
+                <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('summary')} type="button">
+                  <RefreshCw className="h-4 w-4" />
+                  Back to Summary
+                </button>
+              ) : null}
 
               <button className="btn-primary" disabled={!canContinue} onClick={() => void handleContinue()} type="button">
                 {busy ? 'Working...' : currentStep === 'audit' ? 'Finish' : 'Continue'}
@@ -526,7 +667,7 @@ export function CessionFileProcessingWorkflow({
     )
   }
 
-  const modalTitle = activeFileId ? 'Cession File Processing' : 'New Cession File'
+  const modalTitle = activeFileId ? `Cession File Processing${betaSuffix}` : 'New Cession File'
   const fileSubtitle = detail
     ? `${detail.file_id} · ${detail.filename} · ${detail.cedent} · ${detail.file_type} · ${formatCount(detail.records)} records`
     : 'Upload + AI-assisted ingestion pipeline'
@@ -647,6 +788,17 @@ export function CessionFileProcessingWorkflow({
               <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} />
             ) : null}
 
+            {detail && currentStep === 'files' ? (
+              <FilesStep
+                busyAction={fileActionBusy}
+                payload={detail.downstream_files}
+                preview={filePreview}
+                onDownload={(artifactId, filename) => void handleDownloadArtifact(artifactId, filename)}
+                onPreview={(artifactId, filename) => void handlePreviewArtifact(artifactId, filename)}
+                onPush={() => void handlePushFiles()}
+              />
+            ) : null}
+
             {detail && currentStep === 'worklist' ? <WorklistStep items={detail.worklist.items} subtitle={detail.worklist.subtitle} title={detail.worklist.title} /> : null}
 
             {detail && currentStep === 'audit' ? <AuditStep items={detail.audit.items} subtitle={detail.audit.subtitle} title={detail.audit.title} /> : null}
@@ -662,6 +814,12 @@ export function CessionFileProcessingWorkflow({
                 <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('process')} type="button">
                   <RefreshCw className="h-4 w-4" />
                   Back to Process
+                </button>
+              ) : null}
+              {currentStep === 'files' ? (
+                <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('summary')} type="button">
+                  <RefreshCw className="h-4 w-4" />
+                  Back to Summary
                 </button>
               ) : null}
 
@@ -1147,21 +1305,23 @@ function SummaryStep({
         <p>{detail.summary.insight}</p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button className="btn-primary bg-[#1E8449] hover:bg-[#229954]" disabled={busy || detail.stage === 'approved'} onClick={onApprove} type="button">
-          <Check className="h-4 w-4" />
-          Approve
-        </button>
-        <button className="btn-secondary opacity-60" disabled type="button">
-          Reprocess
-        </button>
-        <button className="btn-secondary opacity-60" disabled type="button">
-          Rollback
-        </button>
-        <button className="btn-secondary opacity-60" disabled type="button">
-          Escalate
-        </button>
-      </div>
+      {!isSettlementFile ? (
+        <div className="flex flex-wrap gap-2">
+          <button className="btn-primary bg-[#1E8449] hover:bg-[#229954]" disabled={busy || detail.stage === 'approved'} onClick={onApprove} type="button">
+            <Check className="h-4 w-4" />
+            Approve
+          </button>
+          <button className="btn-secondary opacity-60" disabled type="button">
+            Reprocess
+          </button>
+          <button className="btn-secondary opacity-60" disabled type="button">
+            Rollback
+          </button>
+          <button className="btn-secondary opacity-60" disabled type="button">
+            Escalate
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1228,6 +1388,109 @@ function SettlementReconciliationPanel({
   )
 }
 
+function FilesStep({
+  busyAction,
+  payload,
+  preview,
+  onDownload,
+  onPreview,
+  onPush,
+}: {
+  busyAction: string | null
+  payload: ClaimsCessionDetailPayload['downstream_files']
+  preview: { artifactId: string; filename: string; content: string } | null
+  onDownload: (artifactId: string, filename: string) => void
+  onPreview: (artifactId: string, filename: string) => void
+  onPush: () => void
+}) {
+  const previewTable = preview ? csvPreview(preview.content) : null
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <SectionHeading title={payload.title} subtitle={payload.subtitle} />
+        <button className="btn-primary w-fit" disabled={!payload.items.length || payload.pushed || busyAction === 'push'} onClick={onPush} type="button">
+          <Send className="h-4 w-4" />
+          {payload.pushed ? 'Pushed to SFTP' : busyAction === 'push' ? 'Pushing...' : 'Push to SFTP'}
+        </button>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+        <div className="overflow-hidden rounded-[22px] border border-[#D9E3EA] bg-white shadow-sm">
+          <div className="border-b border-[#EEF2F5] bg-[#F7F9FB] px-4 py-3">
+            <p className="text-[13px] font-semibold text-iris-text-primary">Generated files</p>
+            <p className="mt-1 text-[12px] text-iris-text-secondary">Review the cash tracker and GRDR load form before release.</p>
+          </div>
+          <div className="divide-y divide-[#EEF2F5]">
+            {payload.items.length ? (
+              payload.items.map((item) => (
+                <div key={item.artifact_id} className="flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-medium text-iris-text-primary">{item.report_type}</p>
+                    <p className="mt-1 font-mono text-[12px] text-iris-text-secondary">{item.filename}</p>
+                    <p className="mt-1 text-[12px] text-iris-text-muted">
+                      {item.period} · {item.format.toUpperCase()} · generated {formatRelativeDate(item.generated_at)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button className="btn-secondary" disabled={busyAction === `preview:${item.artifact_id}`} onClick={() => onPreview(item.artifact_id, item.filename)} type="button">
+                      <Eye className="h-4 w-4" />
+                      View
+                    </button>
+                    <button className="btn-secondary" disabled={busyAction === `download:${item.artifact_id}`} onClick={() => onDownload(item.artifact_id, item.filename)} type="button">
+                      <Download className="h-4 w-4" />
+                      Download
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-6 text-[13px] text-iris-text-secondary">No downstream files are available for this processing run.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-[22px] border border-[#D9E3EA] bg-white p-5 shadow-sm">
+          <p className="text-[15px] font-semibold text-iris-text-primary">Preview</p>
+          <p className="mt-1 text-[12px] text-iris-text-secondary">
+            {preview ? preview.filename : 'Select View to inspect the file contents before pushing.'}
+          </p>
+          {previewTable ? (
+            <div className="mt-4 max-h-[360px] overflow-auto rounded-xl border border-[#E5EBF0]">
+              <table className="min-w-full text-[12px]">
+                <thead className="sticky top-0 bg-[#F7F9FB]">
+                  <tr>
+                    {previewTable.headers.map((header) => (
+                      <th key={header} className="whitespace-nowrap px-3 py-2 text-left font-semibold text-iris-text-secondary">
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewTable.rows.map((row, index) => (
+                    <tr key={`${preview?.artifactId ?? 'preview'}-${index}`} className="border-t border-[#EEF2F5]">
+                      {previewTable.headers.map((header) => (
+                        <td key={header} className="whitespace-nowrap px-3 py-2 text-iris-text-secondary">
+                          {row[header] ?? ''}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-dashed border-[#C9D6E0] bg-[#FAFBFC] px-4 py-10 text-center text-[13px] text-iris-text-secondary">
+              File preview will appear here.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function WorklistStep({
   items,
   subtitle,
@@ -1245,7 +1508,7 @@ function WorklistStep({
           <table className="min-w-full text-[13px]">
             <thead className="bg-[#F7F9FB]">
               <tr>
-                {['Task', 'Type', 'Team', 'Priority', 'SLA'].map((label) => (
+                {['Task', 'Type', 'Team', 'Status', 'Priority', 'SLA'].map((label) => (
                   <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
                     {label}
                   </th>
@@ -1262,6 +1525,7 @@ function WorklistStep({
                     </td>
                     <td className="px-4 py-3 text-iris-text-secondary">{item.type}</td>
                     <td className="px-4 py-3 text-iris-text-secondary">{titleCase(item.team)}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{item.type === 'Settlement Pending' ? 'Pending' : titleCase(item.status ?? 'open')}</td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-[#FEF5E7] px-2.5 py-1 text-[12px] font-semibold text-[#B9770E]">{titleCase(item.priority)}</span>
                     </td>
@@ -1270,7 +1534,7 @@ function WorklistStep({
                 ))
               ) : (
                 <tr>
-                  <td className="px-4 py-6 text-iris-text-secondary" colSpan={5}>
+                  <td className="px-4 py-6 text-iris-text-secondary" colSpan={6}>
                     No worklist items were created for this processing run.
                   </td>
                 </tr>
@@ -1568,6 +1832,50 @@ function countInvalidOverrideActions(items: ClaimsExceptionItem[], state: Except
   }).length
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
+}
+
+function csvPreview(content: string) {
+  const lines = content.split(/\r?\n/).filter((line) => line.trim()).slice(0, 6)
+  if (lines.length < 2) {
+    return null
+  }
+  const headers = parseCsvLine(lines[0]).slice(0, 8)
+  const rows = lines.slice(1).map((line) => {
+    const values = parseCsvLine(line)
+    return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? '']))
+  })
+  return { headers, rows }
+}
+
+function parseCsvLine(line: string) {
+  const values: string[] = []
+  let current = ''
+  let quoted = false
+  for (const char of line) {
+    if (char === '"') {
+      quoted = !quoted
+      continue
+    }
+    if (char === ',' && !quoted) {
+      values.push(current)
+      current = ''
+      continue
+    }
+    current += char
+  }
+  values.push(current)
+  return values
+}
+
 function mapHistoryStageToStep(stage: string): ClaimsStep | null {
   const stageMap: Record<string, ClaimsStep> = {
     uploaded: 'upload',
@@ -1579,6 +1887,7 @@ function mapHistoryStageToStep(stage: string): ClaimsStep | null {
     exceptions: 'exceptions',
     processing: 'process',
     processed: 'summary',
+    files: 'files',
     approved: 'audit',
   }
   return stageMap[stage] ?? null

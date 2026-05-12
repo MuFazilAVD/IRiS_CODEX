@@ -21,6 +21,7 @@ export function SanctionsCasePage() {
   const navigate = useNavigate()
   const pushToast = useUiStore((state) => state.pushToast)
   const [busyAction, setBusyAction] = useState<string | null>(null)
+  const [insightTab, setInsightTab] = useState<'network' | 'history' | 'media'>('network')
 
   const overviewQuery = useQuery({
     queryKey: ['compliance-sanctions-workspace'],
@@ -170,11 +171,29 @@ export function SanctionsCasePage() {
             </div>
           ) : null}
 
-          <div className="grid gap-4 xl:grid-cols-3">
-            <SimplePanel title="Network Analysis" note={detail.network_analysis.note} items={detail.network_analysis.items} />
-            <DecisionHistoryPanel detail={detail.decision_history} />
-            <AdverseMediaPanel severity={detail.adverse_media.severity} note={detail.adverse_media.note} />
-          </div>
+          <section className="rounded-xl border border-iris-border bg-white">
+            <div className="border-b border-[#E8EDF2] px-5 py-3">
+              <div className="flex flex-wrap gap-2">
+                <TabButton active={insightTab === 'network'} label="Network Analysis" onClick={() => setInsightTab('network')} />
+                <TabButton active={insightTab === 'history'} label="Decision History" onClick={() => setInsightTab('history')} />
+                <TabButton active={insightTab === 'media'} label="Adverse Media" onClick={() => setInsightTab('media')} />
+              </div>
+            </div>
+            <div className="px-5 py-5">
+              {insightTab === 'network' ? <SimplePanel title="Network Analysis" note={detail.network_analysis.note} items={detail.network_analysis.items} /> : null}
+              {insightTab === 'history' ? <DecisionHistoryPanel detail={detail.decision_history} /> : null}
+              {insightTab === 'media' ? (
+                <AdverseMediaPanel
+                  severity={detail.adverse_media.severity}
+                  note={detail.adverse_media.note}
+                  summaryLine={detail.adverse_media.summary_line}
+                  sourcesChecked={detail.adverse_media.sources_checked}
+                  lastChecked={detail.adverse_media.last_checked}
+                  records={detail.adverse_media.records}
+                />
+              ) : null}
+            </div>
+          </section>
 
           <AuditTrailPanel items={detail.audit_trail} />
         </div>
@@ -298,11 +317,9 @@ function AnalysisPanel({
 
 function SimplePanel({ title, note, items }: { title: string; note: string; items: Array<{ label: string; value: string }> }) {
   return (
-    <section className="rounded-xl border border-iris-border bg-white">
-      <div className="border-b border-[#E8EDF2] px-5 py-4">
-        <h3 className="text-[16px] font-semibold text-iris-text-primary">{title}</h3>
-      </div>
-      <div className="space-y-3 px-5 py-5">
+    <div className="space-y-4">
+      <h3 className="text-[16px] font-semibold text-iris-text-primary">{title}</h3>
+      <div className="space-y-3">
         {items.map((item) => (
           <div key={item.label} className="flex items-center justify-between gap-3 border-b border-[#EEF2F5] pb-2 last:border-b-0 last:pb-0">
             <span className="text-[13px] text-iris-text-secondary">{item.label}</span>
@@ -311,36 +328,109 @@ function SimplePanel({ title, note, items }: { title: string; note: string; item
         ))}
         <p className="text-[12px] italic text-iris-text-secondary">{note}</p>
       </div>
-    </section>
+    </div>
   )
 }
 
 function DecisionHistoryPanel({ detail }: { detail: ComplianceSanctionsCaseDetailPayload['decision_history'] }) {
   return (
-    <section className="rounded-xl border border-iris-border bg-white">
-      <div className="border-b border-[#E8EDF2] px-5 py-4">
-        <h3 className="text-[16px] font-semibold text-iris-text-primary">Decision History</h3>
-      </div>
-      <div className="space-y-3 px-5 py-5">
+    <div className="space-y-4">
+      <h3 className="text-[16px] font-semibold text-iris-text-primary">Decision History</h3>
+      <div className="grid gap-3 xl:grid-cols-2">
         <InfoText label="Times reviewed" value={String(detail.times_reviewed)} />
         <InfoText label="Last verdict" value={detail.last_verdict} />
-        <p className="text-[12px] italic text-iris-text-secondary">{detail.note}</p>
       </div>
-    </section>
+      <div className="grid gap-3 xl:grid-cols-3">
+        {detail.entries.map((entry) => (
+          <div key={`${entry.period}-${entry.screened_on}`} className="rounded-xl border border-[#E8EDF2] px-3 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-[13px] font-semibold text-iris-text-primary">{entry.period}</p>
+                <p className="text-[12px] text-iris-text-secondary">{entry.screening_scope}</p>
+              </div>
+              <Pill tone={decisionTone(entry.decision)}>{entry.decision}</Pill>
+            </div>
+            <div className="mt-3 grid gap-2 text-[12px] text-iris-text-secondary">
+              <span>Reviewed on {entry.screened_on}</span>
+              <span>Sources: {entry.watchlists}</span>
+            </div>
+            <p className="mt-2 text-[12px] leading-5 text-iris-text-primary">{entry.rationale}</p>
+          </div>
+        ))}
+      </div>
+      <p className="text-[12px] italic text-iris-text-secondary">{detail.note}</p>
+    </div>
   )
 }
 
-function AdverseMediaPanel({ severity, note }: { severity: string; note: string }) {
+function AdverseMediaPanel({
+  severity,
+  note,
+  summaryLine,
+  sourcesChecked,
+  lastChecked,
+  records,
+}: {
+  severity: string
+  note: string
+  summaryLine?: string
+  sourcesChecked?: string[]
+  lastChecked?: string
+  records: ComplianceSanctionsCaseDetailPayload['adverse_media']['records']
+}) {
   return (
-    <section className="rounded-xl border border-iris-border bg-white">
-      <div className="border-b border-[#E8EDF2] px-5 py-4">
-        <h3 className="text-[16px] font-semibold text-iris-text-primary">Adverse Media</h3>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-[16px] font-semibold text-iris-text-primary">Adverse Media</h3>
+          {summaryLine ? <p className="mt-1 text-[13px] text-iris-text-secondary">{summaryLine}</p> : null}
+        </div>
+        <Pill tone={severityTone(severity)}>{severity}</Pill>
       </div>
-      <div className="space-y-3 px-5 py-5">
+      <div className="grid gap-3 xl:grid-cols-3">
         <InfoText label="Severity" value={severity} />
-        <p className="text-[12px] italic text-iris-text-secondary">{note}</p>
+        <InfoText label="Last checked" value={lastChecked ?? 'Current review'} />
+        <InfoText label="Sources checked" value={sourcesChecked?.join(' / ') || 'External coverage'} />
       </div>
-    </section>
+      {records.length ? (
+        <div className="grid gap-3 xl:grid-cols-2">
+          {records.map((record) => (
+            <div key={`${record.source}-${record.published_at}-${record.headline}`} className="rounded-xl border border-[#E8EDF2] px-3 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[13px] font-semibold text-iris-text-primary">{record.headline}</p>
+                <span className="text-[11px] text-iris-text-secondary">{record.published_at}</span>
+              </div>
+              <p className="mt-1 text-[12px] text-iris-text-secondary">{record.source}</p>
+              <p className="mt-2 text-[12px] leading-5 text-iris-text-primary">{record.summary}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-[#D9E7F1] bg-[#F7FBFF] px-4 py-4">
+          <p className="text-[13px] font-medium text-iris-text-primary">{summaryLine ?? note}</p>
+          <p className="mt-2 text-[12px] leading-5 text-iris-text-secondary">
+            Coverage remained clear across recent press, enforcement, and counterparty-risk references reviewed for this entity.
+          </p>
+        </div>
+      )}
+      <p className="text-[12px] italic text-iris-text-secondary">{note}</p>
+    </div>
+  )
+}
+
+function TabButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+  return (
+    <button
+      className={`rounded-lg border px-3 py-2 text-[12px] font-semibold transition ${
+        active
+          ? 'border-iris-navy bg-iris-navy text-white'
+          : 'border-[#D9E3EA] bg-white text-iris-text-secondary hover:border-[#AEBECC] hover:text-iris-text-primary'
+      }`}
+      onClick={onClick}
+      type="button"
+    >
+      {label}
+    </button>
   )
 }
 
@@ -410,6 +500,32 @@ function summaryClass(tone: string) {
     return 'border-[#F3D8A3] bg-[#FFF8EA] text-[#9A6B0A]'
   }
   return 'border-[#BCE1C7] bg-[#F4FBF6] text-[#1E8449]'
+}
+
+function decisionTone(decision: string): 'default' | 'positive' | 'warning' | 'negative' {
+  if (decision === 'Blocked') {
+    return 'negative'
+  }
+  if (decision === 'Pending Review') {
+    return 'warning'
+  }
+  if (decision === 'Cleared' || decision === 'False Positive') {
+    return 'positive'
+  }
+  return 'default'
+}
+
+function severityTone(severity: string): 'default' | 'positive' | 'warning' | 'negative' {
+  if (severity === 'High') {
+    return 'negative'
+  }
+  if (severity === 'Medium' || severity === 'Low') {
+    return 'warning'
+  }
+  if (severity === 'None') {
+    return 'positive'
+  }
+  return 'default'
 }
 
 function auditDotClass(actorType: string) {

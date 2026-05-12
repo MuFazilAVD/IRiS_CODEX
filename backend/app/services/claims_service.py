@@ -34,7 +34,11 @@ from app.services.population_csv import (
     PopulationCsvNormalizedRow,
     extract_tabular_upload_text,
 )
-from app.services.settlement_report_files import generate_settlement_report_files
+from app.services.settlement_report_files import (
+    generate_settlement_report_files,
+    publish_settlement_report_artifacts,
+    read_settlement_report_artifact_file,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -54,6 +58,7 @@ PIPELINE_STEPS = [
     "exceptions",
     "process",
     "summary",
+    "files",
     "worklist",
     "audit",
 ]
@@ -411,6 +416,8 @@ class ClaimsService:
             return self._handle_process_exceptions(cession_file, payload)
         if stage == "process":
             return self._handle_process(cession_file)
+        if stage == "files":
+            return self._handle_files(cession_file)
         if stage == "approve":
             return self._handle_approve(cession_file)
 
@@ -436,6 +443,28 @@ class ClaimsService:
         cession_file = self._get_cession_file_or_error(file_id)
         self._ensure_records_and_exceptions(cession_file)
         return self._build_summary_payload(cession_file)
+
+    def download_settlement_pipeline_artifact(self, file_id: str, artifact_id: str) -> dict[str, Any]:
+        logger.info("Downloading settlement pipeline artifact")
+        logger.debug("Settlement pipeline artifact download file_id=%s artifact_id=%s", file_id, artifact_id)
+        cession_file = self._get_cession_file_or_error(file_id)
+        artifacts = self._build_downstream_files_payload(cession_file).get("items") or []
+        artifact = next((item for item in artifacts if item.get("artifact_id") == artifact_id), None)
+        if artifact is None:
+            logger.error("Settlement pipeline artifact not found file_id=%s artifact_id=%s", file_id, artifact_id)
+            raise IrisAPIError(404, "Artifact not found", "The requested downstream settlement file is not available")
+
+        try:
+            content = read_settlement_report_artifact_file(artifact)
+        except FileNotFoundError as exc:
+            logger.error("Settlement pipeline artifact file missing artifact_id=%s path=%s", artifact_id, artifact.get("path"))
+            raise IrisAPIError(404, "Artifact file missing", "The generated downstream file is no longer available") from exc
+
+        return {
+            "filename": artifact.get("filename") or f"{artifact_id}.csv",
+            "content_type": "text/csv",
+            "content": content,
+        }
 
     def list_settlements(
         self,
@@ -966,6 +995,43 @@ class ClaimsService:
             )
         return {"file_id": cession_file.file_id, "stage": "processed", "result": summary}
 
+    def _handle_files(self, cession_file: CessionFile) -> dict[str, Any]:
+        logger.info("Publishing downstream settlement files from cession processing")
+        logger.debug("Downstream file publish file_id=%s", cession_file.file_id)
+        payload = self._build_downstream_files_payload(cession_file)
+        artifacts = payload.get("items") or []
+        if not artifacts:
+            logger.error("Downstream file publish failed because no artifacts exist file_id=%s", cession_file.file_id)
+            raise IrisAPIError(409, "No downstream files", "Generate settlement output files before pushing to SFTP")
+
+        now = datetime.now(UTC)
+        published = publish_settlement_report_artifacts(artifacts, now)
+        self._store_override(
+            cession_file.file_id,
+            {
+                "settlement_report_artifacts": published,
+                "settlement_report_artifacts_pushed": True,
+                "settlement_report_artifacts_pushed_at": self._to_iso(now),
+                "active_step": "worklist",
+            },
+        )
+        self._append_stage_log(cession_file.file_id, "files", "complete")
+        self._append_stage_log(cession_file.file_id, "worklist", "in_progress")
+        self._append_stage_history(cession_file.file_id, "files")
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "Claims Ops",
+                "type": "Human",
+                "action": "Pushed downstream files to SFTP",
+                "detail": ", ".join(artifact.get("filename", "") for artifact in published),
+            },
+        )
+        refreshed_payload = self._build_downstream_files_payload(cession_file)
+        logger.info("Downstream settlement files published")
+        logger.debug("Published downstream files file_id=%s artifacts=%s", cession_file.file_id, published)
+        return {"file_id": cession_file.file_id, "stage": cession_file.stage, "result": refreshed_payload}
+
     def _handle_approve(self, cession_file: CessionFile) -> dict[str, Any]:
         cession_file.stage = "approved"
         cession_file.updated_at = datetime.now(UTC)
@@ -974,6 +1040,7 @@ class ClaimsService:
         self._store_override(cession_file.file_id, {"active_step": "audit"})
         self._append_stage_history(cession_file.file_id, "approved")
         self._append_stage_log(cession_file.file_id, "summary", "complete")
+        self._append_stage_log(cession_file.file_id, "files", "complete")
         self._append_stage_log(cession_file.file_id, "worklist", "complete")
         self._append_stage_log(cession_file.file_id, "audit", "complete")
         self._append_audit_event(
@@ -1230,16 +1297,27 @@ class ClaimsService:
         logger.debug("Settlement file upsert file_id=%s settlement=%s", cession_file.file_id, settlement_row)
         settlement_row["iris_recommendation"] = decision
         settlement_row["settlement_reconciliation"] = reconciliation
-        cedent = self.repository.get_cedent(contract.cedent_id)
-        report_artifacts = generate_settlement_report_files(
-            cession_file=cession_file,
-            contract=contract,
-            cedent_name=cedent.legal_entity_name if cedent else "Unmapped cedent",
-            settlement_row=settlement_row,
-            reconciliation=reconciliation,
-            generated_at=now,
-        )
+        report_artifacts: list[dict[str, Any]] = []
+        if decision == "accept":
+            cedent = self.repository.get_cedent(contract.cedent_id)
+            report_artifacts = generate_settlement_report_files(
+                cession_file=cession_file,
+                contract=contract,
+                cedent_name=cedent.legal_entity_name if cedent else "Unmapped cedent",
+                settlement_row=settlement_row,
+                reconciliation=reconciliation,
+                generated_at=now,
+                publish=False,
+            )
         settlement_row["settlement_report_artifacts"] = report_artifacts
+        self._store_override(
+            cession_file.file_id,
+            {
+                "settlement_report_artifacts": report_artifacts,
+                "settlement_report_artifacts_pushed": False,
+                "settlement_report_artifacts_pushed_at": None,
+            },
+        )
         return settlement_row
 
     def _resolved_population_overrides(self, cession_file: CessionFile) -> dict[int, dict[str, Any]]:
@@ -1405,6 +1483,7 @@ class ClaimsService:
         validation = self._build_validation_payload(cession_file)
         exceptions = self._build_exceptions_payload(cession_file)
         summary = self._build_summary_payload(cession_file)
+        downstream_files = self._build_downstream_files_payload(cession_file)
         worklist = self._build_worklist_payload(cession_file)
         audit = self._build_audit_payload(cession_file)
         active_step = self._resolve_active_step(cession_file)
@@ -1427,6 +1506,7 @@ class ClaimsService:
             "exceptions": exceptions,
             "process": self._build_process_payload(cession_file),
             "summary": summary,
+            "downstream_files": downstream_files,
             "worklist": worklist,
             "audit": audit,
         }
@@ -1781,9 +1861,10 @@ class ClaimsService:
         elif file_type == "Settlement":
             plan = [
                 "Parse settlement period, payment date, pensioner movement, indexation, legs, fee, interest and net amount",
-                "Retrieve IRiS expected fixed and floating legs for the mapped contract-period",
-                "Recompute net settlement as floating minus fixed plus signed fee and prior-period interest",
-                "Create a settlement approval worklist item on match or a reconciliation review item on mismatch",
+                "Aggregate incoming fixed leg, floating leg and net settlement across normalized rows",
+                "Retrieve the pending settlement table row for the mapped cedent, contract and quarter",
+                "Create settlement and sanctions worklist items on match, or route mismatches to settlement reconciliation",
+                "Generate downstream files for review before SFTP push",
             ]
         elif file_type == "Pension Status":
             plan = [
@@ -1956,6 +2037,7 @@ class ClaimsService:
                         "type": item.category or "Validation",
                         "team": item.assigned_role or "claims_ops",
                         "priority": item.priority,
+                        "status": item.status or "open",
                         "sla": self._sla_display(item.sla_deadline),
                         "description": item.description or "",
                     }
@@ -1984,6 +2066,34 @@ class ClaimsService:
             "title": "Worklist Tasks Created",
             "subtitle": "Routed to owning teams with SLA",
             "items": [],
+        }
+
+    def _build_downstream_files_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        stored = self._get_override(cession_file.file_id)
+        artifacts = [
+            {
+                **artifact,
+                "download_url": f"/claims/cession-files/{cession_file.file_id}/settlement-artifacts/{artifact.get('artifact_id')}/download",
+            }
+            for artifact in stored.get("settlement_report_artifacts", [])
+            if isinstance(artifact, dict)
+        ]
+        pushed = bool(stored.get("settlement_report_artifacts_pushed"))
+        pushed_at = stored.get("settlement_report_artifacts_pushed_at")
+        if artifacts:
+            subtitle = (
+                f"{len(artifacts)} files pushed to SFTP"
+                if pushed
+                else f"{len(artifacts)} files generated and awaiting SFTP push"
+            )
+        else:
+            subtitle = "Downstream output files will appear after settlement processing"
+        return {
+            "title": "Downstream Files",
+            "subtitle": subtitle,
+            "items": artifacts,
+            "pushed": pushed,
+            "pushed_at": pushed_at,
         }
 
     def _build_audit_payload(self, cession_file: CessionFile) -> dict[str, Any]:
@@ -2692,7 +2802,12 @@ class ClaimsService:
         expected: dict[str, Any],
     ) -> dict[str, Any]:
         uploaded_recomputed_net = self._decimal_cents(uploaded_floating - uploaded_fixed + uploaded_fee + uploaded_interest)
-        system_net = self._decimal_cents(expected["floating_leg"] - expected["fixed_leg"] + uploaded_fee + uploaded_interest)
+        expected_net = expected.get("net_settlement_amount")
+        system_net = (
+            self._decimal_cents(expected_net)
+            if expected_net is not None
+            else self._decimal_cents(expected["floating_leg"] - expected["fixed_leg"] + uploaded_fee + uploaded_interest)
+        )
         settlement_id = self._settlement_id_for(contract.contract_id, period_label)
         period_start, period_end = self._period_bounds(period_label)
         mismatches: list[dict[str, Any]] = []
@@ -2736,6 +2851,7 @@ class ClaimsService:
                 "net_settlement_amount": self._settlement_decimal_payload(system_net),
             },
             "mismatches": mismatches,
+            "incoming_row_count": expected.get("incoming_row_count"),
         }
 
     def _append_settlement_mismatch(
@@ -2770,17 +2886,45 @@ class ClaimsService:
         logger.info("Retrieving expected settlement values")
         logger.debug("Expected settlement lookup contract_id=%s period=%s", contract.contract_id, period_label)
         period_start, period_end = self._period_bounds(period_label)
+        ground_truth = self.repository.get_pending_settlement_ground_truth(
+            contract.contract_id,
+            contract.cedent_id,
+            period_start,
+            period_end,
+            cession_file.id if cession_file else None,
+        )
+        if ground_truth:
+            logger.info("Using pending settlement table row as ground truth")
+            logger.debug(
+                "Pending settlement ground truth contract_id=%s cedent_id=%s settlement_id=%s status=%s",
+                contract.contract_id,
+                contract.cedent_id,
+                ground_truth.settlement_id,
+                ground_truth.status,
+            )
+            fixed_leg = self._decimal_cents(ground_truth.fixed_leg_amount)
+            floating_leg = self._decimal_cents(ground_truth.floating_leg_amount)
+            net_amount = self._decimal_cents(ground_truth.net_amount)
+            return {
+                "fixed_leg": fixed_leg,
+                "floating_leg": floating_leg,
+                "net_settlement_amount": net_amount,
+                "source": "pending settlement table",
+                "mock_expected": False,
+            }
+
         tracked = self._find_tracked_settlement_expectation(contract.contract_id, period_start, period_end, cession_file)
         if tracked:
             logger.info("Using tracked settlement register row for expected settlement values")
             logger.debug("Tracked settlement expectation contract_id=%s settlement_id=%s", contract.contract_id, tracked["settlement_id"])
             fixed_leg = self._decimal_cents(tracked.get("fixed_leg_amount"))
             floating_leg = self._decimal_cents(tracked.get("floating_leg_amount"))
+            net_amount = self._decimal_cents(tracked.get("net_amount", floating_leg - fixed_leg + uploaded_fee + uploaded_interest))
             return {
                 "fixed_leg": fixed_leg,
                 "floating_leg": floating_leg,
-                "net_settlement_amount": self._decimal_cents(floating_leg - fixed_leg + uploaded_fee + uploaded_interest),
-                "source": "existing settlement register",
+                "net_settlement_amount": net_amount,
+                "source": "settlement register",
                 "mock_expected": False,
             }
 
@@ -2821,14 +2965,14 @@ class ClaimsService:
             "floating_leg_amount": self._decimal_payload(floating_leg),
             "net_amount": self._decimal_payload(floating_leg - fixed_leg + uploaded_fee + uploaded_interest),
             "currency": contract.currency or "USD",
-            "source": "MOCK IMPLEMENTATION - deterministic settlement expectation",
+            "source": "deterministic settlement baseline",
         }
         self._store_mock_settlement_expectation(settlement_id, fallback)
         return {
             "fixed_leg": fixed_leg,
             "floating_leg": floating_leg,
             "net_settlement_amount": self._decimal_cents(floating_leg - fixed_leg + uploaded_fee + uploaded_interest),
-            "source": "MOCK IMPLEMENTATION - deterministic settlement expectation",
+            "source": "settlement baseline cache",
             "mock_expected": True,
         }
 
@@ -2844,6 +2988,8 @@ class ClaimsService:
                 continue
             if settlement.period_start != period_start or settlement.period_end != period_end:
                 continue
+            if str(settlement.status or "").lower() not in {"pending", "pending_approval"}:
+                continue
             if cession_file and settlement.cession_file_id == cession_file.id:
                 continue
             return self._serialize_settlement_model(settlement)
@@ -2855,6 +3001,7 @@ class ClaimsService:
                 if item.get("contract_id") == contract_id
                 and item.get("period_start") == period_start.isoformat()
                 and item.get("period_end") == period_end.isoformat()
+                and str(item.get("status") or "").lower() in {"pending", "pending_approval"}
             ),
             None,
         )
@@ -2873,11 +3020,19 @@ class ClaimsService:
         return len(current_population) >= max(int(expected_lives * 0.8), 1)
 
     def _build_settlement_reconciliation_payload(self, cession_file: CessionFile) -> dict[str, Any] | None:
+        stored_summary = self._get_override(cession_file.file_id).get("settlement_processing_summary") or {}
+        stored_reconciliation = stored_summary.get("settlement_reconciliation")
+        if stored_reconciliation and cession_file.stage in {"processed", "approved"}:
+            return stored_reconciliation
+
         records = self.repository.list_file_records(cession_file.id)
         if not records:
-            stored_summary = self._get_override(cession_file.file_id).get("settlement_processing_summary") or {}
-            return stored_summary.get("settlement_reconciliation")
+            return stored_reconciliation
         contract = self.repository.get_contract(cession_file.contract_id) if cession_file.contract_id else None
+        if contract:
+            aggregated = self._build_settlement_reconciliation_from_records(cession_file, records, contract)
+            if aggregated:
+                return aggregated
         for record in records:
             if contract:
                 recomputed = self._build_settlement_reconciliation_from_record(cession_file, record, contract)
@@ -2888,6 +3043,85 @@ class ClaimsService:
             if reconciliation:
                 return reconciliation
         return None
+
+    def _build_settlement_reconciliation_from_records(
+        self,
+        cession_file: CessionFile,
+        records: list[CessionFileRecord],
+        contract: Contract,
+    ) -> dict[str, Any] | None:
+        logger.info("Aggregating Settlement file amounts before reconciliation")
+        logger.debug("Settlement aggregation file_id=%s record_count=%s", cession_file.file_id, len(records))
+        period_labels: list[str] = []
+        payment_dates: list[date] = []
+        currencies: list[str] = []
+        totals = {
+            "fixed_leg": Decimal("0"),
+            "floating_leg": Decimal("0"),
+            "fee": Decimal("0"),
+            "interest_prior_period": Decimal("0"),
+            "net_settlement_amount": Decimal("0"),
+        }
+        complete_rows = 0
+
+        for record in records:
+            raw_data = json.loads(record.raw_data or "{}")
+            mapped_data = json.loads(record.mapped_data or "{}")
+            period_raw = self._aliased_raw_value(raw_data, "calculation_period") or mapped_data.get("calculation_period")
+            period_label = self._normalize_period_label(period_raw)
+            if period_label:
+                period_labels.append(period_label)
+
+            payment_date_raw = self._aliased_raw_value(raw_data, "payment_date") or mapped_data.get("payment_date")
+            payment_date = self._parse_flexible_date(payment_date_raw)
+            if payment_date:
+                payment_dates.append(payment_date)
+
+            currency = self._settlement_currency(raw_data, str(mapped_data.get("currency") or contract.currency or "USD"))
+            if currency:
+                currencies.append(currency)
+
+            row_amounts = {
+                field_name: self._settlement_amount_from_record(raw_data, mapped_data, field_name)
+                for field_name in totals
+            }
+            if any(value is None for value in row_amounts.values()):
+                continue
+            for field_name, value in row_amounts.items():
+                totals[field_name] += value or Decimal("0")
+            complete_rows += 1
+
+        period_label = self._most_frequent_text(period_labels)
+        if not period_label or complete_rows == 0:
+            logger.error(
+                "Settlement aggregation could not produce reconciliation file_id=%s period=%s complete_rows=%s",
+                cession_file.file_id,
+                period_label,
+                complete_rows,
+            )
+            return None
+
+        expected = self._expected_settlement_values(
+            contract,
+            period_label,
+            self._decimal_cents(totals["fee"]),
+            self._decimal_cents(totals["interest_prior_period"]),
+            cession_file,
+        )
+        expected["incoming_row_count"] = complete_rows
+        return self._settlement_reconciliation_result(
+            contract,
+            cession_file,
+            period_label,
+            self._most_frequent_date(payment_dates),
+            self._most_frequent_text(currencies) or contract.currency or "USD",
+            self._decimal_cents(totals["fixed_leg"]),
+            self._decimal_cents(totals["floating_leg"]),
+            self._decimal_cents(totals["fee"]),
+            self._decimal_cents(totals["interest_prior_period"]),
+            self._decimal_cents(totals["net_settlement_amount"]),
+            expected,
+        )
 
     def _build_settlement_reconciliation_from_record(
         self,
@@ -3806,9 +4040,50 @@ class ClaimsService:
         if detection["file_type"] == "Settlement":
             reconciliation = summary.get("settlement_reconciliation") or {}
             if reconciliation.get("decision") == "accept":
-                title = f"Settlement approval pending - {settlement_id or cession_file.file_id}"
-                category = "Settlement Approval"
-                breadcrumb = "Settlement Approval - Reconciled File"
+                settlement_item = WorklistItem(
+                    wl_id=self.repository.get_next_worklist_id(),
+                    title=f"Settlement approval pending - {settlement_id or cession_file.file_id}",
+                    description="Settlement totals matched the pending table row and are awaiting operational approval.",
+                    category="Settlement Pending",
+                    priority="medium",
+                    status="pending_review",
+                    assigned_role="claims_ops",
+                    contract_id=mapping["contract_id"],
+                    cedent_id=detection["cedent_id"],
+                    cession_file_id=cession_file.id,
+                    settlement_id=settlement_id,
+                    source="AI Agent",
+                    source_detail="Cession pipeline processing",
+                    sla_deadline=now + timedelta(hours=4),
+                    ai_generated=True,
+                    breadcrumb="Settlement Approval - Reconciled File",
+                    created_at=now,
+                    updated_at=now,
+                )
+                created_settlement = self.repository.create_worklist_item(settlement_item)
+                sanctions_item = WorklistItem(
+                    wl_id=self.repository.get_next_worklist_id(),
+                    title=f"Sanction screening pending - {detection['cedent']}",
+                    description=f"Run sanctions screening for {detection['cedent']} before downstream settlement release.",
+                    category="Sanction Screening",
+                    priority="medium",
+                    status="pending_review",
+                    assigned_role="compliance",
+                    contract_id=mapping["contract_id"],
+                    cedent_id=detection["cedent_id"],
+                    cession_file_id=cession_file.id,
+                    settlement_id=settlement_id,
+                    source="AI Agent",
+                    source_detail="Cession pipeline processing",
+                    sla_deadline=now + timedelta(hours=4),
+                    compliance_hold=True,
+                    ai_generated=True,
+                    breadcrumb="Compliance - Sanction Screening",
+                    created_at=now,
+                    updated_at=now,
+                )
+                created_sanctions = self.repository.create_worklist_item(sanctions_item)
+                return [created_settlement, created_sanctions]
             else:
                 mismatch_count = len(reconciliation.get("mismatches") or [])
                 title = f"Settlement reconciliation review - {settlement_id or cession_file.file_id}"

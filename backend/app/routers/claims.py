@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, File, Form, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, File, Form, Query, Response, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -99,6 +99,21 @@ def get_cession_file_summary(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     return get_service(db).get_cession_file_summary(file_id)
+
+
+@router.get("/cession-files/{file_id}/settlement-artifacts/{artifact_id}/download")
+def download_settlement_pipeline_artifact(
+    file_id: str,
+    artifact_id: str,
+    _: User = Depends(require_roles(["claims_ops"])),
+    db: Session = Depends(get_db),
+) -> Response:
+    artifact = get_service(db).download_settlement_pipeline_artifact(file_id, artifact_id)
+    return Response(
+        content=artifact["content"],
+        media_type=artifact["content_type"],
+        headers={"Content-Disposition": f'attachment; filename="{artifact["filename"]}"'},
+    )
 
 
 @router.get("/settlements")

@@ -66,7 +66,7 @@ const sections: NavSection[] = [
     items: [
       { label: 'Sanctions', to: '/compliance/sanctions', icon: Shield },
       { label: 'Audit', to: '/compliance/audit', icon: FileText },
-      { label: 'Screening Cache', to: '/compliance/screening-cache', icon: Database },
+      { label: 'Screening Database', to: '/compliance/screening-cache', icon: Database },
     ],
   },
   {

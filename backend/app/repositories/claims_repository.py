@@ -245,6 +245,33 @@ class ClaimsRepository:
         statement = select(Settlement).where(Settlement.settlement_id == settlement_id).limit(1)
         return self.db.scalar(statement)
 
+    def get_pending_settlement_ground_truth(
+        self,
+        contract_id: str,
+        cedent_id: str | None,
+        period_start,
+        period_end,
+        exclude_cession_file_db_id: str | None = None,
+    ) -> Settlement | None:
+        filters = [
+            Settlement.contract_id == contract_id,
+            Settlement.period_start == period_start,
+            Settlement.period_end == period_end,
+            Settlement.status.in_(["pending", "pending_approval"]),
+        ]
+        if cedent_id:
+            filters.append(Settlement.cedent_id == cedent_id)
+        if exclude_cession_file_db_id:
+            filters.append(or_(Settlement.cession_file_id.is_(None), Settlement.cession_file_id != exclude_cession_file_db_id))
+
+        statement = (
+            select(Settlement)
+            .where(*filters)
+            .order_by(Settlement.updated_at.desc(), Settlement.created_at.desc(), Settlement.settlement_id)
+            .limit(1)
+        )
+        return self.db.scalar(statement)
+
     def upsert_settlement(self, settlement: Settlement) -> Settlement:
         self.db.add(settlement)
         self.db.commit()

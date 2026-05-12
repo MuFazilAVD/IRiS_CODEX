@@ -89,8 +89,8 @@
       "notes": "No active PEP or AML alerts on the most recent review cycle."
     },
     "sanction_screening": {
-      "total_scans": 9,
-      "open_hits": 3,
+      "total_scans": 11,
+      "open_hits": 4,
       "sources_monitored": 3,
       "next_periodic_due": "2025-09-15",
       "source_status": [
@@ -98,25 +98,47 @@
           "source": "OFAC",
           "status": "Pending Review",
           "last_scan": "2026-05-11",
-          "reference": "SCR-2026-05-016",
+          "reference": "SCR-2026-05-017",
           "matches": 1
         },
         {
           "source": "FinCEN",
           "status": "Cleared",
           "last_scan": "2026-05-11",
-          "reference": "SCR-2026-05-016",
+          "reference": "SCR-2026-05-017",
           "matches": 0
         },
         {
           "source": "FinCEN",
           "status": "Cleared",
           "last_scan": "2026-05-11",
-          "reference": "SCR-2026-05-016",
+          "reference": "SCR-2026-05-017",
           "matches": 0
         }
       ],
       "history": [
+        {
+          "id": "SCR-2026-05-017-FinCEN",
+          "screening_date": "2026-05-11T13:20:39Z",
+          "source": "FinCEN",
+          "scan_type": "Adhoc",
+          "result": "Cleared",
+          "reference_id": "SCR-2026-05-017",
+          "matches": 0,
+          "reviewer": "admin@metlife-re.demo",
+          "notes": "No potential matches found"
+        },
+        {
+          "id": "SCR-2026-05-017-OFAC",
+          "screening_date": "2026-05-11T13:20:39Z",
+          "source": "OFAC",
+          "scan_type": "Adhoc",
+          "result": "Pending Review",
+          "reference_id": "SCR-2026-05-017",
+          "matches": 1,
+          "reviewer": "admin@metlife-re.demo",
+          "notes": "Exact Northstar Pension Trust entity match found in the OFAC SDN cache with aligned jurisdiction context. Hold in pending review for compliance disposition."
+        },
         {
           "id": "SCR-2026-05-016-FinCEN",
           "screening_date": "2026-05-11T11:33:24Z",
@@ -265,6 +287,12 @@
       }
     ],
     "audit_approval": [
+      {
+        "timestamp": "2026-05-11 13:20:39",
+        "actor": "IRiS Screening Engine",
+        "action": "Triggered sanction screening",
+        "detail": "OFAC, FinCEN - SCR-2026-05-017 - pending review"
+      },
       {
         "timestamp": "2026-05-11 11:33:24",
         "actor": "IRiS Screening Engine",
@@ -841,7 +869,7 @@
   },
   "CED-0991": {
     "sanction_screening": {
-      "total_scans": 4,
+      "total_scans": 6,
       "open_hits": 0,
       "sources_monitored": 2,
       "next_periodic_due": "2025-09-15",
@@ -850,18 +878,40 @@
           "source": "OFAC",
           "status": "Cleared",
           "last_scan": "2026-05-11",
-          "reference": "SCR-2026-05-013",
+          "reference": "SCR-2026-05-018",
           "matches": 0
         },
         {
           "source": "FinCEN",
           "status": "Cleared",
           "last_scan": "2026-05-11",
-          "reference": "SCR-2026-05-013",
+          "reference": "SCR-2026-05-018",
           "matches": 0
         }
       ],
       "history": [
+        {
+          "id": "SCR-2026-05-018-FinCEN",
+          "screening_date": "2026-05-11T13:21:38Z",
+          "source": "FinCEN",
+          "scan_type": "Adhoc",
+          "result": "Cleared",
+          "reference_id": "SCR-2026-05-018",
+          "matches": 0,
+          "reviewer": "admin@metlife-re.demo",
+          "notes": "No potential matches found"
+        },
+        {
+          "id": "SCR-2026-05-018-OFAC",
+          "screening_date": "2026-05-11T13:21:38Z",
+          "source": "OFAC",
+          "scan_type": "Adhoc",
+          "result": "Cleared",
+          "reference_id": "SCR-2026-05-018",
+          "matches": 0,
+          "reviewer": "admin@metlife-re.demo",
+          "notes": "No potential matches found"
+        },
         {
           "id": "SCR-2026-05-013-FinCEN",
           "screening_date": "2026-05-11T11:21:04Z",
@@ -903,6 +953,12 @@
       ]
     },
     "audit_approval": [
+      {
+        "timestamp": "2026-05-11 13:21:38",
+        "actor": "IRiS Screening Engine",
+        "action": "Triggered sanction screening",
+        "detail": "OFAC, FinCEN - SCR-2026-05-018 - cleared"
+      },
       {
         "timestamp": "2026-05-11 11:21:04",
         "actor": "IRiS Screening Engine",

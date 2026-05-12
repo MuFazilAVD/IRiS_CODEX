@@ -233,6 +233,239 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-12T06:02:07.4192785+00:00]
+
+### Prompt
+Further changes to make in this section:
+
+1) Right now since they are cards, a lot of white space is occuring as you can see in the attached screenshot. Change them to switchable tabs for resolving this issue
+
+2) Right now in all the cards, the fact that we are mocking the data is explicitly mentioned. We need this to look realistic which is why It should not mention anywhere about anything mocking.
+
+3) In the Adverse Media , it looks plain right now with just showing severity as none. Make this section better by adding some kind of additional information as a one liner or any appropriate method
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - backend/app/services/compliance_service.py
+  - backend/app/mock_data/adverse_media_knowledge_base.json
+  - frontend/src/pages/compliance/SanctionsCasePage.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Replaced the three side-by-side sanctions detail cards with a single switchable tab workspace for `Network Analysis`, `Decision History`, and `Adverse Media`.
+- Removed user-visible references to mocked data from the sanctions-detail backend copy and the adverse-media knowledge-base content.
+- Enriched adverse media with summary-line, sources-checked, and last-checked metadata and rendered a stronger informational empty state for clear entities.
+- Verified frontend production build, backend Python compilation, and runtime payloads for seeded sanctions cases.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/services/compliance_service.py
+- backend/app/mock_data/adverse_media_knowledge_base.json
+- frontend/src/pages/compliance/SanctionsCasePage.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Adverse Media remains backed by the current internal knowledge-base file and screening-cache context because this phase still does not define a live external search integration.
+
+### Status
+✅ Completed
+
+## [2026-05-12T05:43:37.1714012+00:00]
+
+### Prompt
+Populate these three cards under compliance analysis with mock data:
+
+1) Network Analysis: Keep it as clear if the company is getting cleared in sanction screening (purely mock)
+2) Decision History: Show a mock history of sanction sscreening that we would have done for a company, for eg, if the company is in onboarding phase in our company, only pre engagement screening would have done. If the contract is currently active then show the screening done in the last 3 quareters. 2025 Q2, Q3, Q4.
+3) Adverse Media : Ideally it should be done using an online search. Currently mock it, keep a mock knowledge base for this.
+
+Now fix this . It should work for all of the cedents. if any company outside cedent list come, mock it according to the FinCEN, OFAC list that we have, Make no mistakes.
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ARCHITECTURE.md
+  - docs/api/COMPLIANCE.md
+  - docs/ui/06-compliance/SANCTIONS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/db/SCHEMA.md
+  - backend/app/services/compliance_service.py
+  - backend/app/repositories/compliance_repository.py
+  - backend/app/mock_data/screening_case_context_seed.json
+  - backend/app/mock_data/screening_events_seed.json
+  - backend/app/mock_data/screening_cache_lists_seed.json
+  - backend/app/mock_data/cedents_seed.json
+  - backend/app/mock_data/contracts_seed.json
+  - frontend/src/pages/compliance/SanctionsCasePage.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Replaced the generic sanctions-detail fallback logic for `Network Analysis`, `Decision History`, and `Adverse Media` with deterministic backend generators.
+- Added active-contract quarterly screening history for `2025 Q2`, `2025 Q3`, and `2025 Q4`, plus pre-engagement-only history for onboarding cedents.
+- Added a mock adverse media knowledge base and a fallback path that derives mock coverage from cached OFAC / FinCEN hits for companies outside the cedent list.
+- Updated the sanctions case UI and API types so the cards render review-history rows and adverse-media records.
+- Verified backend Python compilation, frontend production build, and seeded/runtime sanctions detail behavior for known cedents plus an outside company.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/repositories/compliance_repository.py
+- backend/app/services/compliance_service.py
+- backend/app/mock_data/adverse_media_knowledge_base.json
+- frontend/src/pages/compliance/SanctionsCasePage.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Adverse media remains a documented mock knowledge base because the current compliance phase does not include a live search integration; outside-company coverage is therefore derived from the cached OFAC / FinCEN lists rather than a real web lookup.
+
+### Status
+✅ Completed
+
+## [2026-05-11 14:19:59 UTC]
+
+### Prompt
+In all of the cedant financial data, change 2024 to 2025, 
+change 2025 to 2026,
+change status of every 2026 Q1 to pending instead of paid, remove any data from and beyond 2026 Q2.
+and we will be uploading settlement files of 2026 Q1 and that will be compared inthe settlement pieline
+SO make these data changes. Give prioriry to changin MapleLeaf, then change the rest
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/db/SCHEMA.md
+  - backend/app/mock_data/contract_detail_overrides.json
+  - backend/app/mock_data/settlements_seed.json
+  - backend/app/mock_data/settlement_overrides.json
+  - backend/app/mock_data/settlement_report_artifacts.json
+  - backend/app/services/underwriting_service.py
+  - backend/iris.db
+
+### Actions Taken
+- Updated contract settlement-history mock data so 2024 periods display as 2025, retained 2025 Q1 periods display as `Q1 2026`, and `Q1 2026` rows use `pending` instead of `paid`.
+- Prioritized Maple Leaf in the settlement baseline by ensuring the `Q1 2026` Maple register row exists in the live DB and mock seed data.
+- Shifted the seeded settlement register from `Q1 2025` to `Q1 2026` for Northstar, Helvetia, Maple Leaf, Bavarian, and Atlas.
+- Removed settlement override and artifact data that would land in `2026 Q2` or later after the timeline shift.
+- Updated the live SQLite settlement rows in `backend/iris.db` so the current running app aligns with the file-backed mock data.
+- Updated the default underwriting-service settlement-history generator so non-overridden contracts follow the same rolled-forward timeline and cutoff.
+- Verified Python compilation for the updated underwriting service and read back the updated mock/DB settlement rows.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/mock_data/contract_detail_overrides.json
+- backend/app/mock_data/settlements_seed.json
+- backend/app/mock_data/settlement_overrides.json
+- backend/app/mock_data/settlement_report_artifacts.json
+- backend/app/services/underwriting_service.py
+- backend/iris.db
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Existing historical cession-pipeline override sessions for older Maple/Bavarian settlement uploads were left untouched; the active settlement comparison baseline now comes from the updated `Q1 2026` settlement register and live DB rows used by the settlement reconciliation flow.
+
+### Status
+✅ Completed
+
+## [2026-05-11 14:03:45 UTC]
+
+### Prompt
+In cession file processing, for any fil eprocessing pipeline except settlement, display '(beta)' in the header
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Updated the shared cession file workflow header logic.
+- Added `(beta)` to the pipeline header for non-settlement file types only.
+- Kept settlement processing headers unchanged.
+- Verified the frontend production build.
+- Updated the tracker.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No backend or API changes were needed because the request only affected the frontend pipeline header label.
+
+### Status
+✅ Completed
+
+## [2026-05-11 13:58:56 UTC]
+
+### Prompt
+In the navbar, change the name Screening Cache to Screening Database,  And in the page , change it to Screening Database (Demo).
+In the page, we have two editable cards, make them two tabs, so that we can switch berween them and they can occuppy more width
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/build_plans/BUILD_PLAN_ADDITIONS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/components/layout/Sidebar.tsx
+  - frontend/src/pages/compliance/ScreeningCachePage.tsx
+
+### Actions Taken
+- Renamed the Compliance sidebar item from `Screening Cache` to `Screening Database`.
+- Updated the compliance workspace breadcrumb and page title to `Screening Database (Demo)`.
+- Reworked the two editable workbook cards into a tabbed selector so the active workbook editor renders full-width.
+- Preserved the existing mock-backed workbook save and download behavior.
+- Ran the frontend production build.
+- Updated the tracker.
+
+### Files Modified
+- frontend/src/components/layout/Sidebar.tsx
+- frontend/src/pages/compliance/ScreeningCachePage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No API or schema changes were required because this request only changed the existing Compliance workbook page presentation and labels.
+
+### Status
+✅ Completed
+
+## [2026-05-11 12:51:31 +00:00]
+
+### Prompt
+In the anomalies section initially only the metrices will be visible while the table is empty, and after moving to the resolutions, it is then the table is populated in the anomalies section. Resolve this issue.
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Identified that the workflow moved from Clauses to Anomalies before the backend validation run had populated exception-backed anomaly rows.
+- Changed the Clauses continue path to run validation immediately before opening the Anomalies step, then refetch the file detail and seed the anomaly and resolution state from the refreshed payload.
+- Added a validate-step hydration effect so older/reopened files that are still parked on the pre-validation validate step auto-run validation and populate the anomalies table on load.
+- Blocked Continue while that automatic validation hydration is running to avoid racing into Resolutions with stale or empty anomaly data.
+- Verified the frontend production build.
+- Updated the tracker.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The backend step contract still stores `validate` as the pre-review active step after Clauses; the frontend now hydrates the validation payload before presenting the Anomalies screen so the user-visible behavior stays consistent without changing the API shape.
+
+### Status
+✅ Completed
+
 ## [2026-05-11 12:38:03 +00:00]
 
 ### Prompt
@@ -4355,6 +4588,58 @@ I need to make a few changes in the cedent section:
 
 ### Issues / Deviations
 - The standalone cedent sanction history remains stored in the existing cedent detail overlay because `docs/db/SCHEMA.md` does not define a dedicated cedent screening history table; the actual screening case is persisted through the shared compliance `screening_events` path.
+
+### Status
+✅ Completed
+
+## [2026-05-12 06:51:42 +00:00]
+
+### Prompt
+Few tweaks in the processing pipeline of the settlemnt files:
+
+1) You should always refer DB based on the cedent and the quarter as ground truth. This can be retreived from the table by matchng the cedent/contract, quarter and payment status= Pending. 
+2) When a new settlement file comes after doing our cleaning and normalization , compute the incoming  fixed leg, floating leg and net settlement by taking the summation of all the entries in the corresponding columns and match it against the ground truth retrieved. 
+3) If it mismatches follow the current guidelines which is creating a reconcillation worklist item in settlement. 
+4) If it matches also follow the current path, but add some additional steps. Now we are generating downstream files and saving them into report section. Instead of that generate the downstream files and add an additional step in the processing page where we can view/ download or push the files to report section(push to SFTP button) Make this page aligned with the other steps in the page in a design perspective. Also create two worklist items, one for settlement (here the status will not be pending reconcillation unlike mismatch cases, it will be just pending) and one for sanction screening automatically.  Show both these worklist items with their id's in the worklist section of the processing pipeline page. 
+5)And at last show the audit section just as now
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/api/CLAIMS.md
+  - docs/db/SCHEMA.md
+  - backend/app/services/claims_service.py
+  - backend/app/repositories/claims_repository.py
+  - backend/app/services/settlement_report_files.py
+  - backend/app/routers/claims.py
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Added pending settlement-table ground truth lookup by cedent, contract, quarter, and pending payment status.
+- Changed Settlement processing to aggregate normalized incoming fixed leg, floating leg, fee, interest, and net values across all file rows before reconciliation.
+- Kept mismatch routing to the settlement reconciliation worklist path.
+- Changed exact-match report generation so downstream cash tracker and GRDR files are generated for the pipeline first, then published to Reports only after the new Push to SFTP action.
+- Added a pipeline Files step with generated-file view, download, preview, and Push to SFTP actions.
+- Created both Settlement Pending and Sanction Screening worklist items on exact settlement match and surfaced their IDs in the Worklist step.
+- Preserved the existing audit section as the final step.
+- Verified backend Python compilation and frontend production build.
+- Updated the tracker.
+
+### Files Modified
+- backend/app/repositories/claims_repository.py
+- backend/app/routers/claims.py
+- backend/app/services/claims_service.py
+- backend/app/services/settlement_report_files.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- When no pending settlement table row exists for a contract-period, the existing deterministic settlement baseline fallback remains in place so unsupported demo uploads do not break the pipeline.
+- The frontend production build passes with the existing Vite chunk-size warning.
 
 ### Status
 ✅ Completed

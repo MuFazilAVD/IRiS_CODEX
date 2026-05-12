@@ -1017,6 +1017,7 @@ export interface ClaimsSettlementReconciliation {
   uploaded: ClaimsSettlementReconciliationAmountSet
   system: ClaimsSettlementReconciliationAmountSet
   mismatches: ClaimsSettlementReconciliationMismatch[]
+  incoming_row_count?: number
 }
 
 export interface ClaimsSummaryPayload {
@@ -1044,8 +1045,36 @@ export interface ClaimsWorklistTask {
   type: string
   team: string
   priority: string
+  status?: string
   sla: string
   description: string
+}
+
+export interface ClaimsDownstreamFileArtifact {
+  artifact_id: string
+  settlement_id: string
+  cession_file_id: string
+  contract_id: string
+  cedent: string
+  period: string
+  report_type: string
+  filename: string
+  format: string
+  generated_at: string
+  source_filename: string
+  reconciliation_decision: 'accept' | 'review'
+  mismatch_count: number
+  published?: boolean
+  published_at?: string | null
+  download_url: string
+}
+
+export interface ClaimsDownstreamFilesPayload {
+  title: string
+  subtitle: string
+  items: ClaimsDownstreamFileArtifact[]
+  pushed: boolean
+  pushed_at?: string | null
 }
 
 export interface ClaimsWorklistPayload {
@@ -1097,6 +1126,7 @@ export interface ClaimsCessionDetailPayload {
   exceptions: ClaimsExceptionsPayload
   process: ClaimsProcessPayload
   summary: ClaimsSummaryPayload
+  downstream_files: ClaimsDownstreamFilesPayload
   worklist: ClaimsWorklistPayload
   audit: ClaimsAuditPayload
 }
@@ -1761,11 +1791,28 @@ export interface SanctionsCaseDecisionHistory {
   times_reviewed: number
   last_verdict: string
   note: string
+  entries: Array<{
+    period: string
+    screening_scope: string
+    screened_on: string
+    watchlists: string
+    decision: string
+    rationale: string
+  }>
 }
 
 export interface SanctionsCaseAdverseMedia {
   severity: string
   note: string
+  summary_line?: string
+  sources_checked?: string[]
+  last_checked?: string
+  records: Array<{
+    published_at: string
+    source: string
+    headline: string
+    summary: string
+  }>
 }
 
 export interface SanctionsCaseAuditEvent {
