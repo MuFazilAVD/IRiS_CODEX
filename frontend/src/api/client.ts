@@ -4,7 +4,7 @@ import type { AxiosError } from 'axios'
 import { useAuthStore } from '../store/authStore'
 
 const apiPath = '/api/v1'
-const deployedBackendUrl = 'http://d3sok4f0t46eww.cloudfront.net/iris'
+const deployedBackendUrl = 'https://d2brdeqy144bwg.cloudfront.net/iris'
 
 function getDefaultBackendUrl() {
   if (import.meta.env.PROD) {
