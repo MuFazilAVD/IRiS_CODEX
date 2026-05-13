@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 import pandas as pd
 from fastapi import BackgroundTasks, UploadFile
@@ -812,14 +813,27 @@ class ClaimsService:
 
     def _handle_clauses(self, cession_file: CessionFile) -> dict[str, Any]:
         clauses = self._build_clauses_payload(cession_file)
-        cession_file.stage = "clauses"
-        cession_file.updated_at = datetime.now(UTC)
-        self.repository.update_cession_file(cession_file)
+        returning_to_post_validation_flow = cession_file.stage in {"validated", "exceptions", "processing", "processed", "approved"}
+        unresolved_counts = self._count_unresolved_by_severity(cession_file)
+        if not returning_to_post_validation_flow:
+            cession_file.stage = "clauses"
+            cession_file.updated_at = datetime.now(UTC)
+            self.repository.update_cession_file(cession_file)
+            self._store_override(cession_file.file_id, {"active_step": "validate"})
+            self._append_stage_log(cession_file.file_id, "validate", "in_progress")
+        else:
+            self._store_override(
+                cession_file.file_id,
+                {"active_step": "process" if sum(unresolved_counts.values()) == 0 else "exceptions"},
+            )
+            self._append_stage_log(
+                cession_file.file_id,
+                "process" if sum(unresolved_counts.values()) == 0 else "exceptions",
+                "in_progress",
+            )
 
-        self._store_override(cession_file.file_id, {"active_step": "validate"})
         self._append_stage_history(cession_file.file_id, "clauses")
         self._append_stage_log(cession_file.file_id, "clauses", "complete")
-        self._append_stage_log(cession_file.file_id, "validate", "in_progress")
         self._append_audit_event(
             cession_file.file_id,
             {
@@ -831,7 +845,7 @@ class ClaimsService:
         )
         return {
             "file_id": cession_file.file_id,
-            "stage": "clauses",
+            "stage": cession_file.stage,
             "clauses_checked": clauses["clauses_checked"],
         }
 
@@ -2055,21 +2069,23 @@ class ClaimsService:
 
     def _build_worklist_payload(self, cession_file: CessionFile) -> dict[str, Any]:
         items = self.repository.list_worklist_items_for_file(cession_file.id)
+        assigned_user_names = self.repository.list_user_names([item.assigned_to for item in items if item.assigned_to])
+        default_assignees = {
+            role: self.repository.get_active_user_for_role(role)
+            for role in {item.assigned_role for item in items if item.assigned_role}
+        }
+        screening_summary = self._build_cession_file_screening_summary(cession_file)
         if items:
             return {
                 "title": "Worklist Tasks Created",
                 "subtitle": "Routed to owning teams with SLA",
                 "items": [
-                    {
-                        "wl_id": item.wl_id,
-                        "task": item.title,
-                        "type": item.category or "Validation",
-                        "team": item.assigned_role or "claims_ops",
-                        "priority": item.priority,
-                        "status": item.status or "open",
-                        "sla": self._sla_display(item.sla_deadline),
-                        "description": item.description or "",
-                    }
+                    self._serialize_pipeline_worklist_item(
+                        item,
+                        screening_summary if self._is_screening_worklist_item(item) else None,
+                        assigned_user_names,
+                        default_assignees,
+                    )
                     for item in items
                 ],
             }
@@ -2084,9 +2100,11 @@ class ClaimsService:
                         "task": "Resolve 2 critical validation errors",
                         "type": "Validation",
                         "team": "Claims Ops",
+                        "assigned_person": self._default_assignee_name("claims_ops"),
                         "priority": "high",
                         "sla": "2h",
                         "description": "Mock task seeded from screenshot correction because no linked worklist row exists yet.",
+                        "screening_summary": None,
                     }
                 ],
             }
@@ -2095,6 +2113,121 @@ class ClaimsService:
             "title": "Worklist Tasks Created",
             "subtitle": "Routed to owning teams with SLA",
             "items": [],
+        }
+
+    def _serialize_pipeline_worklist_item(
+        self,
+        item: WorklistItem,
+        screening_summary: dict[str, Any] | None,
+        assigned_user_names: dict[str, str],
+        default_assignees: dict[str, Any],
+    ) -> dict[str, Any]:
+        status_label, status_tone = self._pipeline_worklist_status(item, screening_summary)
+        target_url, target_label = self._pipeline_worklist_target(item, screening_summary)
+        return {
+            "wl_id": item.wl_id,
+            "task": item.title,
+            "type": item.category or "Validation",
+            "team": item.assigned_role or "claims_ops",
+            "assigned_person": self._resolve_worklist_assignee_name(item, assigned_user_names, default_assignees),
+            "priority": item.priority,
+            "status": item.status or "open",
+            "status_label": status_label,
+            "status_tone": status_tone,
+            "sla": self._sla_display(item.sla_deadline),
+            "description": item.description or "",
+            "target_url": target_url,
+            "target_label": target_label,
+            "screening_summary": screening_summary,
+        }
+
+    def _pipeline_worklist_status(
+        self,
+        item: WorklistItem,
+        screening_summary: dict[str, Any] | None,
+    ) -> tuple[str, str]:
+        if self._is_screening_worklist_item(item):
+            screening_status = str((screening_summary or {}).get("status") or "").strip().lower()
+            if screening_status == "auto-cleared":
+                return "Auto-Cleared", "positive"
+            return "Escalated", "negative"
+
+        if self._is_settlement_pending_worklist_item(item):
+            return "Pending", "warning"
+
+        return format_pipeline_worklist_status(item.status or "open"), "neutral"
+
+    def _pipeline_worklist_target(
+        self,
+        item: WorklistItem,
+        screening_summary: dict[str, Any] | None,
+    ) -> tuple[str | None, str | None]:
+        if self._is_screening_worklist_item(item):
+            screening_ref = str((screening_summary or {}).get("screening_ref") or "").strip()
+            if screening_ref:
+                return f"/compliance/sanctions/{screening_ref}", "Open sanction case"
+            return "/compliance/sanctions", "Open sanction screening"
+
+        if self._is_settlement_pending_worklist_item(item) and item.settlement_id:
+            query = urlencode({"settlement_id": item.settlement_id, "q": item.settlement_id})
+            return f"/claims/settlements?{query}", "Open settlement"
+
+        return None, None
+
+    def _resolve_worklist_assignee_name(
+        self,
+        item: WorklistItem,
+        assigned_user_names: dict[str, str],
+        default_assignees: dict[str, Any],
+    ) -> str | None:
+        if item.assigned_to and assigned_user_names.get(item.assigned_to):
+            return assigned_user_names[item.assigned_to]
+        if item.assigned_role:
+            default_user = default_assignees.get(item.assigned_role)
+            if default_user is not None:
+                return default_user.full_name or default_user.email
+        return None
+
+    def _default_assignee_name(self, role: str) -> str | None:
+        user = self.repository.get_active_user_for_role(role)
+        if user is None:
+            return None
+        return user.full_name or user.email
+
+    def _is_screening_worklist_item(self, item: WorklistItem) -> bool:
+        category = str(item.category or "").strip().lower()
+        title = str(item.title or "").strip().lower()
+        return category == "sanction screening" or "sanction screening" in title
+
+    def _is_settlement_pending_worklist_item(self, item: WorklistItem) -> bool:
+        category = str(item.category or "").strip().lower()
+        title = str(item.title or "").strip().lower()
+        return category == "settlement pending" or "approval pending" in title
+
+    def _build_cession_file_screening_summary(self, cession_file: CessionFile) -> dict[str, Any] | None:
+        event = self.repository.get_screening_event_for_cession_file(cession_file.id)
+        if event is None:
+            return None
+
+        from app.repositories.compliance_repository import ComplianceRepository
+        from app.services.compliance_service import ComplianceService
+
+        case_detail = ComplianceService(ComplianceRepository(self.repository.db)).get_screening_case(event.screening_ref)
+        analysis = case_detail.get("analysis")
+        summary = case_detail.get("summary") or {}
+        raw_match = case_detail.get("raw_match") or {}
+        return {
+            "screening_ref": event.screening_ref,
+            "status": case_detail.get("status"),
+            "headline": summary.get("headline") or "Sanctions screening completed",
+            "description": summary.get("description") or event.llm_reasoning or "Screening case completed in the sanctions workspace.",
+            "tone": summary.get("tone") or "default",
+            "watchlists_screened": case_detail.get("watchlists_screened") or [],
+            "confidence_pct": analysis.get("confidence_pct") if analysis else int(round((event.llm_confidence or 0.0) * 100)),
+            "analysis_label": analysis.get("label") if analysis else None,
+            "recommended_action": analysis.get("recommended_action") if analysis else None,
+            "candidate_name": raw_match.get("candidate_name"),
+            "candidate_list": raw_match.get("subtitle"),
         }
 
     def _build_downstream_files_payload(self, cession_file: CessionFile) -> dict[str, Any]:
@@ -4151,6 +4284,8 @@ class ClaimsService:
         now = datetime.now(UTC)
         settlement_impact = summary.get("settlement_impact") or {}
         settlement_id = settlement_impact.get("settlement_id_created")
+        claims_ops_owner = self.repository.get_active_user_for_role("claims_ops")
+        compliance_owner = self.repository.get_active_user_for_role("compliance")
         if detection["file_type"] == "Settlement":
             reconciliation = summary.get("settlement_reconciliation") or {}
             if reconciliation.get("decision") == "accept":
@@ -4162,6 +4297,7 @@ class ClaimsService:
                     priority="medium",
                     status="open",
                     assigned_role="claims_ops",
+                    assigned_to=claims_ops_owner.id if claims_ops_owner else None,
                     contract_id=mapping["contract_id"],
                     cedent_id=detection["cedent_id"],
                     cession_file_id=cession_file.id,
@@ -4183,6 +4319,7 @@ class ClaimsService:
                     priority="medium",
                     status="open",
                     assigned_role="compliance",
+                    assigned_to=compliance_owner.id if compliance_owner else None,
                     contract_id=mapping["contract_id"],
                     cedent_id=detection["cedent_id"],
                     cession_file_id=cession_file.id,
@@ -4220,6 +4357,7 @@ class ClaimsService:
             priority="high",
             status="open",
             assigned_role="claims_ops",
+            assigned_to=claims_ops_owner.id if claims_ops_owner else None,
             contract_id=mapping["contract_id"],
             cedent_id=detection["cedent_id"],
             cession_file_id=cession_file.id,
@@ -5562,3 +5700,9 @@ class ClaimsService:
         if isinstance(value, Decimal):
             return float(value)
         return float(value)
+
+
+def format_pipeline_worklist_status(value: str) -> str:
+    if value == "open":
+        return "Not Started"
+    return value.replace("_", " ").title()

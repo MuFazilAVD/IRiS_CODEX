@@ -754,7 +754,7 @@ function FinancialsTab({
         ))}
       </div>
 
-      <PanelCard subtitle={`Cumulative net variance ${formatCurrency(performance.cumulative_net_variance, currency)}`} title="Settlement History">
+      <PanelCard subtitle={`Cumulative net variance ${formatCurrency(performance.cumulative_net_variance, currency)}`} title="Settlement Tracker">
         <SettlementHistoryTable currency={currency} rows={performance.settlement_history} />
       </PanelCard>
 
@@ -1014,12 +1014,14 @@ function SettlementHistoryTable({
   rows: ContractDetailsPerformancePayload['settlement_history']
   currency: string
 }) {
+  const sortedRows = [...rows].sort((left, right) => quarterPeriodSortValue(right.period) - quarterPeriodSortValue(left.period))
+
   return (
     <div className="overflow-x-auto rounded-xl border border-iris-border">
       <table className="min-w-full text-[13px]">
         <thead className="bg-[#F8F9FA]">
           <tr>
-            {['Quarter', 'Expected Deaths', 'Actual Deaths', 'A/E', 'Fixed Leg', 'Floating Leg', 'Net', 'Status'].map((label) => (
+            {['Quarter', 'Expected Deaths', 'Actual Deaths', 'A/E Deaths', 'Fixed Leg', 'Floating Leg', 'Net', 'Status'].map((label) => (
               <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
                 {label}
               </th>
@@ -1027,10 +1029,10 @@ function SettlementHistoryTable({
           </tr>
         </thead>
         <tbody>
-          {rows.length ? (
-            rows.map((row) => (
-              <tr key={row.period} className="border-t border-[#EEF2F5]">
-                <td className="px-4 py-3 text-iris-text-primary">{row.period}</td>
+          {sortedRows.length ? (
+            sortedRows.map((row) => (
+              <tr key={row.period} className={`border-t border-[#EEF2F5] ${row.status === 'pending' ? 'bg-[#FCFBF7]' : ''}`}>
+                <td className={`px-4 py-3 text-iris-text-primary ${row.status === 'pending' ? 'border-l-2 border-[#E5D9BE]' : ''}`}>{row.period}</td>
                 <td className="px-4 py-3 text-iris-text-primary">{row.expected_deaths}</td>
                 <td className="px-4 py-3 text-iris-text-primary">{row.actual_deaths}</td>
                 <td className="px-4 py-3 text-iris-text-primary">{row.ae_ratio.toFixed(3)}</td>
@@ -1226,6 +1228,15 @@ function formatSignedCurrency(value: number, currency: string) {
 
 function formatCalculationValue(value: number, metric: string, currency: string) {
   return metric === 'ae_ratio' ? value.toFixed(3) : formatCurrency(value, currency)
+}
+
+function quarterPeriodSortValue(period: string) {
+  const match = /^Q([1-4])\s+(\d{4})$/i.exec(period.trim())
+  if (!match) {
+    return Number.MIN_SAFE_INTEGER
+  }
+
+  return Number.parseInt(match[2], 10) * 10 + Number.parseInt(match[1], 10)
 }
 
 function toneClass(tone: string) {

@@ -233,6 +233,56 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-13T07:11:23Z]
+
+### Prompt
+Three changes in this page 
+1. Make the status dynamic. For trhe settlement item, it will be pending with an orange pill and for the compliance it will be either auto cleared or escalated depending on the actual result of the saction screening.
+2. Green ticks are not appearing on the last section despite being inspected and passed on with the continue button
+3. Add hyperlinks in the worklist item created so that it can take us to the below pages
+i) Settlement item -> Go to the settlement page and open the corresponding item in the table.
+ii) Compliance item -> Go to sacnction screening page and open the coressponding page
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/03-worklist/WORKLIST.md
+  - docs/api/WORKLIST.md
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/ui/06-compliance/SANCTIONS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/pages/claims/cession/CessionFileProcessingPage.tsx
+  - frontend/src/pages/claims/settlements/SettlementsPage.tsx
+  - frontend/src/pages/compliance/SanctionsPage.tsx
+  - frontend/src/types/api.ts
+  - backend/app/services/claims_service.py
+  - backend/app/repositories/claims_repository.py
+  - backend/app/services/compliance_service.py
+
+### Actions Taken
+- Added worklist payload metadata for dynamic status labels/tones and destination links based on the linked settlement and sanctions screening outcome.
+- Updated the cession-processing worklist table to render status pills, route task titles into the target settlement/sanctions pages, and expose the same target link from the expanded row.
+- Fixed the post-process pipeline tick state so Summary, Files, Worklist, and Audit stay marked complete after Continue-based navigation.
+- Added query-driven settlement opening so a settlement deep link can open the matching settlement item from the register page.
+- Updated the tracker entry and validated the changes with a frontend production build plus backend compile check.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- frontend/src/pages/claims/settlements/SettlementsPage.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
 ## [2026-05-12 12:25:35 +00:00]
 
 ### Prompt
@@ -4873,6 +4923,137 @@ Few tweaks in the processing pipeline of the settlemnt files:
 ### Issues / Deviations
 - When no pending settlement table row exists for a contract-period, the existing deterministic settlement baseline fallback remains in place so unsupported demo uploads do not break the pipeline.
 - The frontend production build passes with the existing Vite chunk-size warning.
+
+### Status
+✅ Completed
+## [2026-05-13 05:41:31 UTC]
+
+### Prompt
+Changes in contract management>Financials>Settlement History Table:
+1) Change the name "Settlement History" to "Settlement Tracker"
+2) Change the name "A/E" in the table to "A/E Deaths"
+3) Change the data of Maple Leaf Q1 2026:  Reduce the actual deaths to 208, Change A/E ratio, floating leg and Net settlement( this will be negative since lesser floating leg will trigger the payout) accordingly
+4) Change the order of the table to chronologically descending.
+5) Highlight the pending row but in a minimalistic way.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/trackers/TRACKER.md
+  - docs/build_plans/BUILD_PLAN_ADDITIONS.md
+  - frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+  - backend/app/mock_data/contract_detail_overrides.json
+  - backend/app/services/underwriting_service.py
+
+### Actions Taken
+- Renamed the Financials panel from `Settlement History` to `Settlement Tracker`.
+- Renamed the table header from `A/E` to `A/E Deaths`.
+- Added a mock override for `LSC-2024-044` so Maple Leaf `Q1 2026` now uses `208` actual deaths, `0.990` A/E, lower floating leg, and a negative net settlement.
+- Updated the settlement table rendering to sort quarters in descending chronological order.
+- Added a subtle pending-row highlight using a muted background and slim left border.
+- Updated the tracker note for the contract detail financials behavior.
+
+### Files Modified
+- frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+- backend/app/mock_data/contract_detail_overrides.json
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The screenshot correction doc still uses the older `A/E` label, so this change follows the latest user instruction for the live mocked UI.
+- Maple Leaf settlement values are mock-backed through `contract_detail_overrides.json` rather than changing shared default generation logic for all contracts.
+
+### Status
+🧪 Mocked
+
+## [2026-05-13 06:00:30 UTC]
+
+### Prompt
+There is a big logical flaw in the application:
+The floating leg should be larger than fixed leg  when the actual deaths is lower than the expected deaths., because we are calculating the total amount paid for the alive members from the reinsurer's perspective.. Currently i find mistakes in 
+1) Clauses under the rules and configuration section of every contract. There the equation is floating leg - fixed leg and it should be reversed. 
+2) And in every financial history adjust the floating legs accordingly( make it bigger than fixed leg when actual death is lower) and so that the net settlement will stay intact as negative( its sign will not change since we are changing both the floating leg value and the equation)
+
+First  change atleast the values in maple leaf, then proceed on to changing the value of other cedents if possible.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/trackers/TRACKER.md
+  - backend/app/services/contract_clause_catalog.py
+  - backend/app/services/underwriting_service.py
+  - backend/app/mock_data/contract_detail_overrides.json
+
+### Actions Taken
+- Corrected the shared contract clause catalog so the Rules & Configuration section now states `Net settlement = Fixed Leg - Floating Leg +/- Adjustments`.
+- Updated the default contract-detail mock settlement-history generator to derive floating legs from the corrected fixed-minus-floating convention.
+- Corrected Maple Leaf financial history first, then rolled the same logic through Northstar and Helvetia seeded contract-detail histories.
+- Preserved existing net signs where they were already consistent with lower actual deaths; corrected Helvetia rows where the old seeded signs conflicted with the requested alive-members logic.
+- Updated the tracker note to document the corrected settlement-history convention.
+
+### Files Modified
+- backend/app/services/contract_clause_catalog.py
+- backend/app/services/underwriting_service.py
+- backend/app/mock_data/contract_detail_overrides.json
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Helvetia contained seeded rows where actual deaths were lower than expected but net settlement was still positive under the old mock convention. Those row signs were corrected so the history remains logically consistent with the reversed formula and larger floating leg.
+
+### Status
+🧪 Mocked
+
+## [2026-05-13 06:33:10 UTC]
+
+### Prompt
+Few changes in the cession file processing pipeline. 
+1. Club both of the detection and the map contract section into one 
+2. Move clauses section after anomalies and resolution.
+3. In resolution page, the AI suggested values are now coming below the buttons in the action column, move it to a new dedicated column.
+4. In the worklist tab of the processing page, where we are showing the newly created items as a table (settlement reconcilation cases in mismatch cases and both settlement and sanction screening in match cases) we are showing to which team it is assigned to., along with that shoe the assigned person as well, you can get the names from the DB, it is already there in the user_seed json.
+5. If it is all pass case, currently we are creating a sanction screening worklist item and processing it in the baqckground. But currently we can only view it by going to the sanction screening page. So redesign the worklist section of the processing page in such a way that we can expand and see the summarized version of the sanction screening results.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/CessionFileProcessingPage.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/types/api.ts
+  - backend/app/services/claims_service.py
+  - backend/app/repositories/claims_repository.py
+  - backend/app/models/worklist.py
+  - backend/app/models/screening_event.py
+  - backend/app/models/user.py
+  - backend/app/mock_data/users_seed.json
+
+### Actions Taken
+- Combined the visible detection and contract-mapping workflow into one `Detect & Map` processing step while preserving the existing backend `detect` and `map-contract` APIs.
+- Reordered the processing UI so `Clauses` now appears after `Anomalies` and `Resolutions`, and updated the backend clauses handler so calling it after validation no longer rewinds the cession file back to the pre-validation stage.
+- Moved AI-suggested values in the resolutions table into a dedicated column with confidence display and simplified the action column to action-specific controls only.
+- Enriched generated processing worklist payloads with assigned-person names resolved from the seeded users table, and assigned newly created settlement/compliance worklist rows to the default active role owners from the DB.
+- Redesigned the processing-page worklist table to support expandable detail rows, including an inline sanctions-screening summary panel for all-pass settlement cases backed by the persisted compliance screening case.
+- Updated the tracker entry to reflect the new processing-flow order and worklist behavior.
+
+### Files Modified
+- backend/app/repositories/claims_repository.py
+- backend/app/services/claims_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo’s source-of-truth documentation lives under `docs/` rather than the root-level paths referenced in `AGENTS.md`, so the implementation used the `docs/...` equivalents.
+- The backend still persists the original stage-history events for legacy in-flight records; the frontend now remaps those older states into the revised visible step order so reopened files remain usable without inventing new pipeline stages.
 
 ### Status
 ✅ Completed

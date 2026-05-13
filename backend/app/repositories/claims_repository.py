@@ -12,6 +12,7 @@ from app.models.contract import Contract
 from app.models.population import PolicyRegister
 from app.models.screening_event import ScreeningEvent
 from app.models.settlement import Settlement
+from app.models.user import User
 from app.models.worklist import WorklistItem
 
 
@@ -237,6 +238,22 @@ class ClaimsRepository:
         self.db.commit()
         self.db.refresh(item)
         return item
+
+    def list_user_names(self, user_ids: list[str]) -> dict[str, str]:
+        if not user_ids:
+            return {}
+
+        statement = select(User.id, User.full_name).where(User.id.in_(user_ids))
+        return {user_id: full_name for user_id, full_name in self.db.execute(statement).all() if full_name}
+
+    def get_active_user_for_role(self, role: str) -> User | None:
+        statement = (
+            select(User)
+            .where(User.role == role, User.is_active.is_(True))
+            .order_by(User.created_at.asc(), User.email.asc())
+            .limit(1)
+        )
+        return self.db.scalar(statement)
 
     def list_settlements(self) -> list[Settlement]:
         statement = select(Settlement).order_by(Settlement.period_end.desc(), Settlement.settlement_id)

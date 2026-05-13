@@ -1,0 +1,4 @@
+Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount
+2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,"CA$1,520,000","CA$1,542,500",CA$900,CA$0,"-CA$21,600"
+2026 Q1,,Suspension,No escalation applicable during suspension period,1247500,1241500,900,0,6900
+2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1350000,1376000,1000,0,-25000

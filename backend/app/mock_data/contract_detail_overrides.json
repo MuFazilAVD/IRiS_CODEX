@@ -286,7 +286,7 @@
           "actual_deaths": 239,
           "ae_ratio": 1.081,
           "fixed_leg": 8906250,
-          "floating_leg": 9511369,
+          "floating_leg": 8301131,
           "net_settled": 605119,
           "active_pensioners": 18397,
           "status": "paid"
@@ -297,7 +297,7 @@
           "actual_deaths": 209,
           "ae_ratio": 0.946,
           "fixed_leg": 8906250,
-          "floating_leg": 8695801,
+          "floating_leg": 9116699,
           "net_settled": -210449,
           "active_pensioners": 18345,
           "status": "paid"
@@ -308,7 +308,7 @@
           "actual_deaths": 216,
           "ae_ratio": 0.977,
           "fixed_leg": 8906250,
-          "floating_leg": 8890982,
+          "floating_leg": 8921518,
           "net_settled": -15268,
           "active_pensioners": 18264,
           "status": "paid"
@@ -319,7 +319,7 @@
           "actual_deaths": 222,
           "ae_ratio": 1.005,
           "fixed_leg": 8906250,
-          "floating_leg": 9064058,
+          "floating_leg": 8748442,
           "net_settled": 157808,
           "active_pensioners": 18193,
           "status": "paid"
@@ -449,7 +449,7 @@
           "accent": "default"
         }
       ],
-      "cumulative_net_variance": 474031,
+      "cumulative_net_variance": 127831,
       "settlement_history": [
         {
           "period": "Q1 2025",
@@ -457,7 +457,7 @@
           "actual_deaths": 149,
           "ae_ratio": 1.028,
           "fixed_leg": 4567500,
-          "floating_leg": 4750142,
+          "floating_leg": 4384858,
           "net_settled": 182642,
           "active_pensioners": 12108,
           "status": "paid"
@@ -469,7 +469,7 @@
           "ae_ratio": 0.979,
           "fixed_leg": 4567500,
           "floating_leg": 4661700,
-          "net_settled": 94200,
+          "net_settled": -94200,
           "active_pensioners": 12072,
           "status": "paid"
         },
@@ -480,7 +480,7 @@
           "ae_ratio": 0.993,
           "fixed_leg": 4567500,
           "floating_leg": 4646400,
-          "net_settled": 78900,
+          "net_settled": -78900,
           "active_pensioners": 12031,
           "status": "paid"
         },
@@ -490,7 +490,7 @@
           "actual_deaths": 145,
           "ae_ratio": 1.0,
           "fixed_leg": 4567500,
-          "floating_leg": 4629300,
+          "floating_leg": 4505700,
           "net_settled": 61800,
           "active_pensioners": 11984,
           "status": "paid"
@@ -501,7 +501,7 @@
           "actual_deaths": 146,
           "ae_ratio": 1.021,
           "fixed_leg": 4567500,
-          "floating_leg": 4623989,
+          "floating_leg": 4511011,
           "net_settled": 56489,
           "active_pensioners": 11940,
           "status": "pending"
@@ -539,6 +539,68 @@
           "owner": "Chief Actuary",
           "due_date": "2026-03-01",
           "notes": "Next review pending"
+        }
+      ]
+    }
+  },
+  "LSC-2024-044": {
+    "details_performance": {
+      "cumulative_net_variance": -16470,
+      "settlement_history": [
+        {
+          "period": "Q1 2025",
+          "expected_deaths": 210,
+          "actual_deaths": 214,
+          "ae_ratio": 1.019,
+          "fixed_leg": 4117500,
+          "floating_leg": 4068090,
+          "net_settled": 49410,
+          "active_pensioners": 8859,
+          "status": "paid"
+        },
+        {
+          "period": "Q2 2025",
+          "expected_deaths": 210,
+          "actual_deaths": 208,
+          "ae_ratio": 0.99,
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "net_settled": -24705,
+          "active_pensioners": 8812,
+          "status": "paid"
+        },
+        {
+          "period": "Q3 2025",
+          "expected_deaths": 210,
+          "actual_deaths": 212,
+          "ae_ratio": 1.01,
+          "fixed_leg": 4117500,
+          "floating_leg": 4101030,
+          "net_settled": 16470,
+          "active_pensioners": 8771,
+          "status": "paid"
+        },
+        {
+          "period": "Q4 2025",
+          "expected_deaths": 210,
+          "actual_deaths": 207,
+          "ae_ratio": 0.986,
+          "fixed_leg": 4117500,
+          "floating_leg": 4150440,
+          "net_settled": -32940,
+          "active_pensioners": 8735,
+          "status": "paid"
+        },
+        {
+          "period": "Q1 2026",
+          "expected_deaths": 210,
+          "actual_deaths": 208,
+          "ae_ratio": 0.99,
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "net_settled": -24705,
+          "active_pensioners": 8699,
+          "status": "pending"
         }
       ]
     }

@@ -232,7 +232,7 @@ CONTRACT_CLAUSE_CATALOG: list[dict[str, str]] = [
         "clause_id": "CLS-033",
         "category": "Settlement",
         "clause_title": "Net Settlement Formula",
-        "summary_citation": "Net settlement = Floating Leg - Fixed Leg +/- Adjustments.",
+        "summary_citation": "Net settlement = Fixed Leg - Floating Leg +/- Adjustments.",
         "applies_to_transactions": "Settlement",
     },
     {

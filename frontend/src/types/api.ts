@@ -1048,15 +1048,35 @@ export interface ClaimsSummaryPayload {
   insight: string
 }
 
+export interface ClaimsWorklistScreeningSummary {
+  screening_ref: string
+  status: string | null
+  headline: string
+  description: string
+  tone: 'default' | 'positive' | 'warning' | 'negative'
+  watchlists_screened: string[]
+  confidence_pct: number | null
+  analysis_label: string | null
+  recommended_action: string | null
+  candidate_name: string | null
+  candidate_list: string | null
+}
+
 export interface ClaimsWorklistTask {
   wl_id: string
   task: string
   type: string
   team: string
+  assigned_person?: string | null
   priority: string
   status?: string
+  status_label?: string
+  status_tone?: 'neutral' | 'positive' | 'warning' | 'negative'
   sla: string
   description: string
+  target_url?: string | null
+  target_label?: string | null
+  screening_summary?: ClaimsWorklistScreeningSummary | null
 }
 
 export interface ClaimsDownstreamFileArtifact {

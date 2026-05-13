@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowDownRight,
@@ -79,11 +79,13 @@ export function SettlementsPage() {
   const [searchParams] = useSearchParams()
   const pinnedCedentId = searchParams.get('cedent_id')
   const pinnedContractId = searchParams.get('contract_id')
+  const pinnedSettlementId = searchParams.get('settlement_id')
   const initialSearch = searchParams.get('q') ?? pinnedContractId ?? pinnedCedentId ?? ''
   const [searchTerm, setSearchTerm] = useState(initialSearch)
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') ?? 'all')
   const [viewMode, setViewMode] = useState<SettlementViewMode>('list')
   const [selectedSettlementId, setSelectedSettlementId] = useState<string | null>(null)
+  const appliedPinnedSettlementId = useRef<string | null>(null)
   const pushToast = useUiStore((state) => state.pushToast)
 
   const settlementsQuery = useQuery({
@@ -100,6 +102,18 @@ export function SettlementsPage() {
   })
 
   const settlementItems = settlementsQuery.data?.items ?? []
+
+  useEffect(() => {
+    if (!pinnedSettlementId || appliedPinnedSettlementId.current === pinnedSettlementId) {
+      return
+    }
+    if (!settlementItems.some((item) => item.settlement_id === pinnedSettlementId)) {
+      return
+    }
+
+    appliedPinnedSettlementId.current = pinnedSettlementId
+    setSelectedSettlementId(pinnedSettlementId)
+  }, [pinnedSettlementId, settlementItems])
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()

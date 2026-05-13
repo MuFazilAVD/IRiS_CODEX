@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, ArrowLeft, Check, Download, Eye, FileUp, RefreshCw, Send, Sparkles, Upload, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, ChevronDown, ChevronRight, Download, Eye, FileUp, RefreshCw, Send, Sparkles, Upload, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { api } from '../../../api/client'
@@ -12,17 +12,30 @@ import type {
   ClaimsExceptionItem,
   ClaimsPipelineStageResponse,
   ClaimsUploadResponse,
+  ClaimsWorklistScreeningSummary,
   ClaimsWorklistTask,
   ContractListItem,
 } from '../../../types/api'
 
 type ClaimsStep =
   | 'upload'
-  | 'detect'
-  | 'map-contract'
-  | 'clauses'
+  | 'detect-map'
   | 'validate'
   | 'exceptions'
+  | 'clauses'
+  | 'process'
+  | 'summary'
+  | 'files'
+  | 'worklist'
+  | 'audit'
+
+type BackendClaimsStep =
+  | 'upload'
+  | 'detect'
+  | 'map-contract'
+  | 'validate'
+  | 'exceptions'
+  | 'clauses'
   | 'process'
   | 'summary'
   | 'files'
@@ -62,11 +75,10 @@ interface CessionFileProcessingWorkflowProps extends FileProcessingModalProps {
 
 const PIPELINE_STEPS: Array<{ id: ClaimsStep; label: string }> = [
   { id: 'upload', label: 'Upload' },
-  { id: 'detect', label: 'Detect' },
-  { id: 'map-contract', label: 'Map Contract' },
-  { id: 'clauses', label: 'Clauses' },
+  { id: 'detect-map', label: 'Detect & Map' },
   { id: 'validate', label: 'Anomalies' },
   { id: 'exceptions', label: 'Resolutions' },
+  { id: 'clauses', label: 'Clauses' },
   { id: 'process', label: 'Process' },
   { id: 'summary', label: 'Summary' },
   { id: 'files', label: 'Files' },
@@ -144,7 +156,7 @@ export function CessionFileProcessingWorkflow({
   onFileCreated,
 }: CessionFileProcessingWorkflowProps) {
   const [activeFileId, setActiveFileId] = useState<string | null>(fileId ?? null)
-  const [selectedStep, setSelectedStep] = useState<ClaimsStep>(startInUpload ? 'upload' : 'detect')
+  const [selectedStep, setSelectedStep] = useState<ClaimsStep>(startInUpload ? 'upload' : 'detect-map')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadMode, setUploadMode] = useState<UploadMode>('auto')
   const [manualUploadFileType, setManualUploadFileType] = useState('Fixed Leg')
@@ -182,7 +194,7 @@ export function CessionFileProcessingWorkflow({
     const detail = detailQuery.data
     if (initializedFileId.current !== detail.file_id) {
       initializedFileId.current = detail.file_id
-      setSelectedStep(detail.current_step as ClaimsStep)
+      setSelectedStep(resolveVisibleStep(detail))
       setDetectFileType(pendingManualType ?? detail.detection.file_type)
       setDetectCedentId(detail.detection.cedent_id ?? '')
       setMappedContractId(detail.contract_mapping.contract_id)
@@ -236,19 +248,17 @@ export function CessionFileProcessingWorkflow({
       cancelled = true
     }
   }, [activeFileId, autoValidating, currentStep, detail, detailQuery])
+  const actualCurrentStep = detail ? resolveVisibleStep(detail) : currentStep
+  const visualCurrentStep = resolveVisualCurrentStep(actualCurrentStep, currentStep)
   const completedSteps = new Set<ClaimsStep>()
-
-  if (detail) {
-    for (const item of detail.stage_history) {
-      const step = mapHistoryStageToStep(item.stage)
-      if (step) {
-        completedSteps.add(step)
-      }
+  const actualStepIndex = PIPELINE_STEPS.findIndex((step) => step.id === visualCurrentStep)
+  if (detail?.stage === 'approved') {
+    for (const step of PIPELINE_STEPS) {
+      completedSteps.add(step.id)
     }
-    if (detail.stage === 'approved') {
-      for (const step of PIPELINE_STEPS) {
-        completedSteps.add(step.id)
-      }
+  } else if (actualStepIndex > 0) {
+    for (const step of PIPELINE_STEPS.slice(0, actualStepIndex)) {
+      completedSteps.add(step.id)
     }
   }
 
@@ -286,38 +296,30 @@ export function CessionFileProcessingWorkflow({
         return
       }
 
-      if (currentStep === 'detect') {
+      if (currentStep === 'detect-map') {
+        const contractOverrideId = visibleContracts.some((item) => item.contract_id === mappedContractId) ? mappedContractId : null
         await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/detect`, {
           override_file_type: detectFileType || null,
           override_cedent_id: detectCedentId || null,
         })
-        await Promise.all([detailQuery.refetch(), Promise.resolve(onRefresh())])
-        setSelectedStep('map-contract')
-        return
-      }
-
-      if (currentStep === 'map-contract') {
         await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/map-contract`, {
-          override_contract_id: mappedContractId || null,
+          override_contract_id: contractOverrideId,
         })
-        await Promise.all([detailQuery.refetch(), Promise.resolve(onRefresh())])
-        setSelectedStep('clauses')
-        return
-      }
-
-      if (currentStep === 'clauses') {
-        await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/clauses`, {})
         await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/validate`, {})
         const refreshed = await detailQuery.refetch()
+        setDetectFileType(refreshed.data?.detection.file_type ?? detectFileType)
+        setDetectCedentId(refreshed.data?.detection.cedent_id ?? detectCedentId)
+        setMappedContractId(refreshed.data?.contract_mapping.contract_id ?? mappedContractId)
         setExceptionActions(buildExceptionState(refreshed.data?.exceptions.items ?? []))
-        setSelectedStep('validate')
+        await Promise.resolve(onRefresh())
+        setSelectedStep(resolveVisibleStep(refreshed.data))
         return
       }
 
       if (currentStep === 'validate') {
         const nextExceptions = detail?.exceptions.items ?? []
         setExceptionActions(buildExceptionState(nextExceptions))
-        setSelectedStep(nextExceptions.length ? 'exceptions' : 'process')
+        setSelectedStep(nextExceptions.length ? 'exceptions' : 'clauses')
         return
       }
 
@@ -342,7 +344,14 @@ export function CessionFileProcessingWorkflow({
         })
         const refreshed = await detailQuery.refetch()
         setExceptionActions(buildExceptionState(refreshed.data?.exceptions.items ?? []))
-        setSelectedStep((refreshed.data?.current_step as ClaimsStep | undefined) ?? 'process')
+        setSelectedStep(resolveVisibleStep(refreshed.data))
+        return
+      }
+
+      if (currentStep === 'clauses') {
+        await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/clauses`, {})
+        const refreshed = await detailQuery.refetch()
+        setSelectedStep(resolveVisibleStep(refreshed.data))
         return
       }
 
@@ -396,7 +405,7 @@ export function CessionFileProcessingWorkflow({
     setActiveFileId(data.file_id)
     initializedFileId.current = null
     setPendingManualType(uploadMode === 'manual' ? manualUploadFileType : null)
-    setSelectedStep('detect')
+    setSelectedStep('detect-map')
     onFileCreated?.(data.file_id)
     await Promise.resolve(onRefresh())
     setNotice({
@@ -586,27 +595,20 @@ export function CessionFileProcessingWorkflow({
               />
             ) : null}
 
-            {detail && currentStep === 'detect' ? (
-              <DetectStep
+            {detail && currentStep === 'detect-map' ? (
+              <DetectAndMapStep
                 cedentOptions={cedentOptions}
                 detectCedentId={detectCedentId}
                 detectFileType={detectFileType}
                 detail={detail}
+                contractOptions={visibleContracts}
+                mappedContractId={mappedContractId}
                 onCedentChange={setDetectCedentId}
                 onFileTypeChange={setDetectFileType}
-              />
-            ) : null}
-
-            {detail && currentStep === 'map-contract' ? (
-              <MapContractStep
-                contractOptions={visibleContracts}
-                detail={detail}
-                mappedContractId={mappedContractId}
                 onContractChange={setMappedContractId}
               />
             ) : null}
 
-            {detail && currentStep === 'clauses' ? <ClausesStep detail={detail} /> : null}
             {detail && currentStep === 'validate' ? <ValidateStep detail={detail} /> : null}
 
             {detail && currentStep === 'exceptions' ? (
@@ -617,6 +619,7 @@ export function CessionFileProcessingWorkflow({
               />
             ) : null}
 
+            {detail && currentStep === 'clauses' ? <ClausesStep detail={detail} /> : null}
             {detail && currentStep === 'process' ? <ProcessStep detail={detail} /> : null}
 
             {detail && currentStep === 'summary' ? (
@@ -752,27 +755,20 @@ export function CessionFileProcessingWorkflow({
               />
             ) : null}
 
-            {detail && currentStep === 'detect' ? (
-              <DetectStep
+            {detail && currentStep === 'detect-map' ? (
+              <DetectAndMapStep
                 cedentOptions={cedentOptions}
                 detectCedentId={detectCedentId}
                 detectFileType={detectFileType}
                 detail={detail}
+                contractOptions={visibleContracts}
+                mappedContractId={mappedContractId}
                 onCedentChange={setDetectCedentId}
                 onFileTypeChange={setDetectFileType}
-              />
-            ) : null}
-
-            {detail && currentStep === 'map-contract' ? (
-              <MapContractStep
-                contractOptions={visibleContracts}
-                detail={detail}
-                mappedContractId={mappedContractId}
                 onContractChange={setMappedContractId}
               />
             ) : null}
 
-            {detail && currentStep === 'clauses' ? <ClausesStep detail={detail} /> : null}
             {detail && currentStep === 'validate' ? <ValidateStep detail={detail} /> : null}
 
             {detail && currentStep === 'exceptions' ? (
@@ -783,6 +779,7 @@ export function CessionFileProcessingWorkflow({
               />
             ) : null}
 
+            {detail && currentStep === 'clauses' ? <ClausesStep detail={detail} /> : null}
             {detail && currentStep === 'process' ? <ProcessStep detail={detail} /> : null}
 
             {detail && currentStep === 'summary' ? (
@@ -919,24 +916,51 @@ function UploadStep({
   )
 }
 
-function DetectStep({
+function DetectAndMapStep({
   cedentOptions,
+  contractOptions,
   detectCedentId,
   detectFileType,
   detail,
+  mappedContractId,
   onCedentChange,
   onFileTypeChange,
+  onContractChange,
 }: {
   cedentOptions: CedentListItem[]
+  contractOptions: ContractListItem[]
   detectCedentId: string
   detectFileType: string
   detail: ClaimsCessionDetailPayload
+  mappedContractId: string
   onCedentChange: (value: string) => void
   onFileTypeChange: (value: string) => void
+  onContractChange: (value: string) => void
 }) {
+  const mapping = detail.contract_mapping
+  const selectedContract = contractOptions.find((item) => item.contract_id === mappedContractId)
+  const preview = selectedContract
+    ? {
+        contract_id: selectedContract.contract_id,
+        contract_name: selectedContract.contract_name,
+        version: selectedContract.version,
+        matching_basis: `Manual preview: ${selectedContract.cedent_name} + File Type "${detail.file_type}" + Period ${mapping.period}`,
+        confidence: selectedContract.contract_id === mapping.contract_id ? mapping.confidence : 1,
+        notional: selectedContract.notional,
+        currency: selectedContract.currency,
+        fixed_leg_rate_pct: selectedContract.fixed_rate * 100,
+        floating_leg: selectedContract.floating_definition || mapping.floating_leg,
+        lives_covered: selectedContract.lives_count,
+        inception_date: selectedContract.inception_date ?? '',
+        maturity_date: selectedContract.maturity_date ?? '',
+        status: selectedContract.status,
+      }
+    : mapping
+
   return (
-    <div className="space-y-5">
-      <SectionHeading title="AI Classification & Cedant Identification" subtitle="Review and override IRiS detection if needed." />
+    <div className="space-y-6">
+      <SectionHeading title="AI Detection & Contract Mapping" subtitle="Review IRiS file detection, cedant identification, and mapped contract before validation." />
+
       <div className="grid gap-4 xl:grid-cols-2">
         <SelectionCard
           confidence={detail.detection.file_type_confidence}
@@ -973,44 +997,6 @@ function DetectStep({
         </div>
         <p>{detail.detection.iris_reasoning}</p>
       </div>
-    </div>
-  )
-}
-
-function MapContractStep({
-  contractOptions,
-  detail,
-  mappedContractId,
-  onContractChange,
-}: {
-  contractOptions: ContractListItem[]
-  detail: ClaimsCessionDetailPayload
-  mappedContractId: string
-  onContractChange: (value: string) => void
-}) {
-  const mapping = detail.contract_mapping
-  const selectedContract = contractOptions.find((item) => item.contract_id === mappedContractId)
-  const preview = selectedContract
-    ? {
-        contract_id: selectedContract.contract_id,
-        contract_name: selectedContract.contract_name,
-        version: selectedContract.version,
-        matching_basis: `Manual preview: ${selectedContract.cedent_name} + File Type "${detail.file_type}" + Period ${mapping.period}`,
-        confidence: selectedContract.contract_id === mapping.contract_id ? mapping.confidence : 1,
-        notional: selectedContract.notional,
-        currency: selectedContract.currency,
-        fixed_leg_rate_pct: selectedContract.fixed_rate * 100,
-        floating_leg: selectedContract.floating_definition || mapping.floating_leg,
-        lives_covered: selectedContract.lives_count,
-        inception_date: selectedContract.inception_date ?? '',
-        maturity_date: selectedContract.maturity_date ?? '',
-        status: selectedContract.status,
-      }
-    : mapping
-
-  return (
-    <div className="space-y-5">
-      <SectionHeading title="Contract & Treaty Mapping" subtitle="Auto-mapped by cedant + period. Override below if required." />
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)]">
         <select className="field-input" value={mappedContractId} onChange={(event) => onContractChange(event.target.value)}>
@@ -1197,7 +1183,7 @@ function ExceptionsStep({
           <table className="min-w-full text-[13px]">
             <thead className="bg-[#F7F9FB]">
               <tr>
-                {['Sev', 'Row', 'Field', 'Issue', 'Current', 'Reference', 'Action'].map((label) => (
+                {['Sev', 'Row', 'Field', 'Issue', 'Current', 'AI Suggested Value', 'Reference', 'Action'].map((label) => (
                   <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
                     {label}
                   </th>
@@ -1216,6 +1202,16 @@ function ExceptionsStep({
                     <td className="px-4 py-3">{item.field}</td>
                     <td className="px-4 py-3 text-iris-text-secondary">{item.issue}</td>
                     <td className="px-4 py-3">{item.current_value ?? '—'}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">
+                      {item.ai_suggestion ? (
+                        <div>
+                          <div className="font-medium text-iris-text-primary">{item.ai_suggestion}</div>
+                          <div className="mt-1 text-[12px] text-[#117A65]">{formatConfidence(item.ai_confidence)} confidence</div>
+                        </div>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-iris-text-secondary">{item.clause_reference}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
@@ -1223,11 +1219,7 @@ function ExceptionsStep({
                         <ActionChoiceButton active={state.choice === 'override'} label="Override" onClick={() => updateChoice(item.exception_id, 'override')} />
                         <ActionChoiceButton active={state.choice === 'manual'} label="Manual" onClick={() => updateChoice(item.exception_id, 'manual')} />
                       </div>
-                      {state.choice === 'accept' ? (
-                        <div className="mt-2 text-[12px] text-[#117A65]">
-                          {item.ai_suggestion ? `Defaulting to AI suggestion: ${item.ai_suggestion}.` : 'Accept selected as the default action.'}
-                        </div>
-                      ) : null}
+                      {state.choice === 'accept' ? <div className="mt-2 text-[12px] text-[#117A65]">Accept selected for this resolution.</div> : null}
                       {state.choice === 'manual' ? <div className="mt-2 text-[12px] text-iris-text-secondary">Marked for manual follow-up.</div> : null}
                       {state.choice === 'override' ? (
                         <input
@@ -1504,6 +1496,8 @@ function WorklistStep({
   subtitle: string
   title: string
 }) {
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null)
+
   return (
     <div className="space-y-5">
       <SectionHeading title={title} subtitle={subtitle} />
@@ -1512,7 +1506,7 @@ function WorklistStep({
           <table className="min-w-full text-[13px]">
             <thead className="bg-[#F7F9FB]">
               <tr>
-                {['Task', 'Type', 'Team', 'Status', 'Priority', 'SLA'].map((label) => (
+                {['Task', 'Type', 'Team', 'Assigned', 'Status', 'Priority', 'SLA', 'Details'].map((label) => (
                   <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
                     {label}
                   </th>
@@ -1521,30 +1515,60 @@ function WorklistStep({
             </thead>
             <tbody>
               {items.length ? (
-                items.map((item) => (
-                  <tr key={item.wl_id} className="border-t border-[#EEF2F5]">
-                    <td className="px-4 py-3">
-                      <Link className="font-medium text-iris-text-primary transition hover:text-iris-blue" to={`/worklist/${item.wl_id}`}>
-                        {item.task}
-                      </Link>
-                      <div className="mt-1">
-                        <Link className="font-mono text-[12px] text-iris-blue transition hover:text-iris-navy" to={`/worklist/${item.wl_id}`}>
-                          {item.wl_id}
-                        </Link>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-iris-text-secondary">{item.type}</td>
-                    <td className="px-4 py-3 text-iris-text-secondary">{titleCase(item.team)}</td>
-                    <td className="px-4 py-3 text-iris-text-secondary">{formatWorklistTaskStatus(item.status ?? 'open')}</td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-[#FEF5E7] px-2.5 py-1 text-[12px] font-semibold text-[#B9770E]">{titleCase(item.priority)}</span>
-                    </td>
-                    <td className="px-4 py-3 text-iris-text-secondary">{item.sla}</td>
-                  </tr>
-                ))
+                items.map((item) => {
+                  const isExpanded = expandedTaskId === item.wl_id
+                  const canExpand = Boolean(item.description || item.screening_summary)
+                  return (
+                    <Fragment key={item.wl_id}>
+                      <tr className="border-t border-[#EEF2F5] align-top">
+                        <td className="px-4 py-3">
+                          <Link className="font-medium text-iris-text-primary transition hover:text-iris-blue" to={item.target_url ?? `/worklist/${item.wl_id}`}>
+                            {item.task}
+                          </Link>
+                          <div className="mt-1">
+                            <Link className="font-mono text-[12px] text-iris-blue transition hover:text-iris-navy" to={`/worklist/${item.wl_id}`}>
+                              {item.wl_id}
+                            </Link>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-iris-text-secondary">{item.type}</td>
+                        <td className="px-4 py-3 text-iris-text-secondary">{titleCase(item.team)}</td>
+                        <td className="px-4 py-3 text-iris-text-secondary">{item.assigned_person ?? 'Unassigned'}</td>
+                        <td className="px-4 py-3">
+                          <WorklistStatusPill item={item} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-[#FEF5E7] px-2.5 py-1 text-[12px] font-semibold text-[#B9770E]">{titleCase(item.priority)}</span>
+                        </td>
+                        <td className="px-4 py-3 text-iris-text-secondary">{item.sla}</td>
+                        <td className="px-4 py-3">
+                          {canExpand ? (
+                            <button
+                              className="inline-flex items-center gap-2 rounded-full bg-[#F4F7FA] px-3 py-1.5 text-[12px] font-semibold text-iris-text-secondary transition hover:bg-[#EAF1F6]"
+                              onClick={() => setExpandedTaskId(isExpanded ? null : item.wl_id)}
+                              type="button"
+                            >
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                              {isExpanded ? 'Hide' : 'Expand'}
+                            </button>
+                          ) : (
+                            <span className="text-[12px] text-iris-text-muted">—</span>
+                          )}
+                        </td>
+                      </tr>
+                      {isExpanded ? (
+                        <tr className="border-t border-[#EEF2F5] bg-[#FAFBFC]">
+                          <td className="px-4 py-4" colSpan={8}>
+                            <WorklistTaskExpandedDetail item={item} />
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  )
+                })
               ) : (
                 <tr>
-                  <td className="px-4 py-6 text-iris-text-secondary" colSpan={6}>
+                  <td className="px-4 py-6 text-iris-text-secondary" colSpan={8}>
                     No worklist items were created for this processing run.
                   </td>
                 </tr>
@@ -1553,6 +1577,84 @@ function WorklistStep({
           </table>
         </div>
       </div>
+    </div>
+  )
+}
+
+function WorklistTaskExpandedDetail({ item }: { item: ClaimsWorklistTask }) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-[#E5EBF0] bg-white px-4 py-4">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Task Summary</p>
+        <p className="mt-2 text-[13px] text-iris-text-primary">{item.description || 'No additional task summary is available for this worklist item.'}</p>
+        {item.target_url && item.target_label ? (
+          <div className="mt-3">
+            <Link className="inline-flex items-center rounded-full bg-[#F4F7FA] px-3 py-1.5 text-[12px] font-semibold text-iris-text-secondary transition hover:bg-[#EAF1F6]" to={item.target_url}>
+              {item.target_label}
+            </Link>
+          </div>
+        ) : null}
+      </div>
+
+      {item.screening_summary ? <ScreeningSummaryPanel summary={item.screening_summary} /> : null}
+    </div>
+  )
+}
+
+function WorklistStatusPill({ item }: { item: ClaimsWorklistTask }) {
+  const label = item.status_label ?? formatWorklistTaskStatus(item.status ?? 'open')
+  const toneClass =
+    item.status_tone === 'positive'
+      ? 'border-[#BCE1C7] bg-[#EAF7EF] text-[#1E8449]'
+      : item.status_tone === 'warning'
+        ? 'border-[#F8D7A6] bg-[#FFF5E8] text-[#AF601A]'
+        : item.status_tone === 'negative'
+          ? 'border-[#F4C8C9] bg-[#FFF1F1] text-[#922B21]'
+          : 'border-[#D8E0E8] bg-[#F7F9FB] text-[#41566B]'
+
+  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-[12px] font-semibold ${toneClass}`}>{label}</span>
+}
+
+function ScreeningSummaryPanel({ summary }: { summary: ClaimsWorklistScreeningSummary }) {
+  const toneClass =
+    summary.tone === 'positive'
+      ? 'border-[#C7EED8] bg-[#F0FFF6] text-[#1E8449]'
+      : summary.tone === 'warning'
+        ? 'border-[#F9E79F] bg-[#FEF9E7] text-[#9A7D0A]'
+        : summary.tone === 'negative'
+          ? 'border-[#F5C6CB] bg-[#FDEDEC] text-[#922B21]'
+          : 'border-[#D9E3EA] bg-white text-iris-text-primary'
+
+  return (
+    <div className="rounded-xl border border-[#E5EBF0] bg-white">
+      <div className="flex flex-col gap-3 border-b border-[#EEF2F5] px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Sanctions Screening Summary</p>
+          <p className="mt-2 text-[15px] font-semibold text-iris-text-primary">{summary.headline}</p>
+          <p className="mt-1 text-[13px] text-iris-text-secondary">{summary.description}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {summary.status ? <span className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold ${toneClass}`}>{summary.status}</span> : null}
+          <Link className="inline-flex items-center rounded-full bg-[#F4F7FA] px-3 py-1.5 text-[12px] font-semibold text-iris-text-secondary transition hover:bg-[#EAF1F6]" to={`/compliance/sanctions/${summary.screening_ref}`}>
+            {summary.screening_ref}
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid gap-3 px-4 py-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricLine label="Watchlists" value={summary.watchlists_screened.length ? summary.watchlists_screened.join(' · ') : 'OFAC · FinCEN'} />
+        <MetricLine label="Confidence" value={summary.confidence_pct !== null ? `${summary.confidence_pct}%` : '—'} />
+        <MetricLine label="Analysis" value={summary.analysis_label || 'Completed'} />
+        <MetricLine label="Recommended Action" value={summary.recommended_action || 'Review case'} />
+      </div>
+
+      {summary.candidate_name || summary.candidate_list ? (
+        <div className="border-t border-[#EEF2F5] px-4 py-4 text-[13px] text-iris-text-secondary">
+          <span className="font-semibold text-iris-text-primary">Top candidate:</span>{' '}
+          {summary.candidate_name ? `${summary.candidate_name}` : 'No retained candidate'}
+          {summary.candidate_list ? ` · ${summary.candidate_list}` : ''}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1886,21 +1988,55 @@ function parseCsvLine(line: string) {
   return values
 }
 
-function mapHistoryStageToStep(stage: string): ClaimsStep | null {
-  const stageMap: Record<string, ClaimsStep> = {
-    uploaded: 'upload',
-    detecting: 'detect',
-    detected: 'detect',
-    mapped: 'map-contract',
-    clauses: 'clauses',
-    validated: 'validate',
-    exceptions: 'exceptions',
-    processing: 'process',
-    processed: 'summary',
-    files: 'files',
-    approved: 'audit',
+function resolveVisualCurrentStep(actualCurrentStep: ClaimsStep, currentStep: ClaimsStep) {
+  const postProcessSteps: ClaimsStep[] = ['summary', 'files', 'worklist', 'audit']
+  if (postProcessSteps.includes(actualCurrentStep) && postProcessSteps.includes(currentStep)) {
+    const actualIndex = postProcessSteps.indexOf(actualCurrentStep)
+    const currentIndex = postProcessSteps.indexOf(currentStep)
+    return currentIndex > actualIndex ? currentStep : actualCurrentStep
   }
-  return stageMap[stage] ?? null
+  return actualCurrentStep
+}
+
+function resolveVisibleStep(detail: ClaimsCessionDetailPayload | undefined): ClaimsStep {
+  if (!detail) {
+    return 'upload'
+  }
+
+  const backendStep = detail.current_step as BackendClaimsStep
+  const clausesCompleted = detail.stage_history.some((item) => item.stage === 'clauses')
+
+  if (backendStep === 'upload') {
+    return 'upload'
+  }
+  if (backendStep === 'detect' || backendStep === 'map-contract') {
+    return 'detect-map'
+  }
+  if (backendStep === 'validate') {
+    return 'validate'
+  }
+  if (backendStep === 'exceptions') {
+    return 'exceptions'
+  }
+  if (backendStep === 'clauses') {
+    return detail.stage === 'clauses' ? 'validate' : 'clauses'
+  }
+  if (backendStep === 'process') {
+    return clausesCompleted ? 'process' : 'clauses'
+  }
+  if (backendStep === 'summary') {
+    return 'summary'
+  }
+  if (backendStep === 'files') {
+    return 'files'
+  }
+  if (backendStep === 'worklist') {
+    return 'worklist'
+  }
+  if (backendStep === 'audit') {
+    return 'audit'
+  }
+  return 'upload'
 }
 
 function titleCase(value: string) {
