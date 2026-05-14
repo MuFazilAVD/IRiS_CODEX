@@ -7,6 +7,7 @@ import { api } from '../../../api/client'
 import { Breadcrumbs } from '../../../components/common/Breadcrumbs'
 import { SectionPanel } from '../../../components/common/SectionPanel'
 import { StatusBadge } from '../../../components/common/StatusBadge'
+import { formatCurrencyCompact } from '../../../utils/formatters'
 import type { CedentDetailPayload, CedentStatusResponse } from '../../../types/api'
 import {
   AuditTimeline,
@@ -187,7 +188,7 @@ export function CedantDetailPage() {
               <StatusBadge status={detail.screening_status}>Screening: {titleCase(detail.screening_status)}</StatusBadge>
             </div>
             <p className="mt-2 text-[13px] text-iris-text-secondary">
-              {detail.cedent_id} - {detail.country ?? '-'} - {detail.contracts_count} contract(s) - AUM {formatMoney(detail.aum, detail.aum_currency)}
+              {detail.cedent_id} - {displayCedantCountryCode(detail.legal_entity_name, detail.country)} - {detail.contracts_count} contract(s) - AUM {formatMoney(detail.aum, detail.aum_currency)}
             </p>
           </div>
 
@@ -477,13 +478,15 @@ function titleCase(value: string) {
     .join(' ')
 }
 
+function displayCedantCountryCode(legalEntityName: string, country: string | null) {
+  if (legalEntityName === 'Maple Leaf Pension Plan' && country === 'CA') {
+    return 'CAD'
+  }
+  return country ?? '-'
+}
+
 function formatMoney(amount: number, currency: string) {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency,
-    notation: amount >= 1_000_000_000 ? 'compact' : 'standard',
-    maximumFractionDigits: amount >= 1_000_000_000 ? 1 : 0,
-  }).format(amount)
+  return formatCurrencyCompact(amount, currency)
 }
 
 function toRecord(value: unknown) {

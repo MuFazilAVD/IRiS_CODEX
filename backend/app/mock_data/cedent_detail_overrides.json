@@ -91,7 +91,7 @@
     "sanction_screening": {
       "total_scans": 11,
       "open_hits": 4,
-      "sources_monitored": 3,
+      "sources_monitored": 2,
       "next_periodic_due": "2025-09-15",
       "source_status": [
         {
@@ -100,13 +100,6 @@
           "last_scan": "2026-05-11",
           "reference": "SCR-2026-05-017",
           "matches": 1
-        },
-        {
-          "source": "FinCEN",
-          "status": "Cleared",
-          "last_scan": "2026-05-11",
-          "reference": "SCR-2026-05-017",
-          "matches": 0
         },
         {
           "source": "FinCEN",
@@ -335,7 +328,7 @@
     "sanction_screening": {
       "total_scans": 4,
       "open_hits": 0,
-      "sources_monitored": 3,
+      "sources_monitored": 2,
       "next_periodic_due": "2025-09-15",
       "source_status": [
         {
@@ -347,13 +340,6 @@
         },
         {
           "source": "FinCEN",
-          "status": "Cleared",
-          "last_scan": "2025-03-15",
-          "reference": "REF-50001",
-          "matches": 0
-        },
-        {
-          "source": "FINCEN",
           "status": "Cleared",
           "last_scan": "2026-05-06",
           "reference": "REF-102456",
@@ -408,7 +394,7 @@
     "sanction_screening": {
       "total_scans": 4,
       "open_hits": 1,
-      "sources_monitored": 3,
+      "sources_monitored": 2,
       "next_periodic_due": "2025-09-15",
       "source_status": [
         {
@@ -420,13 +406,6 @@
         },
         {
           "source": "FinCEN",
-          "status": "Cleared",
-          "last_scan": "2025-03-15",
-          "reference": "REF-50001",
-          "matches": 0
-        },
-        {
-          "source": "FINCEN",
           "status": "Cleared",
           "last_scan": "2026-05-06",
           "reference": "REF-102456",
@@ -481,7 +460,7 @@
     "sanction_screening": {
       "total_scans": 4,
       "open_hits": 0,
-      "sources_monitored": 3,
+      "sources_monitored": 2,
       "next_periodic_due": "2025-09-15",
       "source_status": [
         {
@@ -493,13 +472,6 @@
         },
         {
           "source": "FinCEN",
-          "status": "Cleared",
-          "last_scan": "2025-03-15",
-          "reference": "REF-50001",
-          "matches": 0
-        },
-        {
-          "source": "FINCEN",
           "status": "Cleared",
           "last_scan": "2026-05-06",
           "reference": "REF-102456",
@@ -554,7 +526,7 @@
     "sanction_screening": {
       "total_scans": 4,
       "open_hits": 1,
-      "sources_monitored": 3,
+      "sources_monitored": 2,
       "next_periodic_due": "2025-09-15",
       "source_status": [
         {
@@ -566,13 +538,6 @@
         },
         {
           "source": "FinCEN",
-          "status": "Cleared",
-          "last_scan": "2025-03-15",
-          "reference": "REF-50001",
-          "matches": 0
-        },
-        {
-          "source": "FINCEN",
           "status": "Cleared",
           "last_scan": "2026-05-06",
           "reference": "REF-102456",

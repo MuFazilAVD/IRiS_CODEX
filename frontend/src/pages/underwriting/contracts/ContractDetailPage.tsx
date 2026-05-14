@@ -1021,7 +1021,7 @@ function SettlementHistoryTable({
       <table className="min-w-full text-[13px]">
         <thead className="bg-[#F8F9FA]">
           <tr>
-            {['Quarter', 'Expected Deaths', 'Actual Deaths', 'A/E Deaths', 'Fixed Leg', 'Floating Leg', 'Net', 'Status'].map((label) => (
+            {['Quarter', 'Expected Deaths', 'Actual Deaths', 'A/E', 'Fixed Leg', 'Floating Leg', 'Net', 'Status'].map((label) => (
               <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
                 {label}
               </th>
@@ -1035,7 +1035,7 @@ function SettlementHistoryTable({
                 <td className={`px-4 py-3 text-iris-text-primary ${row.status === 'pending' ? 'border-l-2 border-[#E5D9BE]' : ''}`}>{row.period}</td>
                 <td className="px-4 py-3 text-iris-text-primary">{row.expected_deaths}</td>
                 <td className="px-4 py-3 text-iris-text-primary">{row.actual_deaths}</td>
-                <td className="px-4 py-3 text-iris-text-primary">{row.ae_ratio.toFixed(3)}</td>
+                <td className="px-4 py-3 text-iris-text-primary">{row.status === 'pending' ? '-' : row.ae_ratio.toFixed(3)}</td>
                 <td className="px-4 py-3 text-iris-text-primary">{formatCurrency(row.fixed_leg, currency)}</td>
                 <td className="px-4 py-3 text-iris-text-primary">{formatCurrency(row.floating_leg, currency)}</td>
                 <td className={`px-4 py-3 font-semibold ${row.net_settled >= 0 ? 'text-[#117A65]' : 'text-[#922B21]'}`}>

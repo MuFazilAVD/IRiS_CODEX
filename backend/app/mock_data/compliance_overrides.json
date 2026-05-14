@@ -2652,6 +2652,242 @@
           "detail": "Auto-cleared"
         }
       ]
+    },
+    "SCR-2026-05-024": {
+      "country": "",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Low",
+      "risk_score": 88,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "summary": {
+        "headline": "No matches across OFAC \u00b7 FinCEN",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Northstar Pension Trust",
+        "candidate_id": "OFAC-SDN-58216",
+        "subtitle": "OFAC SDN",
+        "country": "UK",
+        "entity_type": "Insurance",
+        "aggregate_score": 20,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 71
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 0
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Likely Different",
+        "confidence_pct": 88,
+        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Auto-clear"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-14T06:15:53.666625Z",
+          "actor": "claims.pipeline@iris.local",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-14T06:15:53.666625Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-14T06:15:53.666625Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 88% confidence"
+        },
+        {
+          "timestamp": "2026-05-14T06:15:53.666625Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-025": {
+      "country": "",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Low",
+      "risk_score": 88,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "summary": {
+        "headline": "No matches across OFAC \u00b7 FinCEN",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Northstar Pension Trust",
+        "candidate_id": "OFAC-SDN-58216",
+        "subtitle": "OFAC SDN",
+        "country": "UK",
+        "entity_type": "Insurance",
+        "aggregate_score": 20,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 71
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 0
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Likely Different",
+        "confidence_pct": 88,
+        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Auto-clear"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-14T06:49:30.337187Z",
+          "actor": "claims.pipeline@iris.local",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-14T06:49:30.337187Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-14T06:49:30.337187Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 88% confidence"
+        },
+        {
+          "timestamp": "2026-05-14T06:49:30.337187Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
     }
   }
 }

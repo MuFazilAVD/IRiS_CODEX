@@ -2454,7 +2454,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension Plan_Settlement - 2025Q2.csv",
     "source_size_bytes": 590,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q2,2025-07-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2025 Q2,2025-07-12,Suspension,No escalation applicable during suspension period,\"CA$4,117,500\",\"CA$4,092,795\",\"CA$2,800\",CA$0,\"-CA$27,505\"\r\n2025 Q2,2025-07-12,Reinstatement,CPI capped 5% reapplied after reinstatement,\"CA$4,117,500\",\"CA$4,133,970\",\"CA$2,800\",CA$0,\"CA$13,670\"",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q2,2025-07-12,Death,CPI capped 5% applied to pension tranche,\"CAD 4,117,500\",\"CAD 4,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2025 Q2,2025-07-12,Suspension,No escalation applicable during suspension period,\"CAD 4,117,500\",\"CAD 4,092,795\",\"CAD 2,800\",CAD 0,\"-CAD 27,505\"\r\n2025 Q2,2025-07-12,Reinstatement,CPI capped 5% reapplied after reinstatement,\"CAD 4,117,500\",\"CAD 4,133,970\",\"CAD 2,800\",CAD 0,\"CAD 13,670\"",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -3267,7 +3267,7 @@
     "active_step": "exceptions",
     "source_filename": "Maple Leaf Pension - Q4-25.csv",
     "source_size_bytes": 532,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\nQ4- 2025,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CAD 4,117,500\",\"CAD 4,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\nQ4- 2025,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -3388,7 +3388,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension - Q4-25.csv",
     "source_size_bytes": 531,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CAD 4,117,500\",\"CAD 4,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -3696,7 +3696,7 @@
     "active_step": "exceptions",
     "source_filename": "Maple Leaf Pension - Q4-25.csv",
     "source_size_bytes": 531,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CAD 4,117,500\",\"CAD 4,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -3817,7 +3817,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension - Q4-25.csv",
     "source_size_bytes": 531,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CAD 4,117,500\",\"CAD 4,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -4160,7 +4160,7 @@
     "active_step": "map-contract",
     "source_filename": "Maple Leaf Pension - Q4-25.csv",
     "source_size_bytes": 531,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CAD 4,117,500\",\"CAD 4,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -4244,7 +4244,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension - Q4-25.csv",
     "source_size_bytes": 531,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2025 Q4,2026-01-12,Death,CPI capped 5% applied to pension tranche,\"CAD 4,117,500\",\"CAD 4,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2025 Q4,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2025 Q4,12/01/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -4531,7 +4531,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension - Q1-2026.csv",
     "source_size_bytes": 530,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,506,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,04/12/2026,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac1,367,500\",1379000,1000,0,10500",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,506,735\",CAD 900,CAD 0,\"CAD 5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,04/12/2026,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac1,367,500\",1379000,1000,0,10500",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -4826,7 +4826,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension - Q1-2026.csv",
     "source_size_bytes": 530,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,506,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,04/12/2026,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac1,367,500\",1379000,1000,0,10500",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,506,735\",CAD 900,CAD 0,\"CAD 5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,04/12/2026,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac1,367,500\",1379000,1000,0,10500",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -5121,7 +5121,7 @@
     "active_step": "worklist",
     "source_filename": "Maple Leaf Pension - Q1-2026.csv",
     "source_size_bytes": 530,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,506,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,04/12/2026,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac1,367,500\",1379000,1000,0,10500",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,506,735\",CAD 900,CAD 0,\"CAD 5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,04/12/2026,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac1,367,500\",1379000,1000,0,10500",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -5455,7 +5455,7 @@
     "active_step": "exceptions",
     "source_filename": "Maple Leaf Pension - Q1-2026.csv",
     "source_size_bytes": 530,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,506,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,04/12/2026,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac1,367,500\",1379000,1000,0,10500",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,506,735\",CAD 900,CAD 0,\"CAD 5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,04/12/2026,Reinstatement,CPI capped 5% reapplied after reinstatement,\"\u20ac1,367,500\",1379000,1000,0,10500",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -5824,7 +5824,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension - Q1-26.csv",
     "source_size_bytes": 531,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$4,117,500\",\"CA$4,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2026 Q1,12/04/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 4,117,500\",\"CAD 4,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,4117500,4084560,2800,0,-35740\r\n2026 Q1,12/04/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac4,117,500\",4133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -6065,7 +6065,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension - Q1-26.csv",
     "source_size_bytes": 531,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,117,500\",\"CA$1,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1117500,1084560,2800,0,-35740\r\n2026 Q1,12/04/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac2,117,500\",2133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,117,500\",\"CAD 1,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1117500,1084560,2800,0,-35740\r\n2026 Q1,12/04/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac2,117,500\",2133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -6306,7 +6306,7 @@
     "active_step": "summary",
     "source_filename": "Maple Leaf Pension - Q1-26.csv",
     "source_size_bytes": 531,
-    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,117,500\",\"CA$1,125,735\",\"CA$2,800\",CA$0,\"CA$5,435\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1117500,1084560,2800,0,-35740\r\n2026 Q1,12/04/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac2,117,500\",2133970,2800,0,13670",
+    "source_content_text": "Settlement Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,117,500\",\"CAD 1,125,735\",\"CAD 2,800\",CAD 0,\"CAD 5,435\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1117500,1084560,2800,0,-35740\r\n2026 Q1,12/04/2026,Re-Instate,CPI capped 5% reapplied after reinstatement,\"\u20ac2,117,500\",2133970,2800,0,13670",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -6548,7 +6548,7 @@
     "active_step": "summary",
     "source_filename": "Maple_Leaf_Q1_2026.csv",
     "source_size_bytes": 523,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,506,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379000,1000,0,10500",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,506,735\",CAD 900,CAD 0,\"CAD 5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379000,1000,0,10500",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -6783,7 +6783,7 @@
     "active_step": "summary",
     "source_filename": "Maple_Leaf_Q1_26.csv",
     "source_size_bytes": 521,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,520,000\",\"CA$1,542,500\",CA$900,CA$0,\"-CA$21,600\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1247500,1241500,900,0,6900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1350000,1376000,1000,0,-25000",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,520,000\",\"CAD 1,542,500\",CAD 900,CAD 0,\"-CAD 21,600\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1247500,1241500,900,0,6900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1350000,1376000,1000,0,-25000",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -7025,7 +7025,7 @@
     "active_step": "summary",
     "source_filename": "Maple_Leaf_Q1_2026.csv",
     "source_size_bytes": 523,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,506,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379000,1000,0,10500",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,506,735\",CAD 900,CAD 0,\"CAD 5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379000,1000,0,10500",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -7260,7 +7260,7 @@
     "active_step": "summary",
     "source_filename": "Maple_Leaf_Q1_2026.csv",
     "source_size_bytes": 523,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,514,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367970,1379000,1000,0,10500",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367970,1379000,1000,0,10500",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -7509,7 +7509,7 @@
     "active_step": "summary",
     "source_filename": "Maple_Leaf_Q1_2026.csv",
     "source_size_bytes": 523,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,514,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10500",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10500",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -7744,7 +7744,7 @@
     "active_step": "summary",
     "source_filename": "Maple_Leaf_Q1_2026.csv",
     "source_size_bytes": 523,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,514,735\",CA$900,CA$0,\"CA$5,8835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 5,8835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -7979,7 +7979,7 @@
     "active_step": "summary",
     "source_filename": "Maple_Leaf_Q1_2026.csv",
     "source_size_bytes": 523,
-    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,514,735\",CA$900,CA$0,\"CA$13,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970",
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 13,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970",
     "manual_cedent_id": null,
     "manual_contract_id": null,
     "manual_file_type": null,
@@ -8275,6 +8275,698 @@
           "format": "csv",
           "path": "generated_reports/settlements/CES-2026-041_SET-2026-Q1-044-041_grdr_load_form.csv",
           "generated_at": "2026-05-13T06:52:38.387971Z",
+          "source_filename": "Maple_Leaf_Q1_2026.csv",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        }
+      ]
+    }
+  },
+  "CES-2026-044": {
+    "pipeline_session_id": "pipe-4e1a4798-123b-4e3d-b0a0-b9af416d6016",
+    "active_step": "detect",
+    "source_filename": "bavarian_settlement_2025Q1.csv",
+    "source_size_bytes": 265,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation/Escalation,Fixed Leg,Floating Leg,Fee,Interest on Over/Underpayment from Prior Period,Net Settlement Amount,contract_id\nQ1 2025,2025-04-30,None,None,51200000,50980000,0,0,-220000,LSC-2025-002\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": "Settlement",
+    "detection_override": null,
+    "contract_override": null,
+    "audit_events": [
+      {
+        "timestamp": "2026-05-14T06:13:32.210814Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "bavarian_settlement_2025Q1.csv"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-14T06:13:32.210814Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:13:32.210814Z"
+      },
+      {
+        "stage": "detect",
+        "status": "in_progress",
+        "timestamp": "2026-05-14T06:13:37.210814Z"
+      }
+    ]
+  },
+  "CES-2026-045": {
+    "pipeline_session_id": "pipe-715c7ba6-259d-4dfe-8b4e-709b3df34444",
+    "active_step": "summary",
+    "source_filename": "Maple_Leaf_Q1_2026.csv",
+    "source_size_bytes": 533,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 13,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-14T06:15:31.686679Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-14T06:15:31.937378Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-14T06:15:26.846218Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026.csv"
+      },
+      {
+        "timestamp": "2026-05-14T06:15:31.795880Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-14T06:15:31.840109Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-14T06:15:32.031520Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-14T06:15:32.414816Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-14T06:15:35.229848Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "8 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-14T06:15:42.749123Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-14T06:15:54.025695Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-14T06:15:54.072184Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 2 worklist item(s)",
+        "detail": "WL-9245, WL-9246"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-14T06:15:26.846218Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-14T06:15:31.712375Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-14T06:15:31.735179Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-14T06:15:31.967462Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-14T06:15:32.329258Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-14T06:15:35.166496Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-14T06:15:42.709994Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-14T06:15:53.946415Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-14T06:15:53.966174Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:15:26.846218Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:15:31.755232Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:15:31.989057Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:15:42.729275Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:15:32.373056Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:15:35.131833Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:15:53.985720Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-14T06:15:54.006244Z"
+      }
+    ],
+    "settlement_report_artifacts": [
+      {
+        "artifact_id": "ces-2026-045-cash-settlements-tracker",
+        "settlement_id": "SET-2026-Q1-044-045",
+        "cession_file_id": "CES-2026-045",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "Cash Settlements Tracker",
+        "filename": "CES-2026-045_SET-2026-Q1-044-045_cash_settlements_tracker.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-045_SET-2026-Q1-044-045_cash_settlements_tracker.csv",
+        "generated_at": "2026-05-14T06:15:53.596416Z",
+        "source_filename": "Maple_Leaf_Q1_2026.csv",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": false,
+        "published_at": null,
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ]
+      },
+      {
+        "artifact_id": "ces-2026-045-grdr-load-form",
+        "settlement_id": "SET-2026-Q1-044-045",
+        "cession_file_id": "CES-2026-045",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "GRDR Load Form",
+        "filename": "CES-2026-045_SET-2026-Q1-044-045_grdr_load_form.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-045_SET-2026-Q1-044-045_grdr_load_form.csv",
+        "generated_at": "2026-05-14T06:15:53.596416Z",
+        "source_filename": "Maple_Leaf_Q1_2026.csv",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": false,
+        "published_at": null,
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ]
+      }
+    ],
+    "settlement_report_artifacts_pushed": false,
+    "settlement_report_artifacts_pushed_at": null,
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-044-045",
+      "settlement_display_id": "STL-2026-Q1-044-045",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4142205.0,
+      "net_amount": 21905.0,
+      "currency": "CAD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-12",
+      "status": "pending_approval",
+      "iris_recommendation": "accept",
+      "source": "Created from Settlement file CES-2026-045; reconciled against baseline SET-2026-Q1-044; decision=accept",
+      "last_updated": "2026-05-14T06:15:53.596416Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-044",
+        "decision": "accept",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-12",
+        "currency": "CAD",
+        "expected_source": "contract details performance",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905,
+          "recomputed_net": 21905
+        },
+        "system": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905
+        },
+        "mismatches": [],
+        "incoming_row_count": 3
+      },
+      "baseline_settlement_id": "SET-2026-Q1-044",
+      "screening_ref": "SCR-2026-05-024",
+      "settlement_report_artifacts": [
+        {
+          "artifact_id": "ces-2026-045-cash-settlements-tracker",
+          "settlement_id": "SET-2026-Q1-044-045",
+          "cession_file_id": "CES-2026-045",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "Cash Settlements Tracker",
+          "filename": "CES-2026-045_SET-2026-Q1-044-045_cash_settlements_tracker.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-045_SET-2026-Q1-044-045_cash_settlements_tracker.csv",
+          "generated_at": "2026-05-14T06:15:53.596416Z",
+          "source_filename": "Maple_Leaf_Q1_2026.csv",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        },
+        {
+          "artifact_id": "ces-2026-045-grdr-load-form",
+          "settlement_id": "SET-2026-Q1-044-045",
+          "cession_file_id": "CES-2026-045",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "GRDR Load Form",
+          "filename": "CES-2026-045_SET-2026-Q1-044-045_grdr_load_form.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-045_SET-2026-Q1-044-045_grdr_load_form.csv",
+          "generated_at": "2026-05-14T06:15:53.596416Z",
+          "source_filename": "Maple_Leaf_Q1_2026.csv",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        }
+      ]
+    }
+  },
+  "CES-2026-046": {
+    "pipeline_session_id": "pipe-a7a77e61-b80b-4e08-bd45-3dceedef17c8",
+    "active_step": "worklist",
+    "source_filename": "Maple_Leaf_Q1_2026.csv",
+    "source_size_bytes": 533,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 13,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-14T06:45:58.888083Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-14T06:45:59.181147Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-14T06:45:46.657110Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026.csv"
+      },
+      {
+        "timestamp": "2026-05-14T06:45:59.016928Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-14T06:45:59.069962Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-14T06:45:59.314189Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-14T06:45:59.742095Z",
+        "actor": "Validation Engine",
+        "type": "System",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-14T06:49:21.053552Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "8 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-14T06:49:26.675236Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-14T06:49:30.960832Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-14T06:49:31.025311Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 2 worklist item(s)",
+        "detail": "WL-9247, WL-9248"
+      },
+      {
+        "timestamp": "2026-05-14T06:50:43.835982Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Pushed downstream files to SFTP",
+        "detail": "CES-2026-046_SET-2026-Q1-044-046_cash_settlements_tracker.csv, CES-2026-046_SET-2026-Q1-044-046_grdr_load_form.csv"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-14T06:45:46.657110Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-14T06:45:58.926133Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-14T06:45:58.953723Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-14T06:45:59.221496Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-14T06:45:59.647834Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-14T06:49:21.011298Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-14T06:49:26.609115Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-14T06:49:30.799615Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-14T06:49:30.833972Z"
+      },
+      {
+        "stage": "files",
+        "completed_at": "2026-05-14T06:50:43.804223Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:45:46.657110Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:45:58.974304Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:45:59.252662Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:49:26.642659Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:45:59.679004Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:49:20.987050Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:49:30.866954Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-14T06:49:30.915912Z"
+      },
+      {
+        "stage": "files",
+        "status": "complete",
+        "timestamp": "2026-05-14T06:50:43.737057Z"
+      },
+      {
+        "stage": "worklist",
+        "status": "in_progress",
+        "timestamp": "2026-05-14T06:50:43.770412Z"
+      }
+    ],
+    "settlement_report_artifacts": [
+      {
+        "artifact_id": "ces-2026-046-cash-settlements-tracker",
+        "settlement_id": "SET-2026-Q1-044-046",
+        "cession_file_id": "CES-2026-046",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "Cash Settlements Tracker",
+        "filename": "CES-2026-046_SET-2026-Q1-044-046_cash_settlements_tracker.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-046_SET-2026-Q1-044-046_cash_settlements_tracker.csv",
+        "generated_at": "2026-05-14T06:49:30.247605Z",
+        "source_filename": "Maple_Leaf_Q1_2026.csv",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": true,
+        "published_at": "2026-05-14T06:50:43.692841Z",
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ],
+        "download_url": "/claims/cession-files/CES-2026-046/settlement-artifacts/ces-2026-046-cash-settlements-tracker/download"
+      },
+      {
+        "artifact_id": "ces-2026-046-grdr-load-form",
+        "settlement_id": "SET-2026-Q1-044-046",
+        "cession_file_id": "CES-2026-046",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "GRDR Load Form",
+        "filename": "CES-2026-046_SET-2026-Q1-044-046_grdr_load_form.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-046_SET-2026-Q1-044-046_grdr_load_form.csv",
+        "generated_at": "2026-05-14T06:49:30.247605Z",
+        "source_filename": "Maple_Leaf_Q1_2026.csv",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": true,
+        "published_at": "2026-05-14T06:50:43.692841Z",
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ],
+        "download_url": "/claims/cession-files/CES-2026-046/settlement-artifacts/ces-2026-046-grdr-load-form/download"
+      }
+    ],
+    "settlement_report_artifacts_pushed": true,
+    "settlement_report_artifacts_pushed_at": "2026-05-14T06:50:43.692841Z",
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-044-046",
+      "settlement_display_id": "STL-2026-Q1-044-046",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4142205.0,
+      "net_amount": 21905.0,
+      "currency": "CAD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-12",
+      "status": "pending_approval",
+      "iris_recommendation": "accept",
+      "source": "Created from Settlement file CES-2026-046; reconciled against baseline SET-2026-Q1-044; decision=accept",
+      "last_updated": "2026-05-14T06:49:30.247605Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-044",
+        "decision": "accept",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-12",
+        "currency": "CAD",
+        "expected_source": "contract details performance",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905,
+          "recomputed_net": 21905
+        },
+        "system": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905
+        },
+        "mismatches": [],
+        "incoming_row_count": 3
+      },
+      "baseline_settlement_id": "SET-2026-Q1-044",
+      "screening_ref": "SCR-2026-05-025",
+      "settlement_report_artifacts": [
+        {
+          "artifact_id": "ces-2026-046-cash-settlements-tracker",
+          "settlement_id": "SET-2026-Q1-044-046",
+          "cession_file_id": "CES-2026-046",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "Cash Settlements Tracker",
+          "filename": "CES-2026-046_SET-2026-Q1-044-046_cash_settlements_tracker.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-046_SET-2026-Q1-044-046_cash_settlements_tracker.csv",
+          "generated_at": "2026-05-14T06:49:30.247605Z",
+          "source_filename": "Maple_Leaf_Q1_2026.csv",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        },
+        {
+          "artifact_id": "ces-2026-046-grdr-load-form",
+          "settlement_id": "SET-2026-Q1-044-046",
+          "cession_file_id": "CES-2026-046",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "GRDR Load Form",
+          "filename": "CES-2026-046_SET-2026-Q1-044-046_grdr_load_form.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-046_SET-2026-Q1-044-046_grdr_load_form.csv",
+          "generated_at": "2026-05-14T06:49:30.247605Z",
           "source_filename": "Maple_Leaf_Q1_2026.csv",
           "reconciliation_decision": "accept",
           "mismatch_count": 0,

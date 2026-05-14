@@ -233,6 +233,436 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-14 06:43:25 UTC]
+
+### Prompt
+few tweaks in the processing pipeline of settlement files:
+1) Anomalies are being skipped when we process it at first. Later it is clickable but in the first go it is not getting appeared.
+2) In the resolution section remove the column reference so that the action column can occupy more width and show its content in maximum two lines. 
+3) Also do not select any action by default. 
+4) If it is a failure case, since files are not generated ,do not add green tick on it.
+5) If it is a success case, currently we are generating two worklist tasks and showing it on the same tab. Instead of that only show settlement item in the worklist and add another tab between summary and files where you will show the current expanded view of the sanction screening item as a card.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/db/SCHEMA.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/03-worklist/WORKLIST.md
+  - docs/api/WORKLIST.md
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/api/CLAIMS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Changed the first detect/map validation pass to land on `Anomalies` before any settlement-resolution handling so the initial anomaly review is no longer skipped.
+- Removed the old `Reference` column from the settlement `Resolutions` table, widened the `Action` column, and changed resolution initialization so pending items are no longer preselected as `Accept`.
+- Added a settlement-only `Sanction Screening` post-process tab between `Summary` and `Files`, rendered the screening task in its expanded card view there, and filtered the pipeline `Worklist` tab down to the settlement item.
+- Updated post-process step completion so the `Files` step is not marked complete when a failure path produced no downstream artifacts.
+- Updated the claims tracker entry to reflect the revised settlement-pipeline behavior.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo’s source-of-truth documentation lives under `docs/` rather than the root-level paths referenced in `AGENTS.md`, so the implementation used the `docs/...` equivalents.
+- The settlement pipeline already persisted the sanctions task as a worklist row; this change separates it into its own pipeline tab in the UI instead of removing the underlying compliance routing.
+
+### Status
+✅ Completed
+
+## [2026-05-14 06:13:45 UTC]
+
+### Prompt
+INFO:     127.0.0.1:51330 - "POST /iris/api/v1/claims/cession-files/upload HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\errors.py", line 187, in __call__
+    raise exc
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\routers\claims.py", line 54, in upload_cession_file
+    return await get_service(db).upload_cession_file(file, background_tasks, cedent_id, contract_id, file_type)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\services\claims_service.py", line 361, in upload_cession_file
+    self._store_override(
+    ~~~~~~~~~~~~~~~~~~~~^
+        created.file_id,
+        ^^^^^^^^^^^^^^^^
+    ...<13 lines>...
+        },
+        ^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\services\claims_service.py", line 5653, in _store_override
+    store = self._read_override_store()
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\services\claims_service.py", line 5663, in _read_override_store
+    payload = json.load(handle)
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 341, in loads
+    raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                          s, 0)
+json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+
+I got this error while uploading the settlement file in the cession file processing. Resolve this
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - backend/app/routers/claims.py
+  - backend/app/services/claims_service.py
+  - backend/app/repositories/claims_repository.py
+  - backend/app/mock_data/cession_pipeline_overrides.json
+  - backend/app/mock_data/settlement_overrides.json
+
+### Actions Taken
+- Traced the upload failure from the claims router into the claims-service override persistence path.
+- Confirmed `backend/app/mock_data/cession_pipeline_overrides.json` is saved with a UTF-8 BOM, which caused `_read_override_store()` to fail before upload state could be persisted.
+- Updated both claims JSON store readers to use `utf-8-sig` so the mutable pipeline and settlement override files can be read whether or not the editor added a BOM.
+- Verified the fix with a direct `ClaimsService.upload_cession_file(...)` call using the Bavarian settlement sample CSV, which returned a successful uploaded payload with a generated file ID instead of raising `JSONDecodeError`.
+- Updated the tracker to broaden the BOM-compatibility note across backend JSON-backed stores.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- A route-level `TestClient` verification was blocked by the current local auth state returning `401` for the seeded claims user password, so the functional verification was completed directly against the claims service upload path instead of the authenticated HTTP layer.
+- The repo’s source-of-truth documentation lives under `docs/` rather than the root-level paths referenced in `AGENTS.md`, so this fix used the `docs/...` equivalents.
+
+### Status
+✅ Completed
+
+## [2026-05-14 05:45:22 UTC]
+
+### Prompt
+ERROR:    Traceback (most recent call last):
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 569, in __aenter__
+    await self._router.startup()
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 672, in startup
+    handler()
+    ~~~~~~~^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\main.py", line 49, in startup
+    seed_database(db)
+    ~~~~~~~~~~~~~^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\seed.py", line 316, in seed_database
+    _seed_audit_events(db)
+    ~~~~~~~~~~~~~~~~~~^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\seed.py", line 324, in _seed_audit_events
+    for record in _build_audit_event_seed_records(db):
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\seed.py", line 470, in _build_audit_event_seed_records
+    for file_id, detail in load_mock_data("cession_pipeline_overrides.json").items():
+                           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\mock_data_loader.py", line 24, in load_mock_data
+    payload = json.load(file)
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\MuhammadFazil\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 341, in loads
+    raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                          s, 0)
+json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+
+ERROR:    Application startup failed. Exiting.
+
+I got this error while starting the application. Fix this
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ARCHITECTURE.md
+  - docs/mock_data/MOCK_DATA.md
+  - backend/app/main.py
+  - backend/app/seed.py
+  - backend/app/mock_data_loader.py
+  - backend/app/mock_data/cession_pipeline_overrides.json
+
+### Actions Taken
+- Traced the FastAPI startup failure through `seed_database()` into the shared mock-data loader.
+- Confirmed `backend/app/mock_data/cession_pipeline_overrides.json` is saved with a UTF-8 BOM.
+- Updated the shared JSON loader to open mock-data files with `utf-8-sig` so both BOM and non-BOM UTF-8 seed files load successfully.
+- Verified application startup by running the FastAPI lifespan through `TestClient` and confirming `GET /` returned `200` with the expected health payload.
+- Updated the tracker to record BOM-safe mock-data bootstrap compatibility.
+
+### Files Modified
+- backend/app/mock_data_loader.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo’s source-of-truth documentation lives under `docs/` rather than the root-level paths referenced in `AGENTS.md`, so this fix used the `docs/...` equivalents.
+
+### Status
+✅ Completed
+
+## [2026-05-14 05:37:53 UTC]
+
+### Prompt
+Inside cedents under the section sanction screening we have a component to trigger adhoc screening of the corresponding cedent. For some of the cedents two cards are shown one for ofac and one for fincen. But for some other cedents like maple leaf three cards are shown because the fincen is duplicated. Remove the second fincen and make it two cards for all of the cedents(ofac and fincen).
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/04-underwriting/cedents/CEDENTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/underwriting/cedants/CedentSectionContent.tsx
+  - frontend/src/pages/underwriting/cedants/cedentConfig.ts
+  - backend/app/services/underwriting_service.py
+  - backend/app/mock_data/cedent_detail_overrides.json
+
+### Actions Taken
+- Confirmed the Section 12 spec and screenshot expect exactly two source-status cards: `OFAC` and `FinCEN`.
+- Traced the duplicate UI card back to persisted cedent mock detail overrides that contained duplicate FinCEN `source_status` rows for multiple cedents.
+- Added backend normalization in the underwriting service so cedent sanction-screening payloads always collapse to the canonical `OFAC` and `FinCEN` cards, keep `sources_monitored` aligned, and normalize legacy source labels.
+- Cleaned the stored cedent detail overrides so the seeded mock state itself now carries only two source-status cards per cedent.
+- Updated the tracker note to record the two-card normalization behavior.
+
+### Files Modified
+- backend/app/services/underwriting_service.py
+- backend/app/mock_data/cedent_detail_overrides.json
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo’s source-of-truth documentation lives under `docs/` rather than the root-level paths referenced in `AGENTS.md`, so the implementation used the `docs/...` equivalents.
+
+### Status
+✅ Completed
+
+## [2026-05-14 05:28:47 UTC]
+
+### Prompt
+In all the tables, still the currency is shown as CA$. for example refer the attached screenshot.
+Change CA$ to CAD everywhere in the DB as well
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/utils/formatters.ts
+  - frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+  - frontend/src/pages/underwriting/contracts/ContractsPage.tsx
+  - frontend/src/pages/underwriting/population/PopulationPage.tsx
+  - frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+  - frontend/src/pages/claims/calculation/CalcEnginePage.tsx
+  - backend/app/mock_data/cession_pipeline_overrides.json
+  - backend/app/services/claims_service.py
+  - backend/iris.db
+
+### Actions Taken
+- Replaced the shared frontend browser-currency rendering path with explicit currency-prefix formatting so `CAD` no longer renders as `CA$`.
+- Updated the remaining page-local currency helpers in underwriting and claims to use the shared formatter instead of their own `Intl` currency rendering.
+- Bulk-rewrote Maple settlement source blobs from `CA$` to `CAD ` in `backend/app/mock_data/cession_pipeline_overrides.json` and the Maple backend test fixtures.
+- Updated persisted SQLite text payloads in `backend/iris.db` so Maple `cession_file_records.raw_data` and `cession_file_records.validation_issues` no longer store `CA$`.
+- Updated tracker notes to record the broader `CAD` normalization across shared frontend formatting and persisted Maple settlement blobs.
+- Verified the frontend with `npm run build` and re-checked the migrated SQLite rows to confirm `CA$` no longer appears in the stored Maple payloads.
+
+### Files Modified
+- frontend/src/utils/formatters.ts
+- frontend/src/pages/underwriting/contracts/ContractsPage.tsx
+- frontend/src/pages/underwriting/population/PopulationPage.tsx
+- frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+- frontend/src/pages/claims/calculation/CalcEnginePage.tsx
+- backend/app/mock_data/cession_pipeline_overrides.json
+- backend/tests/Maple Leaf/Maple_Leaf_Q1_26.csv
+- backend/tests/Maple Leaf/Maple_Leaf_Q1_2026.csv
+- backend/iris.db
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- `backend/app/services/claims_service.py` intentionally still recognizes `CA$` as an input marker so older uploaded settlement files remain parseable; the stored and displayed app data was normalized to `CAD`, but backward-compatible ingestion support was preserved.
+- The repo’s active source-of-truth documents are under `docs/` rather than the root-level paths named in `AGENTS.md`, so the `docs/...` equivalents were used.
+
+### Status
+✅ Completed
+
+## [2026-05-14 05:18:22 UTC]
+
+### Prompt
+For maple leaf pension plan we are dealing with canadian dollars. In some places it is mentioned as CA and in some other place it is mentioned as CAD. Make it CAD everywhere. Also in maple leaf contract page the card latest net payout shows the value of quarter 2026, but it is pending according to the settlement tracker shows the value of Q4 2025 since that was the last payout with status "Paid". Also under the settlement tracker in contract mansgement page change the column name "A/E Deaths" to "A/E" and donot show the value there if the status is pending instead show a hyphen("-").
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - docs/ui/04-underwriting/cedents/CEDENTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/services/underwriting_service.py
+  - backend/app/mock_data/contract_detail_overrides.json
+  - backend/app/mock_data/cedents_seed.json
+  - frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+  - frontend/src/pages/underwriting/cedants/CedantsPage.tsx
+  - frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+
+### Actions Taken
+- Updated the contract-performance enrichment logic so the `Latest Net Payout` overview card uses the most recent settlement row with status `paid`, falling back only if no paid rows exist.
+- Adjusted the contract detail settlement tracker UI to rename the `A/E Deaths` column to `A/E` and render `-` instead of the A/E ratio for pending rows.
+- Normalized Maple Leaf’s user-facing `CA` label to `CAD` on the underwriting cedant list and cedant detail header surfaces where the repo was exposing the Canadian code to users.
+- Updated the underwriting tracker note to record the revised Maple Leaf display and settlement-tracker behavior.
+- Verified the frontend with `npm run build` and syntax-checked `backend/app/services/underwriting_service.py` with `python -m py_compile`.
+
+### Files Modified
+- backend/app/services/underwriting_service.py
+- frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+- frontend/src/pages/underwriting/cedants/CedantsPage.tsx
+- frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo’s source-of-truth documentation paths are under `docs/` rather than the root-level locations named in `AGENTS.md`, so the `docs/...` equivalents were used.
+- The cedants UI spec shows Maple Leaf `Country` as `CA`; this change applied the user-requested `CAD` normalization only on the current user-facing underwriting surfaces rather than rewriting the underlying country seed value.
+- A dedicated underwriting API contract file for this exact unit was not present under `docs/api`, so the existing implemented underwriting routes plus UI/spec/tracker/schema files were used as the contract source.
+
+### Status
+✅ Completed
+
 ## [2026-05-13T07:11:23Z]
 
 ### Prompt

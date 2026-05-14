@@ -5279,7 +5279,8 @@ class ClaimsService:
     def _read_settlement_override_store(self) -> dict[str, Any]:
         if not SETTLEMENT_OVERRIDES_FILE.exists():
             return {}
-        with SETTLEMENT_OVERRIDES_FILE.open("r", encoding="utf-8") as handle:
+        # Accept editor-saved UTF-8 JSON with or without a BOM.
+        with SETTLEMENT_OVERRIDES_FILE.open("r", encoding="utf-8-sig") as handle:
             payload = json.load(handle)
         return payload if isinstance(payload, dict) else {}
 
@@ -5659,7 +5660,8 @@ class ClaimsService:
     def _read_override_store(self) -> dict[str, Any]:
         if not PIPELINE_OVERRIDES_FILE.exists():
             return {}
-        with PIPELINE_OVERRIDES_FILE.open("r", encoding="utf-8") as handle:
+        # Accept editor-saved UTF-8 JSON with or without a BOM.
+        with PIPELINE_OVERRIDES_FILE.open("r", encoding="utf-8-sig") as handle:
             payload = json.load(handle)
         return payload if isinstance(payload, dict) else {}
 

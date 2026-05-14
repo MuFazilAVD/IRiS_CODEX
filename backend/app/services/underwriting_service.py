@@ -56,6 +56,7 @@ CONTRACT_DETAIL_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_
 # Temporary backfill defaults keep early-phase population uploads moving until richer member enrichment lands.
 RELAXED_POPULATION_UPLOAD_PLACEHOLDER_DOB = date(1900, 1, 1)
 RELAXED_POPULATION_UPLOAD_PLACEHOLDER_PENSION = Decimal("0")
+CEDENT_SCREENING_SOURCES = ("OFAC", "FinCEN")
 
 
 class UnderwritingService:
@@ -260,7 +261,7 @@ class UnderwritingService:
 
         store = self._read_detail_store()
         payload = self._build_cedent_payload(cedent, self.repository.list_contracts_for_cedent(cedent_id))
-        screening = deepcopy(payload["sanction_screening"])
+        screening = self._normalize_cedent_screening_payload(deepcopy(payload["sanction_screening"]), cedent_id=cedent_id)
         now = datetime.now(UTC)
         screening_ref = str(screening_result["screening_ref"])
         matched_source_labels = {
@@ -310,9 +311,7 @@ class UnderwritingService:
             else:
                 screening["source_status"].append(updated_source)
 
-        screening["total_scans"] = len(screening["history"])
-        screening["open_hits"] = sum(1 for item in screening["history"] if item["matches"] > 0)
-        screening["sources_monitored"] = len(screening["source_status"])
+        screening = self._normalize_cedent_screening_payload(screening, cedent_id=cedent_id)
 
         cedent.screening_status = "pending" if any_match else "cleared"
         cedent.updated_at = datetime.utcnow()
@@ -360,11 +359,11 @@ class UnderwritingService:
 
     def _normalize_cedent_screening_sources(self, sources: list[str]) -> list[str]:
         normalized: list[str] = []
-        for source in sources or ["OFAC", "FinCEN"]:
+        for source in sources or list(CEDENT_SCREENING_SOURCES):
             label = self._cedent_screening_source_label(source)
             if label not in normalized:
                 normalized.append(label)
-        return normalized or ["OFAC", "FinCEN"]
+        return normalized or list(CEDENT_SCREENING_SOURCES)
 
     def _cedent_screening_source_label(self, value: str) -> str:
         normalized = (value or "").strip().lower()
@@ -373,6 +372,96 @@ class UnderwritingService:
         if normalized.startswith("fincen"):
             return "FinCEN"
         return value
+
+    def _normalize_cedent_screening_payload(self, screening: dict[str, Any], cedent_id: str | None = None) -> dict[str, Any]:
+        normalized_history: list[dict[str, Any]] = []
+        for item in screening.get("history", []) or []:
+            history_entry = deepcopy(item)
+            history_entry["source"] = self._cedent_screening_source_label(str(history_entry.get("source") or ""))
+            normalized_history.append(history_entry)
+
+        latest_history_by_source: dict[str, dict[str, Any]] = {}
+        for item in normalized_history:
+            source_label = self._cedent_screening_source_label(str(item.get("source") or ""))
+            if source_label in CEDENT_SCREENING_SOURCES and source_label not in latest_history_by_source:
+                latest_history_by_source[source_label] = item
+
+        normalized_status_by_source: dict[str, dict[str, Any]] = {}
+        for item in screening.get("source_status", []) or []:
+            source_label = self._cedent_screening_source_label(str(item.get("source") or ""))
+            if source_label not in CEDENT_SCREENING_SOURCES:
+                continue
+
+            candidate = {
+                "source": source_label,
+                "status": str(item.get("status") or "Pending"),
+                "last_scan": str(item.get("last_scan") or ""),
+                "reference": str(item.get("reference") or ""),
+                "matches": int(item.get("matches") or 0),
+            }
+            existing = normalized_status_by_source.get(source_label)
+            if existing is None or candidate["last_scan"] >= existing["last_scan"]:
+                normalized_status_by_source[source_label] = candidate
+
+        normalized_status: list[dict[str, Any]] = []
+        for source_label in CEDENT_SCREENING_SOURCES:
+            existing = normalized_status_by_source.get(source_label)
+            if existing is not None:
+                normalized_status.append(existing)
+                continue
+
+            latest_history = latest_history_by_source.get(source_label)
+            if latest_history is not None:
+                normalized_status.append(
+                    {
+                        "source": source_label,
+                        "status": self._format_cedent_screening_status(str(latest_history.get("result") or "Pending")),
+                        "last_scan": str(latest_history.get("screening_date") or "")[:10],
+                        "reference": str(latest_history.get("reference_id") or ""),
+                        "matches": int(latest_history.get("matches") or 0),
+                    }
+                )
+                continue
+
+            normalized_status.append(
+                {
+                    "source": source_label,
+                    "status": "Pending",
+                    "last_scan": "",
+                    "reference": "",
+                    "matches": 0,
+                }
+            )
+
+        original_source_count = len(screening.get("source_status", []) or [])
+        if original_source_count != len(normalized_status) and cedent_id:
+            logger.debug(
+                "Normalized cedant screening source cards cedent_id=%s original_count=%s normalized_count=%s",
+                cedent_id,
+                original_source_count,
+                len(normalized_status),
+            )
+
+        screening["history"] = normalized_history
+        screening["source_status"] = normalized_status
+        screening["total_scans"] = len(normalized_history)
+        screening["open_hits"] = sum(1 for item in normalized_history if int(item.get("matches") or 0) > 0)
+        screening["sources_monitored"] = len(normalized_status)
+        return screening
+
+    def _format_cedent_screening_status(self, value: str) -> str:
+        normalized = (value or "").strip().lower().replace("_", " ")
+        if normalized == "review":
+            return "Pending Review"
+        if normalized == "pending review":
+            return "Pending Review"
+        if normalized == "cleared":
+            return "Cleared"
+        if normalized == "failed":
+            return "Failed"
+        if normalized == "pending":
+            return "Pending"
+        return value or "Pending"
 
     def update_status(self, cedent_id: str, status: str, reason: str) -> dict[str, Any]:
         logger.info("Updating cedant status")
@@ -953,6 +1042,10 @@ class UnderwritingService:
     def _build_cedent_payload(self, cedent: Cedent, contracts: list[Contract]) -> dict[str, Any]:
         store = self._read_detail_store()
         detail = self._deep_merge(self._default_detail_store(cedent, contracts), store.get(cedent.cedent_id, {}))
+        detail["sanction_screening"] = self._normalize_cedent_screening_payload(
+            deepcopy(detail["sanction_screening"]),
+            cedent_id=cedent.cedent_id,
+        )
         audit_approval = self._load_cedent_audit_timeline(cedent.cedent_id, detail["audit_approval"])
 
         legal_entity = {
@@ -2601,7 +2694,8 @@ class UnderwritingService:
         currency: str,
     ) -> list[dict[str, Any]]:
         latest_row = settlement_history[-1] if settlement_history else None
-        latest_net = float(latest_row["net_settled"]) if latest_row else 0.0
+        latest_paid_row = self._latest_paid_settlement_row(settlement_history)
+        latest_net = float(latest_paid_row["net_settled"]) if latest_paid_row else 0.0
         latest_ae = float(latest_row["ae_ratio"]) if latest_row else 1.0
         exposure_value = round(float(contract.notional_amount or 0) * 0.036, 2)
         exposure_change = round((latest_ae - 1) * 100, 1)
@@ -2682,14 +2776,15 @@ class UnderwritingService:
         cedent_name: str,
     ) -> dict[str, Any]:
         latest_row = settlement_history[-1] if settlement_history else None
-        latest_net = float(latest_row["net_settled"]) if latest_row else 0.0
+        latest_paid_row = self._latest_paid_settlement_row(settlement_history)
+        latest_net = float(latest_paid_row["net_settled"]) if latest_paid_row else 0.0
         latest_ae = float(latest_row["ae_ratio"]) if latest_row else 1.0
         stance = "within tolerance" if abs(latest_ae - 1) < 0.03 else "outside tolerance"
         return {
             "headline": f"{contract.contract_id} remains {stance} with a monitored payout profile.",
             "insight": (
                 f"IRiS expects {cedent_name} to remain operationally stable through the next settlement cycle. "
-                f"The latest payout of {self._format_signed_currency_display(latest_net, contract.currency or 'USD')} "
+                f"The latest paid payout of {self._format_signed_currency_display(latest_net, contract.currency or 'USD')} "
                 f"and A/E ratio of {latest_ae:.3f} do not currently breach the configured rule set."
             ),
             "supporting_points": [
@@ -2720,6 +2815,12 @@ class UnderwritingService:
                 "kind": "node",
             },
         ]
+
+    def _latest_paid_settlement_row(self, settlement_history: list[dict[str, Any]]) -> dict[str, Any] | None:
+        for row in reversed(settlement_history):
+            if str(row.get("status", "")).lower() == "paid":
+                return row
+        return settlement_history[-1] if settlement_history else None
 
     def _metric_value_for_row(self, metric: str, row: dict[str, Any]) -> float:
         if metric == "fixed_leg_total":

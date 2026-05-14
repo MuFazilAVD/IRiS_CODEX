@@ -9,6 +9,7 @@ import { EmptyState, EmptyTableRow } from '../../../components/common/EmptyState
 import { PageHeader } from '../../../components/common/PageHeader'
 import { StatusBadge } from '../../../components/common/StatusBadge'
 import { useUiStore } from '../../../store/uiStore'
+import { formatCurrency } from '../../../utils/formatters'
 import type {
   CedentsListPayload,
   ContractUploadMembersResponse,
@@ -749,11 +750,7 @@ function UploadPopulationModal({
 }
 
 function formatMoney(amount: number, currency: string) {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount)
+  return formatCurrency(amount, currency)
 }
 
 function formatNumber(value: number) {

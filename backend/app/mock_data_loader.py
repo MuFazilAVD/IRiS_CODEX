@@ -20,7 +20,8 @@ def load_mock_data(filename: str) -> Any:
         if cached and cached[0] == mtime_ns:
             return cached[1]
 
-        with file_path.open("r", encoding="utf-8") as file:
+        # Accept both standard UTF-8 JSON and UTF-8 files saved with a BOM.
+        with file_path.open("r", encoding="utf-8-sig") as file:
             payload = json.load(file)
 
         _mock_data_cache[filename] = (mtime_ns, payload)

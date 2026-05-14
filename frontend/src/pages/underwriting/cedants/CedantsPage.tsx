@@ -143,7 +143,7 @@ function CedantRow({ item, onOpen }: { item: CedentListItem; onOpen: () => void 
         </Link>
       </td>
       <td className="px-3 py-3">
-        {countryFlag(item.country)} {item.country ?? '-'}
+        {countryFlag(item.country)} {displayCedantCountryCode(item.legal_entity_name, item.country)}
       </td>
       <td className="px-3 py-3 text-right">{item.aum}</td>
       <td className={`px-3 py-3 ${item.contracts_count === 0 ? 'text-iris-text-muted' : 'text-iris-text-primary'}`}>{item.contracts_count}</td>
@@ -191,4 +191,11 @@ function titleCase(value: string) {
     .split(' ')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+}
+
+function displayCedantCountryCode(legalEntityName: string, country: string | null) {
+  if (legalEntityName === 'Maple Leaf Pension Plan' && country === 'CA') {
+    return 'CAD'
+  }
+  return country ?? '-'
 }

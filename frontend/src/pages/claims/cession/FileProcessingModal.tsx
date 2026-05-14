@@ -25,6 +25,7 @@ type ClaimsStep =
   | 'clauses'
   | 'process'
   | 'summary'
+  | 'screening'
   | 'files'
   | 'worklist'
   | 'audit'
@@ -73,7 +74,7 @@ interface CessionFileProcessingWorkflowProps extends FileProcessingModalProps {
   onFileCreated?: (fileId: string) => void
 }
 
-const PIPELINE_STEPS: Array<{ id: ClaimsStep; label: string }> = [
+const BASE_PIPELINE_STEPS: Array<{ id: ClaimsStep; label: string }> = [
   { id: 'upload', label: 'Upload' },
   { id: 'detect-map', label: 'Detect & Map' },
   { id: 'validate', label: 'Anomalies' },
@@ -210,6 +211,9 @@ export function CessionFileProcessingWorkflow({
 
   const detail = detailQuery.data
   const currentStep = activeFileId ? selectedStep : 'upload'
+  const screeningTask = detail ? getScreeningTask(detail) : null
+  const worklistItems = detail ? detail.worklist.items.filter((item) => item.wl_id !== screeningTask?.wl_id) : []
+  const pipelineSteps = buildPipelineSteps(detail)
 
   useEffect(() => {
     if (!activeFileId || !detail || currentStep !== 'validate' || detail.stage !== 'clauses' || autoValidating) {
@@ -249,18 +253,8 @@ export function CessionFileProcessingWorkflow({
     }
   }, [activeFileId, autoValidating, currentStep, detail, detailQuery])
   const actualCurrentStep = detail ? resolveVisibleStep(detail) : currentStep
-  const visualCurrentStep = resolveVisualCurrentStep(actualCurrentStep, currentStep)
-  const completedSteps = new Set<ClaimsStep>()
-  const actualStepIndex = PIPELINE_STEPS.findIndex((step) => step.id === visualCurrentStep)
-  if (detail?.stage === 'approved') {
-    for (const step of PIPELINE_STEPS) {
-      completedSteps.add(step.id)
-    }
-  } else if (actualStepIndex > 0) {
-    for (const step of PIPELINE_STEPS.slice(0, actualStepIndex)) {
-      completedSteps.add(step.id)
-    }
-  }
+  const visualCurrentStep = resolveVisualCurrentStep(actualCurrentStep, currentStep, pipelineSteps)
+  const completedSteps = buildCompletedSteps(detail, pipelineSteps, visualCurrentStep)
 
   const visibleContracts = contractOptions.filter((item) => !detectCedentId || item.cedent_id === detectCedentId)
   useEffect(() => {
@@ -312,7 +306,7 @@ export function CessionFileProcessingWorkflow({
         setMappedContractId(refreshed.data?.contract_mapping.contract_id ?? mappedContractId)
         setExceptionActions(buildExceptionState(refreshed.data?.exceptions.items ?? []))
         await Promise.resolve(onRefresh())
-        setSelectedStep(resolveVisibleStep(refreshed.data))
+        setSelectedStep('validate')
         return
       }
 
@@ -363,6 +357,11 @@ export function CessionFileProcessingWorkflow({
       }
 
       if (currentStep === 'summary') {
+        setSelectedStep(screeningTask ? 'screening' : detail?.downstream_files.items.length ? 'files' : 'worklist')
+        return
+      }
+
+      if (currentStep === 'screening') {
         setSelectedStep(detail?.downstream_files.items.length ? 'files' : 'worklist')
         return
       }
@@ -548,7 +547,7 @@ export function CessionFileProcessingWorkflow({
         <section className="overflow-hidden rounded-lg border border-[#D7E1E8] bg-white shadow-sm">
           <div className="overflow-x-auto border-t border-[#E5EBF0] bg-white px-4 py-3 md:px-6">
             <div className="flex min-w-max items-center gap-2">
-              {PIPELINE_STEPS.map((step, index) => {
+              {pipelineSteps.map((step, index) => {
                 const isCurrent = currentStep === step.id
                 const isComplete = completedSteps.has(step.id)
                 return (
@@ -571,7 +570,7 @@ export function CessionFileProcessingWorkflow({
                       {isComplete ? '✓ ' : ''}
                       {step.label}
                     </button>
-                    {index < PIPELINE_STEPS.length - 1 ? <span className="text-[#AAB7C4]">→</span> : null}
+                    {index < pipelineSteps.length - 1 ? <span className="text-[#AAB7C4]">→</span> : null}
                   </div>
                 )
               })}
@@ -626,6 +625,8 @@ export function CessionFileProcessingWorkflow({
               <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} />
             ) : null}
 
+            {screeningTask && currentStep === 'screening' ? <ScreeningStep item={screeningTask} /> : null}
+
             {detail && currentStep === 'files' ? (
               <FilesStep
                 busyAction={fileActionBusy}
@@ -637,7 +638,7 @@ export function CessionFileProcessingWorkflow({
               />
             ) : null}
 
-            {detail && currentStep === 'worklist' ? <WorklistStep items={detail.worklist.items} subtitle={detail.worklist.subtitle} title={detail.worklist.title} /> : null}
+            {detail && currentStep === 'worklist' ? <WorklistStep items={worklistItems} subtitle={detail.worklist.subtitle} title={detail.worklist.title} /> : null}
 
             {detail && currentStep === 'audit' ? <AuditStep items={detail.audit.items} subtitle={detail.audit.subtitle} title={detail.audit.title} /> : null}
           </div>
@@ -654,10 +655,21 @@ export function CessionFileProcessingWorkflow({
                   Back to Process
                 </button>
               ) : null}
-              {currentStep === 'files' ? (
+              {currentStep === 'screening' ? (
                 <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('summary')} type="button">
                   <RefreshCw className="h-4 w-4" />
                   Back to Summary
+                </button>
+              ) : null}
+              {currentStep === 'files' ? (
+                <button
+                  className="btn-secondary"
+                  disabled={busy}
+                  onClick={() => setSelectedStep(screeningTask ? 'screening' : 'summary')}
+                  type="button"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Back to {screeningTask ? 'Screening' : 'Summary'}
                 </button>
               ) : null}
 
@@ -703,7 +715,7 @@ export function CessionFileProcessingWorkflow({
 
             <div className="mt-5 overflow-x-auto">
               <div className="flex min-w-max items-center gap-2">
-                {PIPELINE_STEPS.map((step, index) => {
+                {pipelineSteps.map((step, index) => {
                   const isCurrent = currentStep === step.id
                   const isComplete = completedSteps.has(step.id)
                   return (
@@ -726,7 +738,7 @@ export function CessionFileProcessingWorkflow({
                         {isComplete ? '✓ ' : ''}
                         {step.label}
                       </button>
-                      {index < PIPELINE_STEPS.length - 1 ? <span className="text-[#AAB7C4]">→</span> : null}
+                      {index < pipelineSteps.length - 1 ? <span className="text-[#AAB7C4]">→</span> : null}
                     </div>
                   )
                 })}
@@ -786,6 +798,8 @@ export function CessionFileProcessingWorkflow({
               <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} />
             ) : null}
 
+            {screeningTask && currentStep === 'screening' ? <ScreeningStep item={screeningTask} /> : null}
+
             {detail && currentStep === 'files' ? (
               <FilesStep
                 busyAction={fileActionBusy}
@@ -797,7 +811,7 @@ export function CessionFileProcessingWorkflow({
               />
             ) : null}
 
-            {detail && currentStep === 'worklist' ? <WorklistStep items={detail.worklist.items} subtitle={detail.worklist.subtitle} title={detail.worklist.title} /> : null}
+            {detail && currentStep === 'worklist' ? <WorklistStep items={worklistItems} subtitle={detail.worklist.subtitle} title={detail.worklist.title} /> : null}
 
             {detail && currentStep === 'audit' ? <AuditStep items={detail.audit.items} subtitle={detail.audit.subtitle} title={detail.audit.title} /> : null}
           </div>
@@ -814,10 +828,21 @@ export function CessionFileProcessingWorkflow({
                   Back to Process
                 </button>
               ) : null}
-              {currentStep === 'files' ? (
+              {currentStep === 'screening' ? (
                 <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('summary')} type="button">
                   <RefreshCw className="h-4 w-4" />
                   Back to Summary
+                </button>
+              ) : null}
+              {currentStep === 'files' ? (
+                <button
+                  className="btn-secondary"
+                  disabled={busy}
+                  onClick={() => setSelectedStep(screeningTask ? 'screening' : 'summary')}
+                  type="button"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Back to {screeningTask ? 'Screening' : 'Summary'}
                 </button>
               ) : null}
 
@@ -1183,11 +1208,13 @@ function ExceptionsStep({
           <table className="min-w-full text-[13px]">
             <thead className="bg-[#F7F9FB]">
               <tr>
-                {['Sev', 'Row', 'Field', 'Issue', 'Current', 'AI Suggested Value', 'Reference', 'Action'].map((label) => (
-                  <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
-                    {label}
-                  </th>
-                ))}
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Sev</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Row</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Field</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Issue</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Current</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">AI Suggested Value</th>
+                <th className="min-w-[280px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -1212,14 +1239,13 @@ function ExceptionsStep({
                         '—'
                       )}
                     </td>
-                    <td className="px-4 py-3 text-iris-text-secondary">{item.clause_reference}</td>
-                    <td className="px-4 py-3">
+                    <td className="min-w-[280px] px-4 py-3">
                       <div className="flex flex-wrap gap-2">
                         <ActionChoiceButton active={state.choice === 'accept'} label="Accept" onClick={() => updateChoice(item.exception_id, 'accept')} />
                         <ActionChoiceButton active={state.choice === 'override'} label="Override" onClick={() => updateChoice(item.exception_id, 'override')} />
                         <ActionChoiceButton active={state.choice === 'manual'} label="Manual" onClick={() => updateChoice(item.exception_id, 'manual')} />
                       </div>
-                      {state.choice === 'accept' ? <div className="mt-2 text-[12px] text-[#117A65]">Accept selected for this resolution.</div> : null}
+                      {state.choice === 'accept' ? <div className="mt-2 text-[12px] text-[#117A65]">AI suggestion selected.</div> : null}
                       {state.choice === 'manual' ? <div className="mt-2 text-[12px] text-iris-text-secondary">Marked for manual follow-up.</div> : null}
                       {state.choice === 'override' ? (
                         <input
@@ -1235,6 +1261,44 @@ function ExceptionsStep({
               })}
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ScreeningStep({ item }: { item: ClaimsWorklistTask }) {
+  return (
+    <div className="space-y-5">
+      <SectionHeading title="Sanction Screening" subtitle="Current expanded view of the linked sanctions-screening task." />
+
+      <div className="overflow-hidden rounded-[22px] border border-[#D9E3EA] bg-white shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-[#EEF2F5] px-5 py-5 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-[18px] font-semibold text-iris-text-primary">{item.task}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-iris-text-secondary">
+              <span className="font-mono text-iris-blue">{item.wl_id}</span>
+              <span>•</span>
+              <span>{item.type}</span>
+              <span>•</span>
+              <span>{titleCase(item.team)}</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <WorklistStatusPill item={item} />
+            <span className="rounded-full bg-[#FEF5E7] px-2.5 py-1 text-[12px] font-semibold text-[#B9770E]">{titleCase(item.priority)}</span>
+          </div>
+        </div>
+
+        <div className="grid gap-3 border-b border-[#EEF2F5] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+          <MetricLine label="Assigned" value={item.assigned_person ?? 'Unassigned'} />
+          <MetricLine label="SLA" value={item.sla} />
+          <MetricLine label="Status" value={item.status_label ?? formatWorklistTaskStatus(item.status ?? 'open')} />
+          <MetricLine label="Linked Case" value={item.screening_summary?.screening_ref ?? 'Pending case'} />
+        </div>
+
+        <div className="bg-[#FAFBFC] px-5 py-5">
+          <WorklistTaskExpandedDetail item={item} />
         </div>
       </div>
     </div>
@@ -1899,9 +1963,9 @@ function buildExceptionState(items: ClaimsExceptionItem[]): ExceptionActionState
             ? 'override'
             : item.resolution === 'rejected'
               ? 'manual'
-              : item.resolution === 'accepted' || item.resolution === 'pending'
+              : item.resolution === 'accepted'
                 ? 'accept'
-                : 'accept',
+                : 'pending',
         manualValue: item.resolution === 'overridden' ? item.current_value ?? '' : '',
       },
     ]),
@@ -1988,14 +2052,63 @@ function parseCsvLine(line: string) {
   return values
 }
 
-function resolveVisualCurrentStep(actualCurrentStep: ClaimsStep, currentStep: ClaimsStep) {
-  const postProcessSteps: ClaimsStep[] = ['summary', 'files', 'worklist', 'audit']
+function resolveVisualCurrentStep(
+  actualCurrentStep: ClaimsStep,
+  currentStep: ClaimsStep,
+  pipelineSteps: Array<{ id: ClaimsStep; label: string }>,
+) {
+  const postProcessSteps = pipelineSteps
+    .map((step) => step.id)
+    .filter((step): step is ClaimsStep => ['summary', 'screening', 'files', 'worklist', 'audit'].includes(step))
   if (postProcessSteps.includes(actualCurrentStep) && postProcessSteps.includes(currentStep)) {
     const actualIndex = postProcessSteps.indexOf(actualCurrentStep)
     const currentIndex = postProcessSteps.indexOf(currentStep)
     return currentIndex > actualIndex ? currentStep : actualCurrentStep
   }
   return actualCurrentStep
+}
+
+function buildPipelineSteps(detail: ClaimsCessionDetailPayload | undefined) {
+  const steps = [...BASE_PIPELINE_STEPS]
+  if (getScreeningTask(detail)) {
+    steps.splice(7, 0, { id: 'screening' as ClaimsStep, label: 'Sanction Screening' })
+  }
+  return steps
+}
+
+function buildCompletedSteps(
+  detail: ClaimsCessionDetailPayload | undefined,
+  pipelineSteps: Array<{ id: ClaimsStep; label: string }>,
+  visualCurrentStep: ClaimsStep,
+) {
+  const completedSteps = new Set<ClaimsStep>()
+  const currentIndex = pipelineSteps.findIndex((step) => step.id === visualCurrentStep)
+  const hasDownstreamFiles = Boolean(detail?.downstream_files.items.length)
+
+  const shouldMarkComplete = (stepId: ClaimsStep) => stepId !== 'files' || hasDownstreamFiles
+
+  if (detail?.stage === 'approved') {
+    for (const step of pipelineSteps) {
+      if (shouldMarkComplete(step.id)) {
+        completedSteps.add(step.id)
+      }
+    }
+    return completedSteps
+  }
+
+  if (currentIndex > 0) {
+    for (const step of pipelineSteps.slice(0, currentIndex)) {
+      if (shouldMarkComplete(step.id)) {
+        completedSteps.add(step.id)
+      }
+    }
+  }
+
+  return completedSteps
+}
+
+function getScreeningTask(detail: ClaimsCessionDetailPayload | undefined) {
+  return detail?.worklist.items.find((item) => Boolean(item.screening_summary)) ?? null
 }
 
 function resolveVisibleStep(detail: ClaimsCessionDetailPayload | undefined): ClaimsStep {

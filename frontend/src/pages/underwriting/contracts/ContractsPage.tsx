@@ -9,6 +9,7 @@ import { EmptyTableRow } from '../../../components/common/EmptyState'
 import { PageHeader } from '../../../components/common/PageHeader'
 import { TableSkeleton } from '../../../components/common/Skeleton'
 import { StatusBadge } from '../../../components/common/StatusBadge'
+import { formatCurrencyCompact as formatCurrencyCompactValue } from '../../../utils/formatters'
 import type { ContractListItem, ContractsListPayload } from '../../../types/api'
 import { ContractAmendmentModal } from './ContractAmendmentModal'
 import { NewContractModal } from './NewContractModal'
@@ -156,12 +157,7 @@ function ContractRow({
 }
 
 function formatCurrencyCompact(amount: number, currency: string) {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency,
-    notation: amount >= 1_000_000 ? 'compact' : 'standard',
-    maximumFractionDigits: amount >= 1_000_000 ? 1 : 0,
-  }).format(amount)
+  return formatCurrencyCompactValue(amount, currency)
 }
 
 function titleCase(value: string) {
