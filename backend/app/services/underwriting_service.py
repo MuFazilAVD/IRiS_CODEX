@@ -53,6 +53,9 @@ CONTRACT_SECTION_NAME_MAP = {
     "compliance-docs": "compliance_docs",
 }
 CONTRACT_DETAIL_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "contract_detail_overrides.json"
+MAPLE_LEAF_CONTRACT_ID = "LSC-2024-044"
+MAPLE_LEAF_MEMBER_DISPLAY_TOTAL = 8900
+MAPLE_LEAF_MEMBER_DISPLAY_PAGES = 8900
 # Temporary backfill defaults keep early-phase population uploads moving until richer member enrichment lands.
 RELAXED_POPULATION_UPLOAD_PLACEHOLDER_DOB = date(1900, 1, 1)
 RELAXED_POPULATION_UPLOAD_PLACEHOLDER_PENSION = Decimal("0")
@@ -1755,11 +1758,22 @@ class UnderwritingService:
         }
 
     def _build_contract_member_list(self, contract: Contract, status: str, page: int, page_size: int) -> dict[str, Any]:
+        detail = self._build_contract_payload(contract)
+        if contract.contract_id == MAPLE_LEAF_CONTRACT_ID:
+            logger.info("Using Maple Leaf mock member population sample")
+            logger.debug(
+                "Maple Leaf member population contract_id=%s status=%s page=%s page_size=%s",
+                contract.contract_id,
+                status,
+                page,
+                page_size,
+            )
+            return self._build_maple_leaf_mock_member_list(contract, detail, status, page, page_size)
+
         live_rows = self.repository.list_current_population_for_contract(contract.contract_id)
         if live_rows:
             return self._build_live_contract_member_list(contract, live_rows, status, page, page_size)
 
-        detail = self._build_contract_payload(contract)
         summary = detail["member_population"]
         items = self._generate_contract_members(contract, summary)
         if status and status != "all":
@@ -1805,6 +1819,151 @@ class UnderwritingService:
             "page": page,
             "page_size": page_size,
             "summary": self._build_live_contract_member_summary(items, contract.currency or "USD"),
+            "items": paginated_items,
+        }
+
+    # MOCK IMPLEMENTATION: Maple Leaf only has a four-row seeded population, so the
+    # contract-detail tab uses a larger representative sample that matches the mocked
+    # financial lives-covered count instead of pretending the tiny seed is complete.
+    def _build_maple_leaf_mock_member_list(
+        self,
+        contract: Contract,
+        detail: dict[str, Any],
+        status: str,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        summary = detail["member_population"]
+        last_verified = summary.get("last_verified_date") or "2025-03-31"
+        currency = summary.get("currency") or contract.currency or "CAD"
+        items = [
+            {
+                "member_id": "PEN-0890001",
+                "name": "Eleanor Walsh",
+                "age": 63,
+                "gender": "F",
+                "annuity_amount": 14120,
+                "currency": currency,
+                "status": "active",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+            {
+                "member_id": "PEN-0890002",
+                "name": "Martin Delaney",
+                "age": 74,
+                "gender": "M",
+                "annuity_amount": 15240,
+                "currency": currency,
+                "status": "active",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+            {
+                "member_id": "PEN-0890003",
+                "name": "Aisha Grant",
+                "age": 68,
+                "gender": "F",
+                "annuity_amount": 16510,
+                "currency": currency,
+                "status": "active",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+            {
+                "member_id": "PEN-0890004",
+                "name": "Colin Mercer",
+                "age": 65,
+                "gender": "M",
+                "annuity_amount": 17180,
+                "currency": currency,
+                "status": "active",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+            {
+                "member_id": "PEN-0890005",
+                "name": "Beatrice Singh",
+                "age": 72,
+                "gender": "F",
+                "annuity_amount": 18360,
+                "currency": currency,
+                "status": "active",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+            {
+                "member_id": "PEN-0890006",
+                "name": "Daniel Rousseau",
+                "age": 77,
+                "gender": "M",
+                "annuity_amount": 19640,
+                "currency": currency,
+                "status": "deferred",
+                "last_verified": last_verified,
+                "defer_reason": "Address proof refresh pending",
+            },
+            {
+                "member_id": "PEN-0890007",
+                "name": "Helena Brooks",
+                "age": 69,
+                "gender": "F",
+                "annuity_amount": 18820,
+                "currency": currency,
+                "status": "active",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+            {
+                "member_id": "PEN-0890008",
+                "name": "Victor Lam",
+                "age": 81,
+                "gender": "M",
+                "annuity_amount": 20475,
+                "currency": currency,
+                "status": "deceased",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+            {
+                "member_id": "PEN-0890009",
+                "name": "Nadia Foster",
+                "age": 66,
+                "gender": "F",
+                "annuity_amount": 17635,
+                "currency": currency,
+                "status": "active",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+            {
+                "member_id": "PEN-0890010",
+                "name": "Graham O'Neill",
+                "age": 70,
+                "gender": "M",
+                "annuity_amount": 19290,
+                "currency": currency,
+                "status": "active",
+                "last_verified": last_verified,
+                "defer_reason": "",
+            },
+        ]
+
+        if status and status != "all":
+            filtered = [item for item in items if item["status"].lower() == status.lower()]
+        else:
+            filtered = items
+
+        start_index = max(page - 1, 0) * page_size
+        paginated_items = filtered[start_index : start_index + page_size]
+        return {
+            "contract_id": contract.contract_id,
+            "total": len(filtered),
+            "display_total": MAPLE_LEAF_MEMBER_DISPLAY_TOTAL,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": MAPLE_LEAF_MEMBER_DISPLAY_PAGES,
+            "summary": summary,
             "items": paginated_items,
         }
 

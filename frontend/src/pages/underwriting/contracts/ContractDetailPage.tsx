@@ -95,7 +95,7 @@ export function ContractDetailPage() {
     queryFn: async () =>
       (
         await api.get<ContractMemberListPayload>(`/underwriting/contracts/${id}/member-list`, {
-          params: { status: memberStatus, page: 1, page_size: 50 },
+          params: { status: memberStatus, page: 1, page_size: 10 },
         })
       ).data,
     enabled: Boolean(id),
@@ -341,6 +341,7 @@ export function ContractDetailPage() {
             <MemberPopulationTab
               contractId={detail.contract_id}
               detail={detail}
+              memberList={memberListQuery.data}
               filteredMembers={filteredMembers}
               memberSearch={memberSearch}
               memberStatus={memberStatus}
@@ -592,6 +593,7 @@ function RulesConfigurationTab({
 function MemberPopulationTab({
   contractId,
   detail,
+  memberList,
   memberSummary,
   filteredMembers,
   memberSearch,
@@ -604,6 +606,7 @@ function MemberPopulationTab({
 }: {
   contractId: string
   detail: ContractDetailPayload
+  memberList: ContractMemberListPayload | undefined
   memberSummary: ContractDetailPayload['member_population']
   filteredMembers: ContractMemberListPayload['items']
   memberSearch: string
@@ -614,6 +617,11 @@ function MemberPopulationTab({
   onMemberGenderChange: (value: string) => void
   onOpenPopulation: () => void
 }) {
+  const sampleCount = filteredMembers.length
+  const memberDisplayTotal = memberList?.display_total ?? memberSummary.total_members
+  const currentPage = memberList?.page ?? 1
+  const totalPages = memberList?.total_pages ?? 1
+
   return (
     <div className="space-y-5">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -686,6 +694,23 @@ function MemberPopulationTab({
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-iris-border bg-[#F8F9FA] px-4 py-3 text-[12px] text-iris-text-secondary sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            Showing {sampleCount.toLocaleString('en-GB')} sample members from {memberDisplayTotal.toLocaleString('en-GB')} covered lives.
+          </p>
+          <div className="flex items-center gap-2">
+            <button className="btn-secondary cursor-not-allowed opacity-60" disabled type="button">
+              Previous
+            </button>
+            <span className="rounded-full border border-iris-border bg-white px-4 py-2 font-semibold text-iris-text-primary">
+              Page {currentPage.toLocaleString('en-GB')} of {totalPages.toLocaleString('en-GB')}
+            </span>
+            <button className="btn-secondary cursor-not-allowed opacity-60" disabled type="button">
+              Next
+            </button>
+          </div>
         </div>
       </PanelCard>
     </div>

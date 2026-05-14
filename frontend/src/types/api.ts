@@ -816,8 +816,10 @@ export interface ContractMemberRecord {
 export interface ContractMemberListPayload {
   contract_id: string
   total: number
+  display_total?: number
   page: number
   page_size: number
+  total_pages?: number
   summary: ContractMemberSummary
   items: ContractMemberRecord[]
 }

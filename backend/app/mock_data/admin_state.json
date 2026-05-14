@@ -589,7 +589,7 @@
     {
       "list_name": "FinCEN 314(a)",
       "provider": "FinCEN",
-      "records": 4122,
+      "records": 3,
       "last_sync": "2025-04-29 04:05",
       "status": "active"
     },

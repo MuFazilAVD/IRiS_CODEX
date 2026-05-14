@@ -544,6 +544,15 @@
     }
   },
   "LSC-2024-044": {
+    "member_population": {
+      "total_members": 8900,
+      "active_members": 7755,
+      "deferred_members": 96,
+      "spouse_members": 0,
+      "deceased_members": 1049,
+      "currency": "CAD",
+      "last_verified_date": "2025-03-31"
+    },
     "details_performance": {
       "cumulative_net_variance": -16470,
       "settlement_history": [

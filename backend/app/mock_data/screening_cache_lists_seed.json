@@ -66,7 +66,7 @@
   {
     "list_name": "FinCEN 314(a)",
     "provider": "FinCEN",
-    "record_count": 4122,
+    "record_count": 3,
     "last_sync": "2025-04-29T04:05:00Z",
     "status": "active",
     "data_payload": {

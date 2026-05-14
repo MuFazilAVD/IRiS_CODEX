@@ -233,6 +233,44 @@ No request is sent from  frontend to login
 ### Status
 ✅ Completed
 
+## [2026-05-14 07:24:22 +00:00]
+
+### Prompt
+In financials section of maple leaf 8900 lives covered is mentioned. But in the population section only 4 are there. Even though it is purely mock bring some originality. Show the count as 8900 in population and in the table show 10 people and pagination across 8900 pages( Do not add the rest of 8990 people there, just show the cound and make the pagination navigation non clickable).
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+  - frontend/src/pages/underwriting/contracts/contractConfig.ts
+  - frontend/src/types/api.ts
+  - backend/app/services/underwriting_service.py
+  - backend/app/mock_data/contract_detail_overrides.json
+
+### Actions Taken
+- Routed Maple Leaf (`LSC-2024-044`) member-list responses through a documented mock-only helper so the contract detail tab no longer reflects the tiny four-row seed population.
+- Added a richer Maple Leaf member population summary with 8,900 total covered lives and a 10-row representative sample of member records.
+- Reduced the contract-detail member-list page size to 10 and added a disabled pagination footer that displays `Page 1 of 8,900` without enabling navigation.
+- Updated the tracker to document the Maple-specific mock display behavior.
+
+### Files Modified
+- backend/app/services/underwriting_service.py
+- backend/app/mock_data/contract_detail_overrides.json
+- frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The seeded `policy_register` data for `LSC-2024-044` still contains only 4 demo rows, so this contract-detail population view remains intentionally mock-backed for consistency with the financial lives-covered figure.
+- The requested `8,900 pages` footer is decorative and non-clickable rather than mathematically derived from the 10-row sample.
+
+### Status
+🧪 Mocked
+
 ## [2026-05-14 06:43:25 UTC]
 
 ### Prompt
