@@ -136,7 +136,7 @@
       {
         "timestamp": "2026-05-07T17:23:29.644744Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "396 critical, 201 warnings"
       }
@@ -334,7 +334,7 @@
       {
         "timestamp": "2026-05-07T17:40:45.775827Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 0 warnings"
       },
@@ -509,7 +509,7 @@
       {
         "timestamp": "2026-05-07T18:32:39.486497Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "600 critical, 200 warnings"
       }
@@ -640,7 +640,7 @@
       {
         "timestamp": "2026-05-07T11:07:03.589635Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 1 warnings"
       }
@@ -759,7 +759,7 @@
       {
         "timestamp": "2026-05-07T11:07:41.996304Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 0 warnings"
       },
@@ -916,7 +916,7 @@
       {
         "timestamp": "2026-05-07T11:51:18.058810Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 0 warnings"
       },
@@ -1073,7 +1073,7 @@
       {
         "timestamp": "2026-05-07T11:53:38.751241Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 0 warnings"
       },
@@ -1267,7 +1267,7 @@
       {
         "timestamp": "2026-05-07T12:35:52.298099Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 0 warnings"
       },
@@ -1577,7 +1577,7 @@
       {
         "timestamp": "2026-05-08T07:01:09.167474Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 0 warnings"
       },
@@ -1775,7 +1775,7 @@
       {
         "timestamp": "2026-05-08T07:15:43.281420Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "2 critical, 0 warnings"
       },
@@ -2004,7 +2004,7 @@
       {
         "timestamp": "2026-05-08T07:19:03.441197Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "3 critical, 0 warnings"
       },
@@ -2279,7 +2279,7 @@
       {
         "timestamp": "2026-05-08T07:38:50.748515Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 0 warnings"
       },
@@ -2506,7 +2506,7 @@
       {
         "timestamp": "2026-05-08T09:10:03.037476Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 0 warnings"
       },
@@ -2777,7 +2777,7 @@
       {
         "timestamp": "2026-05-08T09:33:22.123754Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 0 warnings"
       },
@@ -3062,7 +3062,7 @@
       {
         "timestamp": "2026-05-11T09:03:47.953134Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "0 critical, 0 warnings"
       },
@@ -3319,7 +3319,7 @@
       {
         "timestamp": "2026-05-11T11:56:03.706148Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "3 critical, 0 warnings"
       }
@@ -3440,7 +3440,7 @@
       {
         "timestamp": "2026-05-11T12:08:27.214880Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 10 warnings"
       },
@@ -3748,7 +3748,7 @@
       {
         "timestamp": "2026-05-11T12:54:01.570311Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 10 warnings"
       }
@@ -3869,7 +3869,7 @@
       {
         "timestamp": "2026-05-11T13:25:46.979052Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 10 warnings"
       },
@@ -4296,7 +4296,7 @@
       {
         "timestamp": "2026-05-12T06:07:14.816230Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 10 warnings"
       },
@@ -4583,7 +4583,7 @@
       {
         "timestamp": "2026-05-12T07:02:47.204681Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 9 warnings"
       },
@@ -4878,7 +4878,7 @@
       {
         "timestamp": "2026-05-12T11:22:17.219613Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 9 warnings"
       },
@@ -5173,7 +5173,7 @@
       {
         "timestamp": "2026-05-12T11:42:07.928433Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 9 warnings"
       },
@@ -5507,7 +5507,7 @@
       {
         "timestamp": "2026-05-12T12:06:00.934501Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 9 warnings"
       },
@@ -5570,7 +5570,7 @@
       {
         "timestamp": "2026-05-13T06:09:40.879476Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 9 warnings"
       }
@@ -5876,7 +5876,7 @@
       {
         "timestamp": "2026-05-12T12:14:57.078044Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 10 warnings"
       },
@@ -6117,7 +6117,7 @@
       {
         "timestamp": "2026-05-12T12:18:23.566635Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 10 warnings"
       },
@@ -6358,7 +6358,7 @@
       {
         "timestamp": "2026-05-12T12:29:29.584986Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 10 warnings"
       },
@@ -6593,7 +6593,7 @@
       {
         "timestamp": "2026-05-13T06:40:43.999383Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 7 warnings"
       },
@@ -6828,7 +6828,7 @@
       {
         "timestamp": "2026-05-13T06:46:11.518779Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 6 warnings"
       },
@@ -7070,7 +7070,7 @@
       {
         "timestamp": "2026-05-13T06:48:07.046859Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 7 warnings"
       },
@@ -7305,7 +7305,7 @@
       {
         "timestamp": "2026-05-13T06:49:33.415689Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 7 warnings"
       },
@@ -7554,7 +7554,7 @@
       {
         "timestamp": "2026-05-13T06:50:33.573357Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 7 warnings"
       },
@@ -7789,7 +7789,7 @@
       {
         "timestamp": "2026-05-13T06:51:36.860758Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 7 warnings"
       },
@@ -8024,7 +8024,7 @@
       {
         "timestamp": "2026-05-13T06:52:31.649357Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 7 warnings"
       },
@@ -8378,7 +8378,7 @@
       {
         "timestamp": "2026-05-14T06:15:32.414816Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 7 warnings"
       },
@@ -8693,7 +8693,7 @@
       {
         "timestamp": "2026-05-14T06:45:59.742095Z",
         "actor": "Validation Engine",
-        "type": "System",
+        "type": "AI Agent",
         "action": "Validation complete",
         "detail": "1 critical, 7 warnings"
       },
@@ -8979,6 +8979,476 @@
           ]
         }
       ]
+    }
+  },
+  "CES-2026-047": {
+    "pipeline_session_id": "pipe-2d754399-59f4-4ba5-a5ba-d86f43e3e04f",
+    "active_step": "summary",
+    "source_filename": "Maple_Leaf_Q1_2026.xlsx",
+    "source_size_bytes": 5328,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CA$1,500,000\",\"CA$1,506,735\",CA$900,CA$0,\"CA$5,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1240000,900,0,-10900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379000,1000,0,10500\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-14T13:20:49.490645Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-14T13:20:49.834934Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-14T13:20:35.612210Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026.xlsx"
+      },
+      {
+        "timestamp": "2026-05-14T13:20:49.650275Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-14T13:20:49.710391Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-14T13:20:49.968539Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-14T13:20:50.441198Z",
+        "actor": "Validation Engine",
+        "type": "AI Agent",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-14T13:21:02.138492Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "8 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-14T13:21:04.166018Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-14T13:21:05.884331Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-14T13:21:06.010789Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9248"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-14T13:20:35.612210Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-14T13:20:49.525176Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-14T13:20:49.557657Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-14T13:20:49.875352Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-14T13:20:50.340642Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-14T13:21:02.093207Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-14T13:21:04.099220Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-14T13:21:05.738256Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-14T13:21:05.772639Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:20:35.612210Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:20:49.589198Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:20:49.907449Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:21:04.132491Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:20:50.371252Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:21:02.072128Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:21:05.811561Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-14T13:21:05.852320Z"
+      }
+    ],
+    "settlement_report_artifacts": [],
+    "settlement_report_artifacts_pushed": false,
+    "settlement_report_artifacts_pushed_at": null,
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-044-047",
+      "settlement_display_id": "STL-2026-Q1-044-047",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4125735.0,
+      "net_amount": 5435.0,
+      "currency": "CAD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-12",
+      "status": "pending_reconciliation",
+      "iris_recommendation": "review",
+      "source": "Created from Settlement file CES-2026-047; reconciled against baseline SET-2026-Q1-044; decision=review",
+      "last_updated": "2026-05-14T13:21:05.218089Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-044",
+        "decision": "review",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-12",
+        "currency": "CAD",
+        "expected_source": "contract details performance",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4125735,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 5435,
+          "recomputed_net": 5435
+        },
+        "system": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905
+        },
+        "mismatches": [
+          {
+            "field": "floating_leg",
+            "uploaded": 4125735,
+            "expected": 4142205,
+            "issue_type": "floating_leg_mismatch",
+            "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 5435,
+            "expected": 21905,
+            "issue_type": "net_reconciliation_mismatch",
+            "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+          }
+        ],
+        "incoming_row_count": 3
+      },
+      "baseline_settlement_id": "SET-2026-Q1-044",
+      "settlement_report_artifacts": []
+    }
+  },
+  "CES-2026-048": {
+    "pipeline_session_id": "pipe-f2c41461-24cf-458f-b135-97269cb275ae",
+    "active_step": "summary",
+    "source_filename": "Maple_Leaf_Q1_2026_pipe.txt",
+    "source_size_bytes": 515,
+    "source_content_text": "Calculation Period|Payment Date|Pensioner Movement|Applicable Indexation / Escalation|Fixed Amount|Floating Amount|Fee (Admin)|Interest on Over/Underpayment from Prior Period|Net Settlement Amount\n2026 Q1|2026-04-12|Death|CPI capped 5% applied to pension tranche|CA$1,500,000|CA$1,506,735|CA$900|CA$0|CA$5,835\n2026 Q1||Suspension|No escalation applicable during suspension period|1250000|1240000|900|0|-10900\n2026 Q1|2026-04-12|Reinstatement|CPI capped 5% reapplied after reinstatement|1367500|1379000|1000|0|10500\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-14T13:31:41.740987Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-14T13:31:42.054562Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-14T13:31:37.745529Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026_pipe.txt"
+      },
+      {
+        "timestamp": "2026-05-14T13:31:41.862437Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-14T13:31:41.916189Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-14T13:31:42.185687Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-14T13:31:42.682494Z",
+        "actor": "Validation Engine",
+        "type": "AI Agent",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-14T13:31:52.996301Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "8 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-14T13:31:55.186752Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-14T13:31:57.923674Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-14T13:31:58.002618Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9249"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-14T13:31:37.745529Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-14T13:31:41.770261Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-14T13:31:41.793622Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-14T13:31:42.089466Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-14T13:31:42.583861Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-14T13:31:52.924957Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-14T13:31:55.118312Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-14T13:31:57.788301Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-14T13:31:57.822676Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:31:37.745529Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:31:41.813259Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:31:42.120986Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:31:55.152413Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:31:42.616112Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:31:52.898448Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-14T13:31:57.856029Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-14T13:31:57.889512Z"
+      }
+    ],
+    "settlement_report_artifacts": [],
+    "settlement_report_artifacts_pushed": false,
+    "settlement_report_artifacts_pushed_at": null,
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-044-048",
+      "settlement_display_id": "STL-2026-Q1-044-048",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4125735.0,
+      "net_amount": 5435.0,
+      "currency": "CAD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-12",
+      "status": "pending_reconciliation",
+      "iris_recommendation": "review",
+      "source": "Created from Settlement file CES-2026-048; reconciled against baseline SET-2026-Q1-044; decision=review",
+      "last_updated": "2026-05-14T13:31:57.192969Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-044",
+        "decision": "review",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-12",
+        "currency": "CAD",
+        "expected_source": "contract details performance",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4125735,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 5435,
+          "recomputed_net": 5435
+        },
+        "system": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905
+        },
+        "mismatches": [
+          {
+            "field": "floating_leg",
+            "uploaded": 4125735,
+            "expected": 4142205,
+            "issue_type": "floating_leg_mismatch",
+            "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": 5435,
+            "expected": 21905,
+            "issue_type": "net_reconciliation_mismatch",
+            "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+          }
+        ],
+        "incoming_row_count": 3
+      },
+      "baseline_settlement_id": "SET-2026-Q1-044",
+      "settlement_report_artifacts": []
     }
   }
 }

@@ -26,7 +26,7 @@ These rules are the runtime contract for the Claims > Cession Files pipeline.
 ## Settlement
 - Required fields: `Calculation Period`, `Payment Date`, `Pensioner Movement`, `Applicable Indexation/Escalation`, `Fixed Leg`, `Floating Leg`, `Fee`, `Interest on Over/Underpayment from Prior Period`, `Net Settlement Amount`.
 - Header aliases such as `Applicable Indexation / Escalation` and `Fee (Admin)` are valid Settlement headers after normalization.
-- CSV and tab-delimited CSV uploads are parsed using detected delimiters.
+- CSV, pipe-delimited TXT, and tab-delimited CSV uploads are parsed using detected delimiters.
 - Detect as `Settlement` only when every required settlement header is present.
 - Match by confirmed cedent and contract before reconciliation.
 - Compare uploaded fixed leg and floating leg against IRiS expected values for the mapped contract-period.

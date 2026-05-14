@@ -15,6 +15,64 @@ from app.models.population import PolicyRegister
 from app.models.worklist import WorklistItem
 
 
+CATALOG_COLUMN_HINTS: dict[str, dict[str, Any]] = {
+    "cession_file_records": {
+        "notes": (
+            "Settlement pipeline reconciliation data for uploaded cession files is stored in the "
+            "mapped_data JSON column. Use SQLite json_extract(mapped_data, '$.path') to query it. "
+            "For multi-row Settlement files, sum uploaded values from record-level fields such as "
+            "$.fixed_leg, $.floating_leg, $.fee, $.interest_prior_period, and $.net_settlement_amount "
+            "across rows. Do not sum $.settlement_reconciliation.system.* across rows because those "
+            "diagnostic values can repeat a file-level system expectation."
+        ),
+        "json_columns": [
+            {
+                "name": "mapped_data",
+                "paths": [
+                    "$.contract_id",
+                    "$.calculation_period",
+                    "$.payment_date",
+                    "$.currency",
+                    "$.fixed_leg",
+                    "$.floating_leg",
+                    "$.fee",
+                    "$.interest_prior_period",
+                    "$.net_settlement_amount",
+                    "$.settlement_reconciliation.settlement_id",
+                    "$.settlement_reconciliation.decision",
+                    "$.settlement_reconciliation.expected_source",
+                    "$.settlement_reconciliation.uploaded.fixed_leg",
+                    "$.settlement_reconciliation.uploaded.floating_leg",
+                    "$.settlement_reconciliation.uploaded.fee",
+                    "$.settlement_reconciliation.uploaded.interest_prior_period",
+                    "$.settlement_reconciliation.uploaded.net_settlement_amount",
+                    "$.settlement_reconciliation.system.fixed_leg",
+                    "$.settlement_reconciliation.system.floating_leg",
+                    "$.settlement_reconciliation.system.fee",
+                    "$.settlement_reconciliation.system.interest_prior_period",
+                    "$.settlement_reconciliation.system.net_settlement_amount",
+                ],
+            }
+        ],
+    },
+    "cession_files": {
+        "notes": (
+            "Join to cession_file_records on cession_files.id = cession_file_records.cession_file_id for "
+            "pipeline-level settlement questions. For processed Settlement files, also join settlements on "
+            "settlements.cession_file_id = cession_files.id to retrieve the authoritative file-level IRiS "
+            "system totals instead of summing repeated row diagnostics."
+        )
+    },
+    "settlements": {
+        "notes": (
+            "Processed Settlement files can create one linked settlements row through settlements.cession_file_id. "
+            "That linked row is the authoritative file-level IRiS system result for fixed leg, floating leg, "
+            "net amount, currency, status, and period when answering settlement pipeline reconciliation questions."
+        )
+    },
+}
+
+
 class ChatbotRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -30,7 +88,9 @@ class ChatbotRepository:
                 }
                 for column in inspector.get_columns(table_name)
             ]
-            catalog.append({"table_name": table_name, "columns": columns})
+            table_entry: dict[str, Any] = {"table_name": table_name, "columns": columns}
+            table_entry.update(CATALOG_COLUMN_HINTS.get(table_name, {}))
+            catalog.append(table_entry)
         return catalog
 
     def execute_readonly_query(self, query: str, max_rows: int = 200) -> dict[str, Any]:

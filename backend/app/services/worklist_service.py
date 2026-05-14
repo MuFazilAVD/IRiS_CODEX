@@ -51,6 +51,7 @@ class WorklistService:
         item: WorklistItem,
         cedent_names: dict[str, str] | None = None,
         assigned_user_emails: dict[str, str] | None = None,
+        assigned_user_names: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         elapsed_display, is_approaching, is_overdue = self._format_elapsed(item)
         return {
@@ -72,6 +73,7 @@ class WorklistService:
             "breadcrumb": item.breadcrumb,
             "cedent_name": (cedent_names or {}).get(item.cedent_id) if item.cedent_id else None,
             "assigned_to_email": (assigned_user_emails or {}).get(item.assigned_to) if item.assigned_to else None,
+            "assigned_to_name": (assigned_user_names or {}).get(item.assigned_to) if item.assigned_to else None,
             "entity_display": self._entity_display(item, cedent_names or {}),
             "action_label": self._action_label(item),
         }
@@ -110,6 +112,7 @@ class WorklistService:
                 item["action_label"] = live_state.get("action_label", item.get("action_label"))
                 item["assigned_role"] = live_state.get("assigned_role", item.get("assigned_role"))
                 item["assigned_to_email"] = live_state.get("assigned_to_email", item.get("assigned_to_email"))
+                item["assigned_to_name"] = live_state.get("assigned_to_name", item.get("assigned_to_name"))
                 item["entity_display"] = live_state.get("entity_display", item.get("entity_display"))
 
         dynamic_screening_items = self._build_dynamic_screening_worklist_items(register_items)
@@ -119,6 +122,7 @@ class WorklistService:
             if str(state.get("wl_id") or "") not in register_ids
         ]
         register_items = appended_live_items + dynamic_screening_items + register_items
+        self._attach_assignee_names(register_items)
 
         return {
             "summary": self._build_summary(register_items, role),
@@ -132,8 +136,14 @@ class WorklistService:
         db_items = self.repository.list_live_items()
         cedent_names = self.repository.list_cedent_names([item.cedent_id for item in db_items if item.cedent_id])
         assigned_user_emails = self.repository.list_user_emails([item.assigned_to for item in db_items if item.assigned_to])
+        assigned_user_names = self.repository.list_user_names([item.assigned_to for item in db_items if item.assigned_to])
         live_items = [
-            self._serialize_db_item(item, cedent_names=cedent_names, assigned_user_emails=assigned_user_emails)
+            self._serialize_db_item(
+                item,
+                cedent_names=cedent_names,
+                assigned_user_emails=assigned_user_emails,
+                assigned_user_names=assigned_user_names,
+            )
             for item in db_items
         ]
         return self._build_mock_payload(role, live_items=live_items)
@@ -180,6 +190,24 @@ class WorklistService:
         logger.debug("Dynamic sanctions screening worklist overlays count=%s", len(dynamic_items))
         return dynamic_items
 
+    def _attach_assignee_names(self, items: list[dict[str, Any]]) -> None:
+        emails = sorted(
+            {
+                str(item.get("assigned_to_email")).strip()
+                for item in items
+                if item.get("assigned_to_email") and not item.get("assigned_to_name")
+            }
+        )
+        if not emails:
+            return
+
+        logger.debug("Resolving worklist assignee names for %s email(s)", len(emails))
+        names_by_email = self.repository.list_user_names_by_email(emails)
+        for item in items:
+            email = item.get("assigned_to_email")
+            if email and not item.get("assigned_to_name"):
+                item["assigned_to_name"] = names_by_email.get(str(email).strip())
+
     def _serialize_dynamic_screening_worklist_item(self, event: ScreeningEvent, context: dict[str, Any]) -> dict[str, Any]:
         matched_lists = [self._watchlist_label(str(item)) for item in (event.matched_lists or [])]
         primary_watchlist = matched_lists[0] if matched_lists else "Sanctions"
@@ -213,6 +241,7 @@ class WorklistService:
             "breadcrumb": "Compliance Hold - Review Required",
             "cedent_name": entity_name,
             "assigned_to_email": WORKLIST_VIEWER_EMAILS["compliance"],
+            "assigned_to_name": None,
             "entity_display": entity_name,
             "financial_impact_display": None,
             "is_high_impact": False,
@@ -258,7 +287,13 @@ class WorklistService:
         updated_item = self.repository.update(item)
         cedent_names = self.repository.list_cedent_names([updated_item.cedent_id] if updated_item.cedent_id else [])
         assigned_user_emails = self.repository.list_user_emails([updated_item.assigned_to] if updated_item.assigned_to else [])
-        serialized = self._serialize_db_item(updated_item, cedent_names=cedent_names, assigned_user_emails=assigned_user_emails)
+        assigned_user_names = self.repository.list_user_names([updated_item.assigned_to] if updated_item.assigned_to else [])
+        serialized = self._serialize_db_item(
+            updated_item,
+            cedent_names=cedent_names,
+            assigned_user_emails=assigned_user_emails,
+            assigned_user_names=assigned_user_names,
+        )
 
         for item_payload in deepcopy(load_mock_data(WORKLIST_REGISTER_FILE)):
             if item_payload["wl_id"] == wl_id:

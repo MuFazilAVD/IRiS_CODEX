@@ -14,7 +14,7 @@ from typing import Any
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 
-from config import OPENAI_MODEL, openai_client
+from config import OPENAI_MODEL, get_openai_client
 from app.errors import IrisAPIError
 from app.mock_data_loader import load_mock_data
 from app.models.screening_event import ScreeningEvent
@@ -929,21 +929,30 @@ class ComplianceService:
 
     def _build_summary_payload(self, event: ScreeningEvent, watchlists: list[str]) -> dict[str, Any]:
         watchlist_text = " · ".join(watchlists[:3]) if watchlists else "OFAC · FinCEN"
-        if event.result in {"cleared", "false_positive"}:
+        matched_watchlists = [self._watchlist_label(str(item)) for item in (event.matched_lists or []) if str(item).strip()]
+        matched_watchlist_text = " · ".join(matched_watchlists[:3]) if matched_watchlists else watchlist_text
+
+        if not event.keyword_match:
             return {
                 "headline": f"No matches across {watchlist_text}",
                 "description": "Auto-cleared by Decision Engine. No analyst review required.",
                 "tone": "positive",
             }
+        if event.result in {"cleared", "false_positive"}:
+            return {
+                "headline": f"Raw match found in {matched_watchlist_text}",
+                "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
+                "tone": "positive",
+            }
         if event.result == "review":
             return {
-                "headline": f"Potential match across {watchlist_text}",
-                "description": "Held in analyst review queue pending entity resolution and compliance notes.",
+                "headline": f"Raw match found in {matched_watchlist_text}",
+                "description": "IRiS AI retained the raw watchlist hit for compliance review. Pending analyst disposition.",
                 "tone": "warning",
             }
         return {
-            "headline": f"High-risk match across {watchlist_text}",
-            "description": "Blocked pending compliance sign-off and enhanced due diligence.",
+            "headline": f"High-risk match found in {matched_watchlist_text}",
+            "description": "IRiS AI retained the raw watchlist hit as high risk. Blocked pending compliance sign-off.",
             "tone": "negative",
         }
 
@@ -1410,7 +1419,8 @@ class ComplianceService:
                 "llm_called": False,
             }
 
-        if openai_client is None:
+        client = get_openai_client()
+        if client is None:
             logger.info("OpenAI client is not configured; using heuristic screening verification")
             return {
                 **self._fallback_llm_verification(entity_name, dob, matches, identity_context),
@@ -1425,7 +1435,7 @@ class ComplianceService:
             [item["list_name"] for item in matches],
         )
         try:
-            response = openai_client.responses.create(
+            response = client.responses.create(
                 model=OPENAI_MODEL,
                 instructions=(
                     "You are a sanctions-screening verification assistant for an internal compliance workflow. "

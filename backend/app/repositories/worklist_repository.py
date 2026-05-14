@@ -42,6 +42,20 @@ class WorklistRepository:
         statement = select(User.id, User.email).where(User.id.in_(user_ids))
         return {user_id: email for user_id, email in self.db.execute(statement).all()}
 
+    def list_user_names(self, user_ids: list[str]) -> dict[str, str]:
+        if not user_ids:
+            return {}
+
+        statement = select(User.id, User.full_name).where(User.id.in_(user_ids))
+        return {user_id: full_name for user_id, full_name in self.db.execute(statement).all() if full_name}
+
+    def list_user_names_by_email(self, emails: list[str]) -> dict[str, str]:
+        if not emails:
+            return {}
+
+        statement = select(User.email, User.full_name).where(User.email.in_(emails))
+        return {email: full_name for email, full_name in self.db.execute(statement).all() if full_name}
+
     def update(self, item: WorklistItem) -> WorklistItem:
         self.db.add(item)
         self.db.commit()

@@ -891,12 +891,12 @@ function UploadStep({
           <label className="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-md border border-iris-border bg-white px-3.5 py-2 text-[13px] font-semibold text-iris-text-primary hover:bg-[#F8FAFC]">
             <FileUp className="h-4 w-4" />
             Choose local file
-            <input
-              accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12"
-              className="hidden"
-              onChange={(event) => onFilePicked(event.target.files?.[0] ?? null)}
-              type="file"
-            />
+              <input
+                accept=".csv,.txt,.xlsx,.xlsm,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12"
+                className="hidden"
+                onChange={(event) => onFilePicked(event.target.files?.[0] ?? null)}
+                type="file"
+              />
           </label>
           <p className="text-[12px] text-iris-text-secondary">{selectedFile ? `${selectedFile.name} · ${formatCount(selectedFile.size)} bytes` : 'No file selected yet.'}</p>
         </div>
@@ -1268,9 +1268,30 @@ function ExceptionsStep({
 }
 
 function ScreeningStep({ item }: { item: ClaimsWorklistTask }) {
+  const summary = item.screening_summary
+  const isAutoCleared = summary?.workflow_status === 'auto_cleared'
+  const assignedValue =
+    isAutoCleared
+      ? 'Not required'
+      : item.assigned_person ?? 'Unassigned'
+  const workflowStatusLabel = summary?.status ?? (isAutoCleared ? 'Auto-Cleared' : 'Pending')
+  const confidenceValue = summary?.confidence_pct !== null && summary?.confidence_pct !== undefined ? `${summary.confidence_pct}%` : '--'
+  const sourceCards = buildScreeningSourceCards(summary)
+  const decisionBannerClass = isAutoCleared ? 'border-[#C7EED8] bg-[#F0FFF6]' : 'border-[#F8D7A6] bg-[#FFF8EF]'
+  const decisionIconClass = isAutoCleared ? 'bg-[#DDF5E7] text-[#1E8449]' : 'bg-[#FDEBD0] text-[#AF601A]'
+  const statusBadgeClass = isAutoCleared
+    ? 'border-[#C7EED8] bg-[#F0FFF6] text-[#1E8449]'
+    : 'border-[#F8D7A6] bg-[#FFF8EF] text-[#AF601A]'
+  const decisionTitle = isAutoCleared
+    ? `${summary?.entity_name ?? 'Cedent'} auto-cleared`
+    : `${summary?.entity_name ?? 'Cedent'} requires compliance review`
+  const decisionCopy = isAutoCleared
+    ? 'OFAC and FinCEN screening completed without a remaining compliance hold. IRiS has recorded the final screening rationale below.'
+    : 'A retained sanctions signal still needs human-in-the-loop review. Keep the compliance hold in place until the assigned analyst closes the case.'
+
   return (
     <div className="space-y-5">
-      <SectionHeading title="Sanction Screening" subtitle="Current expanded view of the linked sanctions-screening task." />
+      <SectionHeading title="Sanction Screening" subtitle="Current sanctions-screening result for the linked cession-file release." />
 
       <div className="overflow-hidden rounded-[22px] border border-[#D9E3EA] bg-white shadow-sm">
         <div className="flex flex-col gap-4 border-b border-[#EEF2F5] px-5 py-5 lg:flex-row lg:items-start lg:justify-between">
@@ -1290,15 +1311,98 @@ function ScreeningStep({ item }: { item: ClaimsWorklistTask }) {
           </div>
         </div>
 
-        <div className="grid gap-3 border-b border-[#EEF2F5] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricLine label="Assigned" value={item.assigned_person ?? 'Unassigned'} />
-          <MetricLine label="SLA" value={item.sla} />
-          <MetricLine label="Status" value={item.status_label ?? formatWorklistTaskStatus(item.status ?? 'open')} />
-          <MetricLine label="Linked Case" value={item.screening_summary?.screening_ref ?? 'Pending case'} />
+        <div className="border-b border-[#EEF2F5] px-5 py-5">
+          <div className={`rounded-[20px] border px-5 py-4 ${decisionBannerClass}`}>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex items-start gap-3">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${decisionIconClass}`}>
+                  {isAutoCleared ? <Check className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Cedent screening outcome</p>
+                  <p className="mt-1.5 text-[20px] font-bold text-iris-text-primary">{decisionTitle}</p>
+                  <p className="mt-2 text-[13px] text-iris-text-secondary">{summary?.headline ?? item.task}</p>
+                  <p className="mt-2 text-[13px] text-iris-text-secondary">{decisionCopy}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <WorklistStatusPill item={item} />
+                <span className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold ${statusBadgeClass}`}>{workflowStatusLabel}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-[#FAFBFC] px-5 py-5">
-          <WorklistTaskExpandedDetail item={item} />
+        <div className="grid gap-3 border-b border-[#EEF2F5] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+          <MetricLine label="Cedent Auto-Cleared" value={isAutoCleared ? 'Yes' : 'No'} />
+          <MetricLine label="IRiS Confidence" value={confidenceValue} />
+          <MetricLine label={isAutoCleared ? 'Review Status' : 'Pending Status'} value={isAutoCleared ? 'No HITL review required' : `${workflowStatusLabel} - HITL`} />
+          <MetricLine label="Assigned Compliance" value={assignedValue} />
+        </div>
+
+        <div className="grid gap-4 border-b border-[#EEF2F5] px-5 py-5 xl:grid-cols-2">
+          {sourceCards.map((source) => (
+            <ScreeningSourceCard key={source.name} detail={source.detail} name={source.name} result={source.result} tone={source.tone} />
+          ))}
+        </div>
+
+        <div className="grid gap-4 px-5 py-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <div className="space-y-4">
+            <div className="rounded-[20px] border border-[#D9E3EA] bg-white px-5 py-4">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Raw Watchlist Output</p>
+              <p className="mt-3 text-[14px] font-semibold text-iris-text-primary">{summary?.raw_findings_summary ?? 'No raw watchlist findings are available for this screening case.'}</p>
+            </div>
+
+            <div className="rounded-[20px] border border-[#B8E2E0] bg-[#F4FBFB] px-5 py-4">
+              <div className="flex items-center gap-2 text-[13px] font-semibold text-[#117A65]">
+                <Sparkles className="h-4 w-4" />
+                IRiS Analysis
+              </div>
+              <p className="mt-3 text-[14px] font-semibold text-iris-text-primary">{summary?.iris_findings_summary ?? item.description}</p>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <MetricLine label="Confidence Score" value={confidenceValue} />
+                <MetricLine label="Recommended Action" value={summary?.recommended_action ?? 'Review case'} />
+                <MetricLine label="Analysis Label" value={summary?.analysis_label ?? 'IRiS decision engine'} />
+                <MetricLine label="Linked Case" value={summary?.screening_ref ?? 'Pending case'} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-[20px] border border-[#D9E3EA] bg-white px-5 py-4">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Task Context</p>
+              <p className="mt-3 text-[13px] text-iris-text-primary">{item.description || 'No additional task summary is available for this worklist item.'}</p>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <MetricLine label="Workflow Task" value={item.wl_id} />
+                <MetricLine label="SLA" value={item.sla} />
+              </div>
+              {item.target_url && item.target_label ? (
+                <div className="mt-4">
+                  <Link className="inline-flex items-center rounded-full bg-[#F4F7FA] px-3 py-1.5 text-[12px] font-semibold text-iris-text-secondary transition hover:bg-[#EAF1F6]" to={item.target_url}>
+                    {item.target_label}
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+
+            {isAutoCleared ? (
+              <div className="rounded-[20px] border border-[#C7EED8] bg-[#F0FFF6] px-5 py-4">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#1E8449]">Release Readiness</p>
+                <p className="mt-3 text-[14px] font-semibold text-iris-text-primary">No compliance analyst handoff is required for this cedent.</p>
+                <p className="mt-2 text-[13px] text-iris-text-secondary">The cession-file release can continue without a pending sanctions-review task.</p>
+              </div>
+            ) : (
+              <div className="rounded-[20px] border border-[#F8D7A6] bg-[#FFF8EF] px-5 py-4">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#AF601A]">Pending HITL Review</p>
+                <p className="mt-3 text-[14px] font-semibold text-iris-text-primary">A compliance analyst still needs to disposition this sanctions case.</p>
+                <div className="mt-4 grid gap-3">
+                  <MetricLine label="Pending Status" value={workflowStatusLabel} />
+                  <MetricLine label="Assigned Compliance Member" value={assignedValue} />
+                  <MetricLine label="Case Reference" value={summary?.screening_ref ?? item.wl_id} />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1406,7 +1510,11 @@ function SettlementReconciliationPanel({
         <div>
           <p className="text-[15px] font-semibold text-iris-text-primary">Settlement Reconciliation</p>
           <p className="mt-1 text-[12px] text-iris-text-secondary">
-            {reconciliation.settlement_id} Â· {reconciliation.calculation_period} Â· {reconciliation.expected_source}
+            {reconciliation.settlement_id}
+            {' \u00b7 '}
+            {reconciliation.calculation_period}
+            {' \u00b7 '}
+            {reconciliation.expected_source}
           </p>
         </div>
         <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${decisionTone}`}>{formatSettlementDecision(reconciliation.decision)}</span>
@@ -1706,10 +1814,21 @@ function ScreeningSummaryPanel({ summary }: { summary: ClaimsWorklistScreeningSu
       </div>
 
       <div className="grid gap-3 px-4 py-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricLine label="Watchlists" value={summary.watchlists_screened.length ? summary.watchlists_screened.join(' · ') : 'OFAC · FinCEN'} />
+        <MetricLine label="Watchlists Screened" value={summary.watchlists_screened.length ? summary.watchlists_screened.join(' · ') : 'OFAC · FinCEN'} />
+        <MetricLine label="Raw Matches" value={summary.matched_watchlists.length ? summary.matched_watchlists.join(' · ') : 'None'} />
         <MetricLine label="Confidence" value={summary.confidence_pct !== null ? `${summary.confidence_pct}%` : '—'} />
-        <MetricLine label="Analysis" value={summary.analysis_label || 'Completed'} />
         <MetricLine label="Recommended Action" value={summary.recommended_action || 'Review case'} />
+      </div>
+
+      <div className="grid gap-3 border-t border-[#EEF2F5] px-4 py-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-[#E5EBF0] bg-[#FAFBFC] px-4 py-3">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Raw Watchlist Finding</p>
+          <p className="mt-2 text-[13px] text-iris-text-primary">{summary.raw_findings_summary}</p>
+        </div>
+        <div className="rounded-xl border border-[#E5EBF0] bg-[#FAFBFC] px-4 py-3">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">IRiS AI Finding</p>
+          <p className="mt-2 text-[13px] text-iris-text-primary">{summary.iris_findings_summary}</p>
+        </div>
       </div>
 
       {summary.candidate_name || summary.candidate_list ? (
@@ -1719,6 +1838,38 @@ function ScreeningSummaryPanel({ summary }: { summary: ClaimsWorklistScreeningSu
           {summary.candidate_list ? ` · ${summary.candidate_list}` : ''}
         </div>
       ) : null}
+    </div>
+  )
+}
+
+function ScreeningSourceCard({
+  detail,
+  name,
+  result,
+  tone,
+}: {
+  detail: string
+  name: string
+  result: string
+  tone: 'positive' | 'warning' | 'neutral'
+}) {
+  const badgeClass =
+    tone === 'positive'
+      ? 'border-[#C7EED8] bg-[#F0FFF6] text-[#1E8449]'
+      : tone === 'warning'
+        ? 'border-[#F8D7A6] bg-[#FFF8EF] text-[#AF601A]'
+        : 'border-[#D9E3EA] bg-[#F7F9FB] text-[#41566B]'
+
+  return (
+    <div className="rounded-[20px] border border-[#D9E3EA] bg-white px-5 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[18px] font-semibold text-iris-text-primary">{name}</p>
+          <p className="mt-1 text-[12px] text-iris-text-secondary">Provider output</p>
+        </div>
+        <span className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold ${badgeClass}`}>{result}</span>
+      </div>
+      <p className="mt-4 text-[13px] text-iris-text-primary">{detail}</p>
     </div>
   )
 }
@@ -2173,6 +2324,62 @@ function formatSettlementDecision(value: string) {
 
 function formatConfidence(value: number) {
   return `${Math.round(value * 100)}%`
+}
+
+function buildScreeningSourceCards(summary: ClaimsWorklistScreeningSummary | null | undefined) {
+  const isAutoCleared = summary?.workflow_status === 'auto_cleared'
+  const screenedWatchlists = new Set((summary?.watchlists_screened ?? []).map((item) => normalizeWatchlistName(item)))
+  const matchedWatchlists = new Set((summary?.matched_watchlists ?? []).map((item) => normalizeWatchlistName(item)))
+
+  return ['OFAC', 'FinCEN'].map((name) => {
+    const wasScreened = screenedWatchlists.has(name)
+    const hasRetainedMatch = matchedWatchlists.has(name)
+
+    if (!wasScreened) {
+      return {
+        name,
+        result: 'Not Run',
+        detail: `${name} was not included in the current cession-file screening run.`,
+        tone: 'neutral' as const,
+      }
+    }
+
+    if (!hasRetainedMatch) {
+      return {
+        name,
+        result: 'Cleared',
+        detail: `${name} completed with no retained watchlist match for this cedent.`,
+        tone: 'positive' as const,
+      }
+    }
+
+    if (isAutoCleared) {
+      return {
+        name,
+        result: 'Raw Match Reviewed',
+        detail: `${name} surfaced a raw watchlist overlap, and IRiS auto-cleared it after case analysis.`,
+        tone: 'warning' as const,
+      }
+    }
+
+    return {
+      name,
+      result: 'Pending Review',
+      detail: `${name} returned a retained match that is still awaiting compliance disposition.`,
+      tone: 'warning' as const,
+    }
+  })
+}
+
+function normalizeWatchlistName(value: string) {
+  const normalized = value.trim().toUpperCase()
+  if (normalized.startsWith('OFAC')) {
+    return 'OFAC'
+  }
+  if (normalized.startsWith('FINCEN')) {
+    return 'FinCEN'
+  }
+  return value.trim()
 }
 
 function compactCurrency(value: number, currency: string) {

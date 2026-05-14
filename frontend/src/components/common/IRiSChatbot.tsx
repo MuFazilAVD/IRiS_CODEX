@@ -13,8 +13,14 @@ type ConversationMessage = ChatbotConversationEntry & {
   sources?: string[]
 }
 
-const OPENING_MESSAGE =
-  "Hi, I'm IRiS Assist. I can answer questions about what's on screen, navigate you to any module you're permitted to access, and pull up specific contracts, settlements, files or screening hits. Try 'show me contract LSC-2024-019' or 'what's the Q1 settlement variance?'"
+const OPENING_MESSAGE = `**IRiS Assist**
+
+I can help with:
+- current-page context
+- live data questions
+- permitted navigation
+
+Try \`show me contract LSC-2024-019\` or \`what is the Q1 settlement variance?\``
 
 export function IRiSChatbot() {
   const navigate = useNavigate()
@@ -102,7 +108,7 @@ export function IRiSChatbot() {
       </button>
 
       {chatbotOpen ? (
-        <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[380px] flex-col border-l border-[#D8E2EA] bg-white shadow-[0_20px_60px_rgba(13,27,42,0.18)]">
+        <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[420px] flex-col border-l border-[#D8E2EA] bg-white shadow-[0_20px_60px_rgba(13,27,42,0.18)]">
           <div className="flex items-start justify-between gap-4 bg-iris-navy px-4 py-3 text-white">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 grid h-8 w-8 place-items-center rounded-md bg-white/95">
@@ -122,12 +128,11 @@ export function IRiSChatbot() {
 
           <div className="flex-1 overflow-y-auto px-4 py-4">
             <div className="rounded-2xl bg-[#F1F4F7] px-4 py-3 text-[13px] leading-7 text-iris-text-primary">
-              <strong>Hi, I&apos;m IRiS Assist.</strong> I can answer questions about what&apos;s on screen, navigate you to any module you&apos;re permitted to access, and pull up specific contracts, settlements, files or screening hits. Try{' '}
-              <em>&quot;show me contract LSC-2024-019&quot;</em> or <em>&quot;what&apos;s the Q1 settlement variance?&quot;</em>
+              <MarkdownMessage content={OPENING_MESSAGE} />
             </div>
 
             <div className="mt-4">
-              <p className="mb-2 text-[12px] text-iris-text-secondary">Quick actions</p>
+              <p className="mb-2 text-[12px] text-iris-text-secondary">Suggested queries</p>
               <div className="flex flex-wrap gap-2">
                 {quickActions.map((item) => (
                   <button
@@ -146,7 +151,7 @@ export function IRiSChatbot() {
               {messages.slice(1).map((message) => (
                 <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-[86%] rounded-2xl px-4 py-3 text-[13px] leading-6 shadow-sm ${
+                    className={`max-w-[88%] rounded-2xl px-4 py-3 text-[13px] leading-6 shadow-sm ${
                       message.role === 'user' ? 'bg-iris-navy text-white' : 'bg-[#F1F4F7] text-iris-text-primary'
                     }`}
                   >
@@ -173,7 +178,7 @@ export function IRiSChatbot() {
               {submitting ? (
                 <div className="flex justify-start">
                   <div className="max-w-[86%] rounded-2xl bg-[#F1F4F7] px-4 py-3 text-[13px] text-iris-text-secondary shadow-sm">
-                    IRiS is thinking...
+                    IRiS is analyzing the request...
                   </div>
                 </div>
               ) : null}
@@ -185,7 +190,7 @@ export function IRiSChatbot() {
             <div className="flex items-center gap-2">
               <input
                 className="field-input flex-1"
-                placeholder="Ask about anything on screen..."
+                placeholder="Ask a business or navigation question..."
                 value={inputValue}
                 onChange={(event) => setInputValue(event.target.value)}
                 onKeyDown={(event) => {
@@ -215,7 +220,6 @@ function quickActionsForRole(role: string) {
   if (role === 'admin') {
     return [
       'Open the admin dashboard',
-      'Any FYA items on my worklist?',
       'Show recent audit trail entries',
     ]
   }
@@ -223,7 +227,6 @@ function quickActionsForRole(role: string) {
     return [
       'Show me the latest screening hits',
       'Open the compliance dashboard',
-      'Any FYA items on my worklist?',
       'Show recent audit trail entries',
     ]
   }
@@ -240,12 +243,10 @@ function quickActionsForRole(role: string) {
       'Show me contract LSC-2024-019',
       'Open the underwriting dashboard',
       'How many active contracts do we have with Northstar?',
-      'Any FYA items on my worklist?',
     ]
   }
   return [
     'Open the admin dashboard',
-    'Any FYA items on my worklist?',
     'Show recent audit trail entries',
   ]
 }

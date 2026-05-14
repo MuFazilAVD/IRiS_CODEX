@@ -92,6 +92,14 @@ Operations
   F  Audit & Compliance
 ```
 
+## CONTRACT DETAIL RULES & CONFIGURATION CORRECTION
+
+From the contract detail screenshot for the `Clauses` card under `Rules & Configuration`:
+
+- Keep the section title as `Clauses`
+- Remove the helper subtitle mentioning `60 hardcoded clauses currently applied across all contracts`
+- Only the table content should render under the heading
+
 ---
 
 ## 04 ACTUARIAL BASIS (exact from screenshot)

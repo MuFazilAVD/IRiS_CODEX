@@ -142,9 +142,7 @@ function CedantRow({ item, onOpen }: { item: CedentListItem; onOpen: () => void 
           {item.legal_entity_name}
         </Link>
       </td>
-      <td className="px-3 py-3">
-        {countryFlag(item.country)} {displayCedantCountryCode(item.legal_entity_name, item.country)}
-      </td>
+      <td className="px-3 py-3">{displayCedantCountryCode(item.country)}</td>
       <td className="px-3 py-3 text-right">{item.aum}</td>
       <td className={`px-3 py-3 ${item.contracts_count === 0 ? 'text-iris-text-muted' : 'text-iris-text-primary'}`}>{item.contracts_count}</td>
       <td className="px-3 py-3">
@@ -168,23 +166,6 @@ function getSuggestedCedentId(items: CedentListItem[]) {
   return `CED-${String(maxValue + 1).padStart(4, '0')}`
 }
 
-function countryFlag(country: string | null) {
-  switch (country) {
-    case 'UK':
-      return '🇬🇧'
-    case 'CH':
-      return '🇨🇭'
-    case 'US':
-      return '🇺🇸'
-    case 'CA':
-      return '🇨🇦'
-    case 'DE':
-      return '🇩🇪'
-    default:
-      return '🏳️'
-  }
-}
-
 function titleCase(value: string) {
   return value
     .replaceAll('_', ' ')
@@ -193,9 +174,6 @@ function titleCase(value: string) {
     .join(' ')
 }
 
-function displayCedantCountryCode(legalEntityName: string, country: string | null) {
-  if (legalEntityName === 'Maple Leaf Pension Plan' && country === 'CA') {
-    return 'CAD'
-  }
+function displayCedantCountryCode(country: string | null) {
   return country ?? '-'
 }

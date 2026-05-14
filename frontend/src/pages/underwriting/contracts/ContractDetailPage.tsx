@@ -557,10 +557,7 @@ function RulesConfigurationTab({
         )
       })}
 
-      <PanelCard
-        subtitle={`${detail.contract_clauses.length} hardcoded clauses currently applied across all contracts.`}
-        title="Clauses"
-      >
+      <PanelCard title="Clauses">
         <div className="overflow-x-auto rounded-xl border border-iris-border">
           <table className="min-w-full text-[13px]">
             <thead className="bg-[#F8F9FA]">

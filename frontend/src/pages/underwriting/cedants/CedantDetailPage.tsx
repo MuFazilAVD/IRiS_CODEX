@@ -188,7 +188,7 @@ export function CedantDetailPage() {
               <StatusBadge status={detail.screening_status}>Screening: {titleCase(detail.screening_status)}</StatusBadge>
             </div>
             <p className="mt-2 text-[13px] text-iris-text-secondary">
-              {detail.cedent_id} - {displayCedantCountryCode(detail.legal_entity_name, detail.country)} - {detail.contracts_count} contract(s) - AUM {formatMoney(detail.aum, detail.aum_currency)}
+              {detail.cedent_id} - {displayCedantCountryCode(detail.country)} - {detail.contracts_count} contract(s) - AUM {formatMoney(detail.aum, detail.aum_currency)}
             </p>
           </div>
 
@@ -478,10 +478,7 @@ function titleCase(value: string) {
     .join(' ')
 }
 
-function displayCedantCountryCode(legalEntityName: string, country: string | null) {
-  if (legalEntityName === 'Maple Leaf Pension Plan' && country === 'CA') {
-    return 'CAD'
-  }
+function displayCedantCountryCode(country: string | null) {
   return country ?? '-'
 }
 

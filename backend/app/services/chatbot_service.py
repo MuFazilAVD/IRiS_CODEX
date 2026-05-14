@@ -7,7 +7,7 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
-from config import OPENAI_MODEL, openai_client
+from config import OPENAI_MODEL, get_openai_client, get_openai_client_error
 from app.errors import IrisAPIError
 from app.repositories.chatbot_repository import ChatbotRepository
 from app.schemas.chatbot import ChatbotLLMPlan, ChatbotMessageResponse, ChatbotSQLRepair
@@ -19,6 +19,30 @@ logger = logging.getLogger(__name__)
 JSON_OBJECT_PATTERN = re.compile(r"\{.*\}", re.DOTALL)
 MAX_PLANNED_QUERIES = 3
 SQL_ROW_LIMIT = 200
+ANSWER_FORMAT_GUIDANCE = (
+    "Format the answer as clean Markdown for a compact chat drawer. "
+    "Lead with the answer immediately. "
+    "Use short paragraphs for simple answers. "
+    "Use flat bullet points only when they improve clarity for multiple facts, actions, or records. "
+    "If you use labels, keep them short and bold. "
+    "Do not use nested bullets, long preambles, or filler. "
+    "Keep most answers to one short paragraph or up to four bullets."
+)
+SETTLEMENT_PIPELINE_SQL_GUIDANCE = (
+    "For settlement questions about cession file processing or the settlement pipeline, do not rely on the "
+    "settlements table alone. Pipeline reconciliation values live in cession_file_records.mapped_data JSON for "
+    "Settlement files, joined through cession_files.id = cession_file_records.cession_file_id. Use SQLite "
+    "json_extract on mapped_data for fields such as $.calculation_period, $.fee, "
+    "$.settlement_reconciliation.uploaded.fee, $.settlement_reconciliation.system.fee, "
+    "$.settlement_reconciliation.uploaded.net_settlement_amount, and "
+    "$.settlement_reconciliation.system.net_settlement_amount. Settlement fee is a deduction in the net formula, "
+    "so positive fee values reduce the net settlement amount. For multi-row Settlement files, aggregate uploaded "
+    "fixed leg, floating leg, fee, interest, and net across all incoming rows once per file. Do not sum "
+    "$.settlement_reconciliation.system.* across cession_file_records rows because those values are row-level "
+    "diagnostics and can repeat the file-level system expectation. For the authoritative file-level IRiS system "
+    "total after processing, join settlements on settlements.cession_file_id = cession_files.id and use the "
+    "single linked settlements row, or compute one total from aggregated uploaded components."
+)
 
 ROLE_NAVIGATION_PREFIXES = {
     "admin": ["/dashboard", "/worklist", "/reports", "/admin"],
@@ -101,8 +125,12 @@ class ChatbotService:
             logger.error("Chatbot request rejected because message content was empty")
             raise IrisAPIError(400, "Invalid message", "Chatbot message cannot be empty")
 
-        if openai_client is None:
-            logger.error("OpenAI client is not configured for live chatbot responses")
+        client = get_openai_client()
+        if client is None:
+            logger.error(
+                "OpenAI client is not configured for live chatbot responses reason=%s",
+                get_openai_client_error(),
+            )
             return ChatbotMessageResponse(
                 response="IRiS Assist needs the configured OpenAI client before it can answer live data questions.",
                 navigation_action=None,
@@ -115,6 +143,7 @@ class ChatbotService:
         logger.info("Planning chatbot response with live LLM")
         logger.debug("Chatbot runtime table catalog tables=%s", len(table_catalog))
         plan = self._plan_chatbot_response(
+            client=client,
             user_message=message,
             current_page=current_page,
             request_role=request_role,
@@ -122,6 +151,7 @@ class ChatbotService:
             table_catalog=table_catalog,
         )
         executions = self._run_planned_queries(
+            client=client,
             plan=plan,
             user_message=message,
             current_page=current_page,
@@ -131,6 +161,7 @@ class ChatbotService:
         )
         navigation_action = self._allowed_navigation_action(plan.navigation_action, request_role)
         response_text = self._generate_answer(
+            client=client,
             plan=plan,
             executions=executions,
             user_message=message,
@@ -153,13 +184,14 @@ class ChatbotService:
     def _plan_chatbot_response(
         self,
         *,
+        client: Any,
         user_message: str,
         current_page: str,
         request_role: str,
         conversation_history: list[dict[str, Any]],
         table_catalog: list[dict[str, Any]],
     ) -> ChatbotLLMPlan:
-        response = openai_client.responses.create(
+        response = client.responses.create(
             model=OPENAI_MODEL,
             instructions=(
                 "You are the IRiS Assist query planner for an internal reinsurance platform. "
@@ -168,6 +200,7 @@ class ChatbotService:
                 "Never invent values. Only use the runtime tables listed in the input. "
                 "If the user asks for data that is not available in the runtime tables, set requires_sql to false and let the answering model explain that the live database does not expose it. "
                 "If the user is asking for navigation only, set requires_sql to false and supply a navigation_action when appropriate. "
+                f"{SETTLEMENT_PIPELINE_SQL_GUIDANCE} "
                 "Return JSON only with this shape: "
                 '{"intent": "string", "requires_sql": true, "sql_queries": [{"purpose": "string", "sql": "string"}], "navigation_action": "/path-or-null", "answer_strategy": "string"}. '
                 "Queries must be a single read-only SELECT or WITH statement. Prefer joins over multiple queries. "
@@ -207,6 +240,7 @@ class ChatbotService:
     def _run_planned_queries(
         self,
         *,
+        client: Any,
         plan: ChatbotLLMPlan,
         user_message: str,
         current_page: str,
@@ -236,6 +270,7 @@ class ChatbotService:
                 )
 
             repaired_query = self._repair_sql_query(
+                client=client,
                 user_message=user_message,
                 current_page=current_page,
                 request_role=request_role,
@@ -264,6 +299,7 @@ class ChatbotService:
     def _repair_sql_query(
         self,
         *,
+        client: Any,
         user_message: str,
         current_page: str,
         request_role: str,
@@ -273,10 +309,11 @@ class ChatbotService:
         failure_details: str,
     ) -> str:
         logger.info("Repairing chatbot SQL query with LLM")
-        response = openai_client.responses.create(
+        response = client.responses.create(
             model=OPENAI_MODEL,
             instructions=(
                 "You are repairing a read-only SQL query for IRiS Assist. "
+                f"{SETTLEMENT_PIPELINE_SQL_GUIDANCE} "
                 "Return JSON only with shape {\"sql\": \"...\"}. "
                 "Preserve the original intent, use only the runtime tables and columns from the input, and return one SELECT or WITH statement only."
             ),
@@ -305,6 +342,7 @@ class ChatbotService:
     def _generate_answer(
         self,
         *,
+        client: Any,
         plan: ChatbotLLMPlan,
         executions: list[ChatbotSQLExecution],
         user_message: str,
@@ -321,7 +359,7 @@ class ChatbotService:
             navigation_action,
         )
         try:
-            response = openai_client.responses.create(
+            response = client.responses.create(
                 model=OPENAI_MODEL,
                 instructions=(
                     "You are IRiS Assist inside an internal reinsurance operations platform. "
@@ -329,7 +367,8 @@ class ChatbotService:
                     "Do not invent values, IDs, records, or routes. "
                     "If the SQL results are empty, say you could not find matching live records. "
                     "If the database does not expose the requested data, say so plainly. "
-                    "Keep the answer concise and professional, usually 2 to 4 sentences."
+                    "Keep the tone clear, professional, and businesslike. "
+                    f"{ANSWER_FORMAT_GUIDANCE}"
                 ),
                 input=json.dumps(
                     {

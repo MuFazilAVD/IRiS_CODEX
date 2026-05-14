@@ -102,8 +102,8 @@ function resolveSourceLabel(item: WorklistItem) {
 }
 
 function resolveOwnerDisplay(item: WorklistItem) {
-  const assignee = item.assigned_to_email ? item.assigned_to_email.split('@')[0] : 'Unassigned'
-  return `${formatRoleLabel(item.assigned_role)} · ${assignee}`
+  const assignee = item.assigned_to_name ?? item.assigned_to_email?.split('@')[0] ?? 'Unassigned'
+  return `${formatRoleLabel(item.assigned_role)} - ${assignee}`
 }
 
 function resolveEntityDisplay(item: WorklistItem) {
@@ -216,6 +216,7 @@ export function WorklistPage() {
         resolveEntityDisplay(item),
         item.assigned_role,
         item.assigned_to_email ?? undefined,
+        item.assigned_to_name ?? undefined,
       ]
         .filter(Boolean)
         .join(' ')

@@ -227,7 +227,11 @@ select:focus {
 .iris-chat-markdown ul,
 .iris-chat-markdown ol {
   margin: 0;
-  padding-left: 1.1rem;
+  padding-left: 1.25rem;
+}
+
+.iris-chat-markdown li {
+  padding-left: 0.1rem;
 }
 
 .iris-chat-markdown li + li {

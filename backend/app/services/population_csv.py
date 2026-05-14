@@ -11,7 +11,7 @@ from openpyxl import load_workbook
 
 
 ALLOWED_POPULATION_STATUSES = {"active", "deceased", "deferred", "suspended", "transferred"}
-SUPPORTED_TABULAR_UPLOAD_SUFFIXES = {".csv", ".xlsx", ".xlsm"}
+SUPPORTED_TABULAR_UPLOAD_SUFFIXES = {".csv", ".txt", ".xlsx", ".xlsm"}
 
 
 @dataclass(frozen=True)
@@ -56,14 +56,14 @@ class PopulationCsvRowResult:
 def extract_tabular_upload_text(filename: str | None, raw_bytes: bytes) -> str:
     suffix = Path(filename or "").suffix.lower()
 
-    if suffix in {"", ".csv"}:
+    if suffix in {"", ".csv", ".txt"}:
         return raw_bytes.decode("utf-8-sig", errors="ignore")
     if suffix in {".xlsx", ".xlsm"}:
         return _excel_workbook_to_csv_text(raw_bytes)
     if suffix == ".xls":
         raise ValueError("Legacy Excel .xls files are not supported. Please save the workbook as .xlsx and upload again.")
 
-    raise ValueError("Unsupported file type. Upload a CSV or Excel (.xlsx) file.")
+    raise ValueError("Unsupported file type. Upload a CSV, pipe-delimited TXT, or Excel (.xlsx) file.")
 
 
 def parse_population_file(filename: str | None, raw_bytes: bytes) -> list[PopulationCsvRowResult]:

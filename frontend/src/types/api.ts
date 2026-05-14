@@ -171,6 +171,7 @@ export interface WorklistItem {
   breadcrumb?: string
   cedent_name?: string
   assigned_to_email?: string | null
+  assigned_to_name?: string | null
   entity_display?: string
   financial_impact_display?: string | null
   is_high_impact?: boolean
@@ -1053,15 +1054,20 @@ export interface ClaimsSummaryPayload {
 export interface ClaimsWorklistScreeningSummary {
   screening_ref: string
   status: string | null
+  workflow_status: 'auto_cleared' | 'pending' | 'escalated'
+  entity_name: string
   headline: string
   description: string
   tone: 'default' | 'positive' | 'warning' | 'negative'
   watchlists_screened: string[]
+  matched_watchlists: string[]
   confidence_pct: number | null
   analysis_label: string | null
   recommended_action: string | null
   candidate_name: string | null
   candidate_list: string | null
+  raw_findings_summary: string
+  iris_findings_summary: string
 }
 
 export interface ClaimsWorklistTask {

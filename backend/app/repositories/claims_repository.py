@@ -239,6 +239,17 @@ class ClaimsRepository:
         self.db.refresh(item)
         return item
 
+    def update_worklist_item(self, item: WorklistItem) -> WorklistItem:
+        self.db.add(item)
+        self.db.commit()
+        self.db.refresh(item)
+        return item
+
+    def delete_worklist_items(self, items: list[WorklistItem]) -> None:
+        for item in items:
+            self.db.delete(item)
+        self.db.commit()
+
     def list_user_names(self, user_ids: list[str]) -> dict[str, str]:
         if not user_ids:
             return {}

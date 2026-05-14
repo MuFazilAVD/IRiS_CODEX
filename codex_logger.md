@@ -140,6 +140,444 @@ create vence, install reqs, acgivate and run app
 - PowerShell activation is session-scoped, so the environment was verified in-command and the running backend uses the venv interpreter directly
 
 ### Status
+✅ Completed
+
+
+## [2026-05-14T12:32:52Z]
+
+### Prompt
+The chatbot's response is wrong. Here i donto know how is it getting the net amount of q1 2026 of maple as 23k+?? it is 21k in db , including all rows and fee.
+Also if  3 rows are in db, no need to multiply it with 3, just match the entire summation net of incoing settlement file with the com[uted net settlement value in system Fix tools or prompt or whatever needed to be fixed
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/api/CLAIMS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/services/chatbot_service.py
+  - backend/app/repositories/chatbot_repository.py
+  - backend/iris.db
+
+### Actions Taken
+- Traced the live Maple settlement case `CES-2026-046` in SQLite and confirmed the chatbot was overcounting by summing row-level `mapped_data.settlement_reconciliation.system.net_settlement_amount` diagnostics across 3 file rows.
+- Verified the authoritative processed system total already exists as a single linked `settlements` row with `net_amount = 21905` for `SET-2026-Q1-044-046`, while the uploaded file net also sums to `21905`.
+- Tightened the chatbot settlement SQL guidance so multi-row Settlement-file questions aggregate uploaded row totals once per file and use `settlements.cession_file_id = cession_files.id` for the file-level IRiS system total.
+- Expanded the chatbot table-catalog notes so the SQL planner/repair flow is warned not to sum repeated `$.settlement_reconciliation.system.*` values across `cession_file_records`.
+- Ran a live chatbot smoke check after the patch; for Maple `CES-2026-046`, the chatbot now returns uploaded net `21,905 CAD` and IRiS system net `21,905 CAD` instead of the inflated `71,315`.
+- Updated the tracker note to reflect the settlement-chatbot aggregation fix.
+
+### Files Modified
+- backend/app/services/chatbot_service.py
+- backend/app/repositories/chatbot_repository.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The live smoke check still depends on user phrasing for period text normalization; the patched guidance now fixes the inflated system-total path that caused the Maple overcount and was verified with a direct `CES-2026-046` query.
+
+### Status
+✅ Completed
+
+## [2026-05-14 12:19:46 UTC]
+
+### Prompt
+In the audit trail inside the cession file processing, right now the validation engine action is shown as performed by System( refer the screenshot). Change it to AI Agent everywhere as well as in the upcoming uploads.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - backend/app/services/claims_service.py
+  - backend/app/mock_data/cession_pipeline_overrides.json
+  - backend/iris.db
+
+### Actions Taken
+- Changed the cession validation audit event writer so new uploads persist `Validation Engine` events with `type: AI Agent` instead of `System`.
+- Rewrote the stored cession pipeline override audit entries so existing mock-backed cession sessions now show `AI Agent` for validation events.
+- Updated persisted claims audit rows in `backend/iris.db` so current cession audit trails sourced from `audit_events` also render `AI Agent`.
+- Updated the claims tracker note to record the cession validation audit actor-label behavior.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- backend/app/mock_data/cession_pipeline_overrides.json
+- backend/iris.db
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+
+### Status
+Completed
+
+## [2026-05-14 13:38:33 UTC]
+
+### Prompt
+In the chatbot, inside the quick actions there is a suggestion, "any FYA items on the worklist". Remove that suggestion.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/build_plans/BUILD_PLAN_ADDITIONS.md
+  - docs/ui/02-dashboard/DASHBOARD.md
+  - frontend/src/components/common/IRiSChatbot.tsx
+
+### Actions Taken
+- Removed the `Any FYA items on my worklist?` quick-action chip from the chatbot role-based suggestion lists where it was surfaced.
+- Kept the change scoped to the frontend chatbot quick actions without altering message handling or backend behavior.
+- Validated the string no longer appears in `frontend/src/components/common/IRiSChatbot.tsx`.
+
+### Files Modified
+- frontend/src/components/common/IRiSChatbot.tsx
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the active spec and tracker files in this workspace are stored under `docs/`, so the `docs/...` equivalents were used.
+- `docs/build_plans/BUILD_PLAN_ADDITIONS.md` explicitly listed this quick action for some roles; it was removed as a direct user-requested UI change and logged here rather than rewriting the historical build-plan document.
+
+### Status
+Completed
+
+
+## [2026-05-14T13:40:00Z]
+
+### Prompt
+In the cession file processing, right now the processing pipeline works for both csv file and xlsx file. I need you to handle .txt file as well where the values will be pipe seperated like below:
+Calculation Period|Payment Date|Pensioner Movement|Applicable Indexation / Escalation|Fixed Amount|Floating Amount|Fee (Admin)|Interest on Over/Underpayment from Prior Period|Net Settlement Amount
+2026 Q1|2026-04-12|Death|CPI capped 5% applied to pension tranche|CA$1,500,000|CA$1,506,735|CA$900|CA$0|CA$5,835
+
+In these scenarios as well our system needs to handle the file and process the cession file properly
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/services/population_csv.py
+  - backend/app/services/claims_service.py
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Extended the shared tabular-upload text extractor to accept `.txt` files so pipe-delimited cession uploads reach the existing normalized CSV-style parsing path.
+- Updated claims record counting to treat `.txt` uploads as tabular rows instead of falling back to raw line counting.
+- Broadened the Claims > Cession Files upload picker to accept `.txt` and `text/plain` alongside CSV and Excel.
+- Updated the cession processing rules and tracker note to document pipe-delimited `.txt` settlement support.
+- Verified the change with a throwaway SQLite copy by uploading `Maple_Leaf_Q1_2026.txt` through `ClaimsService.upload_cession_file(...)`, then running detect, map-contract, validate, process-exceptions, and process. The pipeline detected `Settlement`, mapped `Maple Leaf Pension Plan` / `LSC-2024-044`, counted 1 record, and produced the normal settlement reconciliation summary.
+
+### Files Modified
+- backend/app/services/population_csv.py
+- backend/app/services/claims_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The provided sample values intentionally do not match the current Maple `Q1 2026` ground-truth settlement amounts in the seeded contract-performance/settlement data, so the smoke test correctly ended in reconciliation `review` rather than an auto-accept result.
+
+### Status
+✅ Completed
+
+
+## [2026-05-14T12:55:55Z]
+
+### Prompt
+In the sanction screening section insise the cession file processing, change the UI accordingly aligning with the requirements i mention below:
+The key details i need to show in this section is, whether the cedent has been auto cleared or not.
+If it is cleared then a summary of output from OFAC and FinCEN as well as the output from the iris analysis along with the confidence score. 
+If it is not cleared then there will be some additional detailing along with this which is a pending statis as well as the assigned compliance member for HITL.
+Redesign the UI accordingly so that we can get an overall analysis of the sanction screening of the corresponding cedent in that view.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/ui-screens/CessionFiles/CedentFileProcessing.png
+  - docs/ui-screens/SanctionScreening/ScreeningReport(1).png
+  - docs/ui-screens/Cedants/Cedent_SanctionScreening(1).png
+  - frontend/src/pages/claims/cession/CessionFileProcessingPage.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/types/api.ts
+  - backend/app/services/claims_service.py
+  - docs/api/CLAIMS.md
+
+### Actions Taken
+- Redesigned the cession-file `Sanction Screening` step to center the screening decision for the cedent instead of a generic worklist summary.
+- Added an explicit cleared vs pending outcome banner, OFAC and FinCEN provider-output cards, an IRiS analysis panel with confidence and recommended action, and a dedicated HITL ownership block for uncleared cases.
+- Kept the existing claims payload contract intact by deriving the source-level view from the existing screened-watchlist and matched-watchlist fields.
+- Updated the tracker note to record the revised sanctions-analysis presentation in the cession pipeline.
+- Verified the frontend production build after the UI change.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The current backend payload does not expose per-provider narrative text for OFAC and FinCEN, so the redesigned UI derives provider outcomes from the existing screened/matched watchlist fields rather than inventing new backend behavior.
+
+### Status
+✅ Completed
+
+## [2026-05-14 12:04:52 UTC]
+
+### Prompt
+Few changes to make in the chatbot section:
+1) Increase the width of the chatbot window a little more.
+2) Make the tone clear and professional.
+3) I need you to change the template of the responses you give while asking queries. The responses should be well arranged, with proper indendation and you can include bullet points if required. The answers should be crisp and to the point.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/DESIGN.md
+  - docs/ui/00-global/LAYOUT.md
+  - docs/api/COMPLIANCE.md
+  - docs/ui-screens/Chatbot.png
+  - frontend/src/components/common/IRiSChatbot.tsx
+  - frontend/src/index.css
+  - backend/app/services/chatbot_service.py
+
+### Actions Taken
+- Increased the chatbot drawer width from `380px` to `420px` to give the conversation area more room while preserving the screenshot-backed right-side layout.
+- Reworked the opening assistance copy and input/loading text so the chatbot reads more direct and professional in the UI.
+- Tightened the backend answer-generation instructions so live replies return as compact Markdown with a clear business tone, short paragraphs for simple answers, and flat bullets only when they improve clarity.
+- Slightly increased markdown list indentation in the drawer so structured answers render more cleanly.
+- Verified the change with a frontend production build and a backend Python compile pass.
+
+### Files Modified
+- frontend/src/components/common/IRiSChatbot.tsx
+- frontend/src/index.css
+- backend/app/services/chatbot_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The AGENTS instructions refer to root-level spec paths, but this workspace stores the relevant source-of-truth documents under `docs/`, so the `docs/...` equivalents were used.
+- There is no dedicated chatbot correction entry in `docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md`, so the change was aligned to `docs/ui/00-global/LAYOUT.md` and the `docs/ui-screens/Chatbot.png` reference instead.
+
+### Status
+✅ Completed
+
+
+## [2026-05-14T11:29:16Z]
+
+### Prompt
+When the chatbot is querrid with questions regarding settlements inside the processing pupeline it is not taking the settlement fee into the account. 
+
+Also now it is not at all working:
+IRiS Assist needs the configured OpenAI client before it can answer live data questions.
+
+investigate both issuess
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/00-global/LAYOUT.md
+  - docs/ui/05-claims/settlements/SETTLEMENTS_AND_CALC_ENGINE.md
+  - docs/api/CLAIMS.md
+  - backend/config.py
+  - backend/app/repositories/chatbot_repository.py
+  - backend/app/services/chatbot_service.py
+  - backend/app/services/claims_service.py
+  - backend/app/services/compliance_service.py
+  - backend/app/models/cession_file_record.py
+  - backend/app/models/settlement.py
+
+### Actions Taken
+- Investigated the live chatbot runtime and confirmed the OpenAI API key was present but the active virtualenv was missing the `openai` package, which left the import-time shared client as `None`.
+- Installed `openai==2.35.1` into the existing project virtualenv so the backend runtime matches `backend/requirements.txt`.
+- Reworked the shared OpenAI bootstrap to use a lazy `get_openai_client()` path with error logging instead of relying on a stale import-time singleton.
+- Updated chatbot planning/repair prompts and the chatbot table catalog so settlement pipeline questions use `cession_files` joined to `cession_file_records` and query `mapped_data` JSON with `json_extract(...)` for uploaded/system fee and net reconciliation values.
+- Verified the fix with a direct live chatbot request for `CES-2026-046`, which generated JSON-backed SQL against `cession_file_records.mapped_data` and returned the settlement fee and post-fee net values instead of ignoring the fee.
+- Ran backend Python compilation after the service changes.
+
+### Files Modified
+- backend/config.py
+- backend/app/repositories/chatbot_repository.py
+- backend/app/services/chatbot_service.py
+- backend/app/services/claims_service.py
+- backend/app/services/compliance_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The assistant outage was not caused by missing `.env` configuration; it was caused by the `openai` package being absent from the active virtualenv even though the API key was present.
+
+### Status
+✅ Completed
+
+
+## [2026-05-14T11:18:00Z]
+
+### Prompt
+The sanction screening inside the Cession file processing pipeline has some inconsistencies:
+1) If the cedent company is auto cleared in the sanction screening, then no need to assign it to the complaince team(Julia Santos) and do not show "Sanction Screening Pending" in such cases. 
+2) If there was a raw match with the cedent companies inside OFAC and FinCEN, in such cases there will be feedback from the IRiS AI. In this section we need a summary of both of the findings. 
+3) In case the sanction screening fail, ie, both raw match and iris feedback suggest that the cedent company is fraud, then the Pending status should be included inside the card. Also in these cases we need to assign to the complaince team member.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/06-compliance/SANCTIONS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/api/CLAIMS.md
+  - docs/api/COMPLIANCE.md
+  - docs/api/API_ADDITIONS.md
+  - backend/app/repositories/claims_repository.py
+  - backend/app/services/claims_service.py
+  - backend/app/services/compliance_service.py
+  - frontend/src/types/api.ts
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - backend/iris.db
+
+### Actions Taken
+- Changed the settlement cession-file sanctions routing so auto-cleared screening outcomes no longer create or retain a compliance-assigned worklist row, while still surfacing the sanctions result on the dedicated pipeline tab through a synthetic card payload.
+- Added screening-summary fields for workflow status, matched watchlists, and separate raw-watchlist vs IRiS AI finding summaries so the pipeline card can explain both findings in one place.
+- Updated the screening task/card labeling so auto-cleared cases no longer show `Sanction screening pending`, while retained match cases show `Pending` and keep the compliance assignment path.
+- Refined the compliance summary builder so raw-hit cases now distinguish between raw-match detection and the downstream IRiS AI conclusion instead of always saying `No matches`.
+- Triggered the live cession-detail payload for the existing Maple settlement demo files so the new sync logic removed the stale Julia Santos sanctions worklist rows from the local SQLite dataset.
+- Verified backend Python compilation, frontend production build, Maple auto-clear payload rendering, and persisted DB cleanup for the affected settlement files.
+
+### Files Modified
+- backend/app/repositories/claims_repository.py
+- backend/app/services/claims_service.py
+- backend/app/services/compliance_service.py
+- frontend/src/types/api.ts
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- backend/iris.db
+- codex_logger.md
+
+### Issues / Deviations
+- The repository instructions reference root-level spec paths, but the source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The seeded cession settlement demo cases in the local DB already had persisted compliance worklist rows from the older behavior, so the validation pass intentionally exercised the updated detail service to clean those rows from `backend/iris.db`.
+
+### Status
+✅ Completed
+
+## [2026-05-14T10:43:09Z]
+
+### Prompt
+In the worklist page i have a few changes to make:
+1) the cards right now looks bigger in size and have lot of white spaces in it. Also the contents inside are not readable. I want those cards to be compact with appropriate spacing, as given in the reference image. Change the design accordingly.
+2) Also in each worklist card, right now we have mentioned only the team who has been assigned the task. Along with the team name also attach the name of the corresponding person from the Users and roles table.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/03-worklist/WORKLIST.md
+  - docs/api/WORKLIST.md
+  - docs/DESIGN.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/worklist/WorklistPage.tsx
+  - frontend/src/pages/worklist/WorklistCard.tsx
+  - frontend/src/types/api.ts
+  - backend/app/services/worklist_service.py
+  - backend/app/repositories/worklist_repository.py
+  - backend/app/models/user.py
+
+### Actions Taken
+- Tightened the worklist card layout to better match the screenshot-backed compact treatment by reducing vertical padding, removing the taller fixed-height content blocks, and consolidating the owner row into a single readable line.
+- Added assignee name support to the worklist payload for live DB-backed items by resolving `users.full_name` alongside the existing assignee email, and reused that value in frontend search and list/grid owner displays.
+- Added a safe name-resolution pass for mock/register cards so they use a stored user full name when one exists and otherwise fall back to the existing email handle instead of inventing undocumented user records.
+- Updated the worklist tracker note and verified the change with a frontend production build plus backend Python compile checks.
+
+### Files Modified
+- backend/app/repositories/worklist_repository.py
+- backend/app/services/worklist_service.py
+- frontend/src/types/api.ts
+- frontend/src/pages/worklist/WorklistPage.tsx
+- frontend/src/pages/worklist/WorklistCard.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- Several screenshot-backed mock worklist assignee emails do not currently have matching `users` table rows in the active database, so those cards fall back to the documented email-handle label rather than inventing unsupported full names.
+
+### Status
+✅ Completed
+
+## [2026-05-14 10:29:51 UTC]
+
+### Prompt
+A few changes to make in the cedent section:
+1) There are two entries for the cedent Northstar Pension Trust right now. Remove the second entry (last entry in the screenshot - CED-1202).
+2)Inside the table under the column named Country the values are prefixed with a flag code. Remove them. Only country code should be the value.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/04-underwriting/cedents/CEDENTS.md
+  - docs/api/UNDERWRITING.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/underwriting/cedants/CedantsPage.tsx
+  - frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+  - backend/app/mock_data/cedent_detail_overrides.json
+  - backend/iris.db
+
+### Actions Taken
+- Removed the stale duplicate onboarding cedent `CED-1202` from the live SQLite `cedents` table and cleaned up its related worklist and audit rows.
+- Removed the matching `CED-1202` mock detail override payload so repo-owned detail data no longer references the deleted record.
+- Updated the cedants country display helper so the register renders only the ISO country code text with no prefixed flag glyph/fallback code.
+- Normalized the detail header country helper to use the stored country code directly for consistency with the underwriting schema/spec.
+- Updated the underwriting tracker note to reflect the cedants register cleanup.
+- Verified the frontend with `npm run build`.
+
+### Files Modified
+- frontend/src/pages/underwriting/cedants/CedantsPage.tsx
+- frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+- backend/app/mock_data/cedent_detail_overrides.json
+- backend/iris.db
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The AGENTS instructions refer to root-level spec paths, but this workspace stores the source-of-truth documents under `docs/`, so the `docs/...` equivalents were used.
+- The duplicate cedent was not present in the seed JSON; it existed in the live SQLite data store, so the fix required a persisted data cleanup in addition to the UI render change.
+
+### Status
 Completed
 
 ## [2026-05-05 11:50:52 UTC]
@@ -229,6 +667,37 @@ No request is sent from  frontend to login
 ### Issues / Deviations
 - The frontend and backend wiring was functional, but local development could still block the POST before login when the UI origin did not match the backend CORS configuration exactly
 - The previous login UI error text masked network/CORS failures as credential failures, which made the issue harder to diagnose
+
+### Status
+✅ Completed
+
+## [2026-05-14 10:23:41 UTC]
+
+### Prompt
+In the contract management page, under the rules and configuration section, we have a section for clauses. Under the heading there is a one liner that mentions about 60 hardcoded clauses. Remove it from all the contract details. Only remove that line
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+
+### Actions Taken
+- Removed the helper subtitle line from the `Clauses` card in the contract detail Rules & Configuration tab while keeping the heading and table unchanged.
+- Logged the screenshot-driven UI correction so the contract detail behavior stays aligned with the reference visuals.
+- Updated the tracker note to reflect that the shared clause catalog remains visible without the old helper copy.
+
+### Files Modified
+- frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repository paths referenced in `AGENTS.md` resolve to the `docs/...` equivalents in this workspace, so those source-of-truth files were used for the update.
 
 ### Status
 ✅ Completed
@@ -5525,3 +5994,37 @@ Few changes in the cession file processing pipeline.
 
 ### Status
 ✅ Completed
+
+
+## [2026-05-14T10:20:49Z]
+
+### Prompt
+In cedent file processing under the summary section (refer the attached screenshot), inside the settlement reconcillation card, below the main heading there is a shot one liner "SET-2026-Q1-044 ? Q1 2026 ? contract details performance". Change it to meaningfull by removing the characters like "?". 
+Change this everywhere
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - backend/app/services/claims_service.py
+
+### Actions Taken
+- Replaced the malformed settlement-reconciliation subtitle separator in the cession file processing summary UI with the intended dot separator using escaped characters to avoid encoding drift.
+- Normalized additional mojibake-prone literals in the live claims service for clause references, Fixed Leg insight text, audit placeholder details, SLA placeholder text, and validation/worklist breadcrumb copy.
+- Updated the claims tracker note to record the visible text-normalization cleanup for the active cession/settlement flow.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- backend/app/services/claims_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+
+### Status
+Completed

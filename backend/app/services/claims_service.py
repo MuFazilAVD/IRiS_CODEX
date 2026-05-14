@@ -17,7 +17,7 @@ from urllib.parse import urlencode
 import pandas as pd
 from fastapi import BackgroundTasks, UploadFile
 
-from config import OPENAI_MODEL, openai_client
+from config import OPENAI_MODEL, get_openai_client
 from app.errors import IrisAPIError
 from app.mock_data_loader import load_mock_data
 from app.models.audit_event import AuditEvent
@@ -873,7 +873,7 @@ class ClaimsService:
             cession_file.file_id,
             {
                 "actor": "Validation Engine",
-                "type": "System",
+                "type": "AI Agent",
                 "action": "Validation complete",
                 "detail": f'{validation["critical_errors"]} critical, {validation["warnings"]} warnings',
             },
@@ -1825,7 +1825,7 @@ class ClaimsService:
 
         clauses_checked = [
             {
-                "clause_id": "Â§4.1",
+                "clause_id": "\u00a74.1",
                 "clause_title": "Schema Compliance",
                 "category": "Operational",
                 "status": "matched",
@@ -1834,7 +1834,7 @@ class ClaimsService:
                 "active": True,
             },
             {
-                "clause_id": "Â§7.3",
+                "clause_id": "\u00a77.3",
                 "clause_title": "Material Change Reporting",
                 "category": "Data",
                 "status": "check_required",
@@ -1896,7 +1896,7 @@ class ClaimsService:
         file_type = self._build_detection_payload(cession_file)["file_type"]
         if file_type == "Fixed Leg":
             plan = [
-                "Recompute fixed leg per Â§6.2 (ACT/365)",
+                "Recompute fixed leg per \u00a76.2 (ACT/365)",
                 "Compare to file values",
                 "Flag deviations > tolerance",
             ]
@@ -1967,7 +1967,7 @@ class ClaimsService:
                     "liability_impact": 0,
                     "fixed_leg_recomputed": 8782055,
                     "net_settlement_amount": 8649910,
-                    "insight": "recommendation: 1 cell deviates from Â§6.2 calc by 1.5% â€” accept AI correction.",
+                    "insight": "recommendation: 1 cell deviates from \u00a76.2 calc by 1.5% \u2014 accept AI correction.",
                 }
             )
             return summary
@@ -2068,26 +2068,30 @@ class ClaimsService:
         return summary
 
     def _build_worklist_payload(self, cession_file: CessionFile) -> dict[str, Any]:
+        screening_summary = self._build_cession_file_screening_summary(cession_file)
+        self._sync_cession_file_screening_worklist_item(cession_file, screening_summary)
         items = self.repository.list_worklist_items_for_file(cession_file.id)
         assigned_user_names = self.repository.list_user_names([item.assigned_to for item in items if item.assigned_to])
         default_assignees = {
             role: self.repository.get_active_user_for_role(role)
             for role in {item.assigned_role for item in items if item.assigned_role}
         }
-        screening_summary = self._build_cession_file_screening_summary(cession_file)
         if items:
+            serialized_items = [
+                self._serialize_pipeline_worklist_item(
+                    item,
+                    screening_summary if self._is_screening_worklist_item(item) else None,
+                    assigned_user_names,
+                    default_assignees,
+                )
+                for item in items
+            ]
+            if screening_summary and not any(self._is_screening_worklist_item(item) for item in items):
+                serialized_items.append(self._build_synthetic_screening_task(cession_file, screening_summary))
             return {
                 "title": "Worklist Tasks Created",
                 "subtitle": "Routed to owning teams with SLA",
-                "items": [
-                    self._serialize_pipeline_worklist_item(
-                        item,
-                        screening_summary if self._is_screening_worklist_item(item) else None,
-                        assigned_user_names,
-                        default_assignees,
-                    )
-                    for item in items
-                ],
+                "items": serialized_items,
             }
 
         if cession_file.file_type == "Fixed Leg" or "fixed_leg" in cession_file.filename.lower():
@@ -2112,7 +2116,7 @@ class ClaimsService:
         return {
             "title": "Worklist Tasks Created",
             "subtitle": "Routed to owning teams with SLA",
-            "items": [],
+            "items": [self._build_synthetic_screening_task(cession_file, screening_summary)] if screening_summary else [],
         }
 
     def _serialize_pipeline_worklist_item(
@@ -2124,9 +2128,12 @@ class ClaimsService:
     ) -> dict[str, Any]:
         status_label, status_tone = self._pipeline_worklist_status(item, screening_summary)
         target_url, target_label = self._pipeline_worklist_target(item, screening_summary)
+        task_title = item.title
+        if self._is_screening_worklist_item(item) and screening_summary:
+            task_title = self._screening_task_title(str(screening_summary.get("entity_name") or item.title), screening_summary)
         return {
             "wl_id": item.wl_id,
-            "task": item.title,
+            "task": task_title,
             "type": item.category or "Validation",
             "team": item.assigned_role or "claims_ops",
             "assigned_person": self._resolve_worklist_assignee_name(item, assigned_user_names, default_assignees),
@@ -2147,10 +2154,14 @@ class ClaimsService:
         screening_summary: dict[str, Any] | None,
     ) -> tuple[str, str]:
         if self._is_screening_worklist_item(item):
-            screening_status = str((screening_summary or {}).get("status") or "").strip().lower()
-            if screening_status == "auto-cleared":
+            workflow_status = self._screening_workflow_status(screening_summary)
+            if workflow_status == "auto_cleared":
                 return "Auto-Cleared", "positive"
-            return "Escalated", "negative"
+            if workflow_status == "pending":
+                return "Pending", "warning"
+            if workflow_status == "escalated":
+                return "Escalated", "negative"
+            return "Pending", "warning"
 
         if self._is_settlement_pending_worklist_item(item):
             return "Pending", "warning"
@@ -2216,19 +2227,213 @@ class ClaimsService:
         analysis = case_detail.get("analysis")
         summary = case_detail.get("summary") or {}
         raw_match = case_detail.get("raw_match") or {}
+        entity_name = str(case_detail.get("entity_name") or event.entity_name or "").strip()
+        watchlists_screened = [str(item) for item in (case_detail.get("watchlists_screened") or []) if str(item).strip()]
+        matched_watchlists = [self._screening_watchlist_label(str(item)) for item in (event.matched_lists or []) if str(item).strip()]
+        workflow_status = self._screening_workflow_status_from_event(event)
+        if matched_watchlists:
+            raw_findings_summary = f"Raw watchlist hit retained across {' · '.join(matched_watchlists)}."
+            if raw_match.get("candidate_name"):
+                raw_findings_summary = f"{raw_findings_summary} Top candidate: {raw_match['candidate_name']}."
+        else:
+            screened_watchlists = " · ".join(watchlists_screened[:3]) if watchlists_screened else "OFAC · FinCEN"
+            raw_findings_summary = f"No raw watchlist matches were found across {screened_watchlists}."
+
+        if matched_watchlists:
+            if workflow_status == "auto_cleared":
+                iris_findings_summary = (
+                    event.llm_reasoning
+                    or "IRiS AI reviewed the raw watchlist overlap and auto-cleared the entity. No analyst review is required."
+                )
+            elif workflow_status == "pending":
+                iris_findings_summary = (
+                    event.llm_reasoning
+                    or "IRiS AI retained the raw watchlist overlap for compliance review before downstream settlement release."
+                )
+            else:
+                iris_findings_summary = (
+                    event.llm_reasoning
+                    or "IRiS AI retained the raw watchlist overlap as high risk and the case remains blocked pending compliance sign-off."
+                )
+        else:
+            iris_findings_summary = "IRiS AI review was not required because the decision engine found no raw watchlist matches."
+
         return {
             "screening_ref": event.screening_ref,
-            "status": case_detail.get("status"),
+            "status": self._screening_status_label(workflow_status),
+            "workflow_status": workflow_status,
+            "entity_name": entity_name,
             "headline": summary.get("headline") or "Sanctions screening completed",
             "description": summary.get("description") or event.llm_reasoning or "Screening case completed in the sanctions workspace.",
             "tone": summary.get("tone") or "default",
-            "watchlists_screened": case_detail.get("watchlists_screened") or [],
+            "watchlists_screened": watchlists_screened,
+            "matched_watchlists": matched_watchlists,
             "confidence_pct": analysis.get("confidence_pct") if analysis else int(round((event.llm_confidence or 0.0) * 100)),
             "analysis_label": analysis.get("label") if analysis else None,
             "recommended_action": analysis.get("recommended_action") if analysis else None,
             "candidate_name": raw_match.get("candidate_name"),
             "candidate_list": raw_match.get("subtitle"),
+            "raw_findings_summary": raw_findings_summary,
+            "iris_findings_summary": iris_findings_summary,
         }
+
+    def _build_synthetic_screening_task(
+        self,
+        cession_file: CessionFile,
+        screening_summary: dict[str, Any],
+    ) -> dict[str, Any]:
+        workflow_status = self._screening_workflow_status(screening_summary)
+        entity_name = str(screening_summary.get("entity_name") or cession_file.file_id)
+        status_label = self._screening_status_label(workflow_status)
+        status_tone = "positive" if workflow_status == "auto_cleared" else "warning" if workflow_status == "pending" else "negative"
+        screening_ref = str(screening_summary.get("screening_ref") or "").strip()
+        return {
+            "wl_id": screening_ref or f"SCR-{cession_file.file_id}",
+            "task": self._screening_task_title(entity_name, screening_summary),
+            "type": "Sanction Screening",
+            "team": "compliance",
+            "assigned_person": None if workflow_status != "auto_cleared" else "Not required",
+            "priority": "medium",
+            "status": "resolved" if workflow_status == "auto_cleared" else "open",
+            "status_label": status_label,
+            "status_tone": status_tone,
+            "sla": "0h" if workflow_status == "auto_cleared" else self._sla_display(None),
+            "description": self._screening_task_description(entity_name, screening_summary),
+            "target_url": f"/compliance/sanctions/{screening_ref}" if screening_ref else "/compliance/sanctions",
+            "target_label": "Open sanction case" if screening_ref else "Open sanction screening",
+            "screening_summary": screening_summary,
+        }
+
+    def _sync_cession_file_screening_worklist_item(
+        self,
+        cession_file: CessionFile,
+        screening_summary: dict[str, Any] | None,
+        *,
+        detection: dict[str, Any] | None = None,
+        mapping: dict[str, Any] | None = None,
+        settlement_id: str | None = None,
+        now: datetime | None = None,
+    ) -> WorklistItem | None:
+        screening_items = [
+            item
+            for item in self.repository.list_worklist_items_for_file(cession_file.id)
+            if self._is_screening_worklist_item(item)
+        ]
+        workflow_status = self._screening_workflow_status(screening_summary)
+        if screening_summary is None or workflow_status == "auto_cleared":
+            if screening_items:
+                self.repository.delete_worklist_items(screening_items)
+            return None
+
+        effective_detection = detection or self._build_detection_payload(cession_file)
+        effective_mapping = mapping or self._build_contract_mapping_payload(cession_file)
+        effective_now = now or datetime.now(UTC)
+        entity_name = str(screening_summary.get("entity_name") or effective_detection.get("cedent") or cession_file.file_id)
+        linked_settlement_id = settlement_id or next((item.settlement_id for item in screening_items if item.settlement_id), None)
+        compliance_owner = self.repository.get_active_user_for_role("compliance")
+        title = self._screening_task_title(entity_name, screening_summary)
+        description = self._screening_task_description(entity_name, screening_summary)
+
+        if len(screening_items) > 1:
+            self.repository.delete_worklist_items(screening_items[1:])
+            screening_items = screening_items[:1]
+
+        if screening_items:
+            item = screening_items[0]
+            item.title = title
+            item.description = description
+            item.priority = "medium"
+            item.status = "open"
+            item.assigned_role = "compliance"
+            item.assigned_to = compliance_owner.id if compliance_owner else None
+            item.contract_id = effective_mapping["contract_id"]
+            item.cedent_id = effective_detection["cedent_id"]
+            item.settlement_id = linked_settlement_id
+            item.sla_deadline = effective_now + timedelta(hours=4)
+            item.compliance_hold = True
+            item.ai_generated = True
+            item.source = "AI Agent"
+            item.source_detail = "Cession pipeline processing"
+            item.breadcrumb = "Compliance - Sanction Screening"
+            item.updated_at = effective_now
+            return self.repository.update_worklist_item(item)
+
+        item = WorklistItem(
+            wl_id=self.repository.get_next_worklist_id(),
+            title=title,
+            description=description,
+            category="Sanction Screening",
+            priority="medium",
+            status="open",
+            assigned_role="compliance",
+            assigned_to=compliance_owner.id if compliance_owner else None,
+            contract_id=effective_mapping["contract_id"],
+            cedent_id=effective_detection["cedent_id"],
+            cession_file_id=cession_file.id,
+            settlement_id=linked_settlement_id,
+            source="AI Agent",
+            source_detail="Cession pipeline processing",
+            sla_deadline=effective_now + timedelta(hours=4),
+            compliance_hold=True,
+            ai_generated=True,
+            breadcrumb="Compliance - Sanction Screening",
+            created_at=effective_now,
+            updated_at=effective_now,
+        )
+        return self.repository.create_worklist_item(item)
+
+    def _screening_workflow_status_from_event(self, event: Any) -> str:
+        result = str(getattr(event, "result", "") or "").strip().lower()
+        if result in {"cleared", "false_positive"}:
+            return "auto_cleared"
+        if result == "review":
+            return "pending"
+        if result == "escalated":
+            return "escalated"
+        return "pending"
+
+    def _screening_workflow_status(self, screening_summary: dict[str, Any] | None) -> str:
+        if not screening_summary:
+            return "pending"
+        workflow_status = str(screening_summary.get("workflow_status") or "").strip().lower()
+        if workflow_status:
+            return workflow_status
+        status = str(screening_summary.get("status") or "").strip().lower()
+        if status == "auto-cleared":
+            return "auto_cleared"
+        if status == "escalated":
+            return "escalated"
+        return "pending"
+
+    def _screening_status_label(self, workflow_status: str) -> str:
+        if workflow_status == "auto_cleared":
+            return "Auto-Cleared"
+        if workflow_status == "escalated":
+            return "Escalated"
+        return "Pending"
+
+    def _screening_watchlist_label(self, value: str) -> str:
+        if value.startswith("OFAC"):
+            return "OFAC"
+        if value.startswith("FinCEN"):
+            return "FinCEN"
+        return value
+
+    def _screening_task_title(self, entity_name: str, screening_summary: dict[str, Any]) -> str:
+        workflow_status = self._screening_workflow_status(screening_summary)
+        if workflow_status == "pending":
+            return f"Sanction screening pending - {entity_name}"
+        if workflow_status == "escalated":
+            return f"Sanction screening escalated - {entity_name}"
+        return f"Sanction screening - {entity_name}"
+
+    def _screening_task_description(self, entity_name: str, screening_summary: dict[str, Any]) -> str:
+        workflow_status = self._screening_workflow_status(screening_summary)
+        if workflow_status == "auto_cleared":
+            return f"Sanctions screening completed for {entity_name}. No compliance analyst assignment is required."
+        if workflow_status == "escalated":
+            return f"Compliance hold remains in place for {entity_name} because the sanctions findings were retained as high risk."
+        return f"Review sanctions screening findings for {entity_name} before downstream settlement release."
 
     def _build_downstream_files_payload(self, cession_file: CessionFile) -> dict[str, Any]:
         stored = self._get_override(cession_file.file_id)
@@ -2279,7 +2484,7 @@ class ClaimsService:
                     "actor": "SFTP Listener",
                     "type": "System",
                     "action": "File received via SFTP",
-                    "detail": "â€”",
+                    "detail": "\u2014",
                 },
                 {
                     "timestamp": self._to_iso(base_time),
@@ -2300,7 +2505,7 @@ class ClaimsService:
                     "actor": "Pipeline Orchestrator",
                     "type": "System",
                     "action": "Mapped to LSC-2025-002 v1.0",
-                    "detail": "â€”",
+                    "detail": "\u2014",
                 },
             ]
         else:
@@ -4237,12 +4442,12 @@ class ClaimsService:
 
     def _serialize_issue(self, item: CessionFileException) -> dict[str, Any]:
         clause_reference = {
-            "fixed_leg_amount": "Â§6.2 ACT/365",
-            "fee_amount": "Â§6.4 Fee Schedule",
-            "value_date": "Â§3.4 Payment Date Convention",
-            "date_of_death": "Â§7.3 Material Change Reporting",
-            "verified_by": "Â§7.3 Material Change Reporting",
-            "activity_code": "Â§7.3 Material Change Reporting",
+            "fixed_leg_amount": "\u00a76.2 ACT/365",
+            "fee_amount": "\u00a76.4 Fee Schedule",
+            "value_date": "\u00a73.4 Payment Date Convention",
+            "date_of_death": "\u00a77.3 Material Change Reporting",
+            "verified_by": "\u00a77.3 Material Change Reporting",
+            "activity_code": "\u00a77.3 Material Change Reporting",
         }.get(item.field_name, "Operational rule")
         clause_reference = {
             "fixed_leg_amount": "SQL-CONTRACT-FIXED-LEG",
@@ -4285,7 +4490,6 @@ class ClaimsService:
         settlement_impact = summary.get("settlement_impact") or {}
         settlement_id = settlement_impact.get("settlement_id_created")
         claims_ops_owner = self.repository.get_active_user_for_role("claims_ops")
-        compliance_owner = self.repository.get_active_user_for_role("compliance")
         if detection["file_type"] == "Settlement":
             reconciliation = summary.get("settlement_reconciliation") or {}
             if reconciliation.get("decision") == "accept":
@@ -4310,31 +4514,17 @@ class ClaimsService:
                     created_at=now,
                     updated_at=now,
                 )
-                created_settlement = self.repository.create_worklist_item(settlement_item)
-                sanctions_item = WorklistItem(
-                    wl_id=self.repository.get_next_worklist_id(),
-                    title=f"Sanction screening pending - {detection['cedent']}",
-                    description=f"Run sanctions screening for {detection['cedent']} before downstream settlement release.",
-                    category="Sanction Screening",
-                    priority="medium",
-                    status="open",
-                    assigned_role="compliance",
-                    assigned_to=compliance_owner.id if compliance_owner else None,
-                    contract_id=mapping["contract_id"],
-                    cedent_id=detection["cedent_id"],
-                    cession_file_id=cession_file.id,
+                self.repository.create_worklist_item(settlement_item)
+                screening_summary = self._build_cession_file_screening_summary(cession_file)
+                self._sync_cession_file_screening_worklist_item(
+                    cession_file,
+                    screening_summary,
+                    detection=detection,
+                    mapping=mapping,
                     settlement_id=settlement_id,
-                    source="AI Agent",
-                    source_detail="Cession pipeline processing",
-                    sla_deadline=now + timedelta(hours=4),
-                    compliance_hold=True,
-                    ai_generated=True,
-                    breadcrumb="Compliance - Sanction Screening",
-                    created_at=now,
-                    updated_at=now,
+                    now=now,
                 )
-                created_sanctions = self.repository.create_worklist_item(sanctions_item)
-                return [created_settlement, created_sanctions]
+                return self.repository.list_worklist_items_for_file(cession_file.id)
             else:
                 mismatch_count = len(reconciliation.get("mismatches") or [])
                 title = f"Settlement reconciliation review - {settlement_id or cession_file.file_id}"
@@ -4344,10 +4534,10 @@ class ClaimsService:
             title = (
                 "Resolve 2 critical validation errors"
                 if detection["file_type"] == "Fixed Leg"
-                else f"{detection['file_type']} review â€” {cession_file.file_id}"
+                else f"{detection['file_type']} review \u2014 {cession_file.file_id}"
             )
             category = "Validation"
-            breadcrumb = "Cession File Â· Validation Review"
+            breadcrumb = "Cession File \u00b7 Validation Review"
 
         item = WorklistItem(
             wl_id=self.repository.get_next_worklist_id(),
@@ -4704,7 +4894,7 @@ class ClaimsService:
         return active_contract or (contracts[0] if contracts else None)
 
     def _should_use_ai_detection(self, profile: dict[str, Any], conflict_detected: bool) -> bool:
-        if openai_client is None:
+        if get_openai_client() is None:
             return False
         if conflict_detected:
             return True
@@ -4734,7 +4924,11 @@ class ClaimsService:
         ]
         sample_rows = "\n".join(content.splitlines()[:8])
         try:
-            response = openai_client.responses.create(
+            client = get_openai_client()
+            if client is None:
+                logger.info("OpenAI client unavailable during cession file AI fallback; using deterministic detection only")
+                return None
+            response = client.responses.create(
                 model=OPENAI_MODEL,
                 instructions=(
                     "You classify cession file uploads for IRiS. Use only the supplied cedents and contracts. "
@@ -5476,13 +5670,13 @@ class ClaimsService:
     def _count_records(self, filename: str, content: str) -> int:
         if not content.strip():
             return 0
-        if filename.lower().endswith((".csv", ".xlsx", ".xlsm")):
+        if filename.lower().endswith((".csv", ".txt", ".xlsx", ".xlsm")):
             return len(self._parse_csv_rows(content))
         return max(len([line for line in content.splitlines() if line.strip()]) - 1, 0)
 
     def _sla_display(self, due_at: datetime | None) -> str:
         if due_at is None:
-            return "â€”"
+            return "\u2014"
         if due_at.tzinfo is None:
             due_at = due_at.replace(tzinfo=UTC)
         delta = due_at - datetime.now(UTC)

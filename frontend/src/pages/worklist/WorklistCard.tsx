@@ -38,6 +38,10 @@ function formatAssigneeLabel(email?: string | null) {
   return email ? email.split('@')[0] : 'Unassigned'
 }
 
+function resolveAssigneeLabel(item: WorklistItem) {
+  return item.assigned_to_name ?? formatAssigneeLabel(item.assigned_to_email)
+}
+
 function resolveSourceLabel(item: WorklistItem) {
   if (item.source) {
     return item.source
@@ -59,7 +63,7 @@ function resolveEntityDisplay(item: WorklistItem) {
 }
 
 function resolveOwnerDisplay(item: WorklistItem) {
-  return `${formatRoleLabel(item.assigned_role)}\n· ${formatAssigneeLabel(item.assigned_to_email)}`
+  return `${formatRoleLabel(item.assigned_role)} - ${resolveAssigneeLabel(item)}`
 }
 
 function isReadOnlyForRole(item: WorklistItem, viewerRole: Exclude<AppRole, 'super_admin'> | null) {
@@ -98,7 +102,7 @@ export function WorklistCard({
   return (
     <Link className="block h-full" to={`/worklist/${item.wl_id}`}>
       <article
-        className={`flex h-full flex-col rounded-lg border border-iris-border bg-white p-3 shadow-sm border-l-[4px] transition hover:-translate-y-0.5 hover:shadow-md ${borderColorMap[item.priority]}`}
+        className={`flex h-full flex-col rounded-lg border border-iris-border bg-white px-3 py-2.5 shadow-sm border-l-[4px] transition hover:-translate-y-0.5 hover:shadow-md ${borderColorMap[item.priority]}`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -111,14 +115,14 @@ export function WorklistCard({
           </span>
         </div>
 
-        <div className="mt-2.5 flex flex-1 flex-col">
-          <h3 className="min-h-[52px] text-[13px] font-semibold leading-5 text-iris-text-primary">{item.title}</h3>
+        <div className="mt-2 flex flex-1 flex-col">
+          <h3 className="text-[13px] font-semibold leading-5 text-iris-text-primary">{item.title}</h3>
           <p className="mt-1 font-mono text-[11px] text-iris-text-muted">
             {item.wl_id}
             {item.category ? ` - ${item.category}` : ''}
           </p>
 
-          <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="mt-2.5 flex items-center justify-between gap-2">
             <span
               className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ${
                 item.is_overdue
@@ -140,29 +144,27 @@ export function WorklistCard({
             </span>
           </div>
 
-          <div className="mt-3 flex flex-1 flex-col space-y-1.5 text-[11px] text-iris-text-secondary">
-            <p className="min-h-[28px]">{item.breadcrumb}</p>
+          <div className="mt-2.5 flex flex-1 flex-col gap-1.5 border-t border-iris-border pt-2.5 text-[11px] text-iris-text-secondary">
+            <p>{item.breadcrumb}</p>
             {entityDisplay ? (
-              <p className="flex min-h-[46px] items-start gap-1.5">
+              <p className="flex items-start gap-1.5">
                 <Building2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-iris-text-muted" />
-                <span className="whitespace-pre-line">{entityDisplay}</span>
+                <span className="whitespace-pre-line leading-4">{entityDisplay}</span>
               </p>
-            ) : (
-              <div className="min-h-[46px]" />
-            )}
-            <p className="flex min-h-[38px] items-start gap-1.5">
+            ) : null}
+            <p className="flex items-start gap-1.5">
               <UserRound className="mt-0.5 h-3.5 w-3.5 shrink-0 text-iris-text-muted" />
-              <span className="whitespace-pre-line">{ownerDisplay}</span>
+              <span className="leading-4">{ownerDisplay}</span>
             </p>
           </div>
         </div>
 
-        <div className="mt-3 border-t border-iris-border pt-2.5">
+        <div className="mt-2.5 border-t border-iris-border pt-2.5">
           <div className="flex items-end justify-between gap-3">
-            <div className="min-h-[40px]">
+            <div>
               {hasImpact ? (
                 <>
-                  <p className={`text-[18px] font-semibold leading-none ${resolveImpactTone(item.financial_impact_display)}`}>
+                  <p className={`text-[16px] font-semibold leading-none ${resolveImpactTone(item.financial_impact_display)}`}>
                     {item.financial_impact_display}
                   </p>
                   <p className="mt-1 text-[11px] text-iris-text-secondary">Financial impact</p>
