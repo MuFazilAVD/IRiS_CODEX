@@ -913,8 +913,6 @@ function UploadStep({
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
               {testcaseItems.map((testcase) => {
                 const isActive = selectedFile?.name === testcase.filename
-                const isSelecting = testcaseBusy === buildTestcaseActionKey('select', testcase.filename)
-                const isDownloading = testcaseBusy === buildTestcaseActionKey('download', testcase.filename)
                 return (
                   <div
                     key={testcase.filename}

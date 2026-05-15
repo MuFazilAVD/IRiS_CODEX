@@ -6543,6 +6543,37 @@ First  change atleast the values in maple leaf, then proceed on to changing the 
 ## [2026-05-13 06:33:10 UTC]
 
 ### Prompt
+## [2026-05-15 11:30:57 UTC]
+
+### Prompt
+fix the errors
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - frontend/tsconfig.app.json
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Inspected the failing TypeScript build diagnostics in the claims cession file-processing modal.
+- Confirmed `noUnusedLocals` is enabled in the frontend TypeScript config, which makes unused locals a hard build error.
+- Removed the unused `isSelecting` and `isDownloading` locals from the testcase quick-access card renderer because their only former usage was inside commented JSX.
+- Re-ran `npm run build` in `frontend/` and verified the production build completed successfully.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- codex_logger.md
+
+### Issues / Deviations
+- The workspace documentation paths referenced by `AGENTS.md` resolve to the `docs/...` equivalents in this repository, so those source files were used.
+- No tracker status changed from this compile fix, so `docs/trackers/TRACKER.md` was left unchanged.
+
+### Status
+✅ Completed
+
 Few changes in the cession file processing pipeline. 
 1. Club both of the detection and the map contract section into one 
 2. Move clauses section after anomalies and resolution.
