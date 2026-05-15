@@ -84,12 +84,12 @@ On create:
 
 | Full Name | Email | Role | Password |
 |-----------|-------|------|----------|
-| Admin User | admin@metlife-re.demo | super_admin | demo1234 |
-| Mia Patel | m.patel@reinsure.io | underwriter | demo1234 |
-| Aaron Chen | a.chen@reinsure.io | claims_ops | demo1234 |
-| Julia Morales | j.morales@reinsure.io | compliance | demo1234 |
-| Devon Rhodes | d.rhodes@reinsure.io | admin | demo1234 |
-| Hana Suzuki | h.suzuki@reinsure.io | underwriter | demo1234 |
+| Admin User | admin@metlife-re.demo | super_admin | admin@2026 |
+| Mia Patel | m.patel@reinsure.io | underwriter | admin@2026 |
+| Aaron Chen | a.chen@reinsure.io | claims_ops | admin@2026 |
+| Julia Morales | j.morales@reinsure.io | compliance | admin@2026 |
+| Devon Rhodes | d.rhodes@reinsure.io | admin | admin@2026 |
+| Hana Suzuki | h.suzuki@reinsure.io | underwriter | admin@2026 |
 
 ---
 

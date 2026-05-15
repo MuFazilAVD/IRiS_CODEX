@@ -375,7 +375,7 @@ export function CessionFileProcessingWorkflow({
   }
 
   async function handlePickTestcaseFile(testcase: ClaimsCessionTestcase) {
-    setTestcaseBusy(testcase.filename)
+    setTestcaseBusy(buildTestcaseActionKey('select', testcase.filename))
     setNotice(null)
     try {
       const response = await api.get<Blob>(testcase.download_url, {
@@ -387,6 +387,24 @@ export function CessionFileProcessingWorkflow({
       setNotice({
         tone: 'error',
         message: extractErrorMessage(caughtError) ?? 'Unable to load that backend testcase right now.',
+      })
+    } finally {
+      setTestcaseBusy(null)
+    }
+  }
+
+  async function handleDownloadTestcaseFile(testcase: ClaimsCessionTestcase) {
+    setTestcaseBusy(buildTestcaseActionKey('download', testcase.filename))
+    setNotice(null)
+    try {
+      const response = await api.get<Blob>(testcase.download_url, {
+        responseType: 'blob',
+      })
+      downloadBlob(response.data, testcase.filename)
+    } catch (caughtError: unknown) {
+      setNotice({
+        tone: 'error',
+        message: extractErrorMessage(caughtError) ?? 'Unable to download that backend testcase right now.',
       })
     } finally {
       setTestcaseBusy(null)
@@ -566,6 +584,7 @@ export function CessionFileProcessingWorkflow({
                 onFilePicked={setSelectedFile}
                 onManualUploadFileTypeChange={setManualUploadFileType}
                 onPickTestcase={handlePickTestcaseFile}
+                onDownloadTestcase={handleDownloadTestcaseFile}
                 onUploadModeChange={setUploadMode}
               />
             ) : null}
@@ -743,6 +762,7 @@ export function CessionFileProcessingWorkflow({
                 onFilePicked={setSelectedFile}
                 onManualUploadFileTypeChange={setManualUploadFileType}
                 onPickTestcase={handlePickTestcaseFile}
+                onDownloadTestcase={handleDownloadTestcaseFile}
                 onUploadModeChange={setUploadMode}
               />
             ) : null}
@@ -852,6 +872,7 @@ function UploadStep({
   onFilePicked,
   onManualUploadFileTypeChange,
   onPickTestcase,
+  onDownloadTestcase,
   onUploadModeChange,
 }: {
   manualUploadFileType: string
@@ -864,6 +885,7 @@ function UploadStep({
   onFilePicked: (file: File | null) => void
   onManualUploadFileTypeChange: (value: string) => void
   onPickTestcase: (testcase: ClaimsCessionTestcase) => void
+  onDownloadTestcase: (testcase: ClaimsCessionTestcase) => void
   onUploadModeChange: (value: UploadMode) => void
 }) {
   return (
@@ -891,21 +913,50 @@ function UploadStep({
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
               {testcaseItems.map((testcase) => {
                 const isActive = selectedFile?.name === testcase.filename
-                const isBusy = testcaseBusy === testcase.filename
+                const isSelecting = testcaseBusy === buildTestcaseActionKey('select', testcase.filename)
+                const isDownloading = testcaseBusy === buildTestcaseActionKey('download', testcase.filename)
                 return (
-                  <button
+                  <div
                     key={testcase.filename}
-                    className={`rounded-xl border px-4 py-3 text-left text-[13px] font-medium transition ${
+                    className={`cursor-pointer rounded-xl border px-4 py-3 text-left text-[13px] font-medium transition ${
                       isActive
                         ? 'border-iris-blue bg-[#F3F8FB] text-iris-text-primary'
                         : 'border-[#D9E3EA] bg-white text-iris-text-primary hover:bg-[#F8FAFC]'
                     }`}
-                    disabled={Boolean(testcaseBusy)}
                     onClick={() => onPickTestcase(testcase)}
-                    type="button"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        onPickTestcase(testcase)
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
                   >
-                    {isBusy ? 'Loading testcase...' : testcase.filename}
-                  </button>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate">{testcase.filename}</p>
+                        <p className="mt-1 text-[11px] font-normal text-iris-text-secondary">{formatCount(testcase.size_bytes)} bytes</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <button
+                          aria-label={`Download ${testcase.filename}`}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#D9E3EA] bg-white text-iris-text-secondary transition hover:bg-[#F4F7FA] hover:text-iris-text-primary"
+                          disabled={Boolean(testcaseBusy)}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onDownloadTestcase(testcase)
+                          }}
+                          type="button"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* <p className="mt-3 text-[12px] text-iris-text-secondary">
+                      {isSelecting ? 'Loading testcase...' : isDownloading ? 'Downloading testcase...' : 'Click anywhere on this card to select the file.'}
+                    </p> */}
+                  </div>
                 )
               })}
             </div>
@@ -915,10 +966,10 @@ function UploadStep({
               <p className="mt-3 text-[12px] text-iris-text-secondary">No testcase files were found in <span className="font-mono">backend/testcases</span>.</p>
             ) : null}
           </div>
-          <div className="mt-3 rounded-xl border border-[#D9E3EA] bg-[#FBFCFD] px-4 py-3 text-left">
+          {/* <div className="mt-3 rounded-xl border border-[#D9E3EA] bg-[#FBFCFD] px-4 py-3 text-left">
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Quick Access Source</p>
             <p className="mt-2 text-[13px] text-iris-text-primary">Quick-access buttons now mirror the current files in <span className="font-mono">backend/testcases</span>, so Claims Ops tests against the updated backend set instead of stale sample names.</p>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -2161,6 +2212,10 @@ function downloadBlob(blob: Blob, filename: string) {
   anchor.click()
   anchor.remove()
   URL.revokeObjectURL(url)
+}
+
+function buildTestcaseActionKey(action: 'select' | 'download', filename: string) {
+  return `${action}:${filename}`
 }
 
 function csvPreview(content: string) {

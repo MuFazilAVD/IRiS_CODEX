@@ -167,7 +167,7 @@ All data is mock — load from reports DB table and return hardcoded preview dat
 - + New User flow with auto-generated temp password
 - Edit/Revoke user
 
-**Codex creates these 6 seed users on first run** (password: `demo1234`):
+**Codex creates these 6 seed users on first run** (password: `admin@2026`):
 | Email | Role |
 |-------|------|
 | admin@metlife-re.demo | super_admin |
@@ -195,7 +195,7 @@ Reference:
                UserRole_AccessLogs.png, ReferenceLibrary.png + all ReferenceLibrary_*.png
 Phases complete: 0-14
 Users & Roles reads/writes DB. Reference Library reads from seeded DB tables.
-Create the 6 seed users with password demo1234 in the DB migration.
+Create the 6 seed users with password admin@2026 in the DB migration.
 ```
 
 ---

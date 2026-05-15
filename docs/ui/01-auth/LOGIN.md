@@ -89,7 +89,7 @@ const handleLogin = async () => {
     authStore.setToken(result.access_token)
     navigate('/dashboard')
   } catch (e) {
-    setError('Invalid credentials. Try demo1234.')
+    setError('Invalid credentials. Check your password and try again.')
   } finally {
     setLoading(false)
   }

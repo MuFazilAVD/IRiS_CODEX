@@ -7,11 +7,11 @@ All mock data below should be stored as JSON files in `backend/app/mock_data/` a
 ## users_seed.json
 ```json
 [
-  { "email": "admin@metlife-re.demo", "full_name": "Admin User", "role": "super_admin", "password": "demo1234" },
-  { "email": "m.patel@reinsure.io", "full_name": "Mia Patel", "role": "underwriter", "password": "demo1234" },
-  { "email": "a.chen@reinsure.io", "full_name": "Aaron Chen", "role": "claims_ops", "password": "demo1234" },
-  { "email": "j.morales@reinsure.io", "full_name": "Julia Morales", "role": "compliance", "password": "demo1234" },
-  { "email": "d.rhodes@reinsure.io", "full_name": "Devon Rhodes", "role": "admin", "password": "demo1234" }
+  { "email": "admin@metlife-re.demo", "full_name": "Admin User", "role": "super_admin", "password": "admin@2026" },
+  { "email": "m.patel@reinsure.io", "full_name": "Mia Patel", "role": "underwriter", "password": "admin@2026" },
+  { "email": "a.chen@reinsure.io", "full_name": "Aaron Chen", "role": "claims_ops", "password": "admin@2026" },
+  { "email": "j.morales@reinsure.io", "full_name": "Julia Morales", "role": "compliance", "password": "admin@2026" },
+  { "email": "d.rhodes@reinsure.io", "full_name": "Devon Rhodes", "role": "admin", "password": "admin@2026" }
 ]
 ```
 

@@ -85,8 +85,8 @@ Create a new user account.
 ## Demo Credentials (POC seed data)
 | Email | Password | Role |
 |-------|----------|------|
-| admin@metlife-re.demo | demo1234 | super_admin |
-| m.patel@reinsure.io | demo1234 | underwriter |
-| a.chen@reinsure.io | demo1234 | claims_ops |
-| j.morales@reinsure.io | demo1234 | compliance |
-| d.rhodes@reinsure.io | demo1234 | admin |
+| admin@metlife-re.demo | admin@2026 | super_admin |
+| m.patel@reinsure.io | admin@2026 | underwriter |
+| a.chen@reinsure.io | admin@2026 | claims_ops |
+| j.morales@reinsure.io | admin@2026 | compliance |
+| d.rhodes@reinsure.io | admin@2026 | admin |

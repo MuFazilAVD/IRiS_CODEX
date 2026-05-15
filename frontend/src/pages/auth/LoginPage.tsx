@@ -17,7 +17,7 @@ export function LoginPage() {
   const setSession = useAuthStore((state) => state.setSession)
 
   const [email, setEmail] = useState('admin@metlife-re.demo')
-  const [password, setPassword] = useState('demo1234')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

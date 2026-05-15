@@ -50,6 +50,9 @@ def seed_database(db: Session) -> None:
                     ),
                 )
             )
+    else:
+        logger.debug("Syncing seeded demo-user passwords against existing users")
+        _sync_seed_users(db, auth_service)
 
     if db.scalar(select(Cedent.cedent_id).limit(1)) is None:
         logger.debug("Seeding cedents table from mock data")
@@ -316,6 +319,19 @@ def seed_database(db: Session) -> None:
     _seed_audit_events(db)
 
     db.commit()
+
+
+def _sync_seed_users(db: Session, auth_service: AuthService) -> None:
+    logger.info("Synchronizing seeded demo-user credentials")
+    for record in load_mock_data("users_seed.json"):
+        user = db.scalar(select(User).where(User.email == record["email"]))
+        if user is None:
+            logger.debug("Skipping seed password sync for missing user email=%s", record["email"])
+            continue
+        if auth_service.verify_password(record["password"], user.password_hash):
+            continue
+        logger.debug("Refreshing seeded demo-user password for email=%s", record["email"])
+        user.password_hash = auth_service.hash_password(record["password"])
 
 
 def _seed_audit_events(db: Session) -> None:

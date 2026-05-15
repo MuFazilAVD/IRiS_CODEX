@@ -407,9 +407,43 @@ export interface CedentContractSummary {
   lives: number
 }
 
+export interface CedentCalculationSummaryCard {
+  label: string
+  value: number
+  format: 'currency' | 'number' | 'percentage'
+  currency?: string
+  decimals?: number
+}
+
+export interface CedentCalculationQuarterRow {
+  quarter: string
+  net_settlements: number
+  fixed_leg: number
+  floating_leg: number
+  ae_ratio: number
+  active_pensioners: number
+  expected_deaths: number
+  actual_deaths: number
+}
+
+export interface CedentCalculationContract {
+  contract_id: string
+  contract_name: string
+  currency: string
+  lives: number
+  fixed_leg_rate_pct: number
+  quarters: CedentCalculationQuarterRow[]
+}
+
 export interface CedentCalculationsSummary {
   status: string
-  message: string
+  summary_cards: CedentCalculationSummaryCard[]
+  default_metric: string
+  default_aggregation: string
+  default_from: string
+  default_to: string
+  default_contract: string
+  contracts: CedentCalculationContract[]
 }
 
 export interface CedentDetailPayload {

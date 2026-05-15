@@ -143,6 +143,37 @@ create vence, install reqs, acgivate and run app
 ✅ Completed
 
 
+## [2026-05-15T10:49:42Z]
+
+### Prompt
+Remove the select and view button which you have created just now. And select the file when it is clicked on anywhere else apart from the download button. No need for an explicit select button
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/api/CLAIMS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Removed the explicit quick-access `Select` and `View` actions from the cession upload testcase cards.
+- Updated the quick-access card interaction so clicking anywhere on the card selects the testcase, while the separate download icon/button fetches the backend file without also selecting it.
+- Revised the tracker note to reflect the final quick-access interaction pattern.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+
+### Status
+✅ Completed
+
+
 ## [2026-05-14T12:32:52Z]
 
 ### Prompt
@@ -219,6 +250,100 @@ In the audit trail inside the cession file processing, right now the validation 
 
 ### Status
 Completed
+
+
+## [2026-05-15T10:37:55Z]
+
+### Prompt
+Remove the hardcoded password from the login page and set the password as "admin@2026"
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/01-auth/LOGIN.md
+  - docs/api/AUTH.md
+  - docs/db/SCHEMA.md
+  - docs/ARCHITECTURE.md
+  - docs/README.md
+  - docs/mock_data/MOCK_DATA.md
+  - docs/ui/09-admin/ADMIN_UI.md
+  - docs/build_plans/BUILD_PLAN_ADDITIONS.md
+  - frontend/src/pages/auth/LoginPage.tsx
+  - backend/app/mock_data/users_seed.json
+  - backend/app/seed.py
+
+### Actions Taken
+- Removed the hardcoded default password from the login page so the password field now starts empty.
+- Changed the seeded demo-user password baseline from `demo1234` to `admin@2026`.
+- Added startup seed synchronization so already-seeded demo users in the local database are updated to the new password without requiring a manual database reset.
+- Updated the auth/mock-data/admin documentation and tracker notes so the repo’s credential references match the implemented behavior.
+- Verified against the local backend database that `admin@metlife-re.demo` authenticates with `admin@2026`.
+
+### Files Modified
+- frontend/src/pages/auth/LoginPage.tsx
+- backend/app/mock_data/users_seed.json
+- backend/app/seed.py
+- docs/api/AUTH.md
+- docs/ui/01-auth/LOGIN.md
+- docs/README.md
+- docs/mock_data/MOCK_DATA.md
+- docs/ui/09-admin/ADMIN_UI.md
+- docs/build_plans/BUILD_PLAN_ADDITIONS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T10:32:04Z]
+
+### Prompt
+In cedents page, there seems to be a missing section inside the master data , which is the "calculation". Add this section and populate it using the data provided in the above screenshots for all cedents.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/04-underwriting/cedents/CEDENTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/api/UNDERWRITING.md
+  - docs/ARCHITECTURE.md
+  - docs/db/SCHEMA.md
+  - frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+  - frontend/src/pages/underwriting/cedants/cedentConfig.ts
+  - frontend/src/types/api.ts
+  - backend/app/services/underwriting_service.py
+  - backend/app/mock_data/cedent_detail_overrides.json
+
+### Actions Taken
+- Replaced the cedant detail `calculations` placeholder payload with a real screenshot-style calculations dataset derived from mapped contract performance rows.
+- Added a Northstar-specific calculations override using the screenshot values shown for the cedant calculations section.
+- Built the cedant calculations UI with summary KPI cards, aggregation controls, quarterly rollup table, per-contract breakdown, and pensioner trend table.
+- Realigned the cedant detail left rail to the screenshot-backed `Operations` grouping and renamed the audit section to `Audit Trails`.
+- Updated the underwriting tracker entry to reflect the completed cedant calculations workspace.
+
+### Files Modified
+- backend/app/services/underwriting_service.py
+- backend/app/mock_data/cedent_detail_overrides.json
+- frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+- frontend/src/pages/underwriting/cedants/cedentConfig.ts
+- frontend/src/types/api.ts
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- Only Northstar had explicit calculation values available from the supplied screenshot set, so the other cedents use the existing seeded contract-performance data to populate the same calculations workspace instead of inventing undocumented screenshot-only values.
+
+### Status
+✅ Completed
 
 
 ## [2026-05-15T09:10:50Z]

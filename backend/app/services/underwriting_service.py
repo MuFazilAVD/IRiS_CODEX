@@ -1069,6 +1069,11 @@ class UnderwritingService:
         }
 
         mapped_contracts = [self._serialize_mapped_contract(contract) for contract in contracts]
+        calculations = self._build_cedent_calculations_payload(
+            cedent=cedent,
+            contracts=contracts,
+            override=detail.get("calculations"),
+        )
         return {
             "cedent_id": cedent.cedent_id,
             "legal_entity_name": cedent.legal_entity_name,
@@ -1093,10 +1098,7 @@ class UnderwritingService:
             "access_beneficiary_rules": detail["access_beneficiary_rules"],
             "audit_approval": audit_approval,
             "mapped_contracts": mapped_contracts,
-            "calculations": {
-                "status": "spec_gap",
-                "message": "Cedant-level calculation endpoint is not defined in the underwriting API spec yet.",
-            },
+            "calculations": calculations,
         }
 
     def _serialize_mapped_contract(self, contract: Contract) -> dict[str, Any]:
@@ -1109,6 +1111,114 @@ class UnderwritingService:
             "inception_date": contract.inception_date.isoformat() if contract.inception_date else None,
             "lives": contract.lives_count or 0,
         }
+
+    def _build_cedent_calculations_payload(
+        self,
+        cedent: Cedent,
+        contracts: list[Contract],
+        override: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        logger.info("Building cedant calculations payload")
+        logger.debug(
+            "Cedant calculations cedent_id=%s contract_count=%s has_override=%s",
+            cedent.cedent_id,
+            len(contracts),
+            bool(override),
+        )
+
+        calculation_contracts: list[dict[str, Any]] = []
+        all_quarters: list[str] = []
+
+        for contract in contracts:
+            detail = self._build_contract_payload(contract)
+            settlement_history = detail["details_performance"]["settlement_history"]
+            contract_quarters = [
+                {
+                    "quarter": row["period"],
+                    "net_settlements": float(row["net_settled"]),
+                    "fixed_leg": float(row["fixed_leg"]),
+                    "floating_leg": float(row["floating_leg"]),
+                    "ae_ratio": float(row["ae_ratio"]),
+                    "active_pensioners": int(row["active_pensioners"]),
+                    "expected_deaths": int(row["expected_deaths"]),
+                    "actual_deaths": int(row["actual_deaths"]),
+                }
+                for row in settlement_history
+            ]
+            for row in contract_quarters:
+                quarter = row["quarter"]
+                if quarter not in all_quarters:
+                    all_quarters.append(quarter)
+
+            calculation_contracts.append(
+                {
+                    "contract_id": contract.contract_id,
+                    "contract_name": contract.contract_name,
+                    "currency": contract.currency or "USD",
+                    "lives": int(contract.lives_count or 0),
+                    "fixed_leg_rate_pct": round(float(contract.fixed_leg_rate or 0) * 100, 2),
+                    "quarters": contract_quarters,
+                }
+            )
+
+        sorted_quarters = sorted(all_quarters, key=self._quarter_sort_value)
+        total_lives = sum(contract["lives"] for contract in calculation_contracts)
+        latest_active_pensioners = sum(
+            contract["quarters"][-1]["active_pensioners"] for contract in calculation_contracts if contract["quarters"]
+        )
+        weighted_fixed_leg_numerator = sum(
+            float(contract.notional_amount or 0) * float(contract.fixed_leg_rate or 0) * 100 for contract in contracts
+        )
+        total_notional = sum(float(contract.notional_amount or 0) for contract in contracts)
+        avg_fixed_leg = round(weighted_fixed_leg_numerator / total_notional, 2) if total_notional else 0.0
+        lifetime_settlements = round(
+            sum(
+                row["net_settlements"]
+                for contract_payload in calculation_contracts
+                for row in contract_payload["quarters"]
+            ),
+            2,
+        )
+        primary_currency = calculation_contracts[0]["currency"] if calculation_contracts else (cedent.aum_currency or "USD")
+
+        payload = {
+            "status": "mock",
+            "summary_cards": [
+                {
+                    "label": "Lifetime Settlements",
+                    "value": lifetime_settlements,
+                    "format": "currency",
+                    "currency": primary_currency,
+                    "decimals": 0,
+                },
+                {
+                    "label": "Total Lives",
+                    "value": total_lives,
+                    "format": "number",
+                    "decimals": 0,
+                },
+                {
+                    "label": "Latest Active Pensioners",
+                    "value": latest_active_pensioners,
+                    "format": "number",
+                    "decimals": 0,
+                },
+                {
+                    "label": "Avg Fixed Leg",
+                    "value": avg_fixed_leg,
+                    "format": "percentage",
+                    "decimals": 2,
+                },
+            ],
+            "default_metric": "net_settlements",
+            "default_aggregation": "sum",
+            "default_from": sorted_quarters[0] if sorted_quarters else "",
+            "default_to": sorted_quarters[-1] if sorted_quarters else "",
+            "default_contract": "all",
+            "contracts": calculation_contracts,
+        }
+
+        return self._deep_merge(payload, override or {})
 
     def _update_legal_entity(self, cedent: Cedent, payload: dict[str, Any]) -> dict[str, Any]:
         field_map = {
@@ -2799,6 +2909,18 @@ class UnderwritingService:
             return value.replace(year=value.year + 1)
         except ValueError:
             return value.replace(month=2, day=28, year=value.year + 1)
+
+    def _quarter_sort_value(self, period: str) -> tuple[int, int]:
+        parts = (period or "").strip().split(" ")
+        if len(parts) != 2:
+            return (0, 0)
+        quarter_label, year_label = parts
+        try:
+            quarter = int(quarter_label.replace("Q", ""))
+            year = int(year_label)
+        except ValueError:
+            return (0, 0)
+        return (year, quarter)
 
     def _slice_quarter_range(self, rows: list[dict[str, Any]], from_period: str, to_period: str) -> list[dict[str, Any]]:
         labels = [row["period"] for row in rows]

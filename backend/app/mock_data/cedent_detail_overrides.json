@@ -279,6 +279,101 @@
         "rule_description": "Dependent child continuation benefit"
       }
     ],
+    "calculations": {
+      "summary_cards": [
+        {
+          "label": "Lifetime Settlements",
+          "value": 79120000,
+          "format": "currency",
+          "currency": "GBP",
+          "decimals": 0
+        },
+        {
+          "label": "Total Lives",
+          "value": 18420,
+          "format": "number",
+          "decimals": 0
+        },
+        {
+          "label": "Active Pensioners (sample)",
+          "value": 9,
+          "format": "number",
+          "decimals": 0
+        },
+        {
+          "label": "Avg Fixed Leg",
+          "value": 2.85,
+          "format": "percentage",
+          "decimals": 2
+        }
+      ],
+      "default_metric": "net_settlements",
+      "default_aggregation": "sum",
+      "default_from": "Q1 2024",
+      "default_to": "Q1 2025",
+      "default_contract": "all",
+      "contracts": [
+        {
+          "contract_id": "LSC-2024-019",
+          "contract_name": "Northstar Pension Trust Longevity Swap 2024",
+          "currency": "GBP",
+          "lives": 18420,
+          "fixed_leg_rate_pct": 2.85,
+          "quarters": [
+            {
+              "quarter": "Q1 2024",
+              "net_settlements": 605119,
+              "fixed_leg": 8906250,
+              "floating_leg": 9511369,
+              "ae_ratio": 1.081,
+              "active_pensioners": 18397,
+              "expected_deaths": 221,
+              "actual_deaths": 239
+            },
+            {
+              "quarter": "Q2 2024",
+              "net_settlements": -210449,
+              "fixed_leg": 8906250,
+              "floating_leg": 8695801,
+              "ae_ratio": 0.946,
+              "active_pensioners": 18345,
+              "expected_deaths": 221,
+              "actual_deaths": 209
+            },
+            {
+              "quarter": "Q3 2024",
+              "net_settlements": -15268,
+              "fixed_leg": 8906250,
+              "floating_leg": 8890982,
+              "ae_ratio": 0.977,
+              "active_pensioners": 18264,
+              "expected_deaths": 221,
+              "actual_deaths": 216
+            },
+            {
+              "quarter": "Q4 2024",
+              "net_settlements": 157808,
+              "fixed_leg": 8906250,
+              "floating_leg": 9064058,
+              "ae_ratio": 1.005,
+              "active_pensioners": 18193,
+              "expected_deaths": 221,
+              "actual_deaths": 222
+            },
+            {
+              "quarter": "Q1 2025",
+              "net_settlements": 668630,
+              "fixed_leg": 8906250,
+              "floating_leg": 9574880,
+              "ae_ratio": 1.018,
+              "active_pensioners": 18100,
+              "expected_deaths": 221,
+              "actual_deaths": 225
+            }
+          ]
+        }
+      ]
+    },
     "audit_approval": [
       {
         "timestamp": "2026-05-11 13:20:39",
