@@ -6996,3 +6996,38 @@ Change this everywhere
 
 ### Status
 Completed
+## [2026-05-15T12:41:37.5087619+00:00]
+
+### Prompt
+Put guardrails to the chatbot prompt, do not answer any irrelevant questions, state that I cant, also do not reveal any PII, say that I do not have access to PII
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/api/COMPLIANCE.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/ARCHITECTURE.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/services/chatbot_service.py
+  - backend/app/repositories/chatbot_repository.py
+
+### Actions Taken
+- Added deterministic chatbot guardrails ahead of OpenAI planning so off-topic prompts are refused before SQL or answer generation runs
+- Added PII-request detection that returns the exact refusal `I can't help with PII. I do not have access to PII.`
+- Added irrelevant-question detection that returns the exact refusal `I can't help with irrelevant questions. I can only help with IRiS platform workflows, navigation, and live operational data.`
+- Tightened the planner and final-answer prompt instructions so the live LLM path mirrors the same guardrails if a request reaches it
+- Updated the chatbot tracker note to record the new off-topic and PII refusal behavior
+- Ran a backend smoke check covering an irrelevant prompt, a PII-seeking prompt, and an on-topic worklist prompt
+- Ran `venv\Scripts\python -m py_compile backend\app\services\chatbot_service.py`
+
+### Files Modified
+- backend/app/services/chatbot_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- `docs/ARCHITECTURE.md` and the older Phase 10/API docs still describe Anthropic/Claude as the chatbot model path, but the live repository implementation already uses the shared OpenAI client; this guardrail change was applied to the active OpenAI-backed service without altering that existing runtime architecture
+
+### Status
+✅ Completed

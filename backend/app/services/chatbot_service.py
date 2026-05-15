@@ -19,6 +19,11 @@ logger = logging.getLogger(__name__)
 JSON_OBJECT_PATTERN = re.compile(r"\{.*\}", re.DOTALL)
 MAX_PLANNED_QUERIES = 3
 SQL_ROW_LIMIT = 200
+PII_REQUEST_RESPONSE = "I can't help with PII. I do not have access to PII."
+IRRELEVANT_REQUEST_RESPONSE = (
+    "I can't help with irrelevant questions. "
+    "I can only help with IRiS platform workflows, navigation, and live operational data."
+)
 ANSWER_FORMAT_GUIDANCE = (
     "Format the answer as clean Markdown for a compact chat drawer. "
     "Lead with the answer immediately. "
@@ -42,6 +47,104 @@ SETTLEMENT_PIPELINE_SQL_GUIDANCE = (
     "diagnostics and can repeat the file-level system expectation. For the authoritative file-level IRiS system "
     "total after processing, join settlements on settlements.cession_file_id = cession_files.id and use the "
     "single linked settlements row, or compute one total from aggregated uploaded components."
+)
+IRIS_DOMAIN_KEYWORDS = {
+    "iris",
+    "dashboard",
+    "worklist",
+    "underwriting",
+    "cedant",
+    "cedants",
+    "cedent",
+    "cedents",
+    "contract",
+    "contracts",
+    "population",
+    "member",
+    "members",
+    "policy",
+    "policies",
+    "claim",
+    "claims",
+    "cession",
+    "settlement",
+    "settlements",
+    "reconciliation",
+    "calculation",
+    "calculations",
+    "pipeline",
+    "pipelines",
+    "screening",
+    "sanction",
+    "sanctions",
+    "compliance",
+    "audit",
+    "reports",
+    "report",
+    "admin",
+    "user",
+    "users",
+    "role",
+    "roles",
+    "library",
+    "reference",
+    "workflow",
+    "workflows",
+    "approval",
+    "approvals",
+    "exception",
+    "exceptions",
+    "navigate",
+    "navigation",
+}
+IRIS_HELP_PHRASES = {
+    "help",
+    "what can you do",
+    "how can you help",
+    "what do you do",
+    "your capabilities",
+    "what can iris do",
+}
+PII_KEYWORDS = {
+    "pii",
+    "personal data",
+    "personal information",
+    "personally identifiable information",
+    "ssn",
+    "social security",
+    "date of birth",
+    "dob",
+    "birth date",
+    "passport",
+    "driver license",
+    "driving license",
+    "national id",
+    "tax id",
+    "tin",
+    "bank account",
+    "account number",
+    "routing number",
+    "iban",
+    "swift",
+    "sort code",
+    "credit card",
+    "debit card",
+    "cvv",
+    "card number",
+    "phone number",
+    "mobile number",
+    "email address",
+    "home address",
+    "mailing address",
+    "residential address",
+    "beneficiary",
+    "beneficiaries",
+    "member details",
+    "employee id",
+}
+PII_PATTERNS = (
+    re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
+    re.compile(r"\b(?:ssn|dob|tin|iban|cvv)\b"),
 )
 
 ROLE_NAVIGATION_PREFIXES = {
@@ -124,6 +227,14 @@ class ChatbotService:
         if not message:
             logger.error("Chatbot request rejected because message content was empty")
             raise IrisAPIError(400, "Invalid message", "Chatbot message cannot be empty")
+        guardrail_response = self._guardrail_response(message=message, current_page=current_page)
+        if guardrail_response is not None:
+            return ChatbotMessageResponse(
+                response=guardrail_response,
+                navigation_action=None,
+                sql_query_used=None,
+                sources=[],
+            ).model_dump()
 
         client = get_openai_client()
         if client is None:
@@ -150,6 +261,15 @@ class ChatbotService:
             conversation_history=conversation_history,
             table_catalog=table_catalog,
         )
+        if not plan.requires_sql and plan.answer_strategy in {PII_REQUEST_RESPONSE, IRRELEVANT_REQUEST_RESPONSE}:
+            logger.info("Returning chatbot planner guardrail response without SQL execution")
+            logger.debug("Planner guardrail intent=%s answer_strategy=%s", plan.intent, plan.answer_strategy)
+            return ChatbotMessageResponse(
+                response=plan.answer_strategy,
+                navigation_action=None,
+                sql_query_used=None,
+                sources=[],
+            ).model_dump()
         executions = self._run_planned_queries(
             client=client,
             plan=plan,
@@ -196,8 +316,12 @@ class ChatbotService:
             instructions=(
                 "You are the IRiS Assist query planner for an internal reinsurance platform. "
                 "You have a read-only SQL tool over the runtime database tables listed in the input. "
+                "Refuse irrelevant or general-world questions outside the IRiS platform domain. "
+                "Never provide or retrieve PII, personal data, or member-level identifying details. "
                 "Use SQL for any live-data question about counts, statuses, records, comparisons, recent activity, worklists, contracts, cedents, cession files, reports, audit events, screening cache data, or reference data. "
                 "Never invent values. Only use the runtime tables listed in the input. "
+                f"If the user asks for PII or personal data, set requires_sql to false, set navigation_action to null, and set answer_strategy to exactly '{PII_REQUEST_RESPONSE}'. "
+                f"If the user asks an irrelevant or off-topic question, set requires_sql to false, set navigation_action to null, and set answer_strategy to exactly '{IRRELEVANT_REQUEST_RESPONSE}'. "
                 "If the user asks for data that is not available in the runtime tables, set requires_sql to false and let the answering model explain that the live database does not expose it. "
                 "If the user is asking for navigation only, set requires_sql to false and supply a navigation_action when appropriate. "
                 f"{SETTLEMENT_PIPELINE_SQL_GUIDANCE} "
@@ -364,7 +488,11 @@ class ChatbotService:
                 instructions=(
                     "You are IRiS Assist inside an internal reinsurance operations platform. "
                     "Answer only from the provided live SQL results, allowed navigation routes, and runtime table catalog. "
+                    "Do not answer irrelevant or general-world questions outside the IRiS platform domain. "
+                    "Do not provide, infer, summarize, or reveal PII, personal data, or member-level identifying details. "
                     "Do not invent values, IDs, records, or routes. "
+                    f"If the user asks for PII or personal data, reply exactly: {PII_REQUEST_RESPONSE} "
+                    f"If the user asks an irrelevant or off-topic question, reply exactly: {IRRELEVANT_REQUEST_RESPONSE} "
                     "If the SQL results are empty, say you could not find matching live records. "
                     "If the database does not expose the requested data, say so plainly. "
                     "Keep the tone clear, professional, and businesslike. "
@@ -435,6 +563,42 @@ class ChatbotService:
                 continue
             excerpt.append({"role": role, "content": content[:800]})
         return excerpt
+
+    def _guardrail_response(self, *, message: str, current_page: str) -> str | None:
+        normalized_message = self._normalize_guardrail_text(message)
+        if self._requests_pii(normalized_message):
+            logger.info("Chatbot guardrail blocked PII request")
+            logger.debug("PII guardrail message=%s current_page=%s", message, current_page)
+            return PII_REQUEST_RESPONSE
+        if not self._is_relevant_to_iris(normalized_message, current_page):
+            logger.info("Chatbot guardrail blocked irrelevant request")
+            logger.debug("Irrelevant guardrail message=%s current_page=%s", message, current_page)
+            return IRRELEVANT_REQUEST_RESPONSE
+        return None
+
+    def _normalize_guardrail_text(self, text: str) -> str:
+        normalized = re.sub(r"[^a-z0-9/]+", " ", text.lower()).strip()
+        return re.sub(r"\s+", " ", normalized)
+
+    def _requests_pii(self, normalized_message: str) -> bool:
+        if any(keyword in normalized_message for keyword in PII_KEYWORDS):
+            return True
+        return any(pattern.search(normalized_message) for pattern in PII_PATTERNS)
+
+    def _is_relevant_to_iris(self, normalized_message: str, current_page: str) -> bool:
+        if not normalized_message:
+            return False
+        if normalized_message in IRIS_HELP_PHRASES:
+            return True
+        if "current page" in normalized_message or "this page" in normalized_message:
+            return True
+        if current_page and current_page != "/" and " here " in f" {normalized_message} ":
+            return True
+        if current_page and current_page != "/" and current_page.lower() in normalized_message:
+            return True
+        if any(f"/{keyword}" in normalized_message for keyword in ("dashboard", "worklist", "underwriting", "claims", "operations", "compliance", "reports", "admin")):
+            return True
+        return any(keyword in normalized_message for keyword in IRIS_DOMAIN_KEYWORDS)
 
     def _allowed_navigation_action(self, requested_path: str | None, request_role: str) -> str | None:
         if not requested_path:
