@@ -456,7 +456,7 @@ function renderContractSection({
     case 'details_performance':
       return (
         <div className="space-y-5">
-          <OverviewTab detail={detail} performance={performance} />
+          <OverviewTab performance={performance} />
           <PerformanceSummarySection currency={detail.currency} performance={performance} />
         </div>
       )
@@ -609,13 +609,7 @@ function ContractEditableSectionContent({
   )
 }
 
-function OverviewTab({
-  detail,
-  performance,
-}: {
-  detail: ContractDetailPayload
-  performance: ContractDetailsPerformancePayload | null
-}) {
+function OverviewTab({ performance }: { performance: ContractDetailsPerformancePayload | null }) {
   if (!performance) {
     return <p className="text-[13px] text-iris-text-secondary">Overview insights are loading...</p>
   }
@@ -675,9 +669,6 @@ function OverviewTab({
         </PanelCard>
       </div>
 
-      <PanelCard subtitle={`${detail.contract_id} settlement history`} title="Latest Settlement Snapshot">
-        <SettlementHistoryTable currency={detail.currency} rows={performance.settlement_history.slice(-4).reverse()} />
-      </PanelCard>
     </div>
   )
 }

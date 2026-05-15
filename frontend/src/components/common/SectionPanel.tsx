@@ -34,7 +34,7 @@ export function SectionPanel({
 
   return (
     <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="rounded-xl border border-iris-border bg-white p-4 shadow-sm">
+      <aside className="nav-scrollbar rounded-xl border border-iris-border bg-white p-4 shadow-sm xl:sticky xl:top-[80px] xl:self-start xl:max-h-[calc(100vh-96px)] xl:overflow-y-auto">
         {Object.entries(groupedSections).map(([group, items]) => (
           <div key={group} className="mb-5 last:mb-0">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-iris-text-muted">{group}</p>

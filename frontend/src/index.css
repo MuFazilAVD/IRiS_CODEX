@@ -68,28 +68,76 @@ select:focus {
 
 .nav-scrollbar {
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: #1a6b9a #112233;
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
 }
 
 .nav-scrollbar::-webkit-scrollbar {
-  width: 10px;
+  width: 0;
+  height: 0;
 }
 
 .nav-scrollbar::-webkit-scrollbar-track {
   margin-block: 8px;
   border-radius: 9999px;
-  background: linear-gradient(180deg, #0d1b2a 0%, #112233 100%);
+  background: linear-gradient(180deg, #e5e7eb 0%, #f8fafc 100%);
 }
 
 .nav-scrollbar::-webkit-scrollbar-thumb {
+  border: 2px solid #f8fafc;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #9ca3af 0%, #d1d5db 100%);
+}
+
+.nav-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #6b7280 0%, #9ca3af 100%);
+}
+
+.nav-scrollbar:hover {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af #f8fafc;
+}
+
+.nav-scrollbar:hover::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.sidebar-scrollbar {
+  scrollbar-gutter: stable;
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  margin-block: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #0d1b2a 0%, #112233 100%);
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
   border: 2px solid #0d1b2a;
   border-radius: 9999px;
   background: linear-gradient(180deg, #1a6b9a 0%, #00bcd4 100%);
 }
 
-.nav-scrollbar::-webkit-scrollbar-thumb:hover {
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #2980b9 0%, #00bcd4 55%, #2ecc71 100%);
+}
+
+.sidebar-scrollbar:hover {
+  scrollbar-width: thin;
+  scrollbar-color: #1a6b9a #112233;
+}
+
+.sidebar-scrollbar:hover::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
 
 @layer components {

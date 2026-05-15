@@ -110,7 +110,7 @@ export function Sidebar() {
         ) : null}
       </div>
 
-      <div className="nav-scrollbar flex-1 overflow-y-auto px-2 pb-4">
+      <div className="sidebar-scrollbar flex-1 overflow-y-auto px-2 pb-4">
         {sections
           .filter((section) => sidebarRole && section.roles.includes(sidebarRole))
           .map((section) => (

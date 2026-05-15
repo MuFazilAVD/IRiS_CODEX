@@ -221,6 +221,47 @@ In the audit trail inside the cession file processing, right now the validation 
 Completed
 
 
+## [2026-05-15T06:52:07Z]
+
+### Prompt
+In the sanction screening page of the settlement file processing there are some issues:
+1) Auto clear is getting repeated many times. Remove the redundancy.
+2) Task context seems unnecessary.
+reimagine the ui
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/DESIGN.md
+  - docs/api/CLAIMS.md
+  - docs/api/COMPLIANCE.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Reworked the dedicated settlement `Sanction Screening` step into a decision-first layout with a stronger hero section, condensed metadata, and cleaner routing/status presentation.
+- Removed the repeated auto-clear signaling by collapsing the view down to a single primary screening-status pill and replacing repetitive auto-clear cards/metrics with distinct release-path and review-routing summaries.
+- Removed the `Task Context` panel entirely and redistributed the useful case-reference, SLA, assignment, and follow-up link details into the new analyst-handoff/release-readiness card.
+- Kept the existing OFAC and FinCEN provider output cards plus the raw-watchlist and IRiS analysis payloads, but regrouped them into a more readable two-column composition.
+- Updated the claims tracker note to capture the new settlement screening-tab presentation.
+- Verified the frontend build with `npm run build`.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- This request only required a frontend presentation refactor; the screening payload shape and backend workflow were intentionally left unchanged.
+
+### Status
+✅ Completed
+
+
 ## [2026-05-15T05:44:44Z]
 
 ### Prompt
@@ -261,6 +302,135 @@ Do not skip any information that is currently present in the UI. You can make lo
 ### Issues / Deviations
 - The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
 - The screenshot sample was treated as a layout reference only, per the prompt; the live contract data and existing current-page content were preserved rather than replaced with screenshot values.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T06:09:31Z]
+
+### Prompt
+Under details and performance remove latest settlement snapshot.
+Once we scroll through the contracts page and reach the postition where the left nav tab and the details pane are about to touch the header (refer screenshot) fix the scroll ofthe left tab to avoid the nav tab not being seen once we scroll inside the right div
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/DESIGN.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/components/common/SectionPanel.tsx
+  - frontend/src/components/layout/AppShell.tsx
+  - frontend/src/components/layout/Topbar.tsx
+  - frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+
+### Actions Taken
+- Removed the `Latest Settlement Snapshot` card from the contract `Details & Performance` section so that view no longer repeats settlement-history content.
+- Updated the shared `SectionPanel` component to keep the left navigation rail sticky below the fixed topbar on desktop and to give the rail its own max-height and internal scroll behavior.
+- Rebuilt the frontend to verify the contract page and shared section panel changes compile successfully.
+- Updated the underwriting tracker note to record the sticky navigation behavior and the removal of the duplicate settlement snapshot.
+
+### Files Modified
+- frontend/src/components/common/SectionPanel.tsx
+- frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The sticky navigation adjustment was applied in the shared `SectionPanel` because that component already defines the cedent/contract left-rail layout and is the cleanest place to keep the behavior consistent.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T06:25:00Z]
+
+### Prompt
+For the left nav tab reduce the width of the scroll bar, also make it visible only when we are hovering.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/components/common/SectionPanel.tsx
+  - frontend/src/index.css
+
+### Actions Taken
+- Opted the shared contract section rail into the existing `nav-scrollbar` utility so the left nav uses the centralized scrollbar styling.
+- Reduced the scrollbar width for WebKit and switched both WebKit and Firefox styling to stay hidden by default, then appear on hover.
+- Updated the contract detail tracker note to record the hover-only scrollbar behavior.
+
+### Files Modified
+- frontend/src/components/common/SectionPanel.tsx
+- frontend/src/index.css
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T06:31:00Z]
+
+### Prompt
+Revert the color back to gray and white for this scroll bar, for the left most one (for the main left mav tab), keep the current color itself
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/components/layout/Sidebar.tsx
+  - frontend/src/index.css
+
+### Actions Taken
+- Split the app sidebar off from the shared contract section scrollbar styling so the two rails can use different palettes.
+- Restored the main left sidebar scrollbar to a gray/white gradient while keeping the contract section rail on the current blue/teal theme.
+- Updated the sidebar tracker note and logged the change.
+
+### Files Modified
+- frontend/src/components/layout/Sidebar.tsx
+- frontend/src/index.css
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T06:37:00Z]
+
+### Prompt
+Reverse the scroll bar colors :
+Can you please swap the colors of the scrolls for these two scroll bars
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/components/layout/Sidebar.tsx
+  - frontend/src/components/common/SectionPanel.tsx
+  - frontend/src/index.css
+
+### Actions Taken
+- Swapped the scrollbar palettes between the main app sidebar and the contract section rail.
+- Restored the main left navigation scrollbar to the blue/teal theme and moved the gray/white theme to the contract detail section rail.
+- Updated the tracker and session log to reflect the reversal.
+
+### Files Modified
+- frontend/src/index.css
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
 
 ### Status
 ✅ Completed
