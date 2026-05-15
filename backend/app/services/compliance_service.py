@@ -654,11 +654,12 @@ class ComplianceService:
         entries = payload.get("entries") or seed_payload.get("entries") or []
         normalized_entries = [self._normalize_screening_cache_entry(entry) for entry in entries]
         display_name = self._screening_cache_display_name(item.list_name)
+        effective_record_count = len(normalized_entries) if normalized_entries else int(item.record_count or 0)
         return {
             "list_name": item.list_name,
             "display_name": display_name,
             "provider": item.provider,
-            "record_count": item.record_count or len(normalized_entries),
+            "record_count": effective_record_count,
             "last_sync": self._isoformat(item.last_sync) if item.last_sync else "",
             "status": item.status,
             "filename": self._screening_cache_filename(item.list_name),

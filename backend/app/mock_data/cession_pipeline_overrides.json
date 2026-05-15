@@ -3004,5 +3004,446 @@
         }
       ]
     }
+  },
+  "CES-2026-020": {
+    "pipeline_session_id": "pipe-db64bb3d-ae82-4e09-8d7d-141e0c888191",
+    "active_step": "process",
+    "source_filename": "Maple_Leaf_Q1_2026.txt",
+    "source_size_bytes": 520,
+    "source_content_text": "Calculation Period|Payment Date|Pensioner Movement|Applicable Indexation / Escalation|Fixed Amount|Floating Amount|Fee (Admin)|Interest on Over/Underpayment from Prior Period|Net Settlement Amount\n2026 Q1|2026-04-12|Death|CPI capped 5% applied to pension tranche|CAD 1,500,000|CAD 1,514,735|CAD 900|CAD 0|CAD 13,835\n2026 Q1||Suspension|No escalation applicable during suspension period|1250000|1248000|900|0|-2900\n2026 Q1|2026-04-12|Reinstatement|CPI capped 5% reapplied after reinstatement|1367500|1379470|1000|0|10970\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-15T11:43:56.968527Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-15T11:43:57.117930Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-15T11:43:54.593290Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026.txt"
+      },
+      {
+        "timestamp": "2026-05-15T11:43:57.021933Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-15T11:43:57.049636Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-15T11:43:57.151421Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-15T11:43:57.360709Z",
+        "actor": "Validation Engine",
+        "type": "AI Agent",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-15T11:44:02.537868Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "8 resolutions saved"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-15T11:43:54.593290Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-15T11:43:56.980105Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-15T11:43:56.991132Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-15T11:43:57.126190Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-15T11:43:57.335958Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-15T11:44:02.521254Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:43:54.593290Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:43:57.001222Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:43:57.134766Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "in_progress",
+        "timestamp": "2026-05-15T11:43:57.143344Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:43:57.344545Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:44:02.512688Z"
+      },
+      {
+        "stage": "process",
+        "status": "in_progress",
+        "timestamp": "2026-05-15T11:44:02.529328Z"
+      }
+    ]
+  },
+  "CES-2026-021": {
+    "pipeline_session_id": "pipe-ba0193fd-3098-41fa-9fbb-319a52af3b56",
+    "active_step": "summary",
+    "source_filename": "Maple_Leaf_Q1_2026.txt",
+    "source_size_bytes": 520,
+    "source_content_text": "Calculation Period|Payment Date|Pensioner Movement|Applicable Indexation / Escalation|Fixed Amount|Floating Amount|Fee (Admin)|Interest on Over/Underpayment from Prior Period|Net Settlement Amount\n2026 Q1|2026-04-12|Death|CPI capped 5% applied to pension tranche|CAD 1,500,000|CAD 1,514,735|CAD 900|CAD 0|CAD 13,835\n2026 Q1||Suspension|No escalation applicable during suspension period|1250000|1248000|900|0|-2900\n2026 Q1|2026-04-12|Reinstatement|CPI capped 5% reapplied after reinstatement|1367500|1379470|1000|0|10970\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-15T11:50:10.028742Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-15T11:50:10.180581Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-15T11:50:07.658208Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026.txt"
+      },
+      {
+        "timestamp": "2026-05-15T11:50:10.073336Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-15T11:50:10.104474Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-15T11:50:10.216236Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-15T11:50:10.436296Z",
+        "actor": "Validation Engine",
+        "type": "AI Agent",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-15T11:50:16.370797Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "8 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-15T11:50:19.429793Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-15T11:50:29.217926Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-15T11:50:29.247442Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9222"
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-15T11:50:07.658208Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-15T11:50:10.037476Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-15T11:50:10.045907Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-15T11:50:10.190162Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-15T11:50:10.405476Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-15T11:50:16.353209Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-15T11:50:19.412384Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-15T11:50:29.179047Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-15T11:50:29.190676Z"
+      }
+    ],
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:50:07.658208Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:50:10.054937Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:50:10.198565Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:50:19.420848Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:50:10.415720Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:50:16.343758Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-15T11:50:29.199566Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-15T11:50:29.209049Z"
+      }
+    ],
+    "settlement_report_artifacts": [
+      {
+        "artifact_id": "ces-2026-021-cash-settlements-tracker",
+        "settlement_id": "SET-2026-Q1-044-021",
+        "cession_file_id": "CES-2026-021",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "Cash Settlements Tracker",
+        "filename": "CES-2026-021_SET-2026-Q1-044-021_cash_settlements_tracker.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-021_SET-2026-Q1-044-021_cash_settlements_tracker.csv",
+        "generated_at": "2026-05-15T11:50:21.797725Z",
+        "source_filename": "Maple_Leaf_Q1_2026.txt",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": false,
+        "published_at": null,
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ]
+      },
+      {
+        "artifact_id": "ces-2026-021-grdr-load-form",
+        "settlement_id": "SET-2026-Q1-044-021",
+        "cession_file_id": "CES-2026-021",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "GRDR Load Form",
+        "filename": "CES-2026-021_SET-2026-Q1-044-021_grdr_load_form.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-021_SET-2026-Q1-044-021_grdr_load_form.csv",
+        "generated_at": "2026-05-15T11:50:21.797725Z",
+        "source_filename": "Maple_Leaf_Q1_2026.txt",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": false,
+        "published_at": null,
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ]
+      }
+    ],
+    "settlement_report_artifacts_pushed": false,
+    "settlement_report_artifacts_pushed_at": null,
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-044-021",
+      "settlement_display_id": "STL-2026-Q1-044-021",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4142205.0,
+      "net_amount": 21905.0,
+      "currency": "CAD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-12",
+      "status": "pending_approval",
+      "iris_recommendation": "accept",
+      "source": "Created from Settlement file CES-2026-021; reconciled against baseline SET-2026-Q1-044; decision=accept",
+      "last_updated": "2026-05-15T11:50:21.797725Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-044",
+        "decision": "accept",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-12",
+        "currency": "CAD",
+        "expected_source": "contract details performance",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905,
+          "recomputed_net": 21905
+        },
+        "system": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905
+        },
+        "mismatches": [],
+        "incoming_row_count": 3
+      },
+      "baseline_settlement_id": "SET-2026-Q1-044",
+      "screening_ref": "SCR-2026-05-019",
+      "settlement_report_artifacts": [
+        {
+          "artifact_id": "ces-2026-021-cash-settlements-tracker",
+          "settlement_id": "SET-2026-Q1-044-021",
+          "cession_file_id": "CES-2026-021",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "Cash Settlements Tracker",
+          "filename": "CES-2026-021_SET-2026-Q1-044-021_cash_settlements_tracker.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-021_SET-2026-Q1-044-021_cash_settlements_tracker.csv",
+          "generated_at": "2026-05-15T11:50:21.797725Z",
+          "source_filename": "Maple_Leaf_Q1_2026.txt",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        },
+        {
+          "artifact_id": "ces-2026-021-grdr-load-form",
+          "settlement_id": "SET-2026-Q1-044-021",
+          "cession_file_id": "CES-2026-021",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "GRDR Load Form",
+          "filename": "CES-2026-021_SET-2026-Q1-044-021_grdr_load_form.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-021_SET-2026-Q1-044-021_grdr_load_form.csv",
+          "generated_at": "2026-05-15T11:50:21.797725Z",
+          "source_filename": "Maple_Leaf_Q1_2026.txt",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        }
+      ]
+    }
   }
 }

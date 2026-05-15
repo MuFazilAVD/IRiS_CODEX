@@ -292,6 +292,348 @@ In the audit trail inside the cession file processing, right now the validation 
 Completed
 
 
+## [2026-05-15T12:20:00Z]
+
+### Prompt
+Fincen has a hardcode count of 4122, make it actual, wich is 3
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/compliance/ScreeningCachePage.tsx
+  - backend/app/services/compliance_service.py
+  - backend/app/mock_data/screening_cache_lists_seed.json
+  - backend/app/repositories/compliance_repository.py
+
+### Actions Taken
+- Traced the compliance screening-cache count mismatch to backend workbook serialization, where the API preferred the persisted `screening_cache_lists.record_count` value over the actual editable workbook entries.
+- Confirmed the live local DB mismatch: `FinCEN 314(a)` still stored `record_count=4122` while its workbook payload contained only 3 entries.
+- Updated the compliance workbook serializer to return the real entry count whenever workbook entries are present, while still falling back to the stored aggregate count for entry-less lists.
+- Verified the API payload after the change: `FinCEN 314(a)` now returns `record_count=3` and `OFAC SDN` remains `record_count=4`.
+- Updated the tracker note to record the stale-count fix for the screening-cache workspace.
+
+### Files Modified
+- backend/app/services/compliance_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T12:05:00Z]
+
+### Prompt
+INFO:     127.0.0.1:50247 - "POST /iris/api/v1/underwriting/cedents/CED-1156/sanction-screening HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: UNIQUE constraint failed: audit_events.audit_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\errors.py", line 187, in __call__
+    raise exc
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\fastapi\routing.py", line 214, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\starlette\concurrency.py", line 39, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2518, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1002, in run
+    result = context.run(func, *args)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\routers\underwriting.py", line 86, in trigger_sanction_screening
+    return get_service(db).trigger_sanction_screening(cedent_id, payload.sources, current_user)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\services\underwriting_service.py", line 323, in trigger_sanction_screening
+    self._append_audit_event(
+    ~~~~~~~~~~~~~~~~~~~~~~~~^
+        store,
+        ^^^^^^
+    ...<6 lines>...
+        },
+        ^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\services\underwriting_service.py", line 1464, in _append_audit_event
+    self._persist_underwriting_audit_event(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        module="contract",
+        ^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        cedent_id=cedent_id,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\services\underwriting_service.py", line 1563, in _persist_underwriting_audit_event
+    self.repository.create_audit_event(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        AuditEvent(
+        ^^^^^^^^^^^
+    ...<12 lines>...
+        )
+        ^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\backend\app\repositories\underwriting_repository.py", line 291, in create_audit_event
+    self.db.commit()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2028, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4352, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4487, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4448, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1418, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MuhammadFazil\Downloads\IRIS CODEX\IRIS_CODEX\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: audit_events.audit_id
+[SQL: INSERT INTO audit_events (id, audit_id, timestamp, module, event_type, actor_type, actor_id, entity_id, entity_type, description, financial_impact_amount, financial_impact_currency, is_high_impact, approval_status, is_sensitive, contract_id, cedent_id, cession_file_id, settlement_id, ip_address, session_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('2c2d9025-b34a-4d4d-bce7-e7a8221c1a8e', 'AUD-2026-05-15-020', '2026-05-15 11:52:25.000000', 'contract', 'Triggered sanction screening', 'system', 'IRiS Screening Engine', 'CED-1156', 'cedent', 'OFAC, FinCEN - SCR-2026-05-024 - cleared', None, None, 0, 'n/a', 0, None, 'CED-1156', None, None, None, None, '2026-05-15 11:52:25.982924')]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+Unable to trigger sanction screening. Fix this error
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/db/SCHEMA.md
+  - docs/ARCHITECTURE.md
+  - docs/ui/04-underwriting/cedents/CEDENTS.md
+  - backend/app/services/underwriting_service.py
+  - backend/app/repositories/underwriting_repository.py
+  - backend/app/repositories/claims_repository.py
+  - backend/app/models/audit_event.py
+
+### Actions Taken
+- Traced the `POST /underwriting/cedents/{cedent_id}/sanction-screening` failure to underwriting audit persistence, where `audit_id` allocation still used `COUNT(*)` instead of the highest existing daily suffix.
+- Updated `UnderwritingRepository.create_audit_event` to retry once on `audit_events.audit_id` uniqueness conflicts, matching the resilient claims-side pattern already used elsewhere in the repo.
+- Reworked `UnderwritingRepository.get_next_audit_id` to scan existing daily IDs and allocate from the highest numeric suffix so gaps in the local demo database no longer cause duplicate IDs.
+- Added a local helper to extract the daily audit prefix from an existing audit ID for retry reallocation.
+- Verified against the live SQLite database that the next generated ID for `2026-05-15` is `AUD-2026-05-15-029` and that a direct `UnderwritingService.trigger_sanction_screening('CED-1156', ['OFAC', 'FinCEN'], actor)` call now succeeds.
+- Updated the tracker entry to record the underwriting audit-ID collision fix.
+
+### Files Modified
+- backend/app/repositories/underwriting_repository.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The direct verification call persisted a new successful sanction-screening run for `CED-1156` in the local demo data while confirming the fix.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T11:48:28.6079116+00:00]
+
+### Prompt
+INFO:     127.0.0.1:61051 - "POST /iris/api/v1/claims/cession-files/CES-2026-020/pipeline/process-exceptions HTTP/1.1" 500 Internal Server Error
+...
+sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: audit_events.audit_id
+...
+This error is happening when i am trying the processing pipeline. Fix this
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/api/CLAIMS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/db/SCHEMA.md
+  - docs/ARCHITECTURE.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/repositories/claims_repository.py
+  - backend/app/services/claims_service.py
+  - backend/app/models/audit_event.py
+
+### Actions Taken
+- Traced the `process-exceptions` failure to claims audit persistence rather than pipeline-stage business logic.
+- Confirmed from the live local demo database that daily audit IDs already had suffix gaps, making the existing `COUNT(*) + 1` allocator unsafe.
+- Updated the claims repository to allocate the next `AUD-YYYY-MM-DD-###` value from the highest existing suffix for that day.
+- Added a retry path around audit-event inserts so a collision on `audit_events.audit_id` rolls back, regenerates the ID, and retries instead of surfacing a 500 to the pipeline.
+- Updated the claims tracker note to record the collision-safe audit ID behavior for cession processing.
+
+### Files Modified
+- backend/app/repositories/claims_repository.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo’s source-of-truth documentation lives under `docs/` rather than the root-level paths referenced in `AGENTS.md`, so the `docs/...` equivalents were used.
+- The logger prompt excerpt above is abbreviated with `...` because the original user message included a very large full stack trace.
+
+### Status
+✅ Completed
+
+
 ## [2026-05-15T10:59:10Z]
 
 ### Prompt

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import and_, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.audit_event import AuditEvent
@@ -287,12 +288,32 @@ class UnderwritingRepository:
         return list(self.db.scalars(statement))
 
     def create_audit_event(self, event: AuditEvent) -> AuditEvent:
-        self.db.add(event)
-        self.db.commit()
-        self.db.refresh(event)
-        return event
+        for _ in range(2):
+            try:
+                self.db.add(event)
+                self.db.commit()
+                self.db.refresh(event)
+                return event
+            except IntegrityError as exc:
+                self.db.rollback()
+                if "audit_events.audit_id" not in str(exc.orig):
+                    raise
+                timestamp_prefix = self._extract_audit_timestamp_prefix(event.audit_id)
+                event.audit_id = self.get_next_audit_id(timestamp_prefix)
+        raise RuntimeError("Failed to create audit event after retrying audit_id allocation")
 
     def get_next_audit_id(self, timestamp_prefix: str) -> str:
-        statement = select(func.count(AuditEvent.id)).where(AuditEvent.audit_id.like(f"AUD-{timestamp_prefix}-%"))
-        count = self.db.scalar(statement) or 0
-        return f"AUD-{timestamp_prefix}-{count + 1:03d}"
+        statement = select(AuditEvent.audit_id).where(AuditEvent.audit_id.like(f"AUD-{timestamp_prefix}-%"))
+        audit_ids = self.db.scalars(statement).all()
+        max_suffix = 0
+        for audit_id in audit_ids:
+            suffix = audit_id.rsplit("-", 1)[-1]
+            if suffix.isdigit():
+                max_suffix = max(max_suffix, int(suffix))
+        return f"AUD-{timestamp_prefix}-{max_suffix + 1:03d}"
+
+    def _extract_audit_timestamp_prefix(self, audit_id: str) -> str:
+        parts = audit_id.split("-")
+        if len(parts) < 5:
+            raise ValueError(f"Unexpected audit_id format: {audit_id}")
+        return "-".join(parts[1:4])

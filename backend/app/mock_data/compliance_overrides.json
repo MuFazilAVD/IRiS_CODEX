@@ -2077,12 +2077,12 @@
       "processing_seconds": 2.4,
       "matches_count": 1,
       "risk_label": "Low",
-      "risk_score": 88,
+      "risk_score": 90,
       "ai_recommendation": "Auto-clear",
       "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
       "summary": {
-        "headline": "No matches across OFAC \u00b7 FinCEN",
-        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "headline": "Raw match found in OFAC",
+        "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
         "tone": "positive"
       },
       "raw_match": {
@@ -2114,8 +2114,8 @@
       },
       "analysis": {
         "label": "Likely Different",
-        "confidence_pct": 88,
-        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "confidence_pct": 90,
+        "headline": "The watchlist hit is for a different-named entity (\"Northstar Pension Trust\" / alias \"North Star\") while the subject is \"Maple Leaf Pension Plan\". There is also a country mismatch (CA vs UK). No corroborating identifiers (address, registration, tax ID) are present on the watchlist record to bridge the gap. Given the clear name and jurisdiction mismatch, this appears to be a false positive despite the moderate score.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
@@ -2156,25 +2156,25 @@
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-12T12:24:58.386413Z",
+          "timestamp": "2026-05-15T11:50:28.977586Z",
           "actor": "claims.pipeline@iris.local",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.386413Z",
+          "timestamp": "2026-05-15T11:50:28.977586Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.386413Z",
+          "timestamp": "2026-05-15T11:50:28.977586Z",
           "actor": "IRiS",
           "actor_type": "AI",
-          "detail": "Resolved at 88% confidence"
+          "detail": "Resolved at 90% confidence"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.386413Z",
+          "timestamp": "2026-05-15T11:50:28.977586Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
@@ -2182,7 +2182,7 @@
       ]
     },
     "SCR-2026-05-020": {
-      "country": "",
+      "country": "UK",
       "registration_number": "",
       "aliases": [],
       "registered_address": "",
@@ -2192,29 +2192,29 @@
         "OFAC",
         "FinCEN"
       ],
-      "processing_seconds": 2.4,
-      "matches_count": 1,
+      "processing_seconds": 3.3,
+      "matches_count": 2,
       "risk_label": "Low",
-      "risk_score": 88,
+      "risk_score": 78,
       "ai_recommendation": "Auto-clear",
-      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "list_subtitle": "Onboarding screening \u00b7 Atlas",
       "summary": {
-        "headline": "No matches across OFAC \u00b7 FinCEN",
-        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "headline": "Raw match found in OFAC",
+        "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
         "tone": "positive"
       },
       "raw_match": {
         "title": "Raw Match \u00b7 OFAC",
-        "candidate_name": "Northstar Pension Trust",
-        "candidate_id": "OFAC-SDN-58216",
+        "candidate_name": "Atlas Petroleum Holdings JSC",
+        "candidate_id": "OFAC-SDN-58213",
         "subtitle": "OFAC SDN",
-        "country": "UK",
-        "entity_type": "Insurance",
-        "aggregate_score": 20,
+        "country": "RU",
+        "entity_type": "Oil & Gas",
+        "aggregate_score": 36,
         "field_scores": [
           {
             "label": "Name",
-            "value": 71
+            "value": 82
           },
           {
             "label": "Address",
@@ -2222,7 +2222,7 @@
           },
           {
             "label": "Country",
-            "value": 0
+            "value": 50
           },
           {
             "label": "Type",
@@ -2232,13 +2232,13 @@
       },
       "analysis": {
         "label": "Likely Different",
-        "confidence_pct": 88,
-        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "confidence_pct": 78,
+        "headline": "The subject name provided is only the generic term \"Atlas\" with no additional identifiers (address, registration number, tax ID). The watchlist candidates are distinct legal entities (\"Atlas Petroleum Holdings JSC\" in Russia and \"Atlas Insurance\" in the United States). While both records include an alias of/containing \"Atlas\", the subject\u2019s stated country (UK) conflicts with both watchlist jurisdictions (RU, US), and there are no corroborating identifiers to link the subject to either SDN entry. Given the commonness of \"Atlas\" and lack of matching address/ID data, this is assessed as a false positive rather than a genuine match.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
             "text": "Name alignment reviewed against OFAC / FinCEN cache",
-            "weight_pct": 80,
+            "weight_pct": 78,
             "tone": "positive"
           },
           {
@@ -2274,25 +2274,25 @@
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-12T12:24:58.523998Z",
-          "actor": "claims.pipeline@iris.local",
+          "timestamp": "2026-05-15T11:51:12.464573Z",
+          "actor": "admin@metlife-re.demo",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.523998Z",
+          "timestamp": "2026-05-15T11:51:12.464573Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.523998Z",
+          "timestamp": "2026-05-15T11:51:12.464573Z",
           "actor": "IRiS",
           "actor_type": "AI",
-          "detail": "Resolved at 88% confidence"
+          "detail": "Resolved at 78% confidence"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.523998Z",
+          "timestamp": "2026-05-15T11:51:12.464573Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
@@ -2300,9 +2300,11 @@
       ]
     },
     "SCR-2026-05-021": {
-      "country": "",
+      "country": "UK",
       "registration_number": "",
-      "aliases": [],
+      "aliases": [
+        "Sterling Heritage"
+      ],
       "registered_address": "",
       "beneficial_owners": [],
       "bank_details": "",
@@ -2310,48 +2312,22 @@
         "OFAC",
         "FinCEN"
       ],
-      "processing_seconds": 2.4,
-      "matches_count": 1,
+      "processing_seconds": 1.5,
+      "matches_count": 0,
       "risk_label": "Low",
-      "risk_score": 88,
+      "risk_score": 12,
       "ai_recommendation": "Auto-clear",
-      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "list_subtitle": "Adhoc screening \u00b7 Sterling Heritage Pensions",
       "summary": {
         "headline": "No matches across OFAC \u00b7 FinCEN",
         "description": "Auto-cleared by Decision Engine. No analyst review required.",
         "tone": "positive"
       },
-      "raw_match": {
-        "title": "Raw Match \u00b7 OFAC",
-        "candidate_name": "Northstar Pension Trust",
-        "candidate_id": "OFAC-SDN-58216",
-        "subtitle": "OFAC SDN",
-        "country": "UK",
-        "entity_type": "Insurance",
-        "aggregate_score": 20,
-        "field_scores": [
-          {
-            "label": "Name",
-            "value": 71
-          },
-          {
-            "label": "Address",
-            "value": 0
-          },
-          {
-            "label": "Country",
-            "value": 0
-          },
-          {
-            "label": "Type",
-            "value": 10
-          }
-        ]
-      },
+      "raw_match": null,
       "analysis": {
-        "label": "Likely Different",
-        "confidence_pct": 88,
-        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "label": "High Risk",
+        "confidence_pct": 100,
+        "headline": "No keyword or fuzzy watchlist match exceeded the screening threshold.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
@@ -2388,29 +2364,29 @@
             "passed": true
           }
         ],
-        "recommended_action": "Auto-clear"
+        "recommended_action": "Block"
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-12T12:24:58.665594Z",
-          "actor": "claims.pipeline@iris.local",
+          "timestamp": "2026-05-15T11:51:34.114416Z",
+          "actor": "admin@metlife-re.demo",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.665594Z",
+          "timestamp": "2026-05-15T11:51:34.114416Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.665594Z",
+          "timestamp": "2026-05-15T11:51:34.114416Z",
           "actor": "IRiS",
           "actor_type": "AI",
-          "detail": "Resolved at 88% confidence"
+          "detail": "Resolved at 100% confidence"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.665594Z",
+          "timestamp": "2026-05-15T11:51:34.114416Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
@@ -2418,9 +2394,11 @@
       ]
     },
     "SCR-2026-05-022": {
-      "country": "",
+      "country": "UK",
       "registration_number": "",
-      "aliases": [],
+      "aliases": [
+        "Sterling Heritage"
+      ],
       "registered_address": "",
       "beneficial_owners": [],
       "bank_details": "",
@@ -2428,48 +2406,22 @@
         "OFAC",
         "FinCEN"
       ],
-      "processing_seconds": 2.4,
-      "matches_count": 1,
+      "processing_seconds": 1.5,
+      "matches_count": 0,
       "risk_label": "Low",
-      "risk_score": 88,
+      "risk_score": 12,
       "ai_recommendation": "Auto-clear",
-      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "list_subtitle": "Adhoc screening \u00b7 Sterling Heritage Pensions",
       "summary": {
         "headline": "No matches across OFAC \u00b7 FinCEN",
         "description": "Auto-cleared by Decision Engine. No analyst review required.",
         "tone": "positive"
       },
-      "raw_match": {
-        "title": "Raw Match \u00b7 OFAC",
-        "candidate_name": "Northstar Pension Trust",
-        "candidate_id": "OFAC-SDN-58216",
-        "subtitle": "OFAC SDN",
-        "country": "UK",
-        "entity_type": "Insurance",
-        "aggregate_score": 20,
-        "field_scores": [
-          {
-            "label": "Name",
-            "value": 71
-          },
-          {
-            "label": "Address",
-            "value": 0
-          },
-          {
-            "label": "Country",
-            "value": 0
-          },
-          {
-            "label": "Type",
-            "value": 10
-          }
-        ]
-      },
+      "raw_match": null,
       "analysis": {
-        "label": "Likely Different",
-        "confidence_pct": 88,
-        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "label": "High Risk",
+        "confidence_pct": 100,
+        "headline": "No keyword or fuzzy watchlist match exceeded the screening threshold.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
@@ -2506,29 +2458,29 @@
             "passed": true
           }
         ],
-        "recommended_action": "Auto-clear"
+        "recommended_action": "Block"
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-12T12:24:58.810758Z",
-          "actor": "claims.pipeline@iris.local",
+          "timestamp": "2026-05-15T11:51:48.493565Z",
+          "actor": "admin@metlife-re.demo",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.810758Z",
+          "timestamp": "2026-05-15T11:51:48.493565Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.810758Z",
+          "timestamp": "2026-05-15T11:51:48.493565Z",
           "actor": "IRiS",
           "actor_type": "AI",
-          "detail": "Resolved at 88% confidence"
+          "detail": "Resolved at 100% confidence"
         },
         {
-          "timestamp": "2026-05-12T12:24:58.810758Z",
+          "timestamp": "2026-05-15T11:51:48.493565Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
@@ -2536,58 +2488,33 @@
       ]
     },
     "SCR-2026-05-023": {
-      "country": "",
+      "country": "UK",
       "registration_number": "",
-      "aliases": [],
+      "aliases": [
+        "Sterling Heritage"
+      ],
       "registered_address": "",
       "beneficial_owners": [],
       "bank_details": "",
       "watchlists_screened": [
-        "OFAC",
-        "FinCEN"
+        "OFAC"
       ],
-      "processing_seconds": 2.4,
-      "matches_count": 1,
+      "processing_seconds": 1.5,
+      "matches_count": 0,
       "risk_label": "Low",
-      "risk_score": 88,
+      "risk_score": 12,
       "ai_recommendation": "Auto-clear",
-      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "list_subtitle": "Adhoc screening \u00b7 Sterling Heritage Pensions",
       "summary": {
-        "headline": "No matches across OFAC \u00b7 FinCEN",
+        "headline": "No matches across OFAC",
         "description": "Auto-cleared by Decision Engine. No analyst review required.",
         "tone": "positive"
       },
-      "raw_match": {
-        "title": "Raw Match \u00b7 OFAC",
-        "candidate_name": "Northstar Pension Trust",
-        "candidate_id": "OFAC-SDN-58216",
-        "subtitle": "OFAC SDN",
-        "country": "UK",
-        "entity_type": "Insurance",
-        "aggregate_score": 20,
-        "field_scores": [
-          {
-            "label": "Name",
-            "value": 71
-          },
-          {
-            "label": "Address",
-            "value": 0
-          },
-          {
-            "label": "Country",
-            "value": 0
-          },
-          {
-            "label": "Type",
-            "value": 10
-          }
-        ]
-      },
+      "raw_match": null,
       "analysis": {
-        "label": "Likely Different",
-        "confidence_pct": 88,
-        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "label": "High Risk",
+        "confidence_pct": 100,
+        "headline": "No keyword or fuzzy watchlist match exceeded the screening threshold.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
@@ -2624,29 +2551,29 @@
             "passed": true
           }
         ],
-        "recommended_action": "Auto-clear"
+        "recommended_action": "Block"
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-13T06:52:38.462509Z",
-          "actor": "claims.pipeline@iris.local",
+          "timestamp": "2026-05-15T11:51:54.281912Z",
+          "actor": "admin@metlife-re.demo",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-13T06:52:38.462509Z",
+          "timestamp": "2026-05-15T11:51:54.281912Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-13T06:52:38.462509Z",
+          "timestamp": "2026-05-15T11:51:54.281912Z",
           "actor": "IRiS",
           "actor_type": "AI",
-          "detail": "Resolved at 88% confidence"
+          "detail": "Resolved at 100% confidence"
         },
         {
-          "timestamp": "2026-05-13T06:52:38.462509Z",
+          "timestamp": "2026-05-15T11:51:54.281912Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
@@ -2654,7 +2581,7 @@
       ]
     },
     "SCR-2026-05-024": {
-      "country": "",
+      "country": "CA",
       "registration_number": "",
       "aliases": [],
       "registered_address": "",
@@ -2667,12 +2594,12 @@
       "processing_seconds": 2.4,
       "matches_count": 1,
       "risk_label": "Low",
-      "risk_score": 88,
+      "risk_score": 92,
       "ai_recommendation": "Auto-clear",
-      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "list_subtitle": "Adhoc screening \u00b7 Maple Leaf Pension Plan",
       "summary": {
-        "headline": "No matches across OFAC \u00b7 FinCEN",
-        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "headline": "Raw match found in OFAC",
+        "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
         "tone": "positive"
       },
       "raw_match": {
@@ -2704,8 +2631,8 @@
       },
       "analysis": {
         "label": "Likely Different",
-        "confidence_pct": 88,
-        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "confidence_pct": 92,
+        "headline": "The potential match appears to be a false positive. The watchlist entry name (\"Northstar Pension Trust\") does not match the entity name (\"Maple Leaf Pension Plan\"), and there are no supporting identifiers (tax ID, registration number) or address details on the watchlist record to bridge the gap. Additionally, the country is inconsistent (CA vs UK) with no evidence of cross-jurisdiction linkage or alias overlap (no shared aliases such as \"Maple Leaf\"). Given the material name and country mismatches and lack of corroborating identifiers, a genuine SDN match is unlikely.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
@@ -2746,25 +2673,25 @@
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-14T06:15:53.666625Z",
-          "actor": "claims.pipeline@iris.local",
+          "timestamp": "2026-05-15T11:52:25.916444Z",
+          "actor": "admin@metlife-re.demo",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-14T06:15:53.666625Z",
+          "timestamp": "2026-05-15T11:52:25.916444Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-14T06:15:53.666625Z",
+          "timestamp": "2026-05-15T11:52:25.916444Z",
           "actor": "IRiS",
           "actor_type": "AI",
-          "detail": "Resolved at 88% confidence"
+          "detail": "Resolved at 92% confidence"
         },
         {
-          "timestamp": "2026-05-14T06:15:53.666625Z",
+          "timestamp": "2026-05-15T11:52:25.916444Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
@@ -2772,7 +2699,7 @@
       ]
     },
     "SCR-2026-05-025": {
-      "country": "",
+      "country": "CA",
       "registration_number": "",
       "aliases": [],
       "registered_address": "",
@@ -2785,12 +2712,12 @@
       "processing_seconds": 2.4,
       "matches_count": 1,
       "risk_label": "Low",
-      "risk_score": 88,
+      "risk_score": 90,
       "ai_recommendation": "Auto-clear",
-      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "list_subtitle": "Adhoc screening \u00b7 Maple Leaf Pension Plan",
       "summary": {
-        "headline": "No matches across OFAC \u00b7 FinCEN",
-        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "headline": "Raw match found in OFAC",
+        "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
         "tone": "positive"
       },
       "raw_match": {
@@ -2822,8 +2749,8 @@
       },
       "analysis": {
         "label": "Likely Different",
-        "confidence_pct": 88,
-        "headline": "Keyword match was found, but the profile lacks supporting jurisdiction or registration signals and is treated as a false positive.",
+        "confidence_pct": 90,
+        "headline": "The watchlist hit (Northstar Pension Trust, OFAC SDN) does not match the entity\u2019s legal name (Maple Leaf Pension Plan) and has a conflicting country (UK vs CA). No corroborating identifiers (address, TIN, registration number) are present on the watchlist record to bridge the gap, and the listed alias (\u201cNorth Star\u201d) does not resemble the entity name. Based on strong name and jurisdiction mismatches, this is assessed as a false positive.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
@@ -2864,25 +2791,25 @@
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-14T06:49:30.337187Z",
-          "actor": "claims.pipeline@iris.local",
+          "timestamp": "2026-05-15T11:56:31.040812Z",
+          "actor": "underwriter@metlife-re.demo",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-14T06:49:30.337187Z",
+          "timestamp": "2026-05-15T11:56:31.040812Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-14T06:49:30.337187Z",
+          "timestamp": "2026-05-15T11:56:31.040812Z",
           "actor": "IRiS",
           "actor_type": "AI",
-          "detail": "Resolved at 88% confidence"
+          "detail": "Resolved at 90% confidence"
         },
         {
-          "timestamp": "2026-05-14T06:49:30.337187Z",
+          "timestamp": "2026-05-15T11:56:31.040812Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
@@ -2890,7 +2817,7 @@
       ]
     },
     "SCR-2026-05-026": {
-      "country": "",
+      "country": "CA",
       "registration_number": "",
       "aliases": [],
       "registered_address": "",
@@ -2905,7 +2832,7 @@
       "risk_label": "Low",
       "risk_score": 93,
       "ai_recommendation": "Auto-clear",
-      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "list_subtitle": "Adhoc screening \u00b7 Maple Leaf Pension Plan",
       "summary": {
         "headline": "Raw match found in OFAC",
         "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
@@ -2941,7 +2868,7 @@
       "analysis": {
         "label": "Likely Different",
         "confidence_pct": 93,
-        "headline": "The watchlist entry is for a differently named entity (\"Northstar Pension Trust\" / alias \"North Star\") while the subject is \"Maple Leaf Pension Plan\". There is also a jurisdiction conflict (subject in Canada vs watchlist country UK). No corroborating identifiers (address, TIN, registration number) are present on the watchlist record to bridge the gap. Given the clear name and country mismatches, this is assessed as a false positive despite the moderate match score.",
+        "headline": "The watchlist hit is a different named entity (\"Northstar Pension Trust\" / alias \"North Star\") versus the customer (\"Maple Leaf Pension Plan\"). There is also a country mismatch (CA vs UK). No corroborating identifiers (address, tax ID, registration number) are present on the watchlist record to suggest a linkage. Given the clear name and jurisdiction discrepancies, this is assessed as a false positive rather than a genuine SDN match.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
@@ -2982,25 +2909,25 @@
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-15T08:39:00.974599Z",
-          "actor": "claims.pipeline@iris.local",
+          "timestamp": "2026-05-15T12:00:03.194760Z",
+          "actor": "admin@metlife-re.demo",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-15T08:39:00.974599Z",
+          "timestamp": "2026-05-15T12:00:03.194760Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-15T08:39:00.974599Z",
+          "timestamp": "2026-05-15T12:00:03.194760Z",
           "actor": "IRiS",
           "actor_type": "AI",
           "detail": "Resolved at 93% confidence"
         },
         {
-          "timestamp": "2026-05-15T08:39:00.974599Z",
+          "timestamp": "2026-05-15T12:00:03.194760Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
@@ -3008,22 +2935,112 @@
       ]
     },
     "SCR-2026-05-027": {
-      "country": "",
+      "country": "CA",
       "registration_number": "",
       "aliases": [],
       "registered_address": "",
       "beneficial_owners": [],
       "bank_details": "",
       "watchlists_screened": [
-        "OFAC",
         "FinCEN"
+      ],
+      "processing_seconds": 1.5,
+      "matches_count": 0,
+      "risk_label": "Low",
+      "risk_score": 12,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Adhoc screening \u00b7 Maple Leaf Pension Plan",
+      "summary": {
+        "headline": "No matches across FinCEN",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": null,
+      "analysis": {
+        "label": "High Risk",
+        "confidence_pct": 100,
+        "headline": "No keyword or fuzzy watchlist match exceeded the screening threshold.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Block"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-15T12:00:11.288446Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-15T12:00:11.288446Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-15T12:00:11.288446Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 100% confidence"
+        },
+        {
+          "timestamp": "2026-05-15T12:00:11.288446Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-028": {
+      "country": "CA",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC"
       ],
       "processing_seconds": 2.4,
       "matches_count": 1,
       "risk_label": "Low",
-      "risk_score": 93,
+      "risk_score": 94,
       "ai_recommendation": "Auto-clear",
-      "list_subtitle": "Cession File screening \u00b7 Maple Leaf Pension Plan",
+      "list_subtitle": "Adhoc screening \u00b7 Maple Leaf Pension Plan",
       "summary": {
         "headline": "Raw match found in OFAC",
         "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
@@ -3058,8 +3075,8 @@
       },
       "analysis": {
         "label": "Likely Different",
-        "confidence_pct": 93,
-        "headline": "The watchlist hit is a different entity name (\"Northstar Pension Trust\" / alias \"North Star\") versus \"Maple Leaf Pension Plan\" with no overlapping alias evidence. Jurisdiction also conflicts (cedent country Canada vs watchlist country UK). No corroborating identifiers (TIN/registration) or address data are present on the watchlist record to bridge the gap. Given the clear name and country mismatches, this is assessed as a false positive.",
+        "confidence_pct": 94,
+        "headline": "The watchlist hit is a different entity name (Maple Leaf Pension Plan vs Northstar Pension Trust) with no supporting identifiers to bridge the gap. Country is also conflicting (CA vs UK). The watchlist record lacks address/identifier data that could otherwise corroborate, but given the clear name mismatch and jurisdiction mismatch, this is best treated as a false positive rather than a pending genuine match.",
         "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
         "factors": [
           {
@@ -3100,25 +3117,591 @@
       },
       "audit_trail": [
         {
-          "timestamp": "2026-05-15T09:12:23.823397Z",
-          "actor": "claims.pipeline@iris.local",
+          "timestamp": "2026-05-15T12:00:20.006981Z",
+          "actor": "admin@metlife-re.demo",
           "actor_type": "Human",
           "detail": "Initiated ad-hoc screening"
         },
         {
-          "timestamp": "2026-05-15T09:12:23.823397Z",
+          "timestamp": "2026-05-15T12:00:20.006981Z",
           "actor": "Match Engine",
           "actor_type": "System",
           "detail": "Watchlist cache match completed"
         },
         {
-          "timestamp": "2026-05-15T09:12:23.823397Z",
+          "timestamp": "2026-05-15T12:00:20.006981Z",
           "actor": "IRiS",
           "actor_type": "AI",
-          "detail": "Resolved at 93% confidence"
+          "detail": "Resolved at 94% confidence"
         },
         {
-          "timestamp": "2026-05-15T09:12:23.823397Z",
+          "timestamp": "2026-05-15T12:00:20.006981Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-029": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [
+        "Sterling Heritage"
+      ],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 1.5,
+      "matches_count": 0,
+      "risk_label": "Low",
+      "risk_score": 12,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Adhoc screening \u00b7 Sterling Heritage Pensions",
+      "summary": {
+        "headline": "No matches across OFAC \u00b7 FinCEN",
+        "description": "Auto-cleared by Decision Engine. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": null,
+      "analysis": {
+        "label": "High Risk",
+        "confidence_pct": 100,
+        "headline": "No keyword or fuzzy watchlist match exceeded the screening threshold.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Block"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-15T12:01:35.685428Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-15T12:01:35.685428Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-15T12:01:35.685428Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 100% confidence"
+        },
+        {
+          "timestamp": "2026-05-15T12:01:35.685428Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-030": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Low",
+      "risk_score": 62,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Onboarding screening \u00b7 northstar",
+      "summary": {
+        "headline": "Raw match found in OFAC",
+        "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Northstar Pension Trust",
+        "candidate_id": "OFAC-SDN-58216",
+        "subtitle": "OFAC SDN",
+        "country": "UK",
+        "entity_type": "Insurance",
+        "aggregate_score": 48,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 82
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 100
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Likely Different",
+        "confidence_pct": 62,
+        "headline": "Potential false positive driven by a partial/base-name similarity only. The screened name is simply \"northstar\" while the watchlist entity is the more specific legal name \"Northstar Pension Trust\" (OFAC SDN). No corroborating identifiers (address, registration number, TIN) are available on either side to support equivalence. Country aligns (UK) but is not discriminative. Given the generic nature of the screened name and lack of exact legal-name match or unique identifiers, this is assessed as not a genuine match, though residual uncertainty remains due to sparse data.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 62,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Auto-clear"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-15T12:02:09.630687Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:09.630687Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:09.630687Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 62% confidence"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:09.630687Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Auto-cleared"
+        }
+      ]
+    },
+    "SCR-2026-05-031": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Medium",
+      "risk_score": 97,
+      "ai_recommendation": "Review",
+      "list_subtitle": "Onboarding screening \u00b7 Northstar Pension Trust",
+      "summary": {
+        "headline": "Raw match found in OFAC",
+        "description": "IRiS AI retained the raw watchlist hit for compliance review. Pending analyst disposition.",
+        "tone": "warning"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Northstar Pension Trust",
+        "candidate_id": "OFAC-SDN-58216",
+        "subtitle": "OFAC SDN",
+        "country": "UK",
+        "entity_type": "Insurance",
+        "aggregate_score": 52,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 100
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 100
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Needs Review",
+        "confidence_pct": 97,
+        "headline": "Exact Northstar Pension Trust entity match found in the OFAC SDN cache with aligned jurisdiction context. Hold in pending review for compliance disposition.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "negative"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Review"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-15T12:02:24.944856Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:24.944856Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:24.944856Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 97% confidence"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:24.944856Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Pending review"
+        }
+      ]
+    },
+    "SCR-2026-05-032": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Medium",
+      "risk_score": 97,
+      "ai_recommendation": "Review",
+      "list_subtitle": "Onboarding screening \u00b7 Northstar Pension Trust",
+      "summary": {
+        "headline": "Raw match found in OFAC",
+        "description": "IRiS AI retained the raw watchlist hit for compliance review. Pending analyst disposition.",
+        "tone": "warning"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Northstar Pension Trust",
+        "candidate_id": "OFAC-SDN-58216",
+        "subtitle": "OFAC SDN",
+        "country": "UK",
+        "entity_type": "Insurance",
+        "aggregate_score": 52,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 100
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 100
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Needs Review",
+        "confidence_pct": 97,
+        "headline": "Exact Northstar Pension Trust entity match found in the OFAC SDN cache with aligned jurisdiction context. Hold in pending review for compliance disposition.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 80,
+            "tone": "negative"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Review"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-15T12:02:43.564915Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:43.564915Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:43.564915Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 97% confidence"
+        },
+        {
+          "timestamp": "2026-05-15T12:02:43.564915Z",
+          "actor": "Decision Engine",
+          "actor_type": "System",
+          "detail": "Pending review"
+        }
+      ]
+    },
+    "SCR-2026-05-033": {
+      "country": "UK",
+      "registration_number": "",
+      "aliases": [],
+      "registered_address": "",
+      "beneficial_owners": [],
+      "bank_details": "",
+      "watchlists_screened": [
+        "OFAC",
+        "FinCEN"
+      ],
+      "processing_seconds": 2.4,
+      "matches_count": 1,
+      "risk_label": "Low",
+      "risk_score": 62,
+      "ai_recommendation": "Auto-clear",
+      "list_subtitle": "Onboarding screening \u00b7 Northstar Pension",
+      "summary": {
+        "headline": "Raw match found in OFAC",
+        "description": "IRiS AI reviewed the raw watchlist hit and auto-cleared the entity. No analyst review required.",
+        "tone": "positive"
+      },
+      "raw_match": {
+        "title": "Raw Match \u00b7 OFAC",
+        "candidate_name": "Northstar Pension Trust",
+        "candidate_id": "OFAC-SDN-58216",
+        "subtitle": "OFAC SDN",
+        "country": "UK",
+        "entity_type": "Insurance",
+        "aggregate_score": 49,
+        "field_scores": [
+          {
+            "label": "Name",
+            "value": 86
+          },
+          {
+            "label": "Address",
+            "value": 0
+          },
+          {
+            "label": "Country",
+            "value": 100
+          },
+          {
+            "label": "Type",
+            "value": 10
+          }
+        ]
+      },
+      "analysis": {
+        "label": "Likely Different",
+        "confidence_pct": 62,
+        "headline": "Potential but unconfirmed match. The watchlist entry is 'Northstar Pension Trust' (OFAC SDN) while the screened name is 'Northstar Pension'\u2014a close similarity but not an exact legal-name match, and the additional distinguishing identifiers (address, registration number, tax ID) are missing for both sides, preventing confirmation. Country aligns (UK), which keeps the possibility open, but the name difference ('Trust' suffix) and lack of corroborating identifiers make this more likely a false positive than a confirmed hit. Recommend treating as a candidate match requiring manual review if the relationship/context suggests a trust/pension vehicle.",
+        "body": "IRiS weighed name, jurisdiction, registration and ownership indicators against the screening caches.",
+        "factors": [
+          {
+            "text": "Name alignment reviewed against OFAC / FinCEN cache",
+            "weight_pct": 62,
+            "tone": "positive"
+          },
+          {
+            "text": "Jurisdiction and registration cross-check completed",
+            "weight_pct": 32,
+            "tone": "positive"
+          },
+          {
+            "text": "Ownership / banking linkage reviewed where available",
+            "weight_pct": 18,
+            "tone": "positive"
+          }
+        ],
+        "checks": [
+          {
+            "label": "Geographic Match",
+            "passed": true
+          },
+          {
+            "label": "Entity Type Match",
+            "passed": true
+          },
+          {
+            "label": "Industry Match",
+            "passed": true
+          },
+          {
+            "label": "Ownership Link",
+            "passed": true
+          }
+        ],
+        "recommended_action": "Auto-clear"
+      },
+      "audit_trail": [
+        {
+          "timestamp": "2026-05-15T12:03:07.701629Z",
+          "actor": "admin@metlife-re.demo",
+          "actor_type": "Human",
+          "detail": "Initiated ad-hoc screening"
+        },
+        {
+          "timestamp": "2026-05-15T12:03:07.701629Z",
+          "actor": "Match Engine",
+          "actor_type": "System",
+          "detail": "Watchlist cache match completed"
+        },
+        {
+          "timestamp": "2026-05-15T12:03:07.701629Z",
+          "actor": "IRiS",
+          "actor_type": "AI",
+          "detail": "Resolved at 62% confidence"
+        },
+        {
+          "timestamp": "2026-05-15T12:03:07.701629Z",
           "actor": "Decision Engine",
           "actor_type": "System",
           "detail": "Auto-cleared"
