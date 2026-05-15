@@ -64,6 +64,33 @@ Upload a cession file. Initiates the pipeline.
 
 ---
 
+### GET `/cession-files/testcases`
+Returns the curated backend testcase files shown in the upload quick-access area.
+
+**Response 200:**
+```json
+{
+  "items": [
+    {
+      "filename": "Maple_Leaf_Q1_2026.csv",
+      "size_bytes": 1428,
+      "content_type": "text/csv",
+      "download_url": "/claims/cession-files/testcases/Maple_Leaf_Q1_2026.csv"
+    }
+  ]
+}
+```
+
+---
+
+### GET `/cession-files/testcases/{filename}`
+Downloads one curated backend testcase file for quick-access selection in the upload flow.
+
+**Response 200:**
+- Binary file content
+
+---
+
 ### GET `/cession-files/{file_id}`
 Get full file detail including current pipeline stage.
 

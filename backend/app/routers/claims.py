@@ -54,6 +54,28 @@ async def upload_cession_file(
     return await get_service(db).upload_cession_file(file, background_tasks, cedent_id, contract_id, file_type)
 
 
+@router.get("/cession-files/testcases")
+def list_cession_upload_testcases(
+    _: User = Depends(require_roles(["claims_ops"])),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    return get_service(db).list_cession_upload_testcases()
+
+
+@router.get("/cession-files/testcases/{filename}")
+def download_cession_upload_testcase(
+    filename: str,
+    _: User = Depends(require_roles(["claims_ops"])),
+    db: Session = Depends(get_db),
+) -> Response:
+    testcase = get_service(db).download_cession_upload_testcase(filename)
+    return Response(
+        content=testcase["content"],
+        media_type=testcase["content_type"],
+        headers={"Content-Disposition": f'attachment; filename="{testcase["filename"]}"'},
+    )
+
+
 @router.get("/cession-files/{file_id}")
 def get_cession_file_detail(
     file_id: str,

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from sqlalchemy import func, or_, select, text
 from sqlalchemy.orm import Session
 
@@ -19,6 +21,22 @@ from app.models.worklist import WorklistItem
 class ClaimsRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
+
+    def list_testcase_files(self, directory: Path) -> list[Path]:
+        if not directory.exists() or not directory.is_dir():
+            return []
+        return sorted((path for path in directory.iterdir() if path.is_file()), key=lambda path: path.name.lower())
+
+    def resolve_testcase_file(self, directory: Path, filename: str) -> Path | None:
+        base_directory = directory.resolve()
+        candidate = (base_directory / filename).resolve()
+        try:
+            candidate.relative_to(base_directory)
+        except ValueError:
+            return None
+        if not candidate.exists() or not candidate.is_file():
+            return None
+        return candidate
 
     def list_cession_files(
         self,

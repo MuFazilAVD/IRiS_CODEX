@@ -907,6 +907,17 @@ export interface ClaimsCessionQueuePayload {
   items: ClaimsCessionQueueItem[]
 }
 
+export interface ClaimsCessionTestcase {
+  filename: string
+  size_bytes: number
+  content_type: string
+  download_url: string
+}
+
+export interface ClaimsCessionTestcasePayload {
+  items: ClaimsCessionTestcase[]
+}
+
 export interface ClaimsDetectionPayload {
   file_type: string
   file_type_confidence: number

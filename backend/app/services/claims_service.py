@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import logging
+import mimetypes
 import re
 import uuid
 from collections import Counter
@@ -48,6 +49,7 @@ UTC = timezone.utc
 
 PIPELINE_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "cession_pipeline_overrides.json"
 SETTLEMENT_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data" / "settlement_overrides.json"
+TESTCASE_DIRECTORY = Path(__file__).resolve().parents[2] / "testcases"
 CREATED_SETTLEMENTS_KEY = "__created_rows__"
 SETTLEMENT_EXPECTED_FALLBACKS_KEY = "__settlement_expected_fallbacks__"
 
@@ -251,6 +253,37 @@ SETTLEMENT_TARGET_HEADER_LABELS = {
 class ClaimsService:
     def __init__(self, repository: ClaimsRepository) -> None:
         self.repository = repository
+
+    def list_cession_upload_testcases(self) -> dict[str, Any]:
+        logger.info("Loading cession upload testcase quick access")
+        logger.debug("Cession upload testcase directory=%s", TESTCASE_DIRECTORY)
+        testcase_paths = self.repository.list_testcase_files(TESTCASE_DIRECTORY)
+        if not testcase_paths:
+            logger.error("No cession upload testcase files were found directory=%s", TESTCASE_DIRECTORY)
+        return {
+            "items": [
+                {
+                    "filename": testcase_path.name,
+                    "size_bytes": testcase_path.stat().st_size,
+                    "content_type": self._guess_testcase_content_type(testcase_path.name),
+                    "download_url": f"/claims/cession-files/testcases/{testcase_path.name}",
+                }
+                for testcase_path in testcase_paths
+            ]
+        }
+
+    def download_cession_upload_testcase(self, filename: str) -> dict[str, Any]:
+        logger.info("Downloading cession upload testcase")
+        logger.debug("Cession upload testcase filename=%s directory=%s", filename, TESTCASE_DIRECTORY)
+        testcase_path = self.repository.resolve_testcase_file(TESTCASE_DIRECTORY, filename)
+        if testcase_path is None:
+            logger.error("Cession upload testcase file was not found filename=%s directory=%s", filename, TESTCASE_DIRECTORY)
+            raise IrisAPIError(404, "Invalid testcase file", "Testcase file not found in backend/testcases")
+        return {
+            "filename": testcase_path.name,
+            "content": testcase_path.read_bytes(),
+            "content_type": self._guess_testcase_content_type(testcase_path.name),
+        }
 
     def list_cession_files(
         self,
@@ -5896,6 +5929,19 @@ class ClaimsService:
         if isinstance(value, Decimal):
             return float(value)
         return float(value)
+
+    def _guess_testcase_content_type(self, filename: str) -> str:
+        known_types = {
+            ".csv": "text/csv",
+            ".txt": "text/plain",
+            ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12",
+        }
+        extension = Path(filename).suffix.lower()
+        if extension in known_types:
+            return known_types[extension]
+        guessed_type, _ = mimetypes.guess_type(filename)
+        return guessed_type or "application/octet-stream"
 
 
 def format_pipeline_worklist_status(value: str) -> str:

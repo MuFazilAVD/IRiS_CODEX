@@ -24,6 +24,12 @@ From the full-page cession processing screenshot provided during implementation:
 - The existing 10-step processing flow remains the same, but it should render inside a routed page shell rather than a fixed overlay modal
 - The full-page version includes a page-level back action and retains the step bar, upload/detect/map/clauses/validate/exceptions/process/summary/worklist/audit flow
 
+### Cession Upload Quick Access Correction
+
+- The screenshot-era sample filenames are no longer the tester source of truth for upload quick access
+- Quick-access entries in the upload step should instead mirror the current curated files under `backend/testcases`
+- This keeps the UI aligned with the latest backend testcase set without preserving stale screenshot-only sample names
+
 ---
 
 ## SETTLEMENTS REGISTER VISUAL CORRECTIONS

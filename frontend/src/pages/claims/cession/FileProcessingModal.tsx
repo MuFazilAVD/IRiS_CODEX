@@ -9,6 +9,8 @@ import type {
   CedentListItem,
   ClaimsAuditEvent,
   ClaimsCessionDetailPayload,
+  ClaimsCessionTestcase,
+  ClaimsCessionTestcasePayload,
   ClaimsExceptionItem,
   ClaimsPipelineStageResponse,
   ClaimsUploadResponse,
@@ -97,54 +99,6 @@ const FILE_TYPE_OPTIONS = [
   'Fee Schedule',
 ]
 
-const SAMPLE_FILES: Array<{ name: string; content: string; type: string }> = [
-  {
-    name: 'northstar_status_2025Q1.csv',
-    type: 'text/csv',
-    content:
-      'member_id,date_of_birth,gender,status,date_of_death,annual_pension,escalation_type,postcode\nPEN-0100234,1963-04-12,F,active,,12000,RPI,SW1A 1AA\nPEN-0100236,1954-07-23,F,active,,12774,RPI,SW1A 2BB\nPEN-0100238,1947-02-08,F,deceased,2025-01-18,13548,RPI,SW1A 3CC\nPEN-0100240,1941-11-30,F,active,,14322,RPI,SW1A 4DD\n',
-  },
-  {
-    name: 'helvetia_mortality_apr2025.xlsx',
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    content:
-      'member_id,death_date,cause_code,verified_by\nHLV-000101,2025-03-04,NAT,Helvetia Admin\nHLV-000245,2025-03-18,UNK,\nHLV-000317,2025-03-20,NAT,Helvetia Admin\n',
-  },
-  {
-    name: 'northstar_spouses_apr.csv',
-    type: 'text/csv',
-    content:
-      'member_id,event_type,event_date,spouse_dob,spouse_gender,benefit_pct\nPEN-0100234,spouse_added,2025-03-11,1966-06-12,F,50\n',
-  },
-  {
-    name: 'maple_activity_2025Q1.csv',
-    type: 'text/csv',
-    content: 'member_id,activity_code,effective_date\nMAP-000100,DEFER,2025-03-31\nMAP-000240,SPOUSE_CHANGE,2025-03-31\n',
-  },
-  {
-    name: 'bavarian_fixed_leg_q1.csv',
-    type: 'text/csv',
-    content:
-      'row_id,period,fixed_leg_amount,currency,fee_amount,value_date,contract_id\n100,Q1-2025,8914200,EUR,412300,2025-03-30,LSC-2025-002\n237,Q1-2025,8914200,EUR,412300,2025-03-30,LSC-2025-002\n374,Q1-2025,8914200,EUR,412300,2025-03-30,LSC-2025-002\n511,Q1-2025,8914200,EUR,412300,2025-03-30,LSC-2025-002\n',
-  },
-  {
-    name: 'bavarian_settlement_2025Q1.csv',
-    type: 'text/csv',
-    content:
-      'Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Leg,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount,contract_id\nQ1 2025,2025-04-30,None,None,51200000,50980000,0,0,-220000,LSC-2025-002\n',
-  },
-  {
-    name: 'boe_discount_curve_2025Q1.csv',
-    type: 'text/csv',
-    content: 'tenor,rate\n1Y,0.041\n5Y,0.037\n10Y,0.034\n',
-  },
-  {
-    name: 'northstar_collateral_apr.csv',
-    type: 'text/csv',
-    content: 'account_id,threshold_amount,currency,report_date\nCOLL-1042,25000000,GBP,2025-03-31\n',
-  },
-]
-
 export function CessionFileProcessingWorkflow({
   fileId,
   startInUpload = false,
@@ -167,6 +121,7 @@ export function CessionFileProcessingWorkflow({
   const [exceptionActions, setExceptionActions] = useState<ExceptionActionState>({})
   const [notice, setNotice] = useState<ModalNotice>(null)
   const [busy, setBusy] = useState(false)
+  const [testcaseBusy, setTestcaseBusy] = useState<string | null>(null)
   const [pendingManualType, setPendingManualType] = useState<string | null>(null)
   const [autoValidating, setAutoValidating] = useState(false)
   const [fileActionBusy, setFileActionBusy] = useState<string | null>(null)
@@ -178,6 +133,12 @@ export function CessionFileProcessingWorkflow({
     queryKey: ['claims-cession-file-detail', activeFileId],
     queryFn: async () => (await api.get<ClaimsCessionDetailPayload>(`/claims/cession-files/${activeFileId}`)).data,
     enabled: Boolean(activeFileId),
+  })
+
+  const testcaseQuery = useQuery({
+    queryKey: ['claims-cession-upload-testcases'],
+    queryFn: async () => (await api.get<ClaimsCessionTestcasePayload>('/claims/cession-files/testcases')).data,
+    staleTime: 60_000,
   })
 
   useEffect(() => {
@@ -413,6 +374,25 @@ export function CessionFileProcessingWorkflow({
     })
   }
 
+  async function handlePickTestcaseFile(testcase: ClaimsCessionTestcase) {
+    setTestcaseBusy(testcase.filename)
+    setNotice(null)
+    try {
+      const response = await api.get<Blob>(testcase.download_url, {
+        responseType: 'blob',
+      })
+      const contentType = response.data.type || testcase.content_type
+      setSelectedFile(new File([response.data], testcase.filename, { type: contentType }))
+    } catch (caughtError: unknown) {
+      setNotice({
+        tone: 'error',
+        message: extractErrorMessage(caughtError) ?? 'Unable to load that backend testcase right now.',
+      })
+    } finally {
+      setTestcaseBusy(null)
+    }
+  }
+
   async function handleApprove() {
     if (!activeFileId) {
       return
@@ -509,14 +489,6 @@ export function CessionFileProcessingWorkflow({
     }
   }
 
-  function handleSelectSample(sampleName: string) {
-    const sample = SAMPLE_FILES.find((item) => item.name === sampleName)
-    if (!sample) {
-      return
-    }
-    setSelectedFile(new File([sample.content], sample.name, { type: sample.type }))
-  }
-
   const isPage = presentation === 'page'
   const showBetaHeader = Boolean(detail && detail.file_type !== 'Settlement')
   const betaSuffix = showBetaHeader ? ' (beta)' : ''
@@ -586,10 +558,14 @@ export function CessionFileProcessingWorkflow({
               <UploadStep
                 manualUploadFileType={manualUploadFileType}
                 selectedFile={selectedFile}
+                testcaseBusy={testcaseBusy}
+                testcaseError={testcaseQuery.isError ? 'Unable to load backend testcase quick access right now.' : null}
+                testcaseItems={testcaseQuery.data?.items ?? []}
+                testcaseLoading={testcaseQuery.isLoading}
                 uploadMode={uploadMode}
                 onFilePicked={setSelectedFile}
                 onManualUploadFileTypeChange={setManualUploadFileType}
-                onSampleSelect={handleSelectSample}
+                onPickTestcase={handlePickTestcaseFile}
                 onUploadModeChange={setUploadMode}
               />
             ) : null}
@@ -759,10 +735,14 @@ export function CessionFileProcessingWorkflow({
               <UploadStep
                 manualUploadFileType={manualUploadFileType}
                 selectedFile={selectedFile}
+                testcaseBusy={testcaseBusy}
+                testcaseError={testcaseQuery.isError ? 'Unable to load backend testcase quick access right now.' : null}
+                testcaseItems={testcaseQuery.data?.items ?? []}
+                testcaseLoading={testcaseQuery.isLoading}
                 uploadMode={uploadMode}
                 onFilePicked={setSelectedFile}
                 onManualUploadFileTypeChange={setManualUploadFileType}
-                onSampleSelect={handleSelectSample}
+                onPickTestcase={handlePickTestcaseFile}
                 onUploadModeChange={setUploadMode}
               />
             ) : null}
@@ -864,18 +844,26 @@ export function FileProcessingModal(props: FileProcessingModalProps) {
 function UploadStep({
   manualUploadFileType,
   selectedFile,
+  testcaseBusy,
+  testcaseError,
+  testcaseItems,
+  testcaseLoading,
   uploadMode,
   onFilePicked,
   onManualUploadFileTypeChange,
-  onSampleSelect,
+  onPickTestcase,
   onUploadModeChange,
 }: {
   manualUploadFileType: string
   selectedFile: File | null
+  testcaseBusy: string | null
+  testcaseError: string | null
+  testcaseItems: ClaimsCessionTestcase[]
+  testcaseLoading: boolean
   uploadMode: UploadMode
   onFilePicked: (file: File | null) => void
   onManualUploadFileTypeChange: (value: string) => void
-  onSampleSelect: (sampleName: string) => void
+  onPickTestcase: (testcase: ClaimsCessionTestcase) => void
   onUploadModeChange: (value: UploadMode) => void
 }) {
   return (
@@ -887,7 +875,7 @@ function UploadStep({
           <div className="rounded-full bg-[#EBF5FB] p-4 text-iris-blue">
             <Upload className="h-6 w-6" />
           </div>
-          <p className="text-[14px] font-semibold text-iris-text-primary">Drop file here, or pick a sample below</p>
+          <p className="text-[14px] font-semibold text-iris-text-primary">Drop file here or choose a backend testcase below</p>
           <label className="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-md border border-iris-border bg-white px-3.5 py-2 text-[13px] font-semibold text-iris-text-primary hover:bg-[#F8FAFC]">
             <FileUp className="h-4 w-4" />
             Choose local file
@@ -899,19 +887,38 @@ function UploadStep({
               />
           </label>
           <p className="text-[12px] text-iris-text-secondary">{selectedFile ? `${selectedFile.name} · ${formatCount(selectedFile.size)} bytes` : 'No file selected yet.'}</p>
-        </div>
-
-        <div className="mt-6 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          {SAMPLE_FILES.map((sample) => (
-            <button
-              key={sample.name}
-              className="rounded-xl border border-[#D9E3EA] bg-[#FBFCFD] px-3 py-3 text-left text-[13px] font-medium text-iris-text-primary transition hover:border-[#8FB9D4] hover:bg-[#F3F8FB]"
-              onClick={() => onSampleSelect(sample.name)}
-              type="button"
-            >
-              {sample.name}
-            </button>
-          ))}
+          <div className="w-full max-w-5xl">
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {testcaseItems.map((testcase) => {
+                const isActive = selectedFile?.name === testcase.filename
+                const isBusy = testcaseBusy === testcase.filename
+                return (
+                  <button
+                    key={testcase.filename}
+                    className={`rounded-xl border px-4 py-3 text-left text-[13px] font-medium transition ${
+                      isActive
+                        ? 'border-iris-blue bg-[#F3F8FB] text-iris-text-primary'
+                        : 'border-[#D9E3EA] bg-white text-iris-text-primary hover:bg-[#F8FAFC]'
+                    }`}
+                    disabled={Boolean(testcaseBusy)}
+                    onClick={() => onPickTestcase(testcase)}
+                    type="button"
+                  >
+                    {isBusy ? 'Loading testcase...' : testcase.filename}
+                  </button>
+                )
+              })}
+            </div>
+            {testcaseLoading ? <p className="mt-3 text-[12px] text-iris-text-secondary">Loading testcase quick access...</p> : null}
+            {testcaseError ? <p className="mt-3 text-[12px] text-[#922B21]">{testcaseError}</p> : null}
+            {!testcaseLoading && !testcaseItems.length && !testcaseError ? (
+              <p className="mt-3 text-[12px] text-iris-text-secondary">No testcase files were found in <span className="font-mono">backend/testcases</span>.</p>
+            ) : null}
+          </div>
+          <div className="mt-3 rounded-xl border border-[#D9E3EA] bg-[#FBFCFD] px-4 py-3 text-left">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Quick Access Source</p>
+            <p className="mt-2 text-[13px] text-iris-text-primary">Quick-access buttons now mirror the current files in <span className="font-mono">backend/testcases</span>, so Claims Ops tests against the updated backend set instead of stale sample names.</p>
+          </div>
         </div>
       </div>
 
@@ -1277,7 +1284,6 @@ function ScreeningStep({ item }: { item: ClaimsWorklistTask }) {
   const watchlistsValue = summary?.watchlists_screened.length ? summary.watchlists_screened.join(' · ') : 'OFAC · FinCEN'
   const matchedWatchlistsValue = summary?.matched_watchlists.length ? summary.matched_watchlists.join(' · ') : 'None retained'
   const decisionPanelClass = isAutoCleared ? 'border-[#C7EED8] bg-[#F0FFF6]' : 'border-[#F8D7A6] bg-[#FFF8EF]'
-  const decisionIconClass = isAutoCleared ? 'bg-[#DDF5E7] text-[#1E8449]' : 'bg-[#FDEBD0] text-[#AF601A]'
   const statusBadgeClass = isAutoCleared
     ? 'border-[#C7EED8] bg-[#F0FFF6] text-[#1E8449]'
     : 'border-[#F8D7A6] bg-[#FFF8EF] text-[#AF601A]'
@@ -1330,17 +1336,24 @@ function ScreeningStep({ item }: { item: ClaimsWorklistTask }) {
           <MetricLine label={isAutoCleared ? 'Release Path' : 'Review Route'} value={routeValue} />
         </div>
 
-        <div className="grid gap-4 border-b border-[#EEF2F5] px-5 py-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-          <div className="space-y-4">
-            <div className="grid gap-4 lg:grid-cols-2">
-              {sourceCards.map((source) => (
-                <ScreeningSourceCard key={source.name} detail={source.detail} name={source.name} result={source.result} tone={source.tone} />
-              ))}
-            </div>
-
+        <div className="space-y-4 border-b border-[#EEF2F5] px-5 py-5">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {sourceCards.map((source) => (
+              <ScreeningSourceCard key={source.name} detail={source.detail} name={source.name} result={source.result} tone={source.tone} />
+            ))}
             <div className="rounded-[20px] border border-[#D9E3EA] bg-white px-5 py-4">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Raw Watchlist Output</p>
-              <p className="mt-3 text-[14px] font-semibold text-iris-text-primary">{summary?.raw_findings_summary ?? 'No raw watchlist findings are available for this screening case.'}</p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[18px] font-semibold text-iris-text-primary">Raw Match</p>
+                  <p className="mt-1 text-[12px] text-iris-text-secondary">Retained watchlist output</p>
+                </div>
+                <span className="rounded-full border border-[#F8D7A6] bg-[#FFF8EF] px-2.5 py-1 text-[12px] font-semibold text-[#AF601A]">
+                  {summary?.matched_watchlists.length ? 'Retained' : 'No match'}
+                </span>
+              </div>
+              <p className="mt-4 text-[13px] leading-6 text-iris-text-primary">
+                {summary?.raw_findings_summary ?? 'No raw watchlist findings are available for this screening case.'}
+              </p>
               {summary?.candidate_name || summary?.candidate_list ? (
                 <div className="mt-4 rounded-2xl bg-[#F7F9FB] px-4 py-3 text-[13px] text-iris-text-secondary">
                   <span className="font-semibold text-iris-text-primary">Top candidate:</span>{' '}
@@ -1351,52 +1364,37 @@ function ScreeningStep({ item }: { item: ClaimsWorklistTask }) {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className={`rounded-[22px] border px-5 py-5 ${decisionPanelClass}`}>
-              <div className="flex items-start gap-3">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${decisionIconClass}`}>
-                  {isAutoCleared ? <Check className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
-                </div>
-                <div>
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
-                    {isAutoCleared ? 'Release Readiness' : 'Analyst Handoff'}
-                  </p>
-                  <p className="mt-2 text-[16px] font-semibold text-iris-text-primary">
-                    {isAutoCleared ? 'No compliance analyst handoff is required.' : 'A compliance analyst must disposition this case.'}
-                  </p>
-                  <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">
-                    {isAutoCleared
-                      ? 'The settlement release can continue without a pending sanctions-review task.'
-                      : 'Keep the settlement on compliance hold until the linked sanctions case is reviewed and resolved.'}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <MetricLine label="Recommended Action" value={summary?.recommended_action ?? 'Review case'} />
-                <MetricLine label="Assigned Compliance" value={assignedValue} />
-                <MetricLine label="Case Reference" value={summary?.screening_ref ?? item.wl_id} />
-                <MetricLine label="SLA" value={item.sla} />
-              </div>
-              {item.target_url && item.target_label ? (
-                <div className="mt-4">
-                  <Link className="inline-flex items-center rounded-full bg-[#F4F7FA] px-3 py-1.5 text-[12px] font-semibold text-iris-text-secondary transition hover:bg-[#EAF1F6]" to={item.target_url}>
-                    {item.target_label}
-                  </Link>
-                </div>
-              ) : null}
+          <div className="rounded-[20px] border border-[#B8E2E0] bg-[#F4FBFB] px-5 py-4">
+            <div className="flex items-center gap-2 text-[13px] font-semibold text-[#117A65]">
+              <Sparkles className="h-4 w-4" />
+              IRiS Analysis
             </div>
-
-            <div className="rounded-[20px] border border-[#B8E2E0] bg-[#F4FBFB] px-5 py-4">
-              <div className="flex items-center gap-2 text-[13px] font-semibold text-[#117A65]">
-                <Sparkles className="h-4 w-4" />
-                IRiS Analysis
-              </div>
-              <p className="mt-3 text-[14px] font-semibold text-iris-text-primary">{summary?.iris_findings_summary ?? item.description}</p>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <MetricLine label="Analysis Label" value={summary?.analysis_label ?? 'IRiS decision engine'} />
-                <MetricLine label="Workflow Task" value={item.wl_id} />
-              </div>
+            <p className="mt-3 text-[14px] leading-6 text-iris-text-primary">{summary?.iris_findings_summary ?? item.description}</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <MetricLine label="Recommended Action" value={summary?.recommended_action ?? 'Review case'} />
+              <MetricLine label="Assigned Compliance" value={assignedValue} />
+              <MetricLine
+                label="Case Reference"
+                value={
+                  summary?.screening_ref ? (
+                    <Link className="text-iris-blue underline decoration-[#B9D3E6] underline-offset-4 transition hover:text-[#155A82]" to={`/compliance/sanctions/${summary.screening_ref}`}>
+                      {summary.screening_ref}
+                    </Link>
+                  ) : (
+                    item.wl_id
+                  )
+                }
+              />
+              <MetricLine label="Analysis Label" value={summary?.analysis_label ?? 'IRiS decision engine'} />
+              <MetricLine label="SLA" value={item.sla} />
             </div>
+            {item.target_url && item.target_label ? (
+              <div className="mt-4">
+                <Link className="inline-flex items-center rounded-full bg-[#F4F7FA] px-3 py-1.5 text-[12px] font-semibold text-iris-text-secondary transition hover:bg-[#EAF1F6]" to={item.target_url}>
+                  {item.target_label}
+                </Link>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -2000,11 +1998,11 @@ function SummaryChip({
   )
 }
 
-function MetricLine({ label, value }: { label: string; value: string }) {
+function MetricLine({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-xl bg-[#F8FAFC] px-3.5 py-3">
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{label}</p>
-      <p className="mt-1.5 text-[14px] font-semibold text-iris-text-primary">{value}</p>
+      <div className="mt-1.5 text-[14px] font-semibold text-iris-text-primary">{value}</div>
     </div>
   )
 }

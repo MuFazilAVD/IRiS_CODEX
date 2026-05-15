@@ -221,6 +221,131 @@ In the audit trail inside the cession file processing, right now the validation 
 Completed
 
 
+## [2026-05-15T09:10:50Z]
+
+### Prompt
+Remove these files from quick access.
+get the files inside the testcases folder in backend
+and put them to quick access in ui, so that the user can easily test with the newer updated correct files instead of older ones
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/api/CLAIMS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/routers/claims.py
+  - backend/app/services/claims_service.py
+  - backend/app/repositories/claims_repository.py
+  - backend/testcases/
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Added claims-side testcase quick-access APIs to list and download the curated files from `backend/testcases`.
+- Updated the cession upload UI to replace stale sample quick access with buttons driven by the backend testcase folder.
+- Kept the existing manual upload flow intact so selecting a quick-access testcase still feeds the same upload pipeline.
+- Updated the claims API doc, screenshot-correction note, and tracker entry to reflect the new quick-access source.
+- Ran backend syntax validation and a frontend production build to verify the new flow.
+
+### Files Modified
+- backend/app/repositories/claims_repository.py
+- backend/app/routers/claims.py
+- backend/app/services/claims_service.py
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- frontend/src/types/api.ts
+- docs/api/CLAIMS.md
+- docs/trackers/TRACKER.md
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the workspace source-of-truth files live under `docs/`, so the `docs/...` equivalents were used.
+- The worktree already contained unrelated modified/generated files outside this task; they were left untouched.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T09:14:55Z]
+
+### Prompt
+You still have not removed the release rediness card, pls remove it
+Also make the iris analysis occuppy full width in a single row
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/DESIGN.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Removed the remaining release-readiness / analyst-handoff side card from the settlement screening layout.
+- Kept the OFAC, FinCEN, and Raw Match cards together in a single row and moved IRiS Analysis into its own full-width row beneath them.
+- Folded the case metadata needed after the card removal into the full-width IRiS Analysis panel so the linked sanction ID, recommendation, assignee, analysis label, and SLA remain visible.
+- Cleaned up the now-unused icon-style constant left behind by the removed card and verified the frontend build with `npm run build`.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T08:55:25Z]
+
+### Prompt
+Remove these 8 files from quick access and put the files inside the testcases folder so that the user can easily test.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/api/CLAIMS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - backend/testcases
+
+### Actions Taken
+- Removed the hardcoded 8-file quick-access sample button grid from the cession upload step.
+- Updated the upload UI copy to direct testers to the local `backend/testcases` folder instead of in-app sample shortcuts.
+- Created the 8 former quick-access sample files inside `backend/testcases`, including the Excel testcase used by the claims flow.
+- Updated the tracker note for cession file processing to reflect the new testcase-based testing path.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- backend/testcases/northstar_status_2025Q1.csv
+- backend/testcases/helvetia_mortality_apr2025.xlsx
+- backend/testcases/northstar_spouses_apr.csv
+- backend/testcases/maple_activity_2025Q1.csv
+- backend/testcases/bavarian_fixed_leg_q1.csv
+- backend/testcases/bavarian_settlement_2025Q1.csv
+- backend/testcases/boe_discount_curve_2025Q1.csv
+- backend/testcases/northstar_collateral_apr.csv
+- codex_logger.md
+
+### Issues / Deviations
+- The claims UI spec screenshot still shows sample quick-access pills, but this change intentionally removes them per the user request and preserves easy testing through the repo-local testcase folder.
+
+### Status
+✅ Completed
+
+
 ## [2026-05-15T06:52:07Z]
 
 ### Prompt
@@ -257,6 +382,46 @@ reimagine the ui
 ### Issues / Deviations
 - The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
 - This request only required a frontend presentation refactor; the screening payload shape and backend workflow were intentionally left unchanged.
+
+### Status
+✅ Completed
+
+
+## [2026-05-15T08:46:02Z]
+
+### Prompt
+Make some design alignments:
+Put OFAC , FinCEN and  raw match in a single row. 
+And in the next row show iris analysis(no need to bolden the iris analysis text). 
+Also make the Sanction ID clickable and take the user to the corresponding sanction item in the sanctions page upon clicking on it. 
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/DESIGN.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/pages/compliance/SanctionsPage.tsx
+  - frontend/src/pages/compliance/SanctionsCasePage.tsx
+
+### Actions Taken
+- Reflowed the settlement screening detail layout so the OFAC card, FinCEN card, and a new `Raw Match` card render in one responsive row.
+- Folded the retained raw-watchlist summary and top-candidate context into that new third card instead of leaving it as a separate stacked block.
+- Kept `IRiS Analysis` on the following row and reduced the body treatment from bold text to normal-weight narrative copy.
+- Made the screening case reference itself clickable so it deep-links directly to `/compliance/sanctions/{screening_ref}` from the settlement pipeline card.
+- Updated the claims tracker note and verified the frontend build with `npm run build`.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The existing `Open sanction case` CTA remains in place; this change adds the clickable sanction ID itself rather than replacing the existing deep link.
 
 ### Status
 ✅ Completed
