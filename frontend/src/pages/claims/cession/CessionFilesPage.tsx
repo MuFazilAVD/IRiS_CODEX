@@ -86,7 +86,7 @@ export function CessionFilesPage() {
             <div className="flex flex-col gap-4 border-b border-[#E8EDF2] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
                 <p className="text-[18px] font-bold text-iris-text-primary">File Queue</p>
-                <p className="mt-1 text-[13px] text-iris-text-secondary">{formatCount(queueQuery.data.items.length)} file(s) currently in this filtered view. Historical intake and processing detail now open in the full-page workflow.</p>
+                {/* <p className="mt-1 text-[13px] text-iris-text-secondary">{formatCount(queueQuery.data.items.length)} file(s) currently in this filtered view. Historical intake and processing detail now open in the full-page workflow.</p> */}
               </div>
 
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
