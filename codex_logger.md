@@ -143,6 +143,46 @@ create vence, install reqs, acgivate and run app
 ✅ Completed
 
 
+## [2026-05-15T11:05:01Z]
+
+### Prompt
+also remove everything from 11th May  onwards
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/api/CLAIMS.md
+  - backend/app/repositories/claims_repository.py
+  - backend/app/mock_data/cession_pipeline_overrides.json
+  - backend/app/mock_data/settlement_overrides.json
+  - backend/app/mock_data/settlement_report_artifacts.json
+  - backend/iris.db
+
+### Actions Taken
+- Queried the live `cession_files` table and identified 25 rows dated on or after `2026-05-11`, spanning `CES-2026-020` through `CES-2026-044`.
+- Removed those `cession_files` rows from the local SQLite dataset along with linked `cession_file_records`, `cession_file_exceptions`, `worklist_items`, `screening_events`, `settlements`, and `audit_events`.
+- Removed matching cession pipeline override entries, settlement override entries, settlement report registry entries, and generated settlement CSV artifacts for the deleted file IDs.
+- Rechecked the queue ordering after cleanup and confirmed the newest remaining row is now `CES-2026-019` dated `2026-05-08`.
+
+### Files Modified
+- backend/app/mock_data/cession_pipeline_overrides.json
+- backend/app/mock_data/settlement_overrides.json
+- backend/app/mock_data/settlement_report_artifacts.json
+- backend/iris.db
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo’s source-of-truth documentation lives under `docs/` rather than the root-level paths referenced in `AGENTS.md`, so the implementation used the `docs/...` equivalents.
+- This request changed the current local demo dataset directly because it targeted live `cession_files` contents rather than application logic.
+
+### Status
+✅ Completed
+
+
 ## [2026-05-15T10:49:42Z]
 
 ### Prompt
@@ -250,6 +290,56 @@ In the audit trail inside the cession file processing, right now the validation 
 
 ### Status
 Completed
+
+
+## [2026-05-15T10:59:10Z]
+
+### Prompt
+Arrange all the entries inside the cession_files table in chronological descending order and remove the latest entries of Maple leaf till some non Maple entries come.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/api/CLAIMS.md
+  - backend/app/repositories/claims_repository.py
+  - backend/app/mock_data/cession_pipeline_overrides.json
+  - backend/app/mock_data/settlement_overrides.json
+  - backend/app/mock_data/settlement_report_artifacts.json
+  - backend/iris.db
+
+### Actions Taken
+- Verified the live `cession_files` queue was already driven by `received_at` and identified the top Maple Leaf run `CES-2026-050` through `CES-2026-045` before the first non-Maple row `CES-2026-044`.
+- Updated the claims repository ordering to use `received_at DESC, file_id DESC` so the API stays strictly newest-first when timestamps tie.
+- Removed the latest Maple Leaf queue rows `CES-2026-050` through `CES-2026-045` from the local SQLite database together with their linked `cession_file_records`, `cession_file_exceptions`, `worklist_items`, `screening_events`, `settlements`, and `audit_events`.
+- Cleaned the related pipeline override entries, settlement override entries, settlement artifact registry rows, and generated settlement CSV files for the deleted Maple uploads.
+- Verified the top queue row is now the non-Maple Bavarian entry `CES-2026-044`, followed by the remaining Maple history.
+
+### Files Modified
+- backend/app/repositories/claims_repository.py
+- backend/app/mock_data/cession_pipeline_overrides.json
+- backend/app/mock_data/settlement_overrides.json
+- backend/app/mock_data/settlement_report_artifacts.json
+- backend/app/generated_reports/settlements/CES-2026-045_SET-2026-Q1-044-045_cash_settlements_tracker.csv
+- backend/app/generated_reports/settlements/CES-2026-045_SET-2026-Q1-044-045_grdr_load_form.csv
+- backend/app/generated_reports/settlements/CES-2026-046_SET-2026-Q1-044-046_cash_settlements_tracker.csv
+- backend/app/generated_reports/settlements/CES-2026-046_SET-2026-Q1-044-046_grdr_load_form.csv
+- backend/app/generated_reports/settlements/CES-2026-049_SET-2026-Q1-044-049_cash_settlements_tracker.csv
+- backend/app/generated_reports/settlements/CES-2026-049_SET-2026-Q1-044-049_grdr_load_form.csv
+- backend/app/generated_reports/settlements/CES-2026-050_SET-2026-Q1-044-050_cash_settlements_tracker.csv
+- backend/app/generated_reports/settlements/CES-2026-050_SET-2026-Q1-044-050_grdr_load_form.csv
+- backend/iris.db
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo’s source-of-truth documentation lives under `docs/` rather than the root-level paths referenced in `AGENTS.md`, so the implementation used the `docs/...` equivalents.
+- The cleanup was applied to the current local demo SQLite dataset and linked mock artifact stores because the request targeted table contents rather than a new product feature.
+
+### Status
+✅ Completed
 
 
 ## [2026-05-15T10:37:55Z]

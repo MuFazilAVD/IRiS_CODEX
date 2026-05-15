@@ -64,14 +64,14 @@ class ClaimsRepository:
         statement = (
             select(CessionFile)
             .where(*filters)
-            .order_by(CessionFile.received_at.desc(), CessionFile.file_id)
+            .order_by(CessionFile.received_at.desc(), CessionFile.file_id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
         return list(self.db.scalars(statement)), total
 
     def list_all_cession_files(self) -> list[CessionFile]:
-        statement = select(CessionFile).order_by(CessionFile.received_at.desc(), CessionFile.file_id)
+        statement = select(CessionFile).order_by(CessionFile.received_at.desc(), CessionFile.file_id.desc())
         return list(self.db.scalars(statement))
 
     def get_cession_file(self, file_id: str) -> CessionFile | None:
