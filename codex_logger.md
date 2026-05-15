@@ -220,6 +220,51 @@ In the audit trail inside the cession file processing, right now the validation 
 ### Status
 Completed
 
+
+## [2026-05-15T05:44:44Z]
+
+### Prompt
+Transform the current prototypish design of contract management page to the enterprise standards so that it match with the cedent pages UI. I have given a sample in the screenshot. But remember that the data in the sample is wrong but the data in the current design is perfect. We just need to transform the current horizontal tab switching view into vertical ones with a nav bar on the left just as in the screenshot. 
+Do not skip any information that is currently present in the UI. You can make logical swaps in categories if you want but do not alter the data.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/api/UNDERWRITING.md
+  - docs/ui/04-underwriting/contracts/CONTRACTS.md
+  - docs/ui/04-underwriting/cedents/CEDENTS.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/ui-screens/Underwriter/Contracts/Contract_MasterData.png
+  - docs/ui-screens/Cedants/Cedent_Legal_Entity.png
+  - frontend/src/components/common/SectionPanel.tsx
+  - frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+  - frontend/src/pages/underwriting/contracts/contractConfig.ts
+  - frontend/src/pages/underwriting/cedants/CedantDetailPage.tsx
+
+### Actions Taken
+- Replaced the contract detail page’s horizontal tab shell with the shared vertical `SectionPanel` pattern already used by the cedent detail page.
+- Re-mapped the existing contract content into the spec-backed contract left-nav sections so the current data stayed intact while moving into the enterprise section structure.
+- Split the prior mixed tab content into section-specific renderers for editable master-data sections, details/performance, member list, file templates, calculations, amendments, audit approval, and audit/compliance.
+- Kept the existing contract payload usage, calculations query, member list query, amendment modal, upload-members flow, termination flow, and settlement navigation intact.
+- Verified the frontend with a successful production build and updated the tracker entry to record the new contract-detail shell.
+
+### Files Modified
+- frontend/src/pages/underwriting/contracts/ContractDetailPage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repo instructions reference root-level spec paths, but the actual source-of-truth files in this workspace live under `docs/`, so the `docs/...` equivalents were used.
+- The screenshot sample was treated as a layout reference only, per the prompt; the live contract data and existing current-page content were preserved rather than replaced with screenshot values.
+
+### Status
+✅ Completed
+
 ## [2026-05-14 13:38:33 UTC]
 
 ### Prompt

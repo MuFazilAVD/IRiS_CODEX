@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../../../api/client'
 import { Breadcrumbs } from '../../../components/common/Breadcrumbs'
 import { EmptyState } from '../../../components/common/EmptyState'
+import { SectionPanel } from '../../../components/common/SectionPanel'
 import { StatusBadge } from '../../../components/common/StatusBadge'
 import { formatCurrency, formatRelativeDate } from '../../../utils/formatters'
 import type {
@@ -24,6 +25,7 @@ import {
   calculationAggregationOptions,
   calculationGroupByOptions,
   calculationMetricOptions,
+  contractDetailSections,
   contractSectionRouteMap,
   createEmptyComplianceDoc,
   economicTermsFields,
@@ -34,19 +36,8 @@ import {
   riskLimitsFields,
   type FieldConfig,
   type ContractEditableSectionKey,
+  type ContractSectionKey,
 } from './contractConfig'
-
-type ContractDetailTabKey = 'overview' | 'rules' | 'member_population' | 'financials' | 'amendments' | 'audit_log' | 'risk_insights'
-
-const detailTabs: Array<{ key: ContractDetailTabKey; label: string }> = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'rules', label: 'Rules & Configuration' },
-  { key: 'member_population', label: 'Member Population' },
-  { key: 'financials', label: 'Financials' },
-  { key: 'amendments', label: 'Amendments' },
-  { key: 'audit_log', label: 'Audit Log' },
-  { key: 'risk_insights', label: 'Risk & Insights' },
-]
 
 const editableSections: Array<{ key: ContractEditableSectionKey; title: string; subtitle: string }> = [
   { key: 'master_data', title: 'Master Data', subtitle: 'Contract identifiers, structure, treaty references, and lifecycle status.' },
@@ -58,11 +49,45 @@ const editableSections: Array<{ key: ContractEditableSectionKey; title: string; 
   { key: 'compliance_docs', title: 'Compliance & Docs', subtitle: 'Document register aligned to legal, compliance, and onboarding controls.' },
 ]
 
+const editableSectionKeys = new Set<ContractEditableSectionKey>(editableSections.map((section) => section.key))
+
+interface RenderContractSectionProps {
+  activeSection: ContractSectionKey
+  busy: 'saving' | 'status' | 'uploading' | null
+  calcAggregation: string
+  calcFrom: string
+  calcGroupBy: string
+  calcMetric: string
+  calcTo: string
+  calculationQuery: ContractCalculationPayload | undefined
+  detail: ContractDetailPayload
+  editingSection: ContractEditableSectionKey | null
+  filteredMembers: ContractMemberListPayload['items']
+  memberGender: string
+  memberList: ContractMemberListPayload | undefined
+  memberSearch: string
+  memberStatus: string
+  performance: ContractDetailsPerformancePayload | null
+  periods: string[]
+  setDetail: Dispatch<SetStateAction<ContractDetailPayload | null>>
+  onCalcAggregationChange: (value: string) => void
+  onCalcFromChange: (value: string) => void
+  onCalcGroupByChange: (value: string) => void
+  onCalcMetricChange: (value: string) => void
+  onCalcToChange: (value: string) => void
+  onMemberGenderChange: (value: string) => void
+  onMemberSearchChange: (value: string) => void
+  onMemberStatusChange: (value: string) => void
+  onOpenPopulation: () => void
+  onOpenAmendment: () => void
+  onUpdateField: (sectionKey: ContractEditableSectionKey, key: string, value: string | boolean) => void
+}
+
 export function ContractDetailPage() {
   const navigate = useNavigate()
   const { id = '' } = useParams()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const [activeTab, setActiveTab] = useState<ContractDetailTabKey>('overview')
+  const [activeSection, setActiveSection] = useState<ContractSectionKey>('master_data')
   const [editingSection, setEditingSection] = useState<ContractEditableSectionKey | null>(null)
   const [detail, setDetail] = useState<ContractDetailPayload | null>(null)
   const [busy, setBusy] = useState<'saving' | 'status' | 'uploading' | null>(null)
@@ -132,6 +157,7 @@ export function ContractDetailPage() {
   }, [performanceQuery.data, calcFrom, calcTo])
 
   const performance = performanceQuery.data ?? detail?.details_performance ?? null
+  const activeEditableSection = isEditableSection(activeSection) ? activeSection : null
   const periods = performance?.settlement_history.map((row) => row.period) ?? []
   const memberRows = memberListQuery.data?.items ?? []
   const filteredMembers = useMemo(() => {
@@ -157,7 +183,7 @@ export function ContractDetailPage() {
       await api.patch(`/underwriting/contracts/${detail.contract_id}/${contractSectionRouteMap[sectionKey]}`, detail[sectionKey] as unknown)
       await Promise.all([detailQuery.refetch(), performanceQuery.refetch()])
       setEditingSection(null)
-      setSuccess(`${sectionTitle(sectionKey)} saved.`)
+      setSuccess(`${editableSectionTitle(sectionKey)} saved.`)
     } catch (caughtError: unknown) {
       setError(extractErrorMessage(caughtError) ?? 'Unable to save this contract section right now.')
     } finally {
@@ -256,13 +282,13 @@ export function ContractDetailPage() {
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-[30px] font-bold leading-tight text-iris-text-primary">{detail.contract_id}</h1>
+              <h1 className="text-[30px] font-bold leading-tight text-iris-text-primary">{detail.contract_name}</h1>
               <StatusBadge status={detail.status}>{titleCase(detail.status)}</StatusBadge>
               <span className="inline-flex rounded bg-[#F4F9FD] px-2.5 py-1 text-[11px] font-semibold text-iris-blue">{detail.version}</span>
             </div>
-            <p className="mt-2 text-[18px] font-semibold text-iris-text-primary">{detail.contract_name}</p>
             <p className="mt-2 text-[13px] text-iris-text-secondary">
-              {detail.cedent_name} · {formatCurrency(detail.notional, detail.currency)} · {detail.lives_count.toLocaleString('en-GB')} lives
+              {detail.contract_id} · {detail.cedent_name} · {formatCurrency(detail.notional, detail.currency)} ·{' '}
+              {detail.lives_count.toLocaleString('en-GB')} lives
             </p>
           </div>
 
@@ -274,11 +300,11 @@ export function ContractDetailPage() {
               type="file"
               onChange={(event) => void handleUploadMembers(event.target.files?.[0] ?? null)}
             />
-            <button className="btn-primary" onClick={() => navigate(`/claims/settlements?contract_id=${detail.contract_id}`)} type="button">
+            <button className="btn-secondary" onClick={() => navigate(`/claims/settlements?contract_id=${detail.contract_id}`)} type="button">
               Settle Period
             </button>
             <button className="btn-primary" onClick={() => setAmendmentOpen(true)} type="button">
-              Amend Protocol
+              Add Amendment
             </button>
             <button className="btn-secondary" disabled={busy !== null} onClick={() => fileInputRef.current?.click()} type="button">
               <Upload className="h-4 w-4" />
@@ -300,85 +326,64 @@ export function ContractDetailPage() {
         </div>
       ) : null}
 
-      <div className="mt-5 rounded-[24px] border border-iris-border bg-white shadow-sm">
-        <div className="overflow-x-auto border-b border-[#EEF2F5] px-4 py-3">
-          <div className="flex min-w-max gap-2">
-            {detailTabs.map((tab) => (
-              <button
-                key={tab.key}
-                className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
-                  activeTab === tab.key ? 'bg-iris-blue text-white' : 'bg-[#F4F6F8] text-iris-text-secondary hover:bg-[#EAF1F6]'
-                }`}
-                onClick={() => {
-                  setActiveTab(tab.key)
-                  setEditingSection(null)
-                  setError(null)
-                  setSuccess(null)
-                }}
-                type="button"
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="px-5 py-5">
-          {activeTab === 'overview' ? <OverviewTab detail={detail} performance={performance} /> : null}
-          {activeTab === 'rules' ? (
-            <RulesConfigurationTab
-              busy={busy}
-              detail={detail}
-              editingSection={editingSection}
-              onCancel={handleCancelEdit}
-              onEdit={setEditingSection}
-              onSave={handleSaveSection}
-              onUpdateDetail={setDetail}
-              onUpdateField={updateObjectSection}
-            />
-          ) : null}
-          {activeTab === 'member_population' ? (
-            <MemberPopulationTab
-              contractId={detail.contract_id}
-              detail={detail}
-              memberList={memberListQuery.data}
-              filteredMembers={filteredMembers}
-              memberSearch={memberSearch}
-              memberStatus={memberStatus}
-              memberSummary={memberListQuery.data?.summary ?? detail.member_population}
-              onMemberSearchChange={setMemberSearch}
-              onMemberStatusChange={setMemberStatus}
-              memberGender={memberGender}
-              onMemberGenderChange={setMemberGender}
-              onOpenPopulation={() =>
-                navigate(
-                  `/underwriting/population?contract_id=${detail.contract_id}${detail.cedent_id ? `&cedent_id=${detail.cedent_id}` : ''}`,
-                )
-              }
-            />
-          ) : null}
-          {activeTab === 'financials' ? (
-            <FinancialsTab
-              calculationQuery={calculationQuery.data}
-              calcAggregation={calcAggregation}
-              calcFrom={calcFrom}
-              calcGroupBy={calcGroupBy}
-              calcMetric={calcMetric}
-              calcTo={calcTo}
-              currency={detail.currency}
-              periods={periods}
-              performance={performance}
-              onCalcAggregationChange={setCalcAggregation}
-              onCalcFromChange={setCalcFrom}
-              onCalcGroupByChange={setCalcGroupBy}
-              onCalcMetricChange={setCalcMetric}
-              onCalcToChange={setCalcTo}
-            />
-          ) : null}
-          {activeTab === 'amendments' ? <AmendmentsTab detail={detail} onOpenAmendment={() => setAmendmentOpen(true)} /> : null}
-          {activeTab === 'audit_log' ? <AuditLogTab auditCompliance={detail.audit_compliance} auditTimeline={detail.audit_approval} /> : null}
-          {activeTab === 'risk_insights' ? <RiskInsightsTab detail={detail} performance={performance} /> : null}
-        </div>
+      <div className="mt-5">
+        <SectionPanel
+          action={renderSectionAction({
+            activeEditableSection,
+            activeSection,
+            busy,
+            editingSection,
+            onCancel: handleCancelEdit,
+            onEdit: setEditingSection,
+            onOpenAmendment: () => setAmendmentOpen(true),
+            onSave: handleSaveSection,
+          })}
+          activeKey={activeSection}
+          onSelect={(key) => {
+            setActiveSection(key as ContractSectionKey)
+            setEditingSection(null)
+            setError(null)
+            setSuccess(null)
+          }}
+          sections={contractDetailSections}
+          subtitle={sectionSubtitle(activeSection)}
+          title={sectionHeading(activeSection)}
+        >
+          {renderContractSection({
+            activeSection,
+            busy,
+            calcAggregation,
+            calcFrom,
+            calcGroupBy,
+            calcMetric,
+            calcTo,
+            calculationQuery: calculationQuery.data,
+            detail,
+            editingSection,
+            filteredMembers,
+            memberGender,
+            memberList: memberListQuery.data,
+            memberSearch,
+            memberStatus,
+            performance,
+            periods,
+            setDetail,
+            onCalcAggregationChange: setCalcAggregation,
+            onCalcFromChange: setCalcFrom,
+            onCalcGroupByChange: setCalcGroupBy,
+            onCalcMetricChange: setCalcMetric,
+            onCalcToChange: setCalcTo,
+            onMemberGenderChange: setMemberGender,
+            onMemberSearchChange: setMemberSearch,
+            onMemberStatusChange: setMemberStatus,
+            onOpenPopulation: () =>
+              navigate(
+                `/underwriting/population?contract_id=${detail.contract_id}${detail.cedent_id ? `&cedent_id=${detail.cedent_id}` : ''}`,
+              ),
+            onOpenAmendment: () => setAmendmentOpen(true),
+            onUpdateField: updateObjectSection,
+          })}
+        </SectionPanel>
       </div>
 
       {error ? <div className="mt-4 rounded-xl border border-[#F5C6CB] bg-[#FDEDEC] px-4 py-3 text-[13px] text-[#922B21]">{error}</div> : null}
@@ -393,6 +398,213 @@ export function ContractDetailPage() {
           setSuccess('Amendment submitted for approval.')
         }}
       />
+    </div>
+  )
+}
+
+function renderContractSection({
+  activeSection,
+  busy,
+  calcAggregation,
+  calcFrom,
+  calcGroupBy,
+  calcMetric,
+  calcTo,
+  calculationQuery,
+  detail,
+  editingSection,
+  filteredMembers,
+  memberGender,
+  memberList,
+  memberSearch,
+  memberStatus,
+  performance,
+  periods,
+  setDetail,
+  onCalcAggregationChange,
+  onCalcFromChange,
+  onCalcGroupByChange,
+  onCalcMetricChange,
+  onCalcToChange,
+  onMemberGenderChange,
+  onMemberSearchChange,
+  onMemberStatusChange,
+  onOpenPopulation,
+  onOpenAmendment,
+  onUpdateField,
+}: RenderContractSectionProps) {
+  switch (activeSection) {
+    case 'master_data':
+    case 'economic_terms':
+    case 'reference_pool':
+    case 'actuarial_basis':
+    case 'risk_limits':
+    case 'operational_terms':
+    case 'compliance_docs':
+      return (
+        <ContractEditableSectionContent
+          busy={busy}
+          detail={detail}
+          editingSection={editingSection}
+          sectionKey={activeSection}
+          setDetail={setDetail}
+          onUpdateField={onUpdateField}
+        />
+      )
+    case 'audit_approval':
+      return <AuditTimeline events={detail.audit_approval} />
+    case 'details_performance':
+      return (
+        <div className="space-y-5">
+          <OverviewTab detail={detail} performance={performance} />
+          <PerformanceSummarySection currency={detail.currency} performance={performance} />
+        </div>
+      )
+    case 'member_list':
+      return (
+        <MemberPopulationTab
+          contractId={detail.contract_id}
+          detail={detail}
+          filteredMembers={filteredMembers}
+          memberGender={memberGender}
+          memberList={memberList}
+          memberSearch={memberSearch}
+          memberStatus={memberStatus}
+          memberSummary={memberList?.summary ?? detail.member_population}
+          onMemberGenderChange={onMemberGenderChange}
+          onMemberSearchChange={onMemberSearchChange}
+          onMemberStatusChange={onMemberStatusChange}
+          onOpenPopulation={onOpenPopulation}
+        />
+      )
+    case 'file_templates':
+      return <FileTemplatesSection detail={detail} performance={performance} />
+    case 'amendments':
+      return <AmendmentsTab detail={detail} onOpenAmendment={onOpenAmendment} />
+    case 'calculations':
+      return (
+        <CalculationsSection
+          calcAggregation={calcAggregation}
+          calcFrom={calcFrom}
+          calcGroupBy={calcGroupBy}
+          calcMetric={calcMetric}
+          calcTo={calcTo}
+          calculationQuery={calculationQuery}
+          periods={periods}
+          onCalcAggregationChange={onCalcAggregationChange}
+          onCalcFromChange={onCalcFromChange}
+          onCalcGroupByChange={onCalcGroupByChange}
+          onCalcMetricChange={onCalcMetricChange}
+          onCalcToChange={onCalcToChange}
+        />
+      )
+    case 'audit_compliance':
+      return <AuditComplianceSection auditCompliance={detail.audit_compliance} />
+  }
+}
+
+function renderSectionAction({
+  activeEditableSection,
+  activeSection,
+  busy,
+  editingSection,
+  onCancel,
+  onEdit,
+  onOpenAmendment,
+  onSave,
+}: {
+  activeEditableSection: ContractEditableSectionKey | null
+  activeSection: ContractSectionKey
+  busy: 'saving' | 'status' | 'uploading' | null
+  editingSection: ContractEditableSectionKey | null
+  onCancel: () => void
+  onEdit: Dispatch<SetStateAction<ContractEditableSectionKey | null>>
+  onOpenAmendment: () => void
+  onSave: (section: ContractEditableSectionKey) => Promise<void>
+}) {
+  if (activeEditableSection) {
+    if (editingSection === activeEditableSection) {
+      return (
+        <>
+          <button className="btn-secondary" disabled={busy !== null} onClick={onCancel} type="button">
+            Cancel
+          </button>
+          <button className="btn-primary" disabled={busy !== null} onClick={() => void onSave(activeEditableSection)} type="button">
+            Save
+          </button>
+        </>
+      )
+    }
+
+    return (
+      <button className="btn-secondary" onClick={() => onEdit(activeEditableSection)} type="button">
+        View / Edit
+      </button>
+    )
+  }
+
+  if (activeSection === 'amendments') {
+    return (
+      <button className="btn-primary" onClick={onOpenAmendment} type="button">
+        Add Amendment
+      </button>
+    )
+  }
+
+  return null
+}
+
+function ContractEditableSectionContent({
+  busy,
+  detail,
+  editingSection,
+  sectionKey,
+  setDetail,
+  onUpdateField,
+}: {
+  busy: 'saving' | 'status' | 'uploading' | null
+  detail: ContractDetailPayload
+  editingSection: ContractEditableSectionKey | null
+  sectionKey: ContractEditableSectionKey
+  setDetail: Dispatch<SetStateAction<ContractDetailPayload | null>>
+  onUpdateField: (sectionKey: ContractEditableSectionKey, key: string, value: string | boolean) => void
+}) {
+  const isEditing = editingSection === sectionKey
+
+  return (
+    <div className="space-y-5">
+      <PanelCard subtitle={editableSectionSubtitle(sectionKey)} title={editableSectionInnerHeading(sectionKey)}>
+        {sectionKey === 'compliance_docs' ? (
+          isEditing ? (
+            <ContractComplianceDocsEditor
+              items={detail.compliance_docs}
+              onChange={(items) => setDetail((current) => (current ? { ...current, compliance_docs: items } : current))}
+            />
+          ) : (
+            <ContractComplianceDocsReadOnly items={detail.compliance_docs} />
+          )
+        ) : isEditing ? (
+          <FieldGridForm
+            fields={fieldsForSection(sectionKey)}
+            onChange={(key, value) => onUpdateField(sectionKey, key, value)}
+            values={toRecord(detail[sectionKey] as unknown)}
+          />
+        ) : (
+          <div className="space-y-4">
+            {sectionKey === 'economic_terms' && detail.economic_terms.is_locked ? (
+              <div className="rounded-xl border border-[#F9E79F] bg-[#FEF9E7] px-4 py-3 text-[13px] text-[#7D6608]">
+                Economic terms are locked after inception.
+              </div>
+            ) : null}
+            <FieldGridReadOnly fields={fieldsForSection(sectionKey)} values={toRecord(detail[sectionKey] as unknown)} />
+          </div>
+        )}
+      </PanelCard>
+
+      {sectionKey === 'compliance_docs' ? <ClausesTable clauses={detail.contract_clauses} /> : null}
+      {sectionKey !== 'compliance_docs' && busy === 'saving' && isEditing ? (
+        <p className="text-[12px] text-iris-text-secondary">Saving follows the existing contract section API.</p>
+      ) : null}
     </div>
   )
 }
@@ -412,10 +624,7 @@ function OverviewTab({
     <div className="space-y-5">
       <div className="grid gap-5 xl:grid-cols-[1.5fr_0.9fr]">
         <div className="space-y-5">
-          <PanelCard
-            subtitle="Timeline of recent events"
-            title="Recent Operational Trace"
-          >
+          <PanelCard subtitle="Timeline of recent events" title="Recent Operational Trace">
             <div className="space-y-3">
               {performance.operational_trace.length ? (
                 performance.operational_trace.map((item, index) => (
@@ -431,7 +640,11 @@ function OverviewTab({
                   </div>
                 ))
               ) : (
-                <EmptyState compact description="Operational trace entries will appear as claims servicing and compliance events are recorded." title="No operational trace is available" />
+                <EmptyState
+                  compact
+                  description="Operational trace entries will appear as claims servicing and compliance events are recorded."
+                  title="No operational trace is available"
+                />
               )}
             </div>
           </PanelCard>
@@ -449,31 +662,17 @@ function OverviewTab({
           </PanelCard>
         </div>
 
-        <div className="space-y-5">
-          <PanelCard subtitle="IRiS AI insight text" title="Decision Intelligence">
-            <p className="text-[18px] font-semibold text-iris-text-primary">{performance.decision_intelligence.headline}</p>
-            <p className="mt-3 text-[13px] leading-6 text-iris-text-secondary">{performance.decision_intelligence.insight}</p>
-            <div className="mt-4 space-y-2">
-              {performance.decision_intelligence.supporting_points.map((point) => (
-                <div key={point} className="rounded-xl bg-[#F8FAFC] px-3 py-3 text-[13px] text-iris-text-secondary">
-                  {point}
-                </div>
-              ))}
-            </div>
-          </PanelCard>
-
-          <PanelCard subtitle="Linked references and source artifacts" title="Technical Vault">
-            <div className="space-y-3">
-              {performance.technical_vault.map((item) => (
-                <div key={item.label} className="rounded-xl border border-[#EEF2F5] bg-[#FAFBFC] px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{item.label}</p>
-                  <p className="mt-2 text-[14px] font-semibold text-iris-text-primary">{item.value}</p>
-                  <p className="mt-1 text-[12px] text-iris-text-secondary">{titleCase(item.kind)}</p>
-                </div>
-              ))}
-            </div>
-          </PanelCard>
-        </div>
+        <PanelCard subtitle="IRiS AI insight text" title="Decision Intelligence">
+          <p className="text-[18px] font-semibold text-iris-text-primary">{performance.decision_intelligence.headline}</p>
+          <p className="mt-3 text-[13px] leading-6 text-iris-text-secondary">{performance.decision_intelligence.insight}</p>
+          <div className="mt-4 space-y-2">
+            {performance.decision_intelligence.supporting_points.map((point) => (
+              <div key={point} className="rounded-xl bg-[#F8FAFC] px-3 py-3 text-[13px] text-iris-text-secondary">
+                {point}
+              </div>
+            ))}
+          </div>
+        </PanelCard>
       </div>
 
       <PanelCard subtitle={`${detail.contract_id} settlement history`} title="Latest Settlement Snapshot">
@@ -483,107 +682,147 @@ function OverviewTab({
   )
 }
 
-function RulesConfigurationTab({
-  detail,
-  editingSection,
-  busy,
-  onEdit,
-  onSave,
-  onCancel,
-  onUpdateDetail,
-  onUpdateField,
+function PerformanceSummarySection({
+  performance,
+  currency,
 }: {
-  detail: ContractDetailPayload
-  editingSection: ContractEditableSectionKey | null
-  busy: 'saving' | 'status' | 'uploading' | null
-  onEdit: (section: ContractEditableSectionKey | null) => void
-  onSave: (section: ContractEditableSectionKey) => Promise<void>
-  onCancel: () => void
-  onUpdateDetail: Dispatch<SetStateAction<ContractDetailPayload | null>>
-  onUpdateField: (sectionKey: ContractEditableSectionKey, key: string, value: string | boolean) => void
+  performance: ContractDetailsPerformancePayload | null
+  currency: string
 }) {
-  return (
-    <div className="space-y-4">
-      {editableSections.map((section) => {
-        const isEditing = editingSection === section.key
-        return (
-          <PanelCard
-            key={section.key}
-            action={
-              isEditing ? (
-                <div className="flex gap-2">
-                  <button className="btn-secondary" disabled={busy !== null} onClick={onCancel} type="button">
-                    Cancel
-                  </button>
-                  <button className="btn-primary" disabled={busy !== null} onClick={() => void onSave(section.key)} type="button">
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <button className="btn-secondary" onClick={() => onEdit(section.key)} type="button">
-                  Edit
-                </button>
-              )
-            }
-            subtitle={section.subtitle}
-            title={section.title}
-          >
-            {section.key === 'compliance_docs' ? (
-              isEditing ? (
-                <ContractComplianceDocsEditor
-                  items={detail.compliance_docs}
-                  onChange={(items) => onUpdateDetail((current) => (current ? { ...current, compliance_docs: items } : current))}
-                />
-              ) : (
-                <ContractComplianceDocsReadOnly items={detail.compliance_docs} />
-              )
-            ) : isEditing ? (
-              <FieldGridForm
-                fields={fieldsForSection(section.key)}
-                onChange={(key, value) => onUpdateField(section.key, key, value)}
-                values={toRecord(detail[section.key] as unknown)}
-              />
-            ) : (
-              <div className="space-y-4">
-                {section.key === 'economic_terms' && detail.economic_terms.is_locked ? (
-                  <div className="rounded-xl border border-[#F9E79F] bg-[#FEF9E7] px-4 py-3 text-[13px] text-[#7D6608]">
-                    Economic terms are locked after inception.
-                  </div>
-                ) : null}
-                <FieldGridReadOnly fields={fieldsForSection(section.key)} values={toRecord(detail[section.key] as unknown)} />
-              </div>
-            )}
-          </PanelCard>
-        )
-      })}
+  if (!performance) {
+    return null
+  }
 
-      <PanelCard title="Clauses">
-        <div className="overflow-x-auto rounded-xl border border-iris-border">
-          <table className="min-w-full text-[13px]">
-            <thead className="bg-[#F8F9FA]">
-              <tr>
-                {['ID', 'Category', 'Clause', 'Summary & Citation', 'Applies to Transactions'].map((label) => (
-                  <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {detail.contract_clauses.map((item) => (
-                <tr key={item.clause_id} className="border-t border-[#EEF2F5] align-top">
-                  <td className="px-4 py-3 font-mono text-[12px] font-semibold text-iris-blue">{item.clause_id}</td>
-                  <td className="px-4 py-3 text-iris-text-secondary">{item.category}</td>
-                  <td className="px-4 py-3 font-medium text-iris-text-primary">{item.clause_title}</td>
-                  <td className="px-4 py-3 text-iris-text-secondary">{item.summary_citation}</td>
-                  <td className="px-4 py-3 text-iris-text-secondary">{item.applies_to_transactions}</td>
-                </tr>
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-3 xl:grid-cols-6">
+        {performance.headline_metrics.map((metric) => (
+          <div key={metric.label} className="rounded-xl border border-iris-border bg-[#FAFBFC] px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{metric.label}</p>
+            <p className={`mt-3 text-[21px] font-bold ${toneClass(metric.accent)}`}>{metric.value}</p>
+            {metric.subtitle ? <p className="mt-2 text-[12px] text-iris-text-secondary">{metric.subtitle}</p> : null}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        {performance.summary_cards.map((card) => (
+          <PanelCard key={card.title} title={card.title}>
+            <div className="space-y-2">
+              {card.items.map((item) => (
+                <div key={`${card.title}-${item.label}`} className="flex items-start justify-between gap-4 text-[13px]">
+                  <span className="text-iris-text-secondary">{item.label}</span>
+                  <span className="font-medium text-iris-text-primary">{item.value}</span>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </PanelCard>
+        ))}
+      </div>
+
+      <PanelCard subtitle={`Cumulative net variance ${formatCurrency(performance.cumulative_net_variance, currency)}`} title="Settlement Tracker">
+        <SettlementHistoryTable currency={currency} rows={performance.settlement_history} />
       </PanelCard>
     </div>
+  )
+}
+
+function CalculationsSection({
+  calcAggregation,
+  calcFrom,
+  calcGroupBy,
+  calcMetric,
+  calcTo,
+  calculationQuery,
+  periods,
+  onCalcAggregationChange,
+  onCalcFromChange,
+  onCalcGroupByChange,
+  onCalcMetricChange,
+  onCalcToChange,
+}: {
+  calcAggregation: string
+  calcFrom: string
+  calcGroupBy: string
+  calcMetric: string
+  calcTo: string
+  calculationQuery: ContractCalculationPayload | undefined
+  periods: string[]
+  onCalcAggregationChange: (value: string) => void
+  onCalcFromChange: (value: string) => void
+  onCalcGroupByChange: (value: string) => void
+  onCalcMetricChange: (value: string) => void
+  onCalcToChange: (value: string) => void
+}) {
+  return (
+    <PanelCard subtitle="Ad-hoc calculation view powered by the underwriting calculation endpoint" title="Calculation Engine">
+      <div className="grid gap-3 lg:grid-cols-5">
+        <select className="field-input" value={calcMetric} onChange={(event) => onCalcMetricChange(event.target.value)}>
+          {calculationMetricOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <select className="field-input" value={calcAggregation} onChange={(event) => onCalcAggregationChange(event.target.value)}>
+          {calculationAggregationOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <select className="field-input" value={calcGroupBy} onChange={(event) => onCalcGroupByChange(event.target.value)}>
+          {calculationGroupByOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <select className="field-input" value={calcFrom} onChange={(event) => onCalcFromChange(event.target.value)}>
+          {periods.map((period) => (
+            <option key={period} value={period}>
+              {period}
+            </option>
+          ))}
+        </select>
+        <select className="field-input" value={calcTo} onChange={(event) => onCalcToChange(event.target.value)}>
+          {periods.map((period) => (
+            <option key={period} value={period}>
+              {period}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {calculationQuery ? (
+        <div className="mt-4 space-y-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <OverviewMetricChip label="Result" tone="positive" value={formatCalculationValue(calculationQuery.result_value, calculationQuery.metric, calculationQuery.currency)} />
+            <OverviewMetricChip label="Grouping" tone="default" value={titleCase(calculationQuery.group_by.replaceAll('_', ' '))} />
+            <OverviewMetricChip label="Period Window" tone="default" value={`${calculationQuery.from} -> ${calculationQuery.to}`} />
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-iris-border">
+            <table className="min-w-full text-[13px]">
+              <thead className="bg-[#F8F9FA]">
+                <tr>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Period</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {calculationQuery.breakdown.map((row) => (
+                  <tr key={row.period} className="border-t border-[#EEF2F5]">
+                    <td className="px-4 py-3 text-iris-text-primary">{row.period}</td>
+                    <td className="px-4 py-3 text-iris-text-primary">{formatCalculationValue(row.value, calculationQuery.metric, calculationQuery.currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+    </PanelCard>
   )
 }
 
@@ -714,139 +953,66 @@ function MemberPopulationTab({
   )
 }
 
-function FinancialsTab({
+function FileTemplatesSection({
+  detail,
   performance,
-  currency,
-  periods,
-  calcMetric,
-  calcAggregation,
-  calcGroupBy,
-  calcFrom,
-  calcTo,
-  calculationQuery,
-  onCalcMetricChange,
-  onCalcAggregationChange,
-  onCalcGroupByChange,
-  onCalcFromChange,
-  onCalcToChange,
 }: {
+  detail: ContractDetailPayload
   performance: ContractDetailsPerformancePayload | null
-  currency: string
-  periods: string[]
-  calcMetric: string
-  calcAggregation: string
-  calcGroupBy: string
-  calcFrom: string
-  calcTo: string
-  calculationQuery: ContractCalculationPayload | undefined
-  onCalcMetricChange: (value: string) => void
-  onCalcAggregationChange: (value: string) => void
-  onCalcGroupByChange: (value: string) => void
-  onCalcFromChange: (value: string) => void
-  onCalcToChange: (value: string) => void
 }) {
-  if (!performance) {
-    return <p className="text-[13px] text-iris-text-secondary">Financial controls are loading...</p>
-  }
-
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 xl:grid-cols-6">
-        {performance.headline_metrics.map((metric) => (
-          <div key={metric.label} className="rounded-xl border border-iris-border bg-[#FAFBFC] px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{metric.label}</p>
-            <p className={`mt-3 text-[21px] font-bold ${toneClass(metric.accent)}`}>{metric.value}</p>
-            {metric.subtitle ? <p className="mt-2 text-[12px] text-iris-text-secondary">{metric.subtitle}</p> : null}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-3">
-        {performance.summary_cards.map((card) => (
-          <PanelCard key={card.title} title={card.title}>
-            <div className="space-y-2">
-              {card.items.map((item) => (
-                <div key={`${card.title}-${item.label}`} className="flex items-start justify-between gap-4 text-[13px]">
-                  <span className="text-iris-text-secondary">{item.label}</span>
-                  <span className="font-medium text-iris-text-primary">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </PanelCard>
-        ))}
-      </div>
-
-      <PanelCard subtitle={`Cumulative net variance ${formatCurrency(performance.cumulative_net_variance, currency)}`} title="Settlement Tracker">
-        <SettlementHistoryTable currency={currency} rows={performance.settlement_history} />
+      <PanelCard subtitle={`${detail.file_templates.length} template(s) linked for ongoing exchange`} title="File Templates">
+        <div className="overflow-x-auto rounded-xl border border-iris-border">
+          <table className="min-w-full text-[13px]">
+            <thead className="bg-[#F8F9FA]">
+              <tr>
+                {['File Type', 'Template', 'Frequency', 'Format', 'Active'].map((label) => (
+                  <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {detail.file_templates.length ? (
+                detail.file_templates.map((item) => (
+                  <tr key={item.id} className="border-t border-[#EEF2F5]">
+                    <td className="px-4 py-3 text-iris-text-primary">{item.file_type}</td>
+                    <td className="px-4 py-3 text-iris-text-primary">{item.template_name}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{item.frequency}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{item.format}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={item.is_active ? 'active' : 'inactive'}>{item.is_active ? 'Active' : 'Inactive'}</StatusBadge>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="px-4 py-6 text-iris-text-secondary" colSpan={5}>
+                    No file templates are linked to this contract.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </PanelCard>
 
-      <PanelCard subtitle="Ad-hoc calculation view powered by the underwriting calculation endpoint" title="Calculation Engine">
-        <div className="grid gap-3 lg:grid-cols-5">
-          <select className="field-input" value={calcMetric} onChange={(event) => onCalcMetricChange(event.target.value)}>
-            {calculationMetricOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select className="field-input" value={calcAggregation} onChange={(event) => onCalcAggregationChange(event.target.value)}>
-            {calculationAggregationOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select className="field-input" value={calcGroupBy} onChange={(event) => onCalcGroupByChange(event.target.value)}>
-            {calculationGroupByOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select className="field-input" value={calcFrom} onChange={(event) => onCalcFromChange(event.target.value)}>
-            {periods.map((period) => (
-              <option key={period} value={period}>
-                {period}
-              </option>
-            ))}
-          </select>
-          <select className="field-input" value={calcTo} onChange={(event) => onCalcToChange(event.target.value)}>
-            {periods.map((period) => (
-              <option key={period} value={period}>
-                {period}
-              </option>
-            ))}
-          </select>
+      <PanelCard subtitle="Linked references and source artifacts" title="Technical Vault">
+        <div className="grid gap-3 md:grid-cols-2">
+          {(performance?.technical_vault ?? []).length ? (
+            performance?.technical_vault.map((item) => (
+              <div key={item.label} className="rounded-xl border border-[#EEF2F5] bg-[#FAFBFC] px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{item.label}</p>
+                <p className="mt-2 text-[14px] font-semibold text-iris-text-primary">{item.value}</p>
+                <p className="mt-1 text-[12px] text-iris-text-secondary">{titleCase(item.kind)}</p>
+              </div>
+            ))
+          ) : (
+            <EmptyState compact description="Technical references will appear when linked source artifacts are available." title="No vault references are available" />
+          )}
         </div>
-
-        {calculationQuery ? (
-          <div className="mt-4 space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              <OverviewMetricChip label="Result" tone="positive" value={formatCalculationValue(calculationQuery.result_value, calculationQuery.metric, calculationQuery.currency)} />
-              <OverviewMetricChip label="Grouping" tone="default" value={titleCase(calculationQuery.group_by.replaceAll('_', ' '))} />
-              <OverviewMetricChip label="Period Window" tone="default" value={`${calculationQuery.from} -> ${calculationQuery.to}`} />
-            </div>
-
-            <div className="overflow-x-auto rounded-xl border border-iris-border">
-              <table className="min-w-full text-[13px]">
-                <thead className="bg-[#F8F9FA]">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Period</th>
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {calculationQuery.breakdown.map((row) => (
-                    <tr key={row.period} className="border-t border-[#EEF2F5]">
-                      <td className="px-4 py-3 text-iris-text-primary">{row.period}</td>
-                      <td className="px-4 py-3 text-iris-text-primary">{formatCalculationValue(row.value, calculationQuery.metric, calculationQuery.currency)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : null}
       </PanelCard>
     </div>
   )
@@ -857,7 +1023,7 @@ function AmendmentsTab({ detail, onOpenAmendment }: { detail: ContractDetailPayl
     <PanelCard
       action={
         <button className="btn-primary" onClick={onOpenAmendment} type="button">
-          New Amendment
+          Add Amendment
         </button>
       }
       subtitle={`${detail.contract_id} protocol change history`}
@@ -898,17 +1064,28 @@ function AmendmentsTab({ detail, onOpenAmendment }: { detail: ContractDetailPayl
   )
 }
 
-function AuditLogTab({
-  auditTimeline,
-  auditCompliance,
-}: {
-  auditTimeline: ContractDetailPayload['audit_approval']
-  auditCompliance: ContractAuditComplianceSection
-}) {
+function AuditComplianceSection({ auditCompliance }: { auditCompliance: ContractAuditComplianceSection }) {
   return (
     <div className="space-y-5">
-      <PanelCard subtitle="Timeline of approvals and contract change events" title="Audit & Approval">
-        <AuditTimeline events={auditTimeline} />
+      <PanelCard subtitle="Checklist used for operational and compliance readiness" title="Compliance Checklist">
+        <div className="space-y-3">
+          {auditCompliance.checklist.length ? (
+            auditCompliance.checklist.map((item) => (
+              <div key={item.control} className="rounded-xl border border-[#EEF2F5] bg-[#FAFBFC] px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[14px] font-semibold text-iris-text-primary">{item.control}</p>
+                  <StatusBadge status={item.status}>{titleCase(item.status)}</StatusBadge>
+                </div>
+                <p className="mt-1 text-[12px] text-iris-text-secondary">
+                  {item.owner} · due {item.due_date}
+                </p>
+                <p className="mt-2 text-[13px] text-iris-text-secondary">{item.notes}</p>
+              </div>
+            ))
+          ) : (
+            <EmptyState compact description="Checklist items appear here as the contract moves through compliance controls." title="No compliance checklist items are recorded" />
+          )}
+        </div>
       </PanelCard>
 
       <PanelCard subtitle="Detailed access and servicing trail" title="Compliance Trail">
@@ -943,86 +1120,6 @@ function AuditLogTab({
               )}
             </tbody>
           </table>
-        </div>
-      </PanelCard>
-    </div>
-  )
-}
-
-function RiskInsightsTab({
-  detail,
-  performance,
-}: {
-  detail: ContractDetailPayload
-  performance: ContractDetailsPerformancePayload | null
-}) {
-  return (
-    <div className="space-y-5">
-      <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
-        <PanelCard subtitle="Active contract guardrails" title="Risk Limit Snapshot">
-          <FieldGridReadOnly fields={riskLimitsFields} values={toRecord(detail.risk_limits)} />
-        </PanelCard>
-
-        <PanelCard subtitle="Checklist used for operational and compliance readiness" title="Compliance Checklist">
-          <div className="space-y-3">
-            {detail.audit_compliance.checklist.length ? (
-              detail.audit_compliance.checklist.map((item) => (
-                <div key={item.control} className="rounded-xl border border-[#EEF2F5] bg-[#FAFBFC] px-4 py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-[14px] font-semibold text-iris-text-primary">{item.control}</p>
-                    <StatusBadge status={item.status}>{titleCase(item.status)}</StatusBadge>
-                  </div>
-                  <p className="mt-1 text-[12px] text-iris-text-secondary">
-                    {item.owner} · due {item.due_date}
-                  </p>
-                  <p className="mt-2 text-[13px] text-iris-text-secondary">{item.notes}</p>
-                </div>
-              ))
-            ) : (
-              <EmptyState compact description="Checklist items appear here as the contract moves through compliance controls." title="No compliance checklist items are recorded" />
-            )}
-          </div>
-        </PanelCard>
-      </div>
-
-      <PanelCard subtitle="File templates and linked source registry references" title="Technical Annex">
-        <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-          <div className="overflow-x-auto rounded-xl border border-iris-border">
-            <table className="min-w-full text-[13px]">
-              <thead className="bg-[#F8F9FA]">
-                <tr>
-                  {['File Type', 'Template', 'Frequency', 'Format', 'Active'].map((label) => (
-                    <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {detail.file_templates.map((item) => (
-                  <tr key={item.id} className="border-t border-[#EEF2F5]">
-                    <td className="px-4 py-3 text-iris-text-primary">{item.file_type}</td>
-                    <td className="px-4 py-3 text-iris-text-primary">{item.template_name}</td>
-                    <td className="px-4 py-3 text-iris-text-secondary">{item.frequency}</td>
-                    <td className="px-4 py-3 text-iris-text-secondary">{item.format}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={item.is_active ? 'active' : 'inactive'}>{item.is_active ? 'Active' : 'Inactive'}</StatusBadge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="space-y-3">
-            {(performance?.technical_vault ?? []).map((item) => (
-              <div key={item.label} className="rounded-xl border border-[#EEF2F5] bg-[#FAFBFC] px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{item.label}</p>
-                <p className="mt-2 text-[14px] font-semibold text-iris-text-primary">{item.value}</p>
-                <p className="mt-1 text-[12px] text-iris-text-secondary">{titleCase(item.kind)}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </PanelCard>
     </div>
@@ -1175,6 +1272,37 @@ function ContractComplianceDocsReadOnly({ items }: { items: ContractComplianceDo
   )
 }
 
+function ClausesTable({ clauses }: { clauses: ContractDetailPayload['contract_clauses'] }) {
+  return (
+    <PanelCard title="Clauses">
+      <div className="overflow-x-auto rounded-xl border border-iris-border">
+        <table className="min-w-full text-[13px]">
+          <thead className="bg-[#F8F9FA]">
+            <tr>
+              {['ID', 'Category', 'Clause', 'Summary & Citation', 'Applies to Transactions'].map((label) => (
+                <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {clauses.map((item) => (
+              <tr key={item.clause_id} className="border-t border-[#EEF2F5] align-top">
+                <td className="px-4 py-3 font-mono text-[12px] font-semibold text-iris-blue">{item.clause_id}</td>
+                <td className="px-4 py-3 text-iris-text-secondary">{item.category}</td>
+                <td className="px-4 py-3 font-medium text-iris-text-primary">{item.clause_title}</td>
+                <td className="px-4 py-3 text-iris-text-secondary">{item.summary_citation}</td>
+                <td className="px-4 py-3 text-iris-text-secondary">{item.applies_to_transactions}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </PanelCard>
+  )
+}
+
 function PanelCard({
   title,
   subtitle,
@@ -1239,8 +1367,77 @@ function fieldsForSection(sectionKey: ContractEditableSectionKey): FieldConfig[]
   }
 }
 
-function sectionTitle(sectionKey: ContractEditableSectionKey) {
+function editableSectionTitle(sectionKey: ContractEditableSectionKey) {
   return editableSections.find((section) => section.key === sectionKey)?.title ?? titleCase(sectionKey.replaceAll('_', ' '))
+}
+
+function editableSectionSubtitle(sectionKey: ContractEditableSectionKey) {
+  return editableSections.find((section) => section.key === sectionKey)?.subtitle ?? ''
+}
+
+function editableSectionInnerHeading(sectionKey: ContractEditableSectionKey) {
+  switch (sectionKey) {
+    case 'master_data':
+      return 'Contract Identification'
+    case 'economic_terms':
+      return 'Economic Terms'
+    case 'reference_pool':
+      return 'Reference Pool'
+    case 'actuarial_basis':
+      return 'Actuarial Basis'
+    case 'risk_limits':
+      return 'Risk & Limits'
+    case 'operational_terms':
+      return 'Operational Terms'
+    case 'compliance_docs':
+      return 'Compliance Documents'
+  }
+}
+
+function sectionHeading(sectionKey: ContractSectionKey) {
+  switch (sectionKey) {
+    case 'audit_approval':
+      return 'Audit & Approval'
+    case 'details_performance':
+      return 'Details & Performance'
+    case 'member_list':
+      return 'Member List'
+    case 'file_templates':
+      return 'File Templates'
+    case 'amendments':
+      return 'Amendments'
+    case 'calculations':
+      return 'Calculations'
+    case 'audit_compliance':
+      return 'Audit & Compliance'
+    default:
+      return editableSectionTitle(sectionKey)
+  }
+}
+
+function sectionSubtitle(sectionKey: ContractSectionKey) {
+  switch (sectionKey) {
+    case 'audit_approval':
+      return 'Timeline of approvals and material contract changes.'
+    case 'details_performance':
+      return 'Operational intelligence, settlement history, and performance summaries.'
+    case 'member_list':
+      return 'Current covered-life register scoped to this contract.'
+    case 'file_templates':
+      return 'Agreed exchange templates and linked source references.'
+    case 'amendments':
+      return 'Versioned protocol changes and approval progress.'
+    case 'calculations':
+      return 'Run settlement and A/E aggregations for this contract.'
+    case 'audit_compliance':
+      return 'Checklist controls and detailed compliance trail entries.'
+    default:
+      return editableSectionSubtitle(sectionKey)
+  }
+}
+
+function isEditableSection(sectionKey: ContractSectionKey): sectionKey is ContractEditableSectionKey {
+  return editableSectionKeys.has(sectionKey as ContractEditableSectionKey)
 }
 
 function formatSignedCurrency(value: number, currency: string) {
