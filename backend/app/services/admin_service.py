@@ -14,6 +14,12 @@ from app.models.user import User
 from app.repositories.admin_repository import AdminRepository
 from app.services.auth_service import AuthService
 from app.repositories.auth_repository import AuthRepository
+from app.workflow_agents import (
+    VALID_FALLBACK_MODES,
+    VALID_HITL_BEHAVIORS,
+    clamp_threshold,
+    merge_workflow_agent_configs,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -123,6 +129,60 @@ class AdminService:
         logger.info("Loading admin permissions matrix")
         state = self.repository.load_state()
         return {"items": deepcopy(state.get("permissions", []))}
+
+    def list_workflow_agents(self) -> dict[str, Any]:
+        logger.info("Loading admin workflow-agent configuration")
+        state = self.repository.load_state()
+        configs = merge_workflow_agent_configs(state.get("workflow_agents"))
+        if state.get("workflow_agents") != configs:
+            state["workflow_agents"] = configs
+            self.repository.save_state(state)
+        return {"items": configs}
+
+    def update_workflow_agent(self, agent_key: str, payload: dict[str, Any], actor: User) -> dict[str, Any]:
+        logger.info("Updating admin workflow-agent configuration")
+        logger.debug("Workflow-agent update key=%s payload=%s", agent_key, payload)
+        state = self.repository.load_state()
+        configs = merge_workflow_agent_configs(state.get("workflow_agents"))
+        config_map = {item["key"]: item for item in configs}
+        current = config_map.get(agent_key)
+        if current is None:
+            logger.error("Workflow-agent update failed because key=%s is unknown", agent_key)
+            raise IrisAPIError(404, "Workflow agent not found", "The requested workflow agent does not exist")
+
+        updated = deepcopy(current)
+        if payload.get("enabled") is not None:
+            updated["enabled"] = bool(payload["enabled"])
+        if payload.get("confidence_threshold") is not None:
+            updated["confidence_threshold"] = clamp_threshold(payload["confidence_threshold"])
+        if payload.get("hitl_behavior") is not None:
+            hitl_behavior = str(payload["hitl_behavior"]).strip()
+            if hitl_behavior not in VALID_HITL_BEHAVIORS:
+                logger.error("Workflow-agent update rejected because hitl_behavior=%s is invalid", hitl_behavior)
+                raise IrisAPIError(400, "Invalid HITL behavior", "HITL behavior is not supported by the platform")
+            updated["hitl_behavior"] = hitl_behavior
+        if payload.get("escalation_rule") is not None:
+            updated["escalation_rule"] = str(payload["escalation_rule"]).strip()
+        if payload.get("retry_limit") is not None:
+            try:
+                updated["retry_limit"] = max(0, int(payload["retry_limit"]))
+            except (TypeError, ValueError) as exc:
+                logger.error("Workflow-agent update rejected because retry_limit=%s is invalid", payload["retry_limit"])
+                raise IrisAPIError(400, "Invalid retry limit", "Retry limit must be a whole number") from exc
+        if payload.get("fallback_mode") is not None:
+            fallback_mode = str(payload["fallback_mode"]).strip()
+            if fallback_mode not in VALID_FALLBACK_MODES:
+                logger.error("Workflow-agent update rejected because fallback_mode=%s is invalid", fallback_mode)
+                raise IrisAPIError(400, "Invalid fallback mode", "Fallback mode is not supported by the platform")
+            updated["fallback_mode"] = fallback_mode
+
+        next_configs = []
+        for item in configs:
+            next_configs.append(updated if item["key"] == agent_key else item)
+        state["workflow_agents"] = next_configs
+        self.repository.save_state(state)
+        self._record_access_event(actor.email, f"/admin/workflow-agents/{agent_key}", "EDIT")
+        return updated
 
     def list_approval_matrix(self) -> dict[str, Any]:
         logger.info("Loading admin approval matrix")

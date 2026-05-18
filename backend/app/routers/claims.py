@@ -17,6 +17,7 @@ from app.schemas.claims import (
     SettlementApproveRequest,
     SettlementDisputeRequest,
     SettlementHoldRequest,
+    WorkflowAgentApproveRequest,
 )
 from app.services.claims_service import ClaimsService
 
@@ -112,6 +113,17 @@ def get_pipeline_status(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     return get_service(db).get_pipeline_status(file_id)
+
+
+@router.post("/cession-files/{file_id}/workflow/agents/{agent_key}/approve")
+def approve_workflow_agent(
+    file_id: str,
+    agent_key: str,
+    payload: WorkflowAgentApproveRequest,
+    _: User = Depends(require_roles(["claims_ops"])),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    return get_service(db).approve_workflow_agent(file_id, agent_key, payload.notes)
 
 
 @router.get("/cession-files/{file_id}/summary")

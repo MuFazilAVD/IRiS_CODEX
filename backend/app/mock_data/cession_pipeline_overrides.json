@@ -3445,5 +3445,3543 @@
         }
       ]
     }
+  },
+  "CES-2026-023": {
+    "pipeline_session_id": "pipe-50ca0346-6a2a-4ec3-b41f-8c5815ade53f",
+    "active_step": "worklist",
+    "source_filename": "Maple_Leaf_Q1_2026.csv",
+    "source_size_bytes": 533,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 13,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": null,
+      "cedent_id": null,
+      "completed_at": "2026-05-18T07:52:24.239515Z"
+    },
+    "contract_override": {
+      "contract_id": null,
+      "completed_at": "2026-05-18T07:52:24.427970Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-18T07:52:24.034030Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026.csv"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:24.319679Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 98%"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:24.357970Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 92%"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:24.492576Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:24.549881Z",
+        "actor": "Mapping Agent",
+        "type": "AI Agent",
+        "action": "Mapping Agent completed",
+        "detail": "Detected Settlement for Maple Leaf Pension Plan and mapped LSC-2024-044. Confidence: 94% / threshold 88%."
+      },
+      {
+        "timestamp": "2026-05-18T07:52:27.921335Z",
+        "actor": "Validation Engine",
+        "type": "AI Agent",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:27.959087Z",
+        "actor": "Anomaly Detection Agent",
+        "type": "AI Agent",
+        "action": "Anomaly Detection Agent completed",
+        "detail": "1 critical, 7 warning, 0 informational anomaly finding(s) identified. Confidence: 99% / threshold 84%."
+      },
+      {
+        "timestamp": "2026-05-18T07:52:31.326497Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "8 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:31.368617Z",
+        "actor": "Resolution Agent",
+        "type": "AI Agent",
+        "action": "Resolution Agent completed",
+        "detail": "IRiS auto-applied 8 resolution(s); 0 item(s) remain pending review. Confidence: 99% / threshold 90%."
+      },
+      {
+        "timestamp": "2026-05-18T07:52:34.606363Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:34.654492Z",
+        "actor": "Clause Validation Agent",
+        "type": "AI Agent",
+        "action": "Clause Validation Agent completed",
+        "detail": "3 clause control(s) were checked and 0 were flagged. Confidence: 97% / threshold 86%."
+      },
+      {
+        "timestamp": "2026-05-18T07:52:45.700482Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:45.736593Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9223"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:45.813485Z",
+        "actor": "Processing Agent",
+        "type": "AI Agent",
+        "action": "Processing Agent completed",
+        "detail": "3 record(s) were processed for the mapped cession workflow. Confidence: 94% / threshold 87%."
+      },
+      {
+        "timestamp": "2026-05-18T07:52:49.089837Z",
+        "actor": "Results Agent",
+        "type": "AI Agent",
+        "action": "Results Agent completed",
+        "detail": "Workflow results were compiled for live orchestration monitoring. Confidence: 92% / threshold 80%."
+      },
+      {
+        "timestamp": "2026-05-18T07:52:52.340114Z",
+        "actor": "Sanction Screening Agent",
+        "type": "AI Agent",
+        "action": "Sanction Screening Agent completed",
+        "detail": "Raw match found in OFAC Confidence: 92% / threshold 92%."
+      },
+      {
+        "timestamp": "2026-05-18T07:52:55.660441Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Pushed downstream files to SFTP",
+        "detail": "CES-2026-023_SET-2026-Q1-044-023_cash_settlements_tracker.csv, CES-2026-023_SET-2026-Q1-044-023_grdr_load_form.csv"
+      },
+      {
+        "timestamp": "2026-05-18T07:52:55.699576Z",
+        "actor": "File Generation Agent",
+        "type": "AI Agent",
+        "action": "File Generation Agent completed",
+        "detail": "2 downstream file(s) were generated for release. Confidence: 97% / threshold 85%."
+      },
+      {
+        "timestamp": "2026-05-18T07:52:58.953792Z",
+        "actor": "Worklist Agent",
+        "type": "AI Agent",
+        "action": "Worklist Agent completed",
+        "detail": "2 downstream worklist task(s) were routed automatically. Confidence: 91% / threshold 82%."
+      },
+      {
+        "timestamp": "2026-05-18T07:53:02.220702Z",
+        "actor": "Audit Agent",
+        "type": "AI Agent",
+        "action": "Audit Agent completed",
+        "detail": "Workflow audit trail was finalized for this cession file. Confidence: 99% / threshold 95%."
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-18T07:52:24.034030Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-18T07:52:24.256805Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-18T07:52:24.272176Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-18T07:52:24.445434Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-18T07:52:27.886497Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-18T07:52:31.304744Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-18T07:52:34.583485Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-18T07:52:45.645601Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-18T07:52:45.661809Z"
+      },
+      {
+        "stage": "files",
+        "completed_at": "2026-05-18T07:52:55.646414Z"
+      },
+      {
+        "stage": "approved",
+        "completed_at": "2026-05-18T07:53:02.208203Z"
+      }
+    ],
+    "workflow_state": {
+      "status": "completed",
+      "current_agent_key": null,
+      "current_step_id": "audit",
+      "started_at": "2026-05-18T07:52:24.034030Z",
+      "updated_at": "2026-05-18T07:53:02.220702Z",
+      "paused_reason": null,
+      "completed_at": "2026-05-18T07:53:02.220702Z",
+      "final_message": "Cession workflow completed for Maple Leaf Pension Plan \u00b7 Q1 2026. 3 record(s) were processed successfully."
+    },
+    "agent_runs": {
+      "mapping": {
+        "agent_key": "mapping",
+        "agent_name": "Mapping Agent",
+        "description": "Detect the cession file type, identify the cedent, and map the treaty context.",
+        "step_id": "detect-map",
+        "step_label": "Detect & Map",
+        "sequence": 1,
+        "enabled": true,
+        "confidence_threshold": 0.99,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review required before downstream automation continues.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.94,
+        "execution_time_ms": 353,
+        "started_at": "2026-05-18T07:52:24.196668Z",
+        "completed_at": "2026-05-18T07:52:24.549881Z",
+        "updated_at": "2026-05-18T07:52:24.549881Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "File type",
+            "value": "Settlement"
+          },
+          {
+            "label": "Cedent",
+            "value": "Maple Leaf Pension Plan"
+          },
+          {
+            "label": "Contract",
+            "value": "LSC-2024-044"
+          },
+          {
+            "label": "Period",
+            "value": "Q1 2026"
+          }
+        ],
+        "output_summary": "Detected Settlement for Maple Leaf Pension Plan and mapped LSC-2024-044.",
+        "state_message": "Upload was classified and mapped automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "detect-map",
+        "review_label": "Review detection & mapping",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "anomaly_detection": {
+        "agent_key": "anomaly_detection",
+        "agent_name": "Anomaly Detection Agent",
+        "description": "Validate the uploaded rows and identify anomalies, warnings, and informational findings.",
+        "step_id": "validate",
+        "step_label": "Anomalies",
+        "sequence": 2,
+        "enabled": true,
+        "confidence_threshold": 1.0,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops anomaly review required when confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3409,
+        "started_at": "2026-05-18T07:52:24.549881Z",
+        "completed_at": "2026-05-18T07:52:27.959087Z",
+        "updated_at": "2026-05-18T07:52:27.959087Z",
+        "attempts": 1,
+        "warnings": [
+          "1 critical anomaly finding(s) were detected."
+        ],
+        "key_outputs": [
+          {
+            "label": "Records",
+            "value": 3
+          },
+          {
+            "label": "Critical",
+            "value": 1
+          },
+          {
+            "label": "Warnings",
+            "value": 7
+          },
+          {
+            "label": "Informational",
+            "value": 0
+          }
+        ],
+        "output_summary": "1 critical, 7 warning, 0 informational anomaly finding(s) identified.",
+        "state_message": "Anomaly detection completed and the workflow can continue.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "validate",
+        "review_label": "Review anomalies",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "resolution": {
+        "agent_key": "resolution",
+        "agent_name": "Resolution Agent",
+        "description": "Apply high-confidence anomaly resolutions automatically and route the rest to HITL review.",
+        "step_id": "exceptions",
+        "step_label": "Resolutions",
+        "sequence": 3,
+        "enabled": true,
+        "confidence_threshold": 1.0,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops approval required for low-confidence or unsupported resolutions.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3409,
+        "started_at": "2026-05-18T07:52:27.959087Z",
+        "completed_at": "2026-05-18T07:52:31.368617Z",
+        "updated_at": "2026-05-18T07:52:31.368617Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Auto-resolved",
+            "value": 8
+          },
+          {
+            "label": "Pending review",
+            "value": 0
+          }
+        ],
+        "output_summary": "IRiS auto-applied 8 resolution(s); 0 item(s) remain pending review.",
+        "state_message": "All anomaly resolutions were applied automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "exceptions",
+        "review_label": "Review resolutions",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "clause_validation": {
+        "agent_key": "clause_validation",
+        "agent_name": "Clause Validation Agent",
+        "description": "Verify the mapped file against contract clauses and rule controls.",
+        "step_id": "clauses",
+        "step_label": "Clauses",
+        "sequence": 4,
+        "enabled": true,
+        "confidence_threshold": 0.99,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Clause review is required before execution when clause confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.97,
+        "execution_time_ms": 3285,
+        "started_at": "2026-05-18T07:52:31.368617Z",
+        "completed_at": "2026-05-18T07:52:34.654492Z",
+        "updated_at": "2026-05-18T07:52:34.654492Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Clauses checked",
+            "value": 3
+          },
+          {
+            "label": "Flagged",
+            "value": 0
+          }
+        ],
+        "output_summary": "3 clause control(s) were checked and 0 were flagged.",
+        "state_message": "Clause validation completed automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "clauses",
+        "review_label": "Review clauses",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "processing": {
+        "agent_key": "processing",
+        "agent_name": "Processing Agent",
+        "description": "Execute the downstream cession processing logic and prepare settlement or population outcomes.",
+        "step_id": "process",
+        "step_label": "Process",
+        "sequence": 5,
+        "enabled": true,
+        "confidence_threshold": 0.87,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Processing results require review when confidence falls below the configured floor.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.94,
+        "execution_time_ms": 11158,
+        "started_at": "2026-05-18T07:52:34.654492Z",
+        "completed_at": "2026-05-18T07:52:45.813485Z",
+        "updated_at": "2026-05-18T07:52:45.813485Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Records processed",
+            "value": 3
+          },
+          {
+            "label": "Worklist items",
+            "value": 1
+          },
+          {
+            "label": "Settlement ID",
+            "value": "SET-2026-Q1-044-023"
+          }
+        ],
+        "output_summary": "3 record(s) were processed for the mapped cession workflow.",
+        "state_message": "Processing completed automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "process",
+        "review_label": "Review processing",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "results": {
+        "agent_key": "results",
+        "agent_name": "Results Agent",
+        "description": "Compile the workflow results, business impact, and completion narrative for the run.",
+        "step_id": "summary",
+        "step_label": "Summary",
+        "sequence": 6,
+        "enabled": true,
+        "confidence_threshold": 0.8,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Results review is required when derived completion insights fall below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.92,
+        "execution_time_ms": 3276,
+        "started_at": "2026-05-18T07:52:45.813485Z",
+        "completed_at": "2026-05-18T07:52:49.089837Z",
+        "updated_at": "2026-05-18T07:52:49.089837Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Cedent",
+            "value": "Maple Leaf Pension Plan"
+          },
+          {
+            "label": "Period",
+            "value": "Q1 2026"
+          },
+          {
+            "label": "Records",
+            "value": 3
+          },
+          {
+            "label": "Settlement ID",
+            "value": "SET-2026-Q1-044-023"
+          }
+        ],
+        "output_summary": "Workflow results were compiled for live orchestration monitoring.",
+        "state_message": "Results were compiled and published to the workflow dashboard.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "summary",
+        "review_label": "Review results",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "sanction_screening": {
+        "agent_key": "sanction_screening",
+        "agent_name": "Sanction Screening Agent",
+        "description": "Assess counterparties against sanctions sources and pause for HITL review when required.",
+        "step_id": "screening",
+        "step_label": "Sanction Screening",
+        "sequence": 7,
+        "enabled": true,
+        "confidence_threshold": 0.92,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Escalate to compliance when sanctions screening remains below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.92,
+        "execution_time_ms": 3250,
+        "started_at": "2026-05-18T07:52:49.089837Z",
+        "completed_at": "2026-05-18T07:52:52.340114Z",
+        "updated_at": "2026-05-18T07:52:52.340114Z",
+        "attempts": 1,
+        "warnings": [
+          "Raw watchlist hit retained across OFAC. Top candidate: Northstar Pension Trust."
+        ],
+        "key_outputs": [
+          {
+            "label": "Screening ref",
+            "value": "SCR-2026-05-034"
+          },
+          {
+            "label": "Status",
+            "value": "Auto-Cleared"
+          },
+          {
+            "label": "Watchlists",
+            "value": "OFAC \u00b7 FinCEN"
+          }
+        ],
+        "output_summary": "Raw match found in OFAC",
+        "state_message": "Sanctions screening auto-cleared and the workflow can continue.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "screening",
+        "review_label": "Review sanction screening",
+        "review_url": "/compliance/sanctions/SCR-2026-05-034",
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "file_generation": {
+        "agent_key": "file_generation",
+        "agent_name": "File Generation Agent",
+        "description": "Generate downstream cession output files and package them for release.",
+        "step_id": "files",
+        "step_label": "Files",
+        "sequence": 8,
+        "enabled": true,
+        "confidence_threshold": 0.85,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review is required when downstream file generation is incomplete.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.97,
+        "execution_time_ms": 3359,
+        "started_at": "2026-05-18T07:52:52.340114Z",
+        "completed_at": "2026-05-18T07:52:55.699576Z",
+        "updated_at": "2026-05-18T07:52:55.699576Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Files generated",
+            "value": 2
+          },
+          {
+            "label": "SFTP release",
+            "value": "Published"
+          }
+        ],
+        "output_summary": "2 downstream file(s) were generated for release.",
+        "state_message": "Downstream files were generated and released automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "files",
+        "review_label": "Review files",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "worklist": {
+        "agent_key": "worklist",
+        "agent_name": "Worklist Agent",
+        "description": "Create and route all downstream worklist tasks created by the workflow.",
+        "step_id": "worklist",
+        "step_label": "Worklist",
+        "sequence": 9,
+        "enabled": true,
+        "confidence_threshold": 0.82,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Operations review is required if workflow routing confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.91,
+        "execution_time_ms": 3254,
+        "started_at": "2026-05-18T07:52:55.699576Z",
+        "completed_at": "2026-05-18T07:52:58.953792Z",
+        "updated_at": "2026-05-18T07:52:58.953792Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Tasks created",
+            "value": 2
+          },
+          {
+            "label": "Primary owner",
+            "value": "claims_ops"
+          }
+        ],
+        "output_summary": "2 downstream worklist task(s) were routed automatically.",
+        "state_message": "Downstream worklist routing completed automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "worklist",
+        "review_label": "Open worklist",
+        "review_url": "/claims/settlements?settlement_id=SET-2026-Q1-044-023&q=SET-2026-Q1-044-023",
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "audit": {
+        "agent_key": "audit",
+        "agent_name": "Audit Agent",
+        "description": "Finalize the workflow audit trail, approvals, overrides, retries, and completion traceability.",
+        "step_id": "audit",
+        "step_label": "Audit",
+        "sequence": 10,
+        "enabled": true,
+        "confidence_threshold": 0.95,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Administrative review is required when audit completeness falls below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3266,
+        "started_at": "2026-05-18T07:52:58.953792Z",
+        "completed_at": "2026-05-18T07:53:02.220702Z",
+        "updated_at": "2026-05-18T07:53:02.220702Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Audit events",
+            "value": 19
+          },
+          {
+            "label": "Completed at",
+            "value": "2026-05-18T07:53:02.186321Z"
+          }
+        ],
+        "output_summary": "Workflow audit trail was finalized for this cession file.",
+        "state_message": "Workflow audit was finalized and the cession workflow is complete.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "audit",
+        "review_label": "View audit",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      }
+    },
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-18T07:52:24.034030Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-18T07:52:24.288448Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-18T07:52:24.461279Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-18T07:52:34.595164Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-18T07:52:27.897541Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-18T07:52:31.293827Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-18T07:52:45.673604Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-18T07:52:45.686793Z"
+      },
+      {
+        "stage": "files",
+        "status": "complete",
+        "timestamp": "2026-05-18T07:52:55.609845Z"
+      },
+      {
+        "stage": "worklist",
+        "status": "in_progress",
+        "timestamp": "2026-05-18T07:52:55.628870Z"
+      }
+    ],
+    "settlement_report_artifacts": [
+      {
+        "artifact_id": "ces-2026-023-cash-settlements-tracker",
+        "settlement_id": "SET-2026-Q1-044-023",
+        "cession_file_id": "CES-2026-023",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "Cash Settlements Tracker",
+        "filename": "CES-2026-023_SET-2026-Q1-044-023_cash_settlements_tracker.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-023_SET-2026-Q1-044-023_cash_settlements_tracker.csv",
+        "generated_at": "2026-05-18T07:52:37.861709Z",
+        "source_filename": "Maple_Leaf_Q1_2026.csv",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": true,
+        "published_at": "2026-05-18T07:52:55.588134Z",
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ],
+        "download_url": "/claims/cession-files/CES-2026-023/settlement-artifacts/ces-2026-023-cash-settlements-tracker/download"
+      },
+      {
+        "artifact_id": "ces-2026-023-grdr-load-form",
+        "settlement_id": "SET-2026-Q1-044-023",
+        "cession_file_id": "CES-2026-023",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "GRDR Load Form",
+        "filename": "CES-2026-023_SET-2026-Q1-044-023_grdr_load_form.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-023_SET-2026-Q1-044-023_grdr_load_form.csv",
+        "generated_at": "2026-05-18T07:52:37.861709Z",
+        "source_filename": "Maple_Leaf_Q1_2026.csv",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": true,
+        "published_at": "2026-05-18T07:52:55.588134Z",
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ],
+        "download_url": "/claims/cession-files/CES-2026-023/settlement-artifacts/ces-2026-023-grdr-load-form/download"
+      }
+    ],
+    "settlement_report_artifacts_pushed": true,
+    "settlement_report_artifacts_pushed_at": "2026-05-18T07:52:55.588134Z",
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-044-023",
+      "settlement_display_id": "STL-2026-Q1-044-023",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4142205.0,
+      "net_amount": 21905.0,
+      "currency": "CAD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-12",
+      "status": "pending_approval",
+      "iris_recommendation": "accept",
+      "source": "Created from Settlement file CES-2026-023; reconciled against baseline SET-2026-Q1-044; decision=accept",
+      "last_updated": "2026-05-18T07:52:37.861709Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-044",
+        "decision": "accept",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-12",
+        "currency": "CAD",
+        "expected_source": "contract details performance",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905,
+          "recomputed_net": 21905
+        },
+        "system": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905
+        },
+        "mismatches": [],
+        "incoming_row_count": 3
+      },
+      "baseline_settlement_id": "SET-2026-Q1-044",
+      "screening_ref": "SCR-2026-05-034",
+      "settlement_report_artifacts": [
+        {
+          "artifact_id": "ces-2026-023-cash-settlements-tracker",
+          "settlement_id": "SET-2026-Q1-044-023",
+          "cession_file_id": "CES-2026-023",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "Cash Settlements Tracker",
+          "filename": "CES-2026-023_SET-2026-Q1-044-023_cash_settlements_tracker.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-023_SET-2026-Q1-044-023_cash_settlements_tracker.csv",
+          "generated_at": "2026-05-18T07:52:37.861709Z",
+          "source_filename": "Maple_Leaf_Q1_2026.csv",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        },
+        {
+          "artifact_id": "ces-2026-023-grdr-load-form",
+          "settlement_id": "SET-2026-Q1-044-023",
+          "cession_file_id": "CES-2026-023",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "GRDR Load Form",
+          "filename": "CES-2026-023_SET-2026-Q1-044-023_grdr_load_form.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-023_SET-2026-Q1-044-023_grdr_load_form.csv",
+          "generated_at": "2026-05-18T07:52:37.861709Z",
+          "source_filename": "Maple_Leaf_Q1_2026.csv",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        }
+      ]
+    }
+  },
+  "CES-2026-024": {
+    "pipeline_session_id": "pipe-5348f8b8-133f-4f83-bc0a-ca1fe7c21266",
+    "active_step": "summary",
+    "source_filename": "Maple_Leaf_Q1_26.csv",
+    "source_size_bytes": 531,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Leg,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,520,000\",\"CAD 1,542,500\",CAD 900,CAD 0,\"-CAD 21,600\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1247500,1241500,900,0,6900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1350000,1376000,1000,0,-25000\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": null,
+      "cedent_id": null,
+      "completed_at": "2026-05-18T08:25:07.728201Z"
+    },
+    "contract_override": {
+      "contract_id": null,
+      "completed_at": "2026-05-18T08:25:07.948983Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-18T08:25:07.530790Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_26.csv"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:07.828462Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 98%"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:07.870266Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 92%"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:08.026946Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:08.089004Z",
+        "actor": "Mapping Agent",
+        "type": "AI Agent",
+        "action": "Mapping Agent completed",
+        "detail": "Detected Settlement for Maple Leaf Pension Plan and mapped LSC-2024-044. Confidence: 94% / threshold 88%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:11.496800Z",
+        "actor": "Validation Engine",
+        "type": "AI Agent",
+        "action": "Validation complete",
+        "detail": "1 critical, 6 warnings"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:11.531913Z",
+        "actor": "Anomaly Detection Agent",
+        "type": "AI Agent",
+        "action": "Anomaly Detection Agent completed",
+        "detail": "1 critical, 6 warning, 0 informational anomaly finding(s) identified. Confidence: 99% / threshold 84%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:14.939171Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "7 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:14.975604Z",
+        "actor": "Resolution Agent",
+        "type": "AI Agent",
+        "action": "Resolution Agent completed",
+        "detail": "IRiS auto-applied 7 resolution(s); 0 item(s) remain pending review. Confidence: 99% / threshold 90%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:18.284321Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:18.351501Z",
+        "actor": "Clause Validation Agent",
+        "type": "AI Agent",
+        "action": "Clause Validation Agent completed",
+        "detail": "3 clause control(s) were checked and 0 were flagged. Confidence: 97% / threshold 86%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:21.967504Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:22.009141Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9224"
+      },
+      {
+        "timestamp": "2026-05-18T08:25:22.091610Z",
+        "actor": "Processing Agent",
+        "type": "AI Agent",
+        "action": "Processing Agent awaiting approval",
+        "detail": "3 record(s) were processed for the mapped cession workflow. Confidence: 80% / threshold 87%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:45.132703Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Manually approved Processing Agent",
+        "detail": "Workflow review approved from the Results dashboard."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:45.256265Z",
+        "actor": "Results Agent",
+        "type": "AI Agent",
+        "action": "Results Agent completed",
+        "detail": "Workflow results were compiled for live orchestration monitoring. Confidence: 92% / threshold 80%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:45.436381Z",
+        "actor": "Sanction Screening Agent",
+        "type": "AI Agent",
+        "action": "Sanction Screening Agent skipped",
+        "detail": "No sanctions screening case was required for this workflow. Confidence: 99% / threshold 92%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:48.644016Z",
+        "actor": "File Generation Agent",
+        "type": "AI Agent",
+        "action": "File Generation Agent skipped",
+        "detail": "No downstream files were required for this workflow. Confidence: 99% / threshold 85%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:51.912274Z",
+        "actor": "Worklist Agent",
+        "type": "AI Agent",
+        "action": "Worklist Agent completed",
+        "detail": "1 downstream worklist task(s) were routed automatically. Confidence: 91% / threshold 82%."
+      },
+      {
+        "timestamp": "2026-05-18T08:25:55.123524Z",
+        "actor": "Audit Agent",
+        "type": "AI Agent",
+        "action": "Audit Agent completed",
+        "detail": "Workflow audit trail was finalized for this cession file. Confidence: 99% / threshold 95%."
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-18T08:25:07.530790Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-18T08:25:07.749948Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-18T08:25:07.770983Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-18T08:25:07.968933Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-18T08:25:11.445736Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-18T08:25:14.908049Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-18T08:25:18.241749Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-18T08:25:21.891293Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-18T08:25:21.910269Z"
+      },
+      {
+        "stage": "approved",
+        "completed_at": "2026-05-18T08:25:55.109646Z"
+      }
+    ],
+    "workflow_state": {
+      "status": "completed",
+      "current_agent_key": null,
+      "current_step_id": "audit",
+      "paused_reason": null,
+      "updated_at": "2026-05-18T08:25:55.123524Z",
+      "completed_at": "2026-05-18T08:25:55.123524Z",
+      "final_message": "Cession workflow completed for Maple Leaf Pension Plan \u00b7 Q1 2026. 3 record(s) were processed successfully."
+    },
+    "agent_runs": {
+      "mapping": {
+        "agent_key": "mapping",
+        "agent_name": "Mapping Agent",
+        "description": "Detect the cession file type, identify the cedent, and map the treaty context.",
+        "step_id": "detect-map",
+        "step_label": "Detect & Map",
+        "sequence": 1,
+        "enabled": true,
+        "confidence_threshold": 0.88,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review required before downstream automation continues.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.94,
+        "execution_time_ms": 406,
+        "started_at": "2026-05-18T08:25:07.682015Z",
+        "completed_at": "2026-05-18T08:25:08.089004Z",
+        "updated_at": "2026-05-18T08:25:08.089004Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "File type",
+            "value": "Settlement"
+          },
+          {
+            "label": "Cedent",
+            "value": "Maple Leaf Pension Plan"
+          },
+          {
+            "label": "Contract",
+            "value": "LSC-2024-044"
+          },
+          {
+            "label": "Period",
+            "value": "Q1 2026"
+          }
+        ],
+        "output_summary": "Detected Settlement for Maple Leaf Pension Plan and mapped LSC-2024-044.",
+        "state_message": "Upload was classified and mapped automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "detect-map",
+        "review_label": "Review detection & mapping",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "anomaly_detection": {
+        "agent_key": "anomaly_detection",
+        "agent_name": "Anomaly Detection Agent",
+        "description": "Validate the uploaded rows and identify anomalies, warnings, and informational findings.",
+        "step_id": "validate",
+        "step_label": "Anomalies",
+        "sequence": 2,
+        "enabled": true,
+        "confidence_threshold": 0.84,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops anomaly review required when confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3442,
+        "started_at": "2026-05-18T08:25:08.089004Z",
+        "completed_at": "2026-05-18T08:25:11.531913Z",
+        "updated_at": "2026-05-18T08:25:11.531913Z",
+        "attempts": 1,
+        "warnings": [
+          "1 critical anomaly finding(s) were detected."
+        ],
+        "key_outputs": [
+          {
+            "label": "Records",
+            "value": 3
+          },
+          {
+            "label": "Critical",
+            "value": 1
+          },
+          {
+            "label": "Warnings",
+            "value": 6
+          },
+          {
+            "label": "Informational",
+            "value": 0
+          }
+        ],
+        "output_summary": "1 critical, 6 warning, 0 informational anomaly finding(s) identified.",
+        "state_message": "Anomaly detection completed and the workflow can continue.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "validate",
+        "review_label": "Review anomalies",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "resolution": {
+        "agent_key": "resolution",
+        "agent_name": "Resolution Agent",
+        "description": "Apply high-confidence anomaly resolutions automatically and route the rest to HITL review.",
+        "step_id": "exceptions",
+        "step_label": "Resolutions",
+        "sequence": 3,
+        "enabled": true,
+        "confidence_threshold": 0.9,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops approval required for low-confidence or unsupported resolutions.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3443,
+        "started_at": "2026-05-18T08:25:11.531913Z",
+        "completed_at": "2026-05-18T08:25:14.975604Z",
+        "updated_at": "2026-05-18T08:25:14.975604Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Auto-resolved",
+            "value": 7
+          },
+          {
+            "label": "Pending review",
+            "value": 0
+          }
+        ],
+        "output_summary": "IRiS auto-applied 7 resolution(s); 0 item(s) remain pending review.",
+        "state_message": "All anomaly resolutions were applied automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "exceptions",
+        "review_label": "Review resolutions",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "clause_validation": {
+        "agent_key": "clause_validation",
+        "agent_name": "Clause Validation Agent",
+        "description": "Verify the mapped file against contract clauses and rule controls.",
+        "step_id": "clauses",
+        "step_label": "Clauses",
+        "sequence": 4,
+        "enabled": true,
+        "confidence_threshold": 0.86,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Clause review is required before execution when clause confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.97,
+        "execution_time_ms": 3375,
+        "started_at": "2026-05-18T08:25:14.975604Z",
+        "completed_at": "2026-05-18T08:25:18.351501Z",
+        "updated_at": "2026-05-18T08:25:18.351501Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Clauses checked",
+            "value": 3
+          },
+          {
+            "label": "Flagged",
+            "value": 0
+          }
+        ],
+        "output_summary": "3 clause control(s) were checked and 0 were flagged.",
+        "state_message": "Clause validation completed automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "clauses",
+        "review_label": "Review clauses",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "processing": {
+        "agent_key": "processing",
+        "agent_name": "Processing Agent",
+        "description": "Execute the downstream cession processing logic and prepare settlement or population outcomes.",
+        "step_id": "process",
+        "step_label": "Process",
+        "sequence": 5,
+        "enabled": true,
+        "confidence_threshold": 0.87,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Processing results require review when confidence falls below the configured floor.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.8,
+        "execution_time_ms": 3740,
+        "started_at": "2026-05-18T08:25:18.351501Z",
+        "completed_at": "2026-05-18T08:25:45.132703Z",
+        "updated_at": "2026-05-18T08:25:22.091610Z",
+        "attempts": 1,
+        "warnings": [
+          "Settlement reconciliation requires manual review before release."
+        ],
+        "key_outputs": [
+          {
+            "label": "Records processed",
+            "value": 3
+          },
+          {
+            "label": "Worklist items",
+            "value": 1
+          },
+          {
+            "label": "Settlement ID",
+            "value": "SET-2026-Q1-044-024"
+          }
+        ],
+        "output_summary": "3 record(s) were processed for the mapped cession workflow.",
+        "state_message": "Manually approved and released to the next workflow agent.",
+        "hitl_required": true,
+        "awaiting_approval": false,
+        "review_step_id": "process",
+        "review_label": "Review processing",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": "Workflow review approved from the Results dashboard."
+      },
+      "results": {
+        "agent_key": "results",
+        "agent_name": "Results Agent",
+        "description": "Compile the workflow results, business impact, and completion narrative for the run.",
+        "step_id": "summary",
+        "step_label": "Summary",
+        "sequence": 6,
+        "enabled": true,
+        "confidence_threshold": 0.8,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Results review is required when derived completion insights fall below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.92,
+        "execution_time_ms": 50,
+        "started_at": "2026-05-18T08:25:45.206205Z",
+        "completed_at": "2026-05-18T08:25:45.256265Z",
+        "updated_at": "2026-05-18T08:25:45.256265Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Cedent",
+            "value": "Maple Leaf Pension Plan"
+          },
+          {
+            "label": "Period",
+            "value": "Q1 2026"
+          },
+          {
+            "label": "Records",
+            "value": 3
+          },
+          {
+            "label": "Settlement ID",
+            "value": "SET-2026-Q1-044-024"
+          }
+        ],
+        "output_summary": "Workflow results were compiled for live orchestration monitoring.",
+        "state_message": "Results were compiled and published to the workflow dashboard.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "summary",
+        "review_label": "Review results",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "sanction_screening": {
+        "agent_key": "sanction_screening",
+        "agent_name": "Sanction Screening Agent",
+        "description": "Assess counterparties against sanctions sources and pause for HITL review when required.",
+        "step_id": "screening",
+        "step_label": "Sanction Screening",
+        "sequence": 7,
+        "enabled": true,
+        "confidence_threshold": 0.92,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Escalate to compliance when sanctions screening remains below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "skipped",
+        "confidence_score": 0.99,
+        "execution_time_ms": 180,
+        "started_at": "2026-05-18T08:25:45.256265Z",
+        "completed_at": "2026-05-18T08:25:45.436381Z",
+        "updated_at": "2026-05-18T08:25:45.436381Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Screening case",
+            "value": "Not required"
+          }
+        ],
+        "output_summary": "No sanctions screening case was required for this workflow.",
+        "state_message": "The workflow did not require sanctions screening.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "screening",
+        "review_label": "Review sanction screening",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "file_generation": {
+        "agent_key": "file_generation",
+        "agent_name": "File Generation Agent",
+        "description": "Generate downstream cession output files and package them for release.",
+        "step_id": "files",
+        "step_label": "Files",
+        "sequence": 8,
+        "enabled": true,
+        "confidence_threshold": 0.85,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review is required when downstream file generation is incomplete.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "skipped",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3207,
+        "started_at": "2026-05-18T08:25:45.436381Z",
+        "completed_at": "2026-05-18T08:25:48.644016Z",
+        "updated_at": "2026-05-18T08:25:48.644016Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Files generated",
+            "value": 0
+          }
+        ],
+        "output_summary": "No downstream files were required for this workflow.",
+        "state_message": "This cession workflow did not generate downstream files.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "files",
+        "review_label": "Review files",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "worklist": {
+        "agent_key": "worklist",
+        "agent_name": "Worklist Agent",
+        "description": "Create and route all downstream worklist tasks created by the workflow.",
+        "step_id": "worklist",
+        "step_label": "Worklist",
+        "sequence": 9,
+        "enabled": true,
+        "confidence_threshold": 0.82,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Operations review is required if workflow routing confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.91,
+        "execution_time_ms": 3268,
+        "started_at": "2026-05-18T08:25:48.644016Z",
+        "completed_at": "2026-05-18T08:25:51.912274Z",
+        "updated_at": "2026-05-18T08:25:51.912274Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Tasks created",
+            "value": 1
+          },
+          {
+            "label": "Primary owner",
+            "value": "claims_ops"
+          }
+        ],
+        "output_summary": "1 downstream worklist task(s) were routed automatically.",
+        "state_message": "Downstream worklist routing completed automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "worklist",
+        "review_label": "Open worklist",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "audit": {
+        "agent_key": "audit",
+        "agent_name": "Audit Agent",
+        "description": "Finalize the workflow audit trail, approvals, overrides, retries, and completion traceability.",
+        "step_id": "audit",
+        "step_label": "Audit",
+        "sequence": 10,
+        "enabled": true,
+        "confidence_threshold": 0.95,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Administrative review is required when audit completeness falls below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3211,
+        "started_at": "2026-05-18T08:25:51.912274Z",
+        "completed_at": "2026-05-18T08:25:55.123524Z",
+        "updated_at": "2026-05-18T08:25:55.123524Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Audit events",
+            "value": 19
+          },
+          {
+            "label": "Completed at",
+            "value": "2026-05-18T08:25:55.089108Z"
+          }
+        ],
+        "output_summary": "Workflow audit trail was finalized for this cession file.",
+        "state_message": "Workflow audit was finalized and the cession workflow is complete.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "audit",
+        "review_label": "View audit",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      }
+    },
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-18T08:25:07.530790Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-18T08:25:07.791048Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-18T08:25:07.988206Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-18T08:25:18.262759Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-18T08:25:11.464873Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-18T08:25:14.890295Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-18T08:25:21.929417Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-18T08:25:21.948403Z"
+      }
+    ],
+    "settlement_report_artifacts": [],
+    "settlement_report_artifacts_pushed": false,
+    "settlement_report_artifacts_pushed_at": null,
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-044-024",
+      "settlement_display_id": "STL-2026-Q1-044-024",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4160000.0,
+      "net_amount": -39700.0,
+      "currency": "CAD",
+      "direction": "cedant_to_reinsurer",
+      "payment_due_date": "2026-04-12",
+      "status": "pending_reconciliation",
+      "iris_recommendation": "review",
+      "source": "Created from Settlement file CES-2026-024; reconciled against baseline SET-2026-Q1-044; decision=review",
+      "last_updated": "2026-05-18T08:25:21.621516Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-044",
+        "decision": "review",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-12",
+        "currency": "CAD",
+        "expected_source": "contract details performance",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4160000,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": -39700,
+          "recomputed_net": 39700
+        },
+        "system": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905
+        },
+        "mismatches": [
+          {
+            "field": "floating_leg",
+            "uploaded": 4160000,
+            "expected": 4142205,
+            "issue_type": "floating_leg_mismatch",
+            "message": "Uploaded Floating Leg does not exactly match IRiS expected Floating Leg."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": -39700,
+            "expected": 39700,
+            "issue_type": "net_formula_mismatch",
+            "message": "Uploaded Net Settlement Amount does not equal floating minus fixed plus signed fee and interest."
+          },
+          {
+            "field": "net_settlement_amount",
+            "uploaded": -39700,
+            "expected": 21905,
+            "issue_type": "net_reconciliation_mismatch",
+            "message": "Uploaded Net Settlement Amount does not exactly match IRiS expected Net Settlement Amount."
+          }
+        ],
+        "incoming_row_count": 3
+      },
+      "baseline_settlement_id": "SET-2026-Q1-044",
+      "settlement_report_artifacts": []
+    }
+  },
+  "CES-2026-025": {
+    "pipeline_session_id": "pipe-8a147af8-0046-40f1-9774-c7fd67bff78b",
+    "active_step": "exceptions",
+    "source_filename": "Maple_Leaf_Q1_2026.csv",
+    "source_size_bytes": 533,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 13,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": "Settlement",
+      "cedent_id": "CED-1156",
+      "completed_at": "2026-05-18T09:41:03.298522Z"
+    },
+    "contract_override": {
+      "contract_id": "LSC-2024-044",
+      "completed_at": "2026-05-18T09:41:03.557990Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-18T09:40:49.384734Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026.csv"
+      },
+      {
+        "timestamp": "2026-05-18T09:40:49.669750Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 98%"
+      },
+      {
+        "timestamp": "2026-05-18T09:40:49.709753Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 92%"
+      },
+      {
+        "timestamp": "2026-05-18T09:40:49.846661Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-18T09:40:49.905015Z",
+        "actor": "Mapping Agent",
+        "type": "AI Agent",
+        "action": "Mapping Agent awaiting approval",
+        "detail": "Detected Settlement for Maple Leaf Pension Plan and mapped LSC-2024-044. Confidence: 94% / threshold 99%."
+      },
+      {
+        "timestamp": "2026-05-18T09:41:03.369869Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-18T09:41:03.452244Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 100%"
+      },
+      {
+        "timestamp": "2026-05-18T09:41:03.602691Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-18T09:41:03.661327Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Manually approved Mapping Agent",
+        "detail": "Detection and contract mapping were reviewed and approved."
+      },
+      {
+        "timestamp": "2026-05-18T09:41:03.997802Z",
+        "actor": "Validation Engine",
+        "type": "AI Agent",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-18T09:41:04.048145Z",
+        "actor": "Anomaly Detection Agent",
+        "type": "AI Agent",
+        "action": "Anomaly Detection Agent awaiting approval",
+        "detail": "1 critical, 7 warning, 0 informational anomaly finding(s) identified. Confidence: 99% / threshold 100%."
+      },
+      {
+        "timestamp": "2026-05-18T09:46:13.908979Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Manually approved Anomaly Detection Agent",
+        "detail": "Workflow review approved from the Results dashboard."
+      },
+      {
+        "timestamp": "2026-05-18T09:46:14.197653Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "7 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-18T09:46:14.264082Z",
+        "actor": "Resolution Agent",
+        "type": "AI Agent",
+        "action": "Resolution Agent awaiting approval",
+        "detail": "IRiS auto-applied 7 resolution(s); 1 item(s) remain pending review. Confidence: 95% / threshold 100%."
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-18T09:40:49.384734Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-18T09:40:49.613517Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-18T09:40:49.627116Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-18T09:40:49.801790Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-18T09:41:03.950135Z"
+      }
+    ],
+    "workflow_state": {
+      "status": "awaiting_approval",
+      "current_agent_key": "resolution",
+      "current_step_id": "exceptions",
+      "paused_reason": "Human approval is required for the remaining low-confidence or unsupported anomaly resolutions.",
+      "updated_at": "2026-05-18T09:46:14.264082Z",
+      "completed_at": null,
+      "final_message": null
+    },
+    "agent_runs": {
+      "mapping": {
+        "agent_key": "mapping",
+        "agent_name": "Mapping Agent",
+        "description": "Detect the cession file type, identify the cedent, and map the treaty context.",
+        "step_id": "detect-map",
+        "step_label": "Detect & Map",
+        "sequence": 1,
+        "enabled": true,
+        "confidence_threshold": 0.99,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review required before downstream automation continues.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.94,
+        "execution_time_ms": 353,
+        "started_at": "2026-05-18T09:40:49.551954Z",
+        "completed_at": "2026-05-18T09:41:03.661327Z",
+        "updated_at": "2026-05-18T09:40:49.905015Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "File type",
+            "value": "Settlement"
+          },
+          {
+            "label": "Cedent",
+            "value": "Maple Leaf Pension Plan"
+          },
+          {
+            "label": "Contract",
+            "value": "LSC-2024-044"
+          },
+          {
+            "label": "Period",
+            "value": "Q1 2026"
+          }
+        ],
+        "output_summary": "Detected Settlement for Maple Leaf Pension Plan and mapped LSC-2024-044.",
+        "state_message": "Manually approved and released to the next workflow agent.",
+        "hitl_required": true,
+        "awaiting_approval": false,
+        "review_step_id": "detect-map",
+        "review_label": "Review detection & mapping",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": "Detection and contract mapping were reviewed and approved."
+      },
+      "anomaly_detection": {
+        "agent_key": "anomaly_detection",
+        "agent_name": "Anomaly Detection Agent",
+        "description": "Validate the uploaded rows and identify anomalies, warnings, and informational findings.",
+        "step_id": "validate",
+        "step_label": "Anomalies",
+        "sequence": 2,
+        "enabled": true,
+        "confidence_threshold": 1.0,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops anomaly review required when confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 304,
+        "started_at": "2026-05-18T09:41:03.743249Z",
+        "completed_at": "2026-05-18T09:46:13.908979Z",
+        "updated_at": "2026-05-18T09:41:04.048145Z",
+        "attempts": 1,
+        "warnings": [
+          "1 critical anomaly finding(s) were detected."
+        ],
+        "key_outputs": [
+          {
+            "label": "Records",
+            "value": 3
+          },
+          {
+            "label": "Critical",
+            "value": 1
+          },
+          {
+            "label": "Warnings",
+            "value": 7
+          },
+          {
+            "label": "Informational",
+            "value": 0
+          }
+        ],
+        "output_summary": "1 critical, 7 warning, 0 informational anomaly finding(s) identified.",
+        "state_message": "Manually approved and released to the next workflow agent.",
+        "hitl_required": true,
+        "awaiting_approval": false,
+        "review_step_id": "validate",
+        "review_label": "Review anomalies",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": "Workflow review approved from the Results dashboard."
+      },
+      "resolution": {
+        "agent_key": "resolution",
+        "agent_name": "Resolution Agent",
+        "description": "Apply high-confidence anomaly resolutions automatically and route the rest to HITL review.",
+        "step_id": "exceptions",
+        "step_label": "Resolutions",
+        "sequence": 3,
+        "enabled": true,
+        "confidence_threshold": 1.0,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops approval required for low-confidence or unsupported resolutions.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "awaiting_approval",
+        "confidence_score": 0.95,
+        "execution_time_ms": 260,
+        "started_at": "2026-05-18T09:46:14.003933Z",
+        "completed_at": null,
+        "updated_at": "2026-05-18T09:46:14.264082Z",
+        "attempts": 1,
+        "warnings": [
+          "1 anomaly resolution(s) still require human review."
+        ],
+        "key_outputs": [
+          {
+            "label": "Auto-resolved",
+            "value": 7
+          },
+          {
+            "label": "Pending review",
+            "value": 1
+          }
+        ],
+        "output_summary": "IRiS auto-applied 7 resolution(s); 1 item(s) remain pending review.",
+        "state_message": "Human approval is required for the remaining low-confidence or unsupported anomaly resolutions.",
+        "hitl_required": true,
+        "awaiting_approval": true,
+        "review_step_id": "exceptions",
+        "review_label": "Review resolutions",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "clause_validation": {
+        "agent_key": "clause_validation",
+        "agent_name": "Clause Validation Agent",
+        "description": "Verify the mapped file against contract clauses and rule controls.",
+        "step_id": "clauses",
+        "step_label": "Clauses",
+        "sequence": 4,
+        "enabled": true,
+        "confidence_threshold": 0.99,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Clause review is required before execution when clause confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "pending",
+        "confidence_score": 0.0,
+        "execution_time_ms": null,
+        "started_at": null,
+        "completed_at": null,
+        "updated_at": null,
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": null,
+        "state_message": null,
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "clauses",
+        "review_label": "Review clauses",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "processing": {
+        "agent_key": "processing",
+        "agent_name": "Processing Agent",
+        "description": "Execute the downstream cession processing logic and prepare settlement or population outcomes.",
+        "step_id": "process",
+        "step_label": "Process",
+        "sequence": 5,
+        "enabled": true,
+        "confidence_threshold": 0.87,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Processing results require review when confidence falls below the configured floor.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "pending",
+        "confidence_score": 0.0,
+        "execution_time_ms": null,
+        "started_at": null,
+        "completed_at": null,
+        "updated_at": null,
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": null,
+        "state_message": null,
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "process",
+        "review_label": "Review processing",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "results": {
+        "agent_key": "results",
+        "agent_name": "Results Agent",
+        "description": "Compile the workflow results, business impact, and completion narrative for the run.",
+        "step_id": "summary",
+        "step_label": "Summary",
+        "sequence": 6,
+        "enabled": true,
+        "confidence_threshold": 0.8,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Results review is required when derived completion insights fall below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "pending",
+        "confidence_score": 0.0,
+        "execution_time_ms": null,
+        "started_at": null,
+        "completed_at": null,
+        "updated_at": null,
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": null,
+        "state_message": null,
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "summary",
+        "review_label": "Review results",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "sanction_screening": {
+        "agent_key": "sanction_screening",
+        "agent_name": "Sanction Screening Agent",
+        "description": "Assess counterparties against sanctions sources and pause for HITL review when required.",
+        "step_id": "screening",
+        "step_label": "Sanction Screening",
+        "sequence": 7,
+        "enabled": true,
+        "confidence_threshold": 0.92,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Escalate to compliance when sanctions screening remains below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "pending",
+        "confidence_score": 0.0,
+        "execution_time_ms": null,
+        "started_at": null,
+        "completed_at": null,
+        "updated_at": null,
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": null,
+        "state_message": null,
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "screening",
+        "review_label": "Review sanction screening",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "file_generation": {
+        "agent_key": "file_generation",
+        "agent_name": "File Generation Agent",
+        "description": "Generate downstream cession output files and package them for release.",
+        "step_id": "files",
+        "step_label": "Files",
+        "sequence": 8,
+        "enabled": true,
+        "confidence_threshold": 0.85,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review is required when downstream file generation is incomplete.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "pending",
+        "confidence_score": 0.0,
+        "execution_time_ms": null,
+        "started_at": null,
+        "completed_at": null,
+        "updated_at": null,
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": null,
+        "state_message": null,
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "files",
+        "review_label": "Review files",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "worklist": {
+        "agent_key": "worklist",
+        "agent_name": "Worklist Agent",
+        "description": "Create and route all downstream worklist tasks created by the workflow.",
+        "step_id": "worklist",
+        "step_label": "Worklist",
+        "sequence": 9,
+        "enabled": true,
+        "confidence_threshold": 0.82,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Operations review is required if workflow routing confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "pending",
+        "confidence_score": 0.0,
+        "execution_time_ms": null,
+        "started_at": null,
+        "completed_at": null,
+        "updated_at": null,
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": null,
+        "state_message": null,
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "worklist",
+        "review_label": "Open worklist",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "audit": {
+        "agent_key": "audit",
+        "agent_name": "Audit Agent",
+        "description": "Finalize the workflow audit trail, approvals, overrides, retries, and completion traceability.",
+        "step_id": "audit",
+        "step_label": "Audit",
+        "sequence": 10,
+        "enabled": true,
+        "confidence_threshold": 0.95,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Administrative review is required when audit completeness falls below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "pending",
+        "confidence_score": 0.0,
+        "execution_time_ms": null,
+        "started_at": null,
+        "completed_at": null,
+        "updated_at": null,
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": null,
+        "state_message": null,
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "audit",
+        "review_label": "View audit",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      }
+    },
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-18T09:40:49.384734Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-18T09:41:03.326919Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-18T09:41:03.575216Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "in_progress",
+        "timestamp": "2026-05-18T09:41:03.589038Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-18T09:41:03.966721Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "in_progress",
+        "timestamp": "2026-05-18T09:46:14.174771Z"
+      }
+    ]
+  },
+  "CES-2025-017": {
+    "agent_runs": {
+      "mapping": {
+        "agent_key": "mapping",
+        "agent_name": "Mapping Agent",
+        "description": "Detect the cession file type, identify the cedent, and map the treaty context.",
+        "step_id": "detect-map",
+        "step_label": "Detect & Map",
+        "sequence": 1,
+        "enabled": true,
+        "confidence_threshold": 0.99,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review required before downstream automation continues.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.91,
+        "execution_time_ms": null,
+        "started_at": "2026-05-05T11:13:48.101733Z",
+        "completed_at": "2026-05-05T11:13:48.101733Z",
+        "updated_at": "2026-05-05T11:13:48.101733Z",
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": "Existing detection and contract mapping were loaded into the workflow.",
+        "state_message": "Existing detection and contract mapping were loaded into the workflow.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "detect-map",
+        "review_label": "Review detection & mapping",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "anomaly_detection": {
+        "agent_key": "anomaly_detection",
+        "agent_name": "Anomaly Detection Agent",
+        "description": "Validate the uploaded rows and identify anomalies, warnings, and informational findings.",
+        "step_id": "validate",
+        "step_label": "Anomalies",
+        "sequence": 2,
+        "enabled": true,
+        "confidence_threshold": 1.0,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops anomaly review required when confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.96,
+        "execution_time_ms": null,
+        "started_at": "2026-05-05T11:13:48.101733Z",
+        "completed_at": "2026-05-05T11:13:48.101733Z",
+        "updated_at": "2026-05-05T11:13:48.101733Z",
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": "Existing anomaly detection findings were loaded into the workflow.",
+        "state_message": "Existing anomaly detection findings were loaded into the workflow.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "validate",
+        "review_label": "Review anomalies",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "resolution": {
+        "agent_key": "resolution",
+        "agent_name": "Resolution Agent",
+        "description": "Apply high-confidence anomaly resolutions automatically and route the rest to HITL review.",
+        "step_id": "exceptions",
+        "step_label": "Resolutions",
+        "sequence": 3,
+        "enabled": true,
+        "confidence_threshold": 1.0,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops approval required for low-confidence or unsupported resolutions.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "skipped",
+        "confidence_score": 0.99,
+        "execution_time_ms": 15,
+        "started_at": "2026-05-18T09:49:13.430186Z",
+        "completed_at": "2026-05-18T09:49:13.445705Z",
+        "updated_at": "2026-05-18T09:49:13.445705Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Pending resolutions",
+            "value": 0
+          }
+        ],
+        "output_summary": "No anomaly resolutions were required for this workflow.",
+        "state_message": "The workflow did not require a resolution review stage.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "exceptions",
+        "review_label": "Review resolutions",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "clause_validation": {
+        "agent_key": "clause_validation",
+        "agent_name": "Clause Validation Agent",
+        "description": "Verify the mapped file against contract clauses and rule controls.",
+        "step_id": "clauses",
+        "step_label": "Clauses",
+        "sequence": 4,
+        "enabled": true,
+        "confidence_threshold": 0.99,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Clause review is required before execution when clause confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.91,
+        "execution_time_ms": null,
+        "started_at": "2026-05-05T11:13:48.101733Z",
+        "completed_at": "2026-05-05T11:13:48.101733Z",
+        "updated_at": "2026-05-05T11:13:48.101733Z",
+        "attempts": 0,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": "Existing clause validation results were loaded into the workflow.",
+        "state_message": "Existing clause validation results were loaded into the workflow.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "clauses",
+        "review_label": "Review clauses",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "processing": {
+        "agent_key": "processing",
+        "agent_name": "Processing Agent",
+        "description": "Execute the downstream cession processing logic and prepare settlement or population outcomes.",
+        "step_id": "process",
+        "step_label": "Process",
+        "sequence": 5,
+        "enabled": true,
+        "confidence_threshold": 0.87,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Processing results require review when confidence falls below the configured floor.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.0,
+        "execution_time_ms": 6556,
+        "started_at": "2026-05-18T09:49:13.445705Z",
+        "completed_at": "2026-05-18T09:49:27.316809Z",
+        "updated_at": "2026-05-18T09:49:20.002080Z",
+        "attempts": 2,
+        "warnings": [],
+        "key_outputs": [],
+        "output_summary": null,
+        "state_message": "Manually approved and released to the next workflow agent.",
+        "hitl_required": true,
+        "awaiting_approval": false,
+        "review_step_id": "process",
+        "review_label": "Review processing",
+        "review_url": null,
+        "error_message": "Resolve all exceptions before processing the file",
+        "manual_review_note": "Processing Agent was reviewed in the cession workflow screen and approved to continue."
+      },
+      "results": {
+        "agent_key": "results",
+        "agent_name": "Results Agent",
+        "description": "Compile the workflow results, business impact, and completion narrative for the run.",
+        "step_id": "summary",
+        "step_label": "Summary",
+        "sequence": 6,
+        "enabled": true,
+        "confidence_threshold": 0.8,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Results review is required when derived completion insights fall below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.92,
+        "execution_time_ms": 53,
+        "started_at": "2026-05-18T09:49:27.411902Z",
+        "completed_at": "2026-05-18T09:49:27.465462Z",
+        "updated_at": "2026-05-18T09:49:27.465462Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Cedent",
+            "value": "Maple Leaf Pension Plan"
+          },
+          {
+            "label": "Period",
+            "value": "Q1 2025"
+          },
+          {
+            "label": "Records",
+            "value": 1850
+          },
+          {
+            "label": "Settlement ID",
+            "value": "N/A"
+          }
+        ],
+        "output_summary": "Workflow results were compiled for live orchestration monitoring.",
+        "state_message": "Results were compiled and published to the workflow dashboard.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "summary",
+        "review_label": "Review results",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "sanction_screening": {
+        "agent_key": "sanction_screening",
+        "agent_name": "Sanction Screening Agent",
+        "description": "Assess counterparties against sanctions sources and pause for HITL review when required.",
+        "step_id": "screening",
+        "step_label": "Sanction Screening",
+        "sequence": 7,
+        "enabled": true,
+        "confidence_threshold": 0.92,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Escalate to compliance when sanctions screening remains below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "skipped",
+        "confidence_score": 0.99,
+        "execution_time_ms": 259,
+        "started_at": "2026-05-18T09:49:27.465462Z",
+        "completed_at": "2026-05-18T09:49:27.725439Z",
+        "updated_at": "2026-05-18T09:49:27.725439Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Screening case",
+            "value": "Not required"
+          }
+        ],
+        "output_summary": "No sanctions screening case was required for this workflow.",
+        "state_message": "The workflow did not require sanctions screening.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "screening",
+        "review_label": "Review sanction screening",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "file_generation": {
+        "agent_key": "file_generation",
+        "agent_name": "File Generation Agent",
+        "description": "Generate downstream cession output files and package them for release.",
+        "step_id": "files",
+        "step_label": "Files",
+        "sequence": 8,
+        "enabled": true,
+        "confidence_threshold": 0.85,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review is required when downstream file generation is incomplete.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "skipped",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3256,
+        "started_at": "2026-05-18T09:49:27.725439Z",
+        "completed_at": "2026-05-18T09:49:30.982006Z",
+        "updated_at": "2026-05-18T09:49:30.982006Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Files generated",
+            "value": 0
+          }
+        ],
+        "output_summary": "No downstream files were required for this workflow.",
+        "state_message": "This cession workflow did not generate downstream files.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "files",
+        "review_label": "Review files",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "worklist": {
+        "agent_key": "worklist",
+        "agent_name": "Worklist Agent",
+        "description": "Create and route all downstream worklist tasks created by the workflow.",
+        "step_id": "worklist",
+        "step_label": "Worklist",
+        "sequence": 9,
+        "enabled": true,
+        "confidence_threshold": 0.82,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Operations review is required if workflow routing confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "skipped",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3205,
+        "started_at": "2026-05-18T09:49:30.982006Z",
+        "completed_at": "2026-05-18T09:49:34.187543Z",
+        "updated_at": "2026-05-18T09:49:34.187543Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Worklist tasks",
+            "value": 0
+          }
+        ],
+        "output_summary": "No downstream worklist routing was required for this workflow.",
+        "state_message": "No downstream worklist tasks were created.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "worklist",
+        "review_label": "Open worklist",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "audit": {
+        "agent_key": "audit",
+        "agent_name": "Audit Agent",
+        "description": "Finalize the workflow audit trail, approvals, overrides, retries, and completion traceability.",
+        "step_id": "audit",
+        "step_label": "Audit",
+        "sequence": 10,
+        "enabled": true,
+        "confidence_threshold": 0.95,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Administrative review is required when audit completeness falls below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3294,
+        "started_at": "2026-05-18T09:49:34.187543Z",
+        "completed_at": "2026-05-18T09:49:37.482502Z",
+        "updated_at": "2026-05-18T09:49:37.482502Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Audit events",
+            "value": 8
+          },
+          {
+            "label": "Completed at",
+            "value": "2026-05-18T09:49:37.440771Z"
+          }
+        ],
+        "output_summary": "Workflow audit trail was finalized for this cession file.",
+        "state_message": "Workflow audit was finalized and the cession workflow is complete.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "audit",
+        "review_label": "View audit",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      }
+    },
+    "workflow_state": {
+      "status": "completed",
+      "current_agent_key": null,
+      "current_step_id": "audit",
+      "paused_reason": null,
+      "updated_at": "2026-05-18T09:49:37.482502Z",
+      "completed_at": "2026-05-18T09:49:37.482502Z",
+      "final_message": "Cession workflow completed for Maple Leaf Pension Plan \u00b7 Q1 2025. 1850 record(s) were processed successfully."
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-18T09:49:13.445705Z",
+        "actor": "Resolution Agent",
+        "type": "AI Agent",
+        "action": "Resolution Agent skipped",
+        "detail": "No anomaly resolutions were required for this workflow. Confidence: 99% / threshold 100%."
+      },
+      {
+        "timestamp": "2026-05-18T09:49:16.719988Z",
+        "actor": "Processing Agent",
+        "type": "AI Agent",
+        "action": "Processing Agent failed",
+        "detail": "Resolve all exceptions before processing the file"
+      },
+      {
+        "timestamp": "2026-05-18T09:49:20.002080Z",
+        "actor": "Processing Agent",
+        "type": "AI Agent",
+        "action": "Processing Agent failed",
+        "detail": "Resolve all exceptions before processing the file"
+      },
+      {
+        "timestamp": "2026-05-18T09:49:27.316809Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Manually approved Processing Agent",
+        "detail": "Processing Agent was reviewed in the cession workflow screen and approved to continue."
+      },
+      {
+        "timestamp": "2026-05-18T09:49:27.465462Z",
+        "actor": "Results Agent",
+        "type": "AI Agent",
+        "action": "Results Agent completed",
+        "detail": "Workflow results were compiled for live orchestration monitoring. Confidence: 92% / threshold 80%."
+      },
+      {
+        "timestamp": "2026-05-18T09:49:27.725439Z",
+        "actor": "Sanction Screening Agent",
+        "type": "AI Agent",
+        "action": "Sanction Screening Agent skipped",
+        "detail": "No sanctions screening case was required for this workflow. Confidence: 99% / threshold 92%."
+      },
+      {
+        "timestamp": "2026-05-18T09:49:30.982006Z",
+        "actor": "File Generation Agent",
+        "type": "AI Agent",
+        "action": "File Generation Agent skipped",
+        "detail": "No downstream files were required for this workflow. Confidence: 99% / threshold 85%."
+      },
+      {
+        "timestamp": "2026-05-18T09:49:34.187543Z",
+        "actor": "Worklist Agent",
+        "type": "AI Agent",
+        "action": "Worklist Agent skipped",
+        "detail": "No downstream worklist routing was required for this workflow. Confidence: 99% / threshold 82%."
+      },
+      {
+        "timestamp": "2026-05-18T09:49:37.482502Z",
+        "actor": "Audit Agent",
+        "type": "AI Agent",
+        "action": "Audit Agent completed",
+        "detail": "Workflow audit trail was finalized for this cession file. Confidence: 99% / threshold 95%."
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "approved",
+        "completed_at": "2026-05-18T09:49:37.460670Z"
+      }
+    ]
+  },
+  "CES-2026-026": {
+    "pipeline_session_id": "pipe-c462d830-ad1f-4f67-a1c0-7f7d59bdb04c",
+    "active_step": "worklist",
+    "source_filename": "Maple_Leaf_Q1_2026.csv",
+    "source_size_bytes": 533,
+    "source_content_text": "Calculation Period,Payment Date,Pensioner Movement,Applicable Indexation / Escalation,Fixed Amount,Floating Amount,Fee (Admin),Interest on Over/Underpayment from Prior Period,Net Settlement Amount\r\n2026 Q1,2026-04-12,Death,CPI capped 5% applied to pension tranche,\"CAD 1,500,000\",\"CAD 1,514,735\",CAD 900,CAD 0,\"CAD 13,835\"\r\n2026 Q1,,Suspension,No escalation applicable during suspension period,1250000,1248000,900,0,-2900\r\n2026 Q1,2026-04-12,Reinstatement,CPI capped 5% reapplied after reinstatement,1367500,1379470,1000,0,10970\r\n",
+    "manual_cedent_id": null,
+    "manual_contract_id": null,
+    "manual_file_type": null,
+    "detection_override": {
+      "file_type": null,
+      "cedent_id": null,
+      "completed_at": "2026-05-18T11:30:46.948548Z"
+    },
+    "contract_override": {
+      "contract_id": null,
+      "completed_at": "2026-05-18T11:30:47.204378Z"
+    },
+    "audit_events": [
+      {
+        "timestamp": "2026-05-18T11:30:46.697901Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "File uploaded manually",
+        "detail": "Maple_Leaf_Q1_2026.csv"
+      },
+      {
+        "timestamp": "2026-05-18T11:30:47.066463Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Classified as \"Settlement\"",
+        "detail": "confidence 98%"
+      },
+      {
+        "timestamp": "2026-05-18T11:30:47.118124Z",
+        "actor": "AI Classifier v3.2",
+        "type": "AI Agent",
+        "action": "Identified cedant Maple Leaf Pension Plan",
+        "detail": "confidence 92%"
+      },
+      {
+        "timestamp": "2026-05-18T11:30:47.323358Z",
+        "actor": "Pipeline Orchestrator",
+        "type": "System",
+        "action": "Mapped to LSC-2024-044 v1.1",
+        "detail": "Auto-mapped by cedant + period"
+      },
+      {
+        "timestamp": "2026-05-18T11:30:47.397595Z",
+        "actor": "Mapping Agent",
+        "type": "AI Agent",
+        "action": "Mapping Agent awaiting approval",
+        "detail": "Detected Settlement for Maple Leaf Pension Plan and mapped LSC-2024-044. Confidence: 94% / threshold 99%."
+      },
+      {
+        "timestamp": "2026-05-18T11:31:01.965753Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Manually approved Mapping Agent",
+        "detail": "Workflow review approved from the workflow step."
+      },
+      {
+        "timestamp": "2026-05-18T11:31:02.299163Z",
+        "actor": "Validation Engine",
+        "type": "AI Agent",
+        "action": "Validation complete",
+        "detail": "1 critical, 7 warnings"
+      },
+      {
+        "timestamp": "2026-05-18T11:31:02.343614Z",
+        "actor": "Anomaly Detection Agent",
+        "type": "AI Agent",
+        "action": "Anomaly Detection Agent awaiting approval",
+        "detail": "1 critical, 7 warning, 0 informational anomaly finding(s) identified. Confidence: 99% / threshold 100%."
+      },
+      {
+        "timestamp": "2026-05-18T11:31:18.935368Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Manually approved Anomaly Detection Agent",
+        "detail": "Workflow review approved from the workflow step."
+      },
+      {
+        "timestamp": "2026-05-18T11:31:19.169579Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "7 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-18T11:31:19.209107Z",
+        "actor": "Resolution Agent",
+        "type": "AI Agent",
+        "action": "Resolution Agent awaiting approval",
+        "detail": "IRiS auto-applied 7 resolution(s); 1 item(s) remain pending review. Confidence: 95% / threshold 100%."
+      },
+      {
+        "timestamp": "2026-05-18T11:32:03.143217Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Resolution handling updated",
+        "detail": "8 resolutions saved"
+      },
+      {
+        "timestamp": "2026-05-18T11:32:06.510495Z",
+        "actor": "Contract Rules Engine",
+        "type": "System",
+        "action": "Checked 3 clauses",
+        "detail": "0 flagged"
+      },
+      {
+        "timestamp": "2026-05-18T11:32:06.571201Z",
+        "actor": "Clause Validation Agent",
+        "type": "AI Agent",
+        "action": "Clause Validation Agent awaiting approval",
+        "detail": "3 clause control(s) were checked and 0 were flagged. Confidence: 97% / threshold 99%."
+      },
+      {
+        "timestamp": "2026-05-18T11:32:14.926916Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Manually approved Clause Validation Agent",
+        "detail": "Workflow review approved from the workflow step."
+      },
+      {
+        "timestamp": "2026-05-18T11:32:22.664466Z",
+        "actor": "Claims Engine",
+        "type": "System",
+        "action": "Processing complete",
+        "detail": "3 records applied"
+      },
+      {
+        "timestamp": "2026-05-18T11:32:22.760010Z",
+        "actor": "Workflow Router",
+        "type": "System",
+        "action": "Created 1 worklist item(s)",
+        "detail": "WL-9225"
+      },
+      {
+        "timestamp": "2026-05-18T11:41:24.991826Z",
+        "actor": "Processing Agent",
+        "type": "AI Agent",
+        "action": "Processing Agent completed",
+        "detail": "3 record(s) were processed for the mapped cession workflow. Confidence: 94% / threshold 87%."
+      },
+      {
+        "timestamp": "2026-05-18T11:43:27.722145Z",
+        "actor": "Workflow Summary Agent",
+        "type": "AI Agent",
+        "action": "Workflow Summary Agent completed",
+        "detail": "Workflow summary was compiled for orchestration monitoring. Confidence: 92% / threshold 80%."
+      },
+      {
+        "timestamp": "2026-05-18T11:46:27.273251Z",
+        "actor": "Sanction Screening Agent",
+        "type": "AI Agent",
+        "action": "Sanction Screening Agent awaiting approval",
+        "detail": "Raw match found in OFAC Confidence: 90% / threshold 92%."
+      },
+      {
+        "timestamp": "2026-05-18T11:46:36.811407Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Pushed downstream files to SFTP",
+        "detail": "CES-2026-026_SET-2026-Q1-044-026_cash_settlements_tracker.csv, CES-2026-026_SET-2026-Q1-044-026_grdr_load_form.csv"
+      },
+      {
+        "timestamp": "2026-05-18T11:46:36.893394Z",
+        "actor": "File Generation Agent",
+        "type": "AI Agent",
+        "action": "File Generation Agent completed",
+        "detail": "2 downstream file(s) were generated for release. Confidence: 97% / threshold 85%."
+      },
+      {
+        "timestamp": "2026-05-18T11:46:40.342681Z",
+        "actor": "Worklist Agent",
+        "type": "AI Agent",
+        "action": "Worklist Agent completed",
+        "detail": "2 downstream worklist task(s) were routed automatically. Confidence: 91% / threshold 82%."
+      },
+      {
+        "timestamp": "2026-05-18T11:46:43.735496Z",
+        "actor": "Audit Agent",
+        "type": "AI Agent",
+        "action": "Audit Agent completed",
+        "detail": "Workflow audit trail was finalized for this cession file. Confidence: 99% / threshold 95%."
+      }
+    ],
+    "stage_history": [
+      {
+        "stage": "uploaded",
+        "completed_at": "2026-05-18T11:30:46.697901Z"
+      },
+      {
+        "stage": "detecting",
+        "completed_at": "2026-05-18T11:30:46.971501Z"
+      },
+      {
+        "stage": "detected",
+        "completed_at": "2026-05-18T11:30:46.995449Z"
+      },
+      {
+        "stage": "mapped",
+        "completed_at": "2026-05-18T11:30:47.228981Z"
+      },
+      {
+        "stage": "validated",
+        "completed_at": "2026-05-18T11:31:02.239654Z"
+      },
+      {
+        "stage": "exceptions",
+        "completed_at": "2026-05-18T11:32:03.108207Z"
+      },
+      {
+        "stage": "clauses",
+        "completed_at": "2026-05-18T11:32:06.471768Z"
+      },
+      {
+        "stage": "processing",
+        "completed_at": "2026-05-18T11:32:22.548662Z"
+      },
+      {
+        "stage": "processed",
+        "completed_at": "2026-05-18T11:32:22.577998Z"
+      },
+      {
+        "stage": "files",
+        "completed_at": "2026-05-18T11:46:36.775847Z"
+      },
+      {
+        "stage": "approved",
+        "completed_at": "2026-05-18T11:46:43.700285Z"
+      }
+    ],
+    "workflow_state": {
+      "status": "completed",
+      "current_agent_key": null,
+      "current_step_id": "audit",
+      "paused_reason": null,
+      "updated_at": "2026-05-18T11:46:43.735496Z",
+      "completed_at": "2026-05-18T11:46:43.735496Z",
+      "final_message": "Cession workflow completed for Maple Leaf Pension Plan \u00b7 Q1 2026. 3 record(s) were processed successfully."
+    },
+    "agent_runs": {
+      "mapping": {
+        "agent_key": "mapping",
+        "agent_name": "Mapping Agent",
+        "description": "Detect the cession file type, identify the cedent, and map the treaty context.",
+        "step_id": "detect-map",
+        "step_label": "Detect & Map",
+        "sequence": 1,
+        "enabled": true,
+        "confidence_threshold": 0.99,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review required before downstream automation continues.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.94,
+        "execution_time_ms": 500,
+        "started_at": "2026-05-18T11:30:46.896855Z",
+        "completed_at": "2026-05-18T11:31:01.965753Z",
+        "updated_at": "2026-05-18T11:30:47.397595Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "File type",
+            "value": "Settlement"
+          },
+          {
+            "label": "Cedent",
+            "value": "Maple Leaf Pension Plan"
+          },
+          {
+            "label": "Contract",
+            "value": "LSC-2024-044"
+          },
+          {
+            "label": "Period",
+            "value": "Q1 2026"
+          }
+        ],
+        "output_summary": "Detected Settlement for Maple Leaf Pension Plan and mapped LSC-2024-044.",
+        "state_message": "Manually approved and released to the next workflow agent.",
+        "hitl_required": true,
+        "awaiting_approval": false,
+        "review_step_id": "detect-map",
+        "review_label": "Review detection & mapping",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": "Workflow review approved from the workflow step."
+      },
+      "anomaly_detection": {
+        "agent_key": "anomaly_detection",
+        "agent_name": "Anomaly Detection Agent",
+        "description": "Validate the uploaded rows and identify anomalies, warnings, and informational findings.",
+        "step_id": "validate",
+        "step_label": "Anomalies",
+        "sequence": 2,
+        "enabled": true,
+        "confidence_threshold": 1.0,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops anomaly review required when confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 305,
+        "started_at": "2026-05-18T11:31:02.037857Z",
+        "completed_at": "2026-05-18T11:31:18.935368Z",
+        "updated_at": "2026-05-18T11:31:02.343614Z",
+        "attempts": 1,
+        "warnings": [
+          "1 critical anomaly finding(s) were detected."
+        ],
+        "key_outputs": [
+          {
+            "label": "Records",
+            "value": 3
+          },
+          {
+            "label": "Critical",
+            "value": 1
+          },
+          {
+            "label": "Warnings",
+            "value": 7
+          },
+          {
+            "label": "Informational",
+            "value": 0
+          }
+        ],
+        "output_summary": "1 critical, 7 warning, 0 informational anomaly finding(s) identified.",
+        "state_message": "Manually approved and released to the next workflow agent.",
+        "hitl_required": true,
+        "awaiting_approval": false,
+        "review_step_id": "validate",
+        "review_label": "Review anomalies",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": "Workflow review approved from the workflow step."
+      },
+      "resolution": {
+        "agent_key": "resolution",
+        "agent_name": "Resolution Agent",
+        "description": "Apply high-confidence anomaly resolutions automatically and route the rest to HITL review.",
+        "step_id": "exceptions",
+        "step_label": "Resolutions",
+        "sequence": 3,
+        "enabled": true,
+        "confidence_threshold": 1.0,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops approval required for low-confidence or unsupported resolutions.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.95,
+        "execution_time_ms": 197,
+        "started_at": "2026-05-18T11:31:19.011319Z",
+        "completed_at": "2026-05-18T11:32:03.226777Z",
+        "updated_at": "2026-05-18T11:32:03.226777Z",
+        "attempts": 1,
+        "warnings": [
+          "1 anomaly resolution(s) still require human review."
+        ],
+        "key_outputs": [
+          {
+            "label": "Auto-resolved",
+            "value": 7
+          },
+          {
+            "label": "Pending review",
+            "value": 1
+          }
+        ],
+        "output_summary": "IRiS auto-applied 7 resolution(s); 1 item(s) remain pending review.",
+        "state_message": "Manual review completed and workflow resumed.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "exceptions",
+        "review_label": "Review resolutions",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "clause_validation": {
+        "agent_key": "clause_validation",
+        "agent_name": "Clause Validation Agent",
+        "description": "Verify the mapped file against contract clauses and rule controls.",
+        "step_id": "clauses",
+        "step_label": "Clauses",
+        "sequence": 4,
+        "enabled": true,
+        "confidence_threshold": 0.99,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Clause review is required before execution when clause confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.97,
+        "execution_time_ms": 3344,
+        "started_at": "2026-05-18T11:32:03.226777Z",
+        "completed_at": "2026-05-18T11:32:14.926916Z",
+        "updated_at": "2026-05-18T11:32:06.571201Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Clauses checked",
+            "value": 3
+          },
+          {
+            "label": "Flagged",
+            "value": 0
+          }
+        ],
+        "output_summary": "3 clause control(s) were checked and 0 were flagged.",
+        "state_message": "Manually approved and released to the next workflow agent.",
+        "hitl_required": true,
+        "awaiting_approval": false,
+        "review_step_id": "clauses",
+        "review_label": "Review clauses",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": "Workflow review approved from the workflow step."
+      },
+      "processing": {
+        "agent_key": "processing",
+        "agent_name": "Processing Agent",
+        "description": "Execute the downstream cession processing logic and prepare settlement or population outcomes.",
+        "step_id": "process",
+        "step_label": "Process",
+        "sequence": 5,
+        "enabled": true,
+        "confidence_threshold": 0.87,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Processing results require review when confidence falls below the configured floor.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.94,
+        "execution_time_ms": 549974,
+        "started_at": "2026-05-18T11:32:15.017816Z",
+        "completed_at": "2026-05-18T11:41:24.991826Z",
+        "updated_at": "2026-05-18T11:41:24.991826Z",
+        "attempts": 2,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Records processed",
+            "value": 3
+          },
+          {
+            "label": "Worklist items",
+            "value": 1
+          },
+          {
+            "label": "Settlement ID",
+            "value": "SET-2026-Q1-044-026"
+          }
+        ],
+        "output_summary": "3 record(s) were processed for the mapped cession workflow.",
+        "state_message": "Processing completed automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "process",
+        "review_label": "Review processing",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "results": {
+        "agent_key": "results",
+        "agent_name": "Workflow Summary Agent",
+        "description": "Compile the workflow summary, business impact, and completion narrative for the run.",
+        "step_id": "summary",
+        "step_label": "Summary",
+        "sequence": 6,
+        "enabled": true,
+        "confidence_threshold": 0.8,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Results review is required when derived completion insights fall below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.92,
+        "execution_time_ms": 664774,
+        "started_at": "2026-05-18T11:32:22.947855Z",
+        "completed_at": "2026-05-18T11:43:27.722145Z",
+        "updated_at": "2026-05-18T11:43:27.722145Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Cedent",
+            "value": "Maple Leaf Pension Plan"
+          },
+          {
+            "label": "Period",
+            "value": "Q1 2026"
+          },
+          {
+            "label": "Records",
+            "value": 3
+          },
+          {
+            "label": "Settlement ID",
+            "value": "SET-2026-Q1-044-026"
+          }
+        ],
+        "output_summary": "Workflow summary was compiled for orchestration monitoring.",
+        "state_message": "Workflow summary was compiled and published to the workflow step.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "summary",
+        "review_label": "Open summary",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "sanction_screening": {
+        "agent_key": "sanction_screening",
+        "agent_name": "Sanction Screening Agent",
+        "description": "Assess counterparties against sanctions sources and pause for HITL review when required.",
+        "step_id": "screening",
+        "step_label": "Sanction Screening",
+        "sequence": 7,
+        "enabled": true,
+        "confidence_threshold": 0.92,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Escalate to compliance when sanctions screening remains below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.9,
+        "execution_time_ms": 179551,
+        "started_at": "2026-05-18T11:43:27.722145Z",
+        "completed_at": "2026-05-18T11:46:33.239522Z",
+        "updated_at": "2026-05-18T11:46:33.239522Z",
+        "attempts": 1,
+        "warnings": [
+          "Raw watchlist hit retained across OFAC. Top candidate: Northstar Pension Trust."
+        ],
+        "key_outputs": [
+          {
+            "label": "Screening ref",
+            "value": "SCR-2026-05-035"
+          },
+          {
+            "label": "Status",
+            "value": "Auto-Cleared"
+          },
+          {
+            "label": "Watchlists",
+            "value": "OFAC \u00b7 FinCEN"
+          }
+        ],
+        "output_summary": "Raw match found in OFAC",
+        "state_message": "Manual review completed and workflow resumed.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "screening",
+        "review_label": "Review sanction screening",
+        "review_url": "/compliance/sanctions/SCR-2026-05-035",
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "file_generation": {
+        "agent_key": "file_generation",
+        "agent_name": "File Generation Agent",
+        "description": "Generate downstream cession output files and package them for release.",
+        "step_id": "files",
+        "step_label": "Files",
+        "sequence": 8,
+        "enabled": true,
+        "confidence_threshold": 0.85,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Claims Ops review is required when downstream file generation is incomplete.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.97,
+        "execution_time_ms": 3653,
+        "started_at": "2026-05-18T11:46:33.239522Z",
+        "completed_at": "2026-05-18T11:46:36.893394Z",
+        "updated_at": "2026-05-18T11:46:36.893394Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Files generated",
+            "value": 2
+          },
+          {
+            "label": "SFTP release",
+            "value": "Published"
+          }
+        ],
+        "output_summary": "2 downstream file(s) were generated for release.",
+        "state_message": "Downstream files were generated and released automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "files",
+        "review_label": "Review files",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "worklist": {
+        "agent_key": "worklist",
+        "agent_name": "Worklist Agent",
+        "description": "Create and route all downstream worklist tasks created by the workflow.",
+        "step_id": "worklist",
+        "step_label": "Worklist",
+        "sequence": 9,
+        "enabled": true,
+        "confidence_threshold": 0.82,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Operations review is required if workflow routing confidence is below threshold.",
+        "retry_limit": 1,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.91,
+        "execution_time_ms": 3449,
+        "started_at": "2026-05-18T11:46:36.893394Z",
+        "completed_at": "2026-05-18T11:46:40.342681Z",
+        "updated_at": "2026-05-18T11:46:40.342681Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Tasks created",
+            "value": 2
+          },
+          {
+            "label": "Primary owner",
+            "value": "claims_ops"
+          }
+        ],
+        "output_summary": "2 downstream worklist task(s) were routed automatically.",
+        "state_message": "Downstream worklist routing completed automatically.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "worklist",
+        "review_label": "Open worklist",
+        "review_url": "/claims/settlements?settlement_id=SET-2026-Q1-044-026&q=SET-2026-Q1-044-026",
+        "error_message": null,
+        "manual_review_note": null
+      },
+      "audit": {
+        "agent_key": "audit",
+        "agent_name": "Audit Agent",
+        "description": "Finalize the workflow audit trail, approvals, overrides, retries, and completion traceability.",
+        "step_id": "audit",
+        "step_label": "Audit",
+        "sequence": 10,
+        "enabled": true,
+        "confidence_threshold": 0.95,
+        "hitl_behavior": "pause_for_approval",
+        "escalation_rule": "Administrative review is required when audit completeness falls below threshold.",
+        "retry_limit": 0,
+        "fallback_mode": "manual_review",
+        "status": "completed",
+        "confidence_score": 0.99,
+        "execution_time_ms": 3392,
+        "started_at": "2026-05-18T11:46:40.342681Z",
+        "completed_at": "2026-05-18T11:46:43.735496Z",
+        "updated_at": "2026-05-18T11:46:43.735496Z",
+        "attempts": 1,
+        "warnings": [],
+        "key_outputs": [
+          {
+            "label": "Audit events",
+            "value": 20
+          },
+          {
+            "label": "Completed at",
+            "value": "2026-05-18T11:46:43.676927Z"
+          }
+        ],
+        "output_summary": "Workflow audit trail was finalized for this cession file.",
+        "state_message": "Workflow audit was finalized and the cession workflow is complete.",
+        "hitl_required": false,
+        "awaiting_approval": false,
+        "review_step_id": "audit",
+        "review_label": "View audit",
+        "review_url": null,
+        "error_message": null,
+        "manual_review_note": null
+      }
+    },
+    "stage_log": [
+      {
+        "stage": "upload",
+        "status": "complete",
+        "timestamp": "2026-05-18T11:30:46.697901Z"
+      },
+      {
+        "stage": "detect",
+        "status": "complete",
+        "timestamp": "2026-05-18T11:30:47.019823Z"
+      },
+      {
+        "stage": "map_contract",
+        "status": "complete",
+        "timestamp": "2026-05-18T11:30:47.252820Z"
+      },
+      {
+        "stage": "clauses",
+        "status": "complete",
+        "timestamp": "2026-05-18T11:32:06.493030Z"
+      },
+      {
+        "stage": "validate",
+        "status": "complete",
+        "timestamp": "2026-05-18T11:31:02.257477Z"
+      },
+      {
+        "stage": "exceptions",
+        "status": "complete",
+        "timestamp": "2026-05-18T11:32:03.091890Z"
+      },
+      {
+        "stage": "process",
+        "status": "complete",
+        "timestamp": "2026-05-18T11:32:22.994168Z"
+      },
+      {
+        "stage": "summary",
+        "status": "in_progress",
+        "timestamp": "2026-05-18T11:32:22.637264Z"
+      },
+      {
+        "stage": "files",
+        "status": "complete",
+        "timestamp": "2026-05-18T11:46:36.706833Z"
+      },
+      {
+        "stage": "worklist",
+        "status": "in_progress",
+        "timestamp": "2026-05-18T11:46:36.740203Z"
+      }
+    ],
+    "settlement_report_artifacts": [
+      {
+        "artifact_id": "ces-2026-026-cash-settlements-tracker",
+        "settlement_id": "SET-2026-Q1-044-026",
+        "cession_file_id": "CES-2026-026",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "Cash Settlements Tracker",
+        "filename": "CES-2026-026_SET-2026-Q1-044-026_cash_settlements_tracker.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-026_SET-2026-Q1-044-026_cash_settlements_tracker.csv",
+        "generated_at": "2026-05-18T11:32:16.231696Z",
+        "source_filename": "Maple_Leaf_Q1_2026.csv",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": true,
+        "published_at": "2026-05-18T11:46:36.666605Z",
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ],
+        "download_url": "/claims/cession-files/CES-2026-026/settlement-artifacts/ces-2026-026-cash-settlements-tracker/download"
+      },
+      {
+        "artifact_id": "ces-2026-026-grdr-load-form",
+        "settlement_id": "SET-2026-Q1-044-026",
+        "cession_file_id": "CES-2026-026",
+        "contract_id": "LSC-2024-044",
+        "cedent": "Maple Leaf Pension Plan",
+        "period": "Q1 2026",
+        "report_type": "GRDR Load Form",
+        "filename": "CES-2026-026_SET-2026-Q1-044-026_grdr_load_form.csv",
+        "format": "csv",
+        "path": "generated_reports/settlements/CES-2026-026_SET-2026-Q1-044-026_grdr_load_form.csv",
+        "generated_at": "2026-05-18T11:32:16.231696Z",
+        "source_filename": "Maple_Leaf_Q1_2026.csv",
+        "reconciliation_decision": "accept",
+        "mismatch_count": 0,
+        "published": true,
+        "published_at": "2026-05-18T11:46:36.666605Z",
+        "roles_with_access": [
+          "claims_ops",
+          "admin",
+          "super_admin"
+        ],
+        "download_url": "/claims/cession-files/CES-2026-026/settlement-artifacts/ces-2026-026-grdr-load-form/download"
+      }
+    ],
+    "settlement_report_artifacts_pushed": true,
+    "settlement_report_artifacts_pushed_at": "2026-05-18T11:46:36.666605Z",
+    "settlement_processing_summary": {
+      "settlement_id": "SET-2026-Q1-044-026",
+      "settlement_display_id": "STL-2026-Q1-044-026",
+      "contract_id": "LSC-2024-044",
+      "contract_display_id": "LSC-2024-044",
+      "contract_name": "Maple Leaf Pension Plan Longevity Swap 2024",
+      "contract_version": "v1.1",
+      "cedent_id": "CED-1156",
+      "cedent_name": "Maple Leaf Pension Plan",
+      "period_label": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "fixed_leg_amount": 4117500.0,
+      "floating_leg_amount": 4142205.0,
+      "net_amount": 21905.0,
+      "currency": "CAD",
+      "direction": "reinsurer_to_cedant",
+      "payment_due_date": "2026-04-12",
+      "status": "pending_approval",
+      "iris_recommendation": "accept",
+      "source": "Created from Settlement file CES-2026-026; reconciled against baseline SET-2026-Q1-044; decision=accept",
+      "last_updated": "2026-05-18T11:32:16.231696Z",
+      "settlement_reconciliation": {
+        "settlement_id": "SET-2026-Q1-044",
+        "decision": "accept",
+        "calculation_period": "Q1 2026",
+        "period_start": "2026-01-01",
+        "period_end": "2026-03-31",
+        "payment_date": "2026-04-12",
+        "currency": "CAD",
+        "expected_source": "contract details performance",
+        "mock_expected": false,
+        "uploaded": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905,
+          "recomputed_net": 21905
+        },
+        "system": {
+          "fixed_leg": 4117500,
+          "floating_leg": 4142205,
+          "fee": 2800,
+          "interest_prior_period": 0,
+          "net_settlement_amount": 21905
+        },
+        "mismatches": [],
+        "incoming_row_count": 3
+      },
+      "baseline_settlement_id": "SET-2026-Q1-044",
+      "screening_ref": "SCR-2026-05-035",
+      "settlement_report_artifacts": [
+        {
+          "artifact_id": "ces-2026-026-cash-settlements-tracker",
+          "settlement_id": "SET-2026-Q1-044-026",
+          "cession_file_id": "CES-2026-026",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "Cash Settlements Tracker",
+          "filename": "CES-2026-026_SET-2026-Q1-044-026_cash_settlements_tracker.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-026_SET-2026-Q1-044-026_cash_settlements_tracker.csv",
+          "generated_at": "2026-05-18T11:32:16.231696Z",
+          "source_filename": "Maple_Leaf_Q1_2026.csv",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        },
+        {
+          "artifact_id": "ces-2026-026-grdr-load-form",
+          "settlement_id": "SET-2026-Q1-044-026",
+          "cession_file_id": "CES-2026-026",
+          "contract_id": "LSC-2024-044",
+          "cedent": "Maple Leaf Pension Plan",
+          "period": "Q1 2026",
+          "report_type": "GRDR Load Form",
+          "filename": "CES-2026-026_SET-2026-Q1-044-026_grdr_load_form.csv",
+          "format": "csv",
+          "path": "generated_reports/settlements/CES-2026-026_SET-2026-Q1-044-026_grdr_load_form.csv",
+          "generated_at": "2026-05-18T11:32:16.231696Z",
+          "source_filename": "Maple_Leaf_Q1_2026.csv",
+          "reconciliation_decision": "accept",
+          "mismatch_count": 0,
+          "published": false,
+          "published_at": null,
+          "roles_with_access": [
+            "claims_ops",
+            "admin",
+            "super_admin"
+          ]
+        }
+      ]
+    }
   }
 }

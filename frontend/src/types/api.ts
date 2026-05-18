@@ -1190,6 +1190,90 @@ export interface ClaimsPipelineStageLogItem {
   timestamp: string
 }
 
+export type ClaimsWorkflowAgentStatus = 'pending' | 'running' | 'completed' | 'awaiting_approval' | 'failed' | 'skipped'
+
+export interface ClaimsWorkflowKeyOutput {
+  label: string
+  value: string | number | null
+}
+
+export interface ClaimsWorkflowAgent {
+  key: string
+  agent_name: string
+  description: string
+  step_id: string
+  step_label: string
+  status: ClaimsWorkflowAgentStatus
+  enabled: boolean
+  attempts: number
+  confidence_score: number | null
+  confidence_threshold: number
+  hitl_behavior: string
+  escalation_rule: string
+  retry_limit: number
+  fallback_mode: string
+  execution_time_ms: number | null
+  started_at: string | null
+  completed_at: string | null
+  updated_at: string | null
+  warnings: string[]
+  key_outputs: ClaimsWorkflowKeyOutput[]
+  output_summary: string | null
+  state_message: string | null
+  hitl_required: boolean
+  awaiting_approval: boolean
+  review_step_id: string
+  review_label: string
+  review_url: string | null
+  approval_endpoint: string
+  error_message: string | null
+}
+
+export interface ClaimsWorkflowResultSummary {
+  title: string
+  status: string
+  success: boolean
+  message: string
+  detected_cedent: string
+  cedent_id: string | null
+  contract_id: string | null
+  reporting_period: string
+  processed_records_count: number
+  anomalies_detected: number
+  anomalies_resolved: number
+  sanctions_screening_outcome: string
+  generated_files: string[]
+  generated_files_count: number
+  worklist_items_count: number
+  settlement_readiness_status: string
+  completion_timestamp: string | null
+  audit_events_count: number
+  settlement_id: string | null
+  insight: string
+}
+
+export interface ClaimsWorkflowStepperItem {
+  stage: string
+  label: string
+  status: ClaimsWorkflowAgentStatus | 'completed'
+  timestamp: string
+}
+
+export interface ClaimsWorkflowPayload {
+  status: string
+  current_agent_key: string | null
+  current_step_id: string
+  started_at: string | null
+  updated_at: string | null
+  completed_at: string | null
+  paused_reason: string | null
+  final_message: string | null
+  pct_complete: number
+  stepper: ClaimsWorkflowStepperItem[]
+  agents: ClaimsWorkflowAgent[]
+  results: ClaimsWorkflowResultSummary
+}
+
 export interface ClaimsCessionDetailPayload {
   file_id: string
   filename: string
@@ -1211,6 +1295,7 @@ export interface ClaimsCessionDetailPayload {
   downstream_files: ClaimsDownstreamFilesPayload
   worklist: ClaimsWorklistPayload
   audit: ClaimsAuditPayload
+  workflow: ClaimsWorkflowPayload
 }
 
 export interface ClaimsUploadResponse {
@@ -2204,6 +2289,24 @@ export interface AdminLibraryUploadResponse {
   ref_id: string
   status: string
   data_type: string
+}
+
+export interface AdminWorkflowAgentRecord {
+  key: string
+  step_id: string
+  step_label: string
+  agent_name: string
+  description: string
+  enabled: boolean
+  confidence_threshold: number
+  hitl_behavior: string
+  escalation_rule: string
+  retry_limit: number
+  fallback_mode: string
+}
+
+export interface AdminWorkflowAgentsPayload {
+  items: AdminWorkflowAgentRecord[]
 }
 
 export interface AdminScreeningCacheSyncResponse {

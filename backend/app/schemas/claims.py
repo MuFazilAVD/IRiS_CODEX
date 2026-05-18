@@ -24,6 +24,10 @@ class ExceptionResolutionRequest(BaseModel):
     exception_resolutions: list[ExceptionResolutionItem]
 
 
+class WorkflowAgentApproveRequest(BaseModel):
+    notes: str | None = None
+
+
 class SettlementApproveRequest(BaseModel):
     notes: str | None = None
 

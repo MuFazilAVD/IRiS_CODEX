@@ -10,6 +10,7 @@ import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './pages/auth/LoginPage'
 import { ReferenceLibraryPage } from './pages/admin/library/ReferenceLibraryPage'
 import { AdminUsersPage } from './pages/admin/users/AdminUsersPage'
+import { AdminWorkflowAgentsPage } from './pages/admin/workflow-agents/AdminWorkflowAgentsPage'
 import { CalcEnginePage } from './pages/claims/calculation/CalcEnginePage'
 import { CessionFileProcessingPage } from './pages/claims/cession/CessionFileProcessingPage'
 import { CessionFilesPage } from './pages/claims/cession/CessionFilesPage'
@@ -196,6 +197,14 @@ export default function App() {
                 element={
                   <RoleGate roles={['admin', 'super_admin']}>
                     <ReferenceLibraryPage />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/admin/workflow-agents"
+                element={
+                  <RoleGate roles={['admin', 'super_admin']}>
+                    <AdminWorkflowAgentsPage />
                   </RoleGate>
                 }
               />

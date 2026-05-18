@@ -9,7 +9,7 @@ from app.database import get_db
 from app.dependencies import require_roles
 from app.models.user import User
 from app.repositories.admin_repository import AdminRepository
-from app.schemas.admin import AdminCreateUserRequest, AdminUpdateUserRequest
+from app.schemas.admin import AdminCreateUserRequest, AdminUpdateUserRequest, AdminWorkflowAgentUpdateRequest
 from app.services.admin_service import AdminService
 
 
@@ -62,6 +62,24 @@ def list_permissions(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     return get_service(db).list_permissions()
+
+
+@router.get("/workflow-agents")
+def list_workflow_agents(
+    _: User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    return get_service(db).list_workflow_agents()
+
+
+@router.patch("/workflow-agents/{agent_key}")
+def update_workflow_agent(
+    agent_key: str,
+    payload: AdminWorkflowAgentUpdateRequest,
+    current_user: User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    return get_service(db).update_workflow_agent(agent_key, payload.model_dump(exclude_none=True), current_user)
 
 
 @router.get("/approval-matrix")

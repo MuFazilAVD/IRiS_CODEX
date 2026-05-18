@@ -5,7 +5,9 @@ import io
 import json
 import logging
 import mimetypes
+import os
 import re
+import threading
 import uuid
 from collections import Counter
 from copy import deepcopy
@@ -42,6 +44,7 @@ from app.services.settlement_report_files import (
     publish_settlement_report_artifacts,
     read_settlement_report_artifact_file,
 )
+from app.workflow_agents import WORKFLOW_AGENT_DEFINITIONS, load_workflow_agent_configs_from_admin_state
 
 
 logger = logging.getLogger(__name__)
@@ -52,6 +55,8 @@ SETTLEMENT_OVERRIDES_FILE = Path(__file__).resolve().parent.parent / "mock_data"
 TESTCASE_DIRECTORY = Path(__file__).resolve().parents[2] / "testcases"
 CREATED_SETTLEMENTS_KEY = "__created_rows__"
 SETTLEMENT_EXPECTED_FALLBACKS_KEY = "__settlement_expected_fallbacks__"
+PIPELINE_OVERRIDES_LOCK = threading.RLock()
+SETTLEMENT_OVERRIDES_LOCK = threading.RLock()
 
 PIPELINE_STEPS = [
     "upload",
@@ -66,6 +71,23 @@ PIPELINE_STEPS = [
     "worklist",
     "audit",
 ]
+
+WORKFLOW_STEP_SEQUENCE = [
+    "upload",
+    "detect-map",
+    "validate",
+    "exceptions",
+    "clauses",
+    "process",
+    "summary",
+    "screening",
+    "files",
+    "worklist",
+    "audit",
+]
+
+WORKFLOW_AGENT_SEQUENCE = [definition["key"] for definition in WORKFLOW_AGENT_DEFINITIONS]
+_WORKFLOW_UNSET = object()
 
 FILE_TYPE_OPTIONS = [
     "Pension Status",
@@ -406,6 +428,13 @@ class ClaimsService:
                 "contract_override": None,
                 "audit_events": [upload_audit_event],
                 "stage_history": [{"stage": "uploaded", "completed_at": self._to_iso(now)}],
+                "workflow_state": self._build_workflow_state_patch(
+                    status="running",
+                    current_agent_key="mapping",
+                    started_at=now,
+                    updated_at=now,
+                ),
+                "agent_runs": self._build_initial_agent_runs(),
             },
         )
         self._persist_claims_audit_event(
@@ -432,6 +461,7 @@ class ClaimsService:
         logger.info("Loading cession file detail")
         logger.debug("Cession file detail file_id=%s", file_id)
         cession_file = self._get_cession_file_or_error(file_id)
+        cession_file = self._tick_agentic_workflow(cession_file)
         return self._build_file_detail(cession_file)
 
     def advance_pipeline_stage(self, file_id: str, stage: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -463,19 +493,89 @@ class ClaimsService:
         logger.info("Loading cession pipeline status")
         logger.debug("Cession pipeline status file_id=%s", file_id)
         cession_file = self._get_cession_file_or_error(file_id)
+        cession_file = self._tick_agentic_workflow(cession_file)
         detail = self._build_file_detail(cession_file)
-        current_step = detail["current_step"]
+        workflow = detail["workflow"]
         return {
             "file_id": cession_file.file_id,
-            "current_stage": current_step.replace("-", "_"),
-            "pct_complete": self._step_completion_pct(current_step, cession_file.stage),
-            "stage_log": self._build_stage_log(cession_file),
+            "current_stage": workflow["current_step_id"].replace("-", "_"),
+            "pct_complete": workflow["pct_complete"],
+            "stage_log": workflow["stepper"],
+        }
+
+    def approve_workflow_agent(self, file_id: str, agent_key: str, notes: str | None) -> dict[str, Any]:
+        logger.info("Approving workflow agent pause")
+        logger.debug("Workflow-agent approval file_id=%s agent_key=%s notes=%s", file_id, agent_key, notes)
+        cession_file = self._get_cession_file_or_error(file_id)
+        self._ensure_agentic_workflow_state(cession_file)
+        stored = self._get_override(cession_file.file_id)
+        agent_runs = self._normalize_agent_runs(stored.get("agent_runs"))
+        run = deepcopy(agent_runs.get(agent_key) or {})
+        if not run:
+            logger.error("Workflow-agent approval failed because agent_key=%s is unknown", agent_key)
+            raise IrisAPIError(404, "Workflow agent not found", "The requested workflow agent does not exist for this workflow")
+        if run.get("status") not in {"awaiting_approval", "failed"}:
+            logger.error("Workflow-agent approval rejected because agent_key=%s is not waiting for review", agent_key)
+            raise IrisAPIError(409, "Workflow agent not awaiting approval", "This workflow agent does not currently require review")
+        if agent_key == "resolution" and sum(self._count_unresolved_by_severity(cession_file).values()) > 0:
+            logger.error("Workflow-agent approval rejected because unresolved resolutions remain file_id=%s", file_id)
+            raise IrisAPIError(
+                409,
+                "Resolution review incomplete",
+                "Resolve or override the remaining anomaly items before resuming the workflow",
+            )
+
+        now = datetime.now(UTC)
+        if agent_key == "sanction_screening":
+            self._manually_clear_screening_hold(cession_file, notes, now)
+
+        run.update(
+            {
+                "status": "completed",
+                "completed_at": self._to_iso(now),
+                "execution_time_ms": run.get("execution_time_ms") or 0,
+                "hitl_required": True,
+                "awaiting_approval": False,
+                "state_message": "Manually approved and released to the next workflow agent.",
+                "manual_review_note": notes,
+            }
+        )
+        agent_runs[agent_key] = run
+        self._store_override(
+            cession_file.file_id,
+            {
+                "agent_runs": agent_runs,
+                "workflow_state": self._build_workflow_state_patch(
+                    status="running",
+                    current_agent_key=self._next_pending_agent_key(agent_runs),
+                    paused_reason=None,
+                    updated_at=now,
+                ),
+            },
+        )
+        self._append_audit_event(
+            cession_file.file_id,
+            {
+                "actor": "Claims Ops",
+                "type": "Human",
+                "action": f'Manually approved {run.get("agent_name") or agent_key}',
+                "detail": notes or "Workflow resumed after manual HITL approval.",
+                "timestamp": self._to_iso(now),
+            },
+        )
+        updated_file = self._tick_agentic_workflow(self._get_cession_file_or_error(file_id))
+        detail = self._build_file_detail(updated_file)
+        return {
+            "file_id": updated_file.file_id,
+            "stage": updated_file.stage,
+            "result": detail["workflow"],
         }
 
     def get_cession_file_summary(self, file_id: str) -> dict[str, Any]:
         logger.info("Loading cession file processing summary")
         logger.debug("Cession file summary file_id=%s", file_id)
         cession_file = self._get_cession_file_or_error(file_id)
+        cession_file = self._tick_agentic_workflow(cession_file)
         self._ensure_records_and_exceptions(cession_file)
         return self._build_summary_payload(cession_file)
 
@@ -688,11 +788,12 @@ class ClaimsService:
         settlement.notes = settlement_row.get("source", "Pipeline-created settlement")
         settlement.updated_at = datetime.now(UTC)
         self.repository.upsert_settlement(settlement)
-        store = self._read_settlement_override_store()
-        created_rows = deepcopy(store.get(CREATED_SETTLEMENTS_KEY, {}))
-        created_rows[settlement_id] = settlement_row
-        store[CREATED_SETTLEMENTS_KEY] = created_rows
-        self._write_settlement_override_store(store)
+        with SETTLEMENT_OVERRIDES_LOCK:
+            store = self._read_json_store_locked(SETTLEMENT_OVERRIDES_FILE, "claims settlement overrides")
+            created_rows = deepcopy(store.get(CREATED_SETTLEMENTS_KEY, {}))
+            created_rows[settlement_id] = settlement_row
+            store[CREATED_SETTLEMENTS_KEY] = created_rows
+            self._write_json_store_locked(SETTLEMENT_OVERRIDES_FILE, store)
         return self._get_settlement_or_error(settlement_id)
 
     def list_calculation_contracts(self) -> list[dict[str, Any]]:
@@ -1587,7 +1688,16 @@ class ClaimsService:
         downstream_files = self._build_downstream_files_payload(cession_file)
         worklist = self._build_worklist_payload(cession_file)
         audit = self._build_audit_payload(cession_file)
-        active_step = self._resolve_active_step(cession_file)
+        workflow = self._build_workflow_payload(
+            cession_file,
+            detection=detection,
+            mapping=mapping,
+            validation=validation,
+            summary=summary,
+            downstream_files=downstream_files,
+            worklist=worklist,
+            audit=audit,
+        )
 
         return {
             "file_id": cession_file.file_id,
@@ -1598,7 +1708,7 @@ class ClaimsService:
             "file_type": detection["file_type"],
             "records": cession_file.record_count or 0,
             "stage": cession_file.stage,
-            "current_step": active_step,
+            "current_step": workflow["current_step_id"],
             "stage_history": self._build_stage_history(cession_file),
             "detection": detection,
             "contract_mapping": mapping,
@@ -1610,6 +1720,7 @@ class ClaimsService:
             "downstream_files": downstream_files,
             "worklist": worklist,
             "audit": audit,
+            "workflow": workflow,
         }
 
     def _serialize_queue_item(self, cession_file: CessionFile) -> dict[str, Any]:
@@ -3773,11 +3884,12 @@ class ClaimsService:
         return str(value)
 
     def _store_mock_settlement_expectation(self, settlement_id: str, payload: dict[str, Any]) -> None:
-        store = self._read_settlement_override_store()
-        fallbacks = deepcopy(store.get(SETTLEMENT_EXPECTED_FALLBACKS_KEY, {}))
-        fallbacks[settlement_id] = payload
-        store[SETTLEMENT_EXPECTED_FALLBACKS_KEY] = fallbacks
-        self._write_settlement_override_store(store)
+        with SETTLEMENT_OVERRIDES_LOCK:
+            store = self._read_json_store_locked(SETTLEMENT_OVERRIDES_FILE, "claims settlement overrides")
+            fallbacks = deepcopy(store.get(SETTLEMENT_EXPECTED_FALLBACKS_KEY, {}))
+            fallbacks[settlement_id] = payload
+            store[SETTLEMENT_EXPECTED_FALLBACKS_KEY] = fallbacks
+            self._write_json_store_locked(SETTLEMENT_OVERRIDES_FILE, store)
 
     def _aliased_raw_value(self, raw_data: dict[str, str], field_name: str) -> str:
         for alias in COLUMN_ALIASES_BY_FIELD.get(field_name, (field_name,)):
@@ -4595,6 +4707,1298 @@ class ClaimsService:
         )
         created = self.repository.create_worklist_item(item)
         return [created]
+
+    def _workflow_agent_config_map(self) -> dict[str, dict[str, Any]]:
+        return {item["key"]: item for item in load_workflow_agent_configs_from_admin_state()}
+
+    def _workflow_definition_for_key(self, agent_key: str) -> dict[str, Any]:
+        for definition in WORKFLOW_AGENT_DEFINITIONS:
+            if definition["key"] == agent_key:
+                return definition
+        logger.error("Workflow definition lookup failed agent_key=%s", agent_key)
+        raise IrisAPIError(404, "Workflow agent not found", "The requested workflow agent is not configured")
+
+    def _workflow_step_id_for_agent(self, agent_key: str | None) -> str:
+        if not agent_key:
+            return "audit"
+        return self._workflow_definition_for_key(agent_key)["step_id"]
+
+    def _workflow_review_label(self, agent_key: str) -> str:
+        return {
+            "mapping": "Review detection & mapping",
+            "anomaly_detection": "Review anomalies",
+            "resolution": "Review resolutions",
+            "clause_validation": "Review clauses",
+            "processing": "Review processing",
+            "results": "Open summary",
+            "sanction_screening": "Review sanction screening",
+            "file_generation": "Review files",
+            "worklist": "Open worklist",
+            "audit": "View audit",
+        }.get(agent_key, "Review workflow step")
+
+    def _average_confidence(self, values: list[Any], default: float = 0.85) -> float:
+        numeric_values: list[float] = []
+        for value in values:
+            numeric_value = self._to_float(value)
+            if numeric_value is not None:
+                numeric_values.append(numeric_value)
+        if not numeric_values:
+            return round(default, 2)
+        return round(sum(numeric_values) / len(numeric_values), 2)
+
+    def _build_workflow_state_patch(
+        self,
+        *,
+        base: dict[str, Any] | None = None,
+        status: Any = _WORKFLOW_UNSET,
+        current_agent_key: Any = _WORKFLOW_UNSET,
+        paused_reason: Any = _WORKFLOW_UNSET,
+        started_at: Any = _WORKFLOW_UNSET,
+        updated_at: Any = _WORKFLOW_UNSET,
+        completed_at: Any = _WORKFLOW_UNSET,
+        final_message: Any = _WORKFLOW_UNSET,
+    ) -> dict[str, Any]:
+        patch = deepcopy(base or {})
+        updates = {
+            "status": status,
+            "current_agent_key": current_agent_key,
+            "paused_reason": paused_reason,
+            "started_at": started_at,
+            "updated_at": updated_at,
+            "completed_at": completed_at,
+            "final_message": final_message,
+        }
+        for key, value in updates.items():
+            if value is _WORKFLOW_UNSET:
+                continue
+            if key == "current_agent_key":
+                patch[key] = value
+                patch["current_step_id"] = self._workflow_step_id_for_agent(value)
+                continue
+            if isinstance(value, datetime):
+                patch[key] = self._to_iso(value)
+                continue
+            patch[key] = value
+
+        if "current_step_id" not in patch:
+            patch["current_step_id"] = self._workflow_step_id_for_agent(patch.get("current_agent_key"))
+        if "status" not in patch:
+            patch["status"] = "running"
+        return patch
+
+    def _build_initial_agent_runs(self) -> dict[str, dict[str, Any]]:
+        config_map = self._workflow_agent_config_map()
+        agent_runs: dict[str, dict[str, Any]] = {}
+        for index, definition in enumerate(WORKFLOW_AGENT_DEFINITIONS, start=1):
+            config = deepcopy(config_map.get(definition["key"]) or {})
+            agent_runs[definition["key"]] = {
+                "agent_key": definition["key"],
+                "agent_name": definition["agent_name"],
+                "description": definition["description"],
+                "step_id": definition["step_id"],
+                "step_label": definition["step_label"],
+                "sequence": index,
+                "enabled": bool(config.get("enabled", True)),
+                "confidence_threshold": self._to_float(config.get("confidence_threshold")) or float(definition["default_threshold"]),
+                "hitl_behavior": str(config.get("hitl_behavior") or "pause_for_approval"),
+                "escalation_rule": str(config.get("escalation_rule") or definition["default_escalation_rule"]),
+                "retry_limit": int(config.get("retry_limit", definition["default_retry_limit"])),
+                "fallback_mode": str(config.get("fallback_mode") or definition["default_fallback_mode"]),
+                "status": "pending",
+                "confidence_score": None,
+                "execution_time_ms": None,
+                "started_at": None,
+                "completed_at": None,
+                "updated_at": None,
+                "attempts": 0,
+                "warnings": [],
+                "key_outputs": [],
+                "output_summary": None,
+                "state_message": None,
+                "hitl_required": False,
+                "awaiting_approval": False,
+                "review_step_id": definition["step_id"],
+                "review_label": self._workflow_review_label(definition["key"]),
+                "review_url": None,
+                "error_message": None,
+                "manual_review_note": None,
+            }
+        return agent_runs
+
+    def _normalize_agent_runs(self, raw_agent_runs: Any) -> dict[str, dict[str, Any]]:
+        stored_map = raw_agent_runs if isinstance(raw_agent_runs, dict) else {}
+        normalized = self._build_initial_agent_runs()
+        for definition in WORKFLOW_AGENT_DEFINITIONS:
+            key = definition["key"]
+            candidate = stored_map.get(key) if isinstance(stored_map.get(key), dict) else {}
+            run = normalized[key]
+            run["status"] = str(candidate.get("status") or run["status"])
+            run["confidence_score"] = self._to_float(candidate.get("confidence_score"))
+            run["execution_time_ms"] = int(candidate["execution_time_ms"]) if str(candidate.get("execution_time_ms") or "").isdigit() else candidate.get("execution_time_ms")
+            run["started_at"] = candidate.get("started_at")
+            run["completed_at"] = candidate.get("completed_at")
+            run["updated_at"] = candidate.get("updated_at")
+            run["attempts"] = int(candidate.get("attempts") or 0)
+            run["warnings"] = [str(item) for item in (candidate.get("warnings") or []) if str(item).strip()]
+            run["key_outputs"] = [item for item in (candidate.get("key_outputs") or []) if isinstance(item, dict)]
+            run["output_summary"] = candidate.get("output_summary")
+            run["state_message"] = candidate.get("state_message")
+            run["hitl_required"] = bool(candidate.get("hitl_required", False))
+            run["awaiting_approval"] = bool(candidate.get("awaiting_approval", False))
+            run["review_step_id"] = str(candidate.get("review_step_id") or run["review_step_id"])
+            run["review_label"] = str(candidate.get("review_label") or run["review_label"])
+            run["review_url"] = candidate.get("review_url")
+            run["error_message"] = candidate.get("error_message")
+            run["manual_review_note"] = candidate.get("manual_review_note")
+        return normalized
+
+    def _mark_bootstrap_agent_completed(
+        self,
+        run: dict[str, Any],
+        timestamp: datetime,
+        *,
+        confidence_score: float,
+        note: str,
+    ) -> None:
+        iso_timestamp = self._to_iso(timestamp)
+        run.update(
+            {
+                "status": "completed",
+                "confidence_score": round(confidence_score, 2),
+                "started_at": run.get("started_at") or iso_timestamp,
+                "completed_at": iso_timestamp,
+                "updated_at": iso_timestamp,
+                "output_summary": run.get("output_summary") or note,
+                "state_message": note,
+                "hitl_required": False,
+                "awaiting_approval": False,
+                "error_message": None,
+            }
+        )
+
+    def _mark_bootstrap_agent_skipped(self, run: dict[str, Any], timestamp: datetime, *, note: str) -> None:
+        iso_timestamp = self._to_iso(timestamp)
+        run.update(
+            {
+                "status": "skipped",
+                "started_at": run.get("started_at") or iso_timestamp,
+                "completed_at": iso_timestamp,
+                "updated_at": iso_timestamp,
+                "output_summary": run.get("output_summary") or note,
+                "state_message": note,
+                "hitl_required": False,
+                "awaiting_approval": False,
+                "error_message": None,
+            }
+        )
+
+    def _ensure_agentic_workflow_state(self, cession_file: CessionFile) -> None:
+        stored = self._get_override(cession_file.file_id)
+        agent_runs = self._normalize_agent_runs(stored.get("agent_runs"))
+        workflow_state = deepcopy(stored.get("workflow_state") or {})
+
+        if not workflow_state:
+            workflow_state = self._bootstrap_agent_runs_from_file_state(cession_file, agent_runs)
+            self._store_override(
+                cession_file.file_id,
+                {
+                    "agent_runs": agent_runs,
+                    "workflow_state": workflow_state,
+                },
+            )
+            return
+
+        current_agent_key = workflow_state.get("current_agent_key")
+        if current_agent_key not in agent_runs or agent_runs.get(current_agent_key, {}).get("status") in {"completed", "skipped"}:
+            current_agent_key = self._next_pending_agent_key(agent_runs)
+
+        if current_agent_key is None:
+            status = "completed"
+        else:
+            current_status = agent_runs[current_agent_key]["status"]
+            if current_status == "awaiting_approval":
+                status = "awaiting_approval"
+            elif current_status == "failed":
+                status = "failed"
+            else:
+                status = "running"
+
+        normalized_state = self._build_workflow_state_patch(
+            base=workflow_state,
+            status=status,
+            current_agent_key=current_agent_key,
+        )
+        self._store_override(
+            cession_file.file_id,
+            {
+                "agent_runs": agent_runs,
+                "workflow_state": normalized_state,
+            },
+        )
+
+    def _bootstrap_agent_runs_from_file_state(
+        self,
+        cession_file: CessionFile,
+        agent_runs: dict[str, dict[str, Any]],
+    ) -> dict[str, Any]:
+        stored = self._get_override(cession_file.file_id)
+        stage = str(cession_file.stage or "uploaded").strip().lower()
+        timestamp = cession_file.updated_at or cession_file.received_at or datetime.now(UTC)
+        stage_history = stored.get("stage_history") or []
+        stage_names = {
+            str(item.get("stage") or "").strip().lower()
+            for item in stage_history
+            if isinstance(item, dict)
+        }
+
+        if stage != "uploaded" or cession_file.file_type or cession_file.contract_id:
+            try:
+                detection = self._build_detection_payload(cession_file)
+                mapping = self._build_contract_mapping_payload(cession_file)
+                mapping_confidence = self._average_confidence(
+                    [
+                        detection.get("file_type_confidence"),
+                        detection.get("cedent_confidence"),
+                        mapping.get("confidence"),
+                    ],
+                    default=0.9,
+                )
+            except IrisAPIError:
+                mapping_confidence = 0.9
+            self._mark_bootstrap_agent_completed(
+                agent_runs["mapping"],
+                timestamp,
+                confidence_score=mapping_confidence,
+                note="Existing detection and contract mapping were loaded into the workflow.",
+            )
+
+        has_validation_context = stage in {"validated", "exceptions", "processing", "processed", "approved"}
+        record_rows = self.repository.list_file_records(cession_file.id)
+        exception_rows = self.repository.list_file_exceptions(cession_file.id)
+        if record_rows or exception_rows:
+            has_validation_context = True
+
+        unresolved_counts = self._count_unresolved_by_severity(cession_file) if has_validation_context else {"critical": 0, "warning": 0, "info": 0}
+        unresolved_total = sum(unresolved_counts.values())
+
+        if has_validation_context:
+            try:
+                validation = self._build_validation_payload(cession_file)
+                validation_confidence = self._average_confidence(
+                    [issue.get("ai_confidence") for issue in validation.get("issues") or []],
+                    default=0.96 if not validation.get("issues") else 0.85,
+                )
+            except IrisAPIError:
+                validation_confidence = 0.85
+            self._mark_bootstrap_agent_completed(
+                agent_runs["anomaly_detection"],
+                timestamp,
+                confidence_score=validation_confidence,
+                note="Existing anomaly detection findings were loaded into the workflow.",
+            )
+
+        if has_validation_context and unresolved_total == 0 and stage in {"validated", "processing", "processed", "approved"}:
+            self._mark_bootstrap_agent_completed(
+                agent_runs["resolution"],
+                timestamp,
+                confidence_score=0.96,
+                note="All anomaly resolutions were already completed for this workflow.",
+            )
+        elif unresolved_total > 0 and stage == "exceptions":
+            agent_runs["resolution"].update(
+                {
+                    "status": "awaiting_approval",
+                    "updated_at": self._to_iso(timestamp),
+                    "state_message": f"{unresolved_total} unresolved anomaly action(s) still require manual review.",
+                    "hitl_required": True,
+                    "awaiting_approval": True,
+                }
+            )
+
+        has_clause_context = stage in {"clauses", "validated", "exceptions", "processing", "processed", "approved"} or "clauses" in stage_names
+        if has_clause_context:
+            try:
+                clauses = self._build_clauses_payload(cession_file)
+                total_clauses = max(len(clauses.get("clauses_checked") or []), 1)
+                clause_confidence = round(max(0.78, 0.97 - (clauses.get("flagged_count", 0) / total_clauses) * 0.12), 2)
+            except IrisAPIError:
+                clause_confidence = 0.86
+            self._mark_bootstrap_agent_completed(
+                agent_runs["clause_validation"],
+                timestamp,
+                confidence_score=clause_confidence,
+                note="Existing clause validation results were loaded into the workflow.",
+            )
+
+        if stage in {"processed", "approved"}:
+            summary = self._build_summary_payload(cession_file)
+            processing_confidence = 0.94
+            if (summary.get("settlement_reconciliation") or {}).get("decision") == "review":
+                processing_confidence = 0.8
+            self._mark_bootstrap_agent_completed(
+                agent_runs["processing"],
+                timestamp,
+                confidence_score=processing_confidence,
+                note="Existing downstream processing outputs were loaded into the workflow.",
+            )
+            self._mark_bootstrap_agent_completed(
+                agent_runs["results"],
+                timestamp,
+                confidence_score=0.92,
+                note="Existing workflow results were loaded into the orchestration view.",
+            )
+
+            screening_summary = self._build_cession_file_screening_summary(cession_file)
+            if screening_summary:
+                screening_confidence = round((screening_summary.get("confidence_pct") or 95) / 100, 2)
+                if self._screening_workflow_status(screening_summary) == "auto_cleared":
+                    self._mark_bootstrap_agent_completed(
+                        agent_runs["sanction_screening"],
+                        timestamp,
+                        confidence_score=screening_confidence,
+                        note="Existing sanctions screening output was loaded into the workflow.",
+                    )
+                else:
+                    agent_runs["sanction_screening"].update(
+                        {
+                            "status": "awaiting_approval",
+                            "confidence_score": screening_confidence,
+                            "updated_at": self._to_iso(timestamp),
+                            "state_message": "Sanctions screening still requires manual review.",
+                            "hitl_required": True,
+                            "awaiting_approval": True,
+                        }
+                    )
+            else:
+                self._mark_bootstrap_agent_skipped(
+                    agent_runs["sanction_screening"],
+                    timestamp,
+                    note="No sanctions screening case is linked to this workflow.",
+                )
+
+            downstream_files = self._build_downstream_files_payload(cession_file)
+            if downstream_files.get("items") and downstream_files.get("pushed"):
+                self._mark_bootstrap_agent_completed(
+                    agent_runs["file_generation"],
+                    timestamp,
+                    confidence_score=0.97,
+                    note="Downstream file generation was already completed for this workflow.",
+                )
+            elif not downstream_files.get("items"):
+                self._mark_bootstrap_agent_skipped(
+                    agent_runs["file_generation"],
+                    timestamp,
+                    note="No downstream files were required for this workflow.",
+                )
+
+            worklist = self._build_worklist_payload(cession_file)
+            if worklist.get("items"):
+                self._mark_bootstrap_agent_completed(
+                    agent_runs["worklist"],
+                    timestamp,
+                    confidence_score=0.91,
+                    note="Existing worklist routing was loaded into the workflow.",
+                )
+            elif downstream_files.get("items") and downstream_files.get("pushed"):
+                self._mark_bootstrap_agent_skipped(
+                    agent_runs["worklist"],
+                    timestamp,
+                    note="No downstream worklist tasks were required for this workflow.",
+                )
+
+        if stage == "approved":
+            self._mark_bootstrap_agent_completed(
+                agent_runs["audit"],
+                timestamp,
+                confidence_score=0.99,
+                note="Workflow audit completion was loaded from the current approved state.",
+            )
+
+        current_agent_key = self._next_pending_agent_key(agent_runs)
+        workflow_status = "running"
+        if current_agent_key is None:
+            workflow_status = "completed"
+        elif agent_runs[current_agent_key]["status"] == "awaiting_approval":
+            workflow_status = "awaiting_approval"
+        elif agent_runs[current_agent_key]["status"] == "failed":
+            workflow_status = "failed"
+
+        return self._build_workflow_state_patch(
+            status=workflow_status,
+            current_agent_key=current_agent_key,
+            started_at=cession_file.received_at or timestamp,
+            updated_at=timestamp,
+            completed_at=timestamp if workflow_status == "completed" else None,
+            final_message=self._workflow_completion_message(cession_file) if workflow_status == "completed" else None,
+        )
+
+    def _tick_agentic_workflow(self, cession_file: CessionFile) -> CessionFile:
+        self._ensure_agentic_workflow_state(cession_file)
+        stored = self._get_override(cession_file.file_id)
+        agent_runs = self._normalize_agent_runs(stored.get("agent_runs"))
+        workflow_state = deepcopy(stored.get("workflow_state") or {})
+
+        current_agent_key = workflow_state.get("current_agent_key") or self._next_pending_agent_key(agent_runs)
+        if current_agent_key is None:
+            if workflow_state.get("status") != "completed":
+                now = datetime.now(UTC)
+                self._store_override(
+                    cession_file.file_id,
+                    {
+                        "workflow_state": self._build_workflow_state_patch(
+                            base=workflow_state,
+                            status="completed",
+                            current_agent_key=None,
+                            updated_at=now,
+                            completed_at=now,
+                            final_message=self._workflow_completion_message(cession_file),
+                        ),
+                    },
+                )
+            return self._get_cession_file_or_error(cession_file.file_id)
+
+        current_run = deepcopy(agent_runs[current_agent_key])
+        if current_run["status"] in {"awaiting_approval", "failed"}:
+            if not self._workflow_ready_to_resume(cession_file, current_agent_key, current_run):
+                return cession_file
+
+            now = datetime.now(UTC)
+            current_run.update(
+                {
+                    "status": "completed",
+                    "completed_at": self._to_iso(now),
+                    "updated_at": self._to_iso(now),
+                    "hitl_required": False,
+                    "awaiting_approval": False,
+                    "error_message": None,
+                    "state_message": current_run.get("manual_review_note") or "Manual review completed and workflow resumed.",
+                }
+            )
+            agent_runs[current_agent_key] = current_run
+            next_agent_key = self._next_pending_agent_key(agent_runs)
+            if next_agent_key and agent_runs[next_agent_key]["status"] == "pending":
+                agent_runs[next_agent_key]["status"] = "running"
+                agent_runs[next_agent_key]["started_at"] = agent_runs[next_agent_key].get("started_at") or self._to_iso(now)
+                agent_runs[next_agent_key]["updated_at"] = self._to_iso(now)
+            self._store_override(
+                cession_file.file_id,
+                {
+                    "agent_runs": agent_runs,
+                    "workflow_state": self._build_workflow_state_patch(
+                        base=workflow_state,
+                        status="completed" if next_agent_key is None else "running",
+                        current_agent_key=next_agent_key,
+                        paused_reason=None,
+                        updated_at=now,
+                        completed_at=now if next_agent_key is None else None,
+                        final_message=self._workflow_completion_message(cession_file) if next_agent_key is None else None,
+                    ),
+                },
+            )
+            return self._get_cession_file_or_error(cession_file.file_id)
+
+        if current_run["status"] == "pending":
+            now = datetime.now(UTC)
+            current_run["status"] = "running"
+            current_run["started_at"] = current_run.get("started_at") or self._to_iso(now)
+            current_run["updated_at"] = self._to_iso(now)
+            agent_runs[current_agent_key] = current_run
+            self._store_override(cession_file.file_id, {"agent_runs": agent_runs})
+
+        return self._execute_workflow_agent(cession_file, current_agent_key, agent_runs, workflow_state)
+
+    def _execute_workflow_agent(
+        self,
+        cession_file: CessionFile,
+        agent_key: str,
+        agent_runs: dict[str, dict[str, Any]],
+        workflow_state: dict[str, Any],
+    ) -> CessionFile:
+        run = deepcopy(agent_runs[agent_key])
+        now = datetime.now(UTC)
+        started_at = now
+        if isinstance(run.get("started_at"), str) and run["started_at"]:
+            try:
+                started_at = self._parse_claims_audit_timestamp(run["started_at"])
+            except ValueError:
+                started_at = now
+        run["attempts"] = int(run.get("attempts") or 0) + 1
+
+        try:
+            result = {
+                "mapping": self._mapping_agent_execution,
+                "anomaly_detection": self._anomaly_detection_agent_execution,
+                "resolution": self._resolution_agent_execution,
+                "clause_validation": self._clause_validation_agent_execution,
+                "processing": self._processing_agent_execution,
+                "results": self._results_agent_execution,
+                "sanction_screening": self._sanction_screening_agent_execution,
+                "file_generation": self._file_generation_agent_execution,
+                "worklist": self._worklist_agent_execution,
+                "audit": self._audit_agent_execution,
+            }[agent_key](cession_file, run)
+            refreshed_file = self._get_cession_file_or_error(cession_file.file_id)
+            completed_at = datetime.now(UTC)
+            execution_ms = max(int((completed_at - started_at).total_seconds() * 1000), 0)
+            confidence_score = self._to_float(result.get("confidence_score"))
+            threshold = self._to_float(run.get("confidence_threshold")) or 0.9
+            enabled = bool(run.get("enabled", True))
+            applicable = bool(result.get("applicable", True))
+            requires_hitl = bool(result.get("requires_hitl", False))
+
+            if not enabled or not applicable:
+                final_status = "skipped"
+                state_message = result.get("state_message") or (
+                    "Agent disabled by Administration. Workflow advanced using the configured fallback."
+                    if not enabled
+                    else "This workflow step was not required for the current file."
+                )
+            elif confidence_score is not None and confidence_score < threshold:
+                final_status = "awaiting_approval"
+                requires_hitl = True
+                state_message = result.get("state_message") or (
+                    f'{run["agent_name"]} confidence {int(confidence_score * 100)}% is below the configured threshold.'
+                )
+            elif requires_hitl:
+                final_status = "awaiting_approval"
+                state_message = result.get("state_message") or "Manual review is required before the workflow can continue."
+            else:
+                final_status = "completed"
+                state_message = result.get("state_message") or "Workflow agent completed successfully."
+
+            run.update(
+                {
+                    "status": final_status,
+                    "confidence_score": confidence_score,
+                    "execution_time_ms": execution_ms,
+                    "updated_at": self._to_iso(completed_at),
+                    "completed_at": self._to_iso(completed_at) if final_status in {"completed", "skipped"} else run.get("completed_at"),
+                    "warnings": [str(item) for item in (result.get("warnings") or []) if str(item).strip()],
+                    "key_outputs": [item for item in (result.get("key_outputs") or []) if isinstance(item, dict)],
+                    "output_summary": result.get("output_summary"),
+                    "state_message": state_message,
+                    "hitl_required": bool(requires_hitl),
+                    "awaiting_approval": final_status == "awaiting_approval",
+                    "review_step_id": str(result.get("review_step_id") or run["step_id"]),
+                    "review_label": str(result.get("review_label") or run["review_label"]),
+                    "review_url": result.get("review_url"),
+                    "error_message": None,
+                }
+            )
+            agent_runs[agent_key] = run
+
+            if final_status in {"completed", "skipped"}:
+                next_agent_key = self._next_pending_agent_key(agent_runs)
+                if next_agent_key and agent_runs[next_agent_key]["status"] == "pending":
+                    agent_runs[next_agent_key]["status"] = "running"
+                    agent_runs[next_agent_key]["started_at"] = agent_runs[next_agent_key].get("started_at") or self._to_iso(completed_at)
+                    agent_runs[next_agent_key]["updated_at"] = self._to_iso(completed_at)
+                workflow_status = "completed" if next_agent_key is None else "running"
+                paused_reason = None
+                final_message = self._workflow_completion_message(refreshed_file) if next_agent_key is None else None
+                completed_marker = completed_at if next_agent_key is None else None
+            elif final_status == "failed":
+                next_agent_key = agent_key
+                workflow_status = "failed"
+                paused_reason = run.get("state_message")
+                final_message = None
+                completed_marker = None
+            else:
+                next_agent_key = agent_key
+                workflow_status = "awaiting_approval"
+                paused_reason = run.get("state_message")
+                final_message = None
+                completed_marker = None
+
+            self._store_override(
+                cession_file.file_id,
+                {
+                    "agent_runs": agent_runs,
+                    "workflow_state": self._build_workflow_state_patch(
+                        base=workflow_state,
+                        status=workflow_status,
+                        current_agent_key=next_agent_key,
+                        paused_reason=paused_reason,
+                        updated_at=completed_at,
+                        completed_at=completed_marker,
+                        final_message=final_message,
+                    ),
+                },
+            )
+            self._append_audit_event(
+                cession_file.file_id,
+                {
+                    "actor": run["agent_name"],
+                    "type": "AI Agent",
+                    "action": f'{run["agent_name"]} {final_status.replace("_", " ")}',
+                    "detail": (
+                        f'{run.get("output_summary") or run.get("state_message") or "No additional detail."} '
+                        f'Confidence: {int((confidence_score or 0) * 100)}% / threshold {int(threshold * 100)}%.'
+                    ),
+                    "timestamp": self._to_iso(completed_at),
+                },
+            )
+            return refreshed_file
+        except Exception as exc:
+            logger.error("Workflow agent execution failed file_id=%s agent_key=%s error=%s", cession_file.file_id, agent_key, exc)
+            completed_at = datetime.now(UTC)
+            execution_ms = max(int((completed_at - started_at).total_seconds() * 1000), 0)
+            retry_limit = int(run.get("retry_limit") or 0)
+            fallback_mode = str(run.get("fallback_mode") or "manual_review")
+            if run["attempts"] <= retry_limit:
+                run.update(
+                    {
+                        "status": "pending",
+                        "execution_time_ms": execution_ms,
+                        "updated_at": self._to_iso(completed_at),
+                        "state_message": f"Retry scheduled after failure ({run['attempts']}/{retry_limit}).",
+                        "error_message": str(exc),
+                        "hitl_required": False,
+                        "awaiting_approval": False,
+                    }
+                )
+                next_agent_key = agent_key
+                workflow_status = "running"
+                paused_reason = None
+            elif fallback_mode == "skip_step":
+                run.update(
+                    {
+                        "status": "skipped",
+                        "execution_time_ms": execution_ms,
+                        "updated_at": self._to_iso(completed_at),
+                        "completed_at": self._to_iso(completed_at),
+                        "state_message": "Execution failed and the configured fallback skipped this workflow step.",
+                        "error_message": str(exc),
+                        "hitl_required": False,
+                        "awaiting_approval": False,
+                    }
+                )
+                next_agent_key = self._next_pending_agent_key({**agent_runs, agent_key: run})
+                workflow_status = "completed" if next_agent_key is None else "running"
+                paused_reason = None
+            else:
+                run.update(
+                    {
+                        "status": "failed",
+                        "execution_time_ms": execution_ms,
+                        "updated_at": self._to_iso(completed_at),
+                        "state_message": str(exc),
+                        "error_message": str(exc),
+                        "hitl_required": True,
+                        "awaiting_approval": True,
+                    }
+                )
+                next_agent_key = agent_key
+                workflow_status = "failed"
+                paused_reason = str(exc)
+
+            agent_runs[agent_key] = run
+            self._store_override(
+                cession_file.file_id,
+                {
+                    "agent_runs": agent_runs,
+                    "workflow_state": self._build_workflow_state_patch(
+                        base=workflow_state,
+                        status=workflow_status,
+                        current_agent_key=next_agent_key,
+                        paused_reason=paused_reason,
+                        updated_at=completed_at,
+                        completed_at=completed_at if workflow_status == "completed" else None,
+                        final_message=self._workflow_completion_message(cession_file) if workflow_status == "completed" else None,
+                    ),
+                },
+            )
+            self._append_audit_event(
+                cession_file.file_id,
+                {
+                    "actor": run["agent_name"],
+                    "type": "AI Agent",
+                    "action": f'{run["agent_name"]} failed',
+                    "detail": str(exc),
+                    "timestamp": self._to_iso(completed_at),
+                },
+            )
+            return self._get_cession_file_or_error(cession_file.file_id)
+
+    def _mapping_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        stored = self._get_override(cession_file.file_id)
+        manual_file_type = stored.get("manual_file_type")
+        manual_cedent_id = stored.get("manual_cedent_id")
+        manual_contract_id = stored.get("manual_contract_id")
+
+        if cession_file.stage == "uploaded":
+            self._handle_detect(
+                cession_file,
+                {
+                    "override_file_type": manual_file_type,
+                    "override_cedent_id": manual_cedent_id,
+                },
+            )
+            cession_file = self._get_cession_file_or_error(cession_file.file_id)
+        if cession_file.stage in {"uploaded", "detected"} or not cession_file.contract_id:
+            self._handle_map_contract(cession_file, {"override_contract_id": manual_contract_id})
+            cession_file = self._get_cession_file_or_error(cession_file.file_id)
+
+        detection = self._build_detection_payload(cession_file)
+        mapping = self._build_contract_mapping_payload(cession_file)
+        confidence_score = self._average_confidence(
+            [
+                detection.get("file_type_confidence"),
+                detection.get("cedent_confidence"),
+                mapping.get("confidence"),
+            ],
+            default=0.9,
+        )
+        warnings: list[str] = []
+        if manual_file_type:
+            warnings.append(f'Manual file type override "{manual_file_type}" was supplied at upload.')
+        if manual_contract_id:
+            warnings.append(f'Manual contract selection "{manual_contract_id}" was supplied at upload.')
+        return {
+            "confidence_score": confidence_score,
+            "output_summary": (
+                f'Detected {detection["file_type"]} for {detection["cedent"]} and mapped {mapping["contract_id"]}.'
+            ),
+            "key_outputs": [
+                {"label": "File type", "value": detection["file_type"]},
+                {"label": "Cedent", "value": detection["cedent"]},
+                {"label": "Contract", "value": mapping["contract_id"]},
+                {"label": "Period", "value": mapping["period"]},
+            ],
+            "warnings": warnings,
+            "state_message": "Upload was classified and mapped automatically.",
+            "review_step_id": "detect-map",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+        }
+
+    def _anomaly_detection_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        if cession_file.stage not in {"processed", "approved"}:
+            self._handle_validate(cession_file)
+            cession_file = self._get_cession_file_or_error(cession_file.file_id)
+
+        validation = self._build_validation_payload(cession_file)
+        issues = validation.get("issues") or []
+        confidence_score = self._average_confidence(
+            [issue.get("ai_confidence") for issue in issues],
+            default=0.99 if not issues else 0.85,
+        )
+        warnings: list[str] = []
+        if validation.get("critical_errors"):
+            warnings.append(f'{validation["critical_errors"]} critical anomaly finding(s) were detected.')
+        return {
+            "confidence_score": confidence_score,
+            "output_summary": (
+                f'{validation["critical_errors"]} critical, {validation["warnings"]} warning, '
+                f'{validation["informational"]} informational anomaly finding(s) identified.'
+            ),
+            "key_outputs": [
+                {"label": "Records", "value": validation["records"]},
+                {"label": "Critical", "value": validation["critical_errors"]},
+                {"label": "Warnings", "value": validation["warnings"]},
+                {"label": "Informational", "value": validation["informational"]},
+            ],
+            "warnings": warnings,
+            "state_message": "Anomaly detection completed and the workflow can continue.",
+            "review_step_id": "validate",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+        }
+
+    def _resolution_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        exceptions = [
+            item
+            for item in self.repository.list_file_exceptions(cession_file.id)
+            if item.resolution not in {"accepted", "overridden", "rejected"}
+        ]
+        if not exceptions:
+            return {
+                "applicable": False,
+                "confidence_score": 0.99,
+                "output_summary": "No anomaly resolutions were required for this workflow.",
+                "key_outputs": [{"label": "Pending resolutions", "value": 0}],
+                "warnings": [],
+                "state_message": "The workflow did not require a resolution review stage.",
+                "review_step_id": "exceptions",
+                "review_label": self._workflow_review_label(run["agent_key"]),
+            }
+
+        threshold = self._to_float(run.get("confidence_threshold")) or 0.9
+        auto_actions: list[dict[str, Any]] = []
+        auto_confidences: list[float] = []
+        for exception in exceptions:
+            ai_confidence = self._to_float(exception.ai_confidence)
+            if exception.issue_type == "missing_active_member":
+                continue
+            if exception.ai_suggestion and ai_confidence is not None and ai_confidence >= threshold:
+                auto_actions.append({"exception_id": exception.id, "resolution": "accepted"})
+                auto_confidences.append(ai_confidence)
+
+        if auto_actions:
+            self._handle_process_exceptions(cession_file, {"exception_resolutions": auto_actions})
+            cession_file = self._get_cession_file_or_error(cession_file.file_id)
+
+        pending = [
+            item
+            for item in self.repository.list_file_exceptions(cession_file.id)
+            if item.resolution not in {"accepted", "overridden", "rejected"}
+        ]
+        resolved_count = len(auto_actions)
+        pending_count = len(pending)
+        confidence_values = auto_confidences or [self._to_float(item.ai_confidence) or 0.72 for item in exceptions]
+        confidence_score = self._average_confidence(confidence_values, default=0.74)
+        if pending_count > 0 and confidence_score >= threshold:
+            confidence_score = round(max(threshold - 0.05, 0.0), 2)
+
+        warnings: list[str] = []
+        if pending_count > 0:
+            warnings.append(f"{pending_count} anomaly resolution(s) still require human review.")
+
+        return {
+            "confidence_score": confidence_score,
+            "requires_hitl": pending_count > 0,
+            "output_summary": (
+                f"IRiS auto-applied {resolved_count} resolution(s); {pending_count} item(s) remain pending review."
+            ),
+            "key_outputs": [
+                {"label": "Auto-resolved", "value": resolved_count},
+                {"label": "Pending review", "value": pending_count},
+            ],
+            "warnings": warnings,
+            "state_message": (
+                "Human approval is required for the remaining low-confidence or unsupported anomaly resolutions."
+                if pending_count > 0
+                else "All anomaly resolutions were applied automatically."
+            ),
+            "review_step_id": "exceptions",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+        }
+
+    def _clause_validation_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        self._handle_clauses(cession_file)
+        cession_file = self._get_cession_file_or_error(cession_file.file_id)
+        clauses = self._build_clauses_payload(cession_file)
+        checked = clauses.get("clauses_checked") or []
+        flagged_count = int(clauses.get("flagged_count") or 0)
+        total_clauses = max(len(checked), 1)
+        confidence_score = round(max(0.78, 0.97 - (flagged_count / total_clauses) * 0.12), 2)
+        warnings = [f"{flagged_count} clause control(s) were flagged for review."] if flagged_count else []
+        return {
+            "confidence_score": confidence_score,
+            "output_summary": f'{len(checked)} clause control(s) were checked and {flagged_count} were flagged.',
+            "key_outputs": [
+                {"label": "Clauses checked", "value": len(checked)},
+                {"label": "Flagged", "value": flagged_count},
+            ],
+            "warnings": warnings,
+            "state_message": "Clause validation completed automatically.",
+            "review_step_id": "clauses",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+        }
+
+    def _processing_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        if cession_file.stage not in {"processed", "approved"}:
+            self._handle_process(cession_file)
+            cession_file = self._get_cession_file_or_error(cession_file.file_id)
+
+        summary = self._build_summary_payload(cession_file)
+        reconciliation = summary.get("settlement_reconciliation") or {}
+        confidence_score = 0.94
+        warnings: list[str] = []
+        requires_hitl = False
+        if reconciliation.get("decision") == "review":
+            confidence_score = 0.8
+            requires_hitl = True
+            warnings.append("Settlement reconciliation requires manual review before release.")
+        return {
+            "confidence_score": confidence_score,
+            "requires_hitl": requires_hitl,
+            "output_summary": f'{summary["records_processed"]} record(s) were processed for the mapped cession workflow.',
+            "key_outputs": [
+                {"label": "Records processed", "value": summary["records_processed"]},
+                {"label": "Worklist items", "value": summary["worklist_items_created"]},
+                {
+                    "label": "Settlement ID",
+                    "value": (summary.get("settlement_impact") or {}).get("settlement_id_created") or "N/A",
+                },
+            ],
+            "warnings": warnings,
+            "state_message": (
+                "Processing completed, but the settlement reconciliation outcome still requires manual review."
+                if requires_hitl
+                else "Processing completed automatically."
+            ),
+            "review_step_id": "process",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+        }
+
+    def _results_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        summary = self._build_summary_payload(cession_file)
+        confidence_score = 0.92 if summary.get("records_processed") else 0.78
+        settlement_impact = summary.get("settlement_impact") or {}
+        return {
+            "confidence_score": confidence_score,
+            "output_summary": "Workflow summary was compiled for orchestration monitoring.",
+            "key_outputs": [
+                {"label": "Cedent", "value": self._build_detection_payload(cession_file)["cedent"]},
+                {"label": "Period", "value": summary["period"]},
+                {"label": "Records", "value": summary["records_processed"]},
+                {"label": "Settlement ID", "value": settlement_impact.get("settlement_id_created") or "N/A"},
+            ],
+            "warnings": [],
+            "state_message": "Workflow summary was compiled and published to the workflow step.",
+            "review_step_id": "summary",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+        }
+
+    def _sanction_screening_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        screening_summary = self._build_cession_file_screening_summary(cession_file)
+        if screening_summary is None:
+            return {
+                "applicable": False,
+                "confidence_score": 0.99,
+                "output_summary": "No sanctions screening case was required for this workflow.",
+                "key_outputs": [{"label": "Screening case", "value": "Not required"}],
+                "warnings": [],
+                "state_message": "The workflow did not require sanctions screening.",
+                "review_step_id": "screening",
+                "review_label": self._workflow_review_label(run["agent_key"]),
+            }
+
+        confidence_score = round((screening_summary.get("confidence_pct") or 95) / 100, 2)
+        workflow_status = self._screening_workflow_status(screening_summary)
+        warnings = [screening_summary.get("raw_findings_summary")] if screening_summary.get("matched_watchlists") else []
+        return {
+            "confidence_score": confidence_score,
+            "requires_hitl": workflow_status != "auto_cleared",
+            "output_summary": screening_summary.get("headline") or "Sanctions screening completed.",
+            "key_outputs": [
+                {"label": "Screening ref", "value": screening_summary.get("screening_ref") or "N/A"},
+                {"label": "Status", "value": screening_summary.get("status") or "Pending"},
+                {"label": "Watchlists", "value": " · ".join(screening_summary.get("watchlists_screened") or []) or "N/A"},
+            ],
+            "warnings": warnings,
+            "state_message": (
+                "Compliance review is required before the workflow can continue."
+                if workflow_status != "auto_cleared"
+                else "Sanctions screening auto-cleared and the workflow can continue."
+            ),
+            "review_step_id": "screening",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+            "review_url": (
+                f'/compliance/sanctions/{screening_summary.get("screening_ref")}'
+                if screening_summary.get("screening_ref")
+                else "/compliance/sanctions"
+            ),
+        }
+
+    def _file_generation_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        downstream_files = self._build_downstream_files_payload(cession_file)
+        if not downstream_files.get("items"):
+            return {
+                "applicable": False,
+                "confidence_score": 0.99,
+                "output_summary": "No downstream files were required for this workflow.",
+                "key_outputs": [{"label": "Files generated", "value": 0}],
+                "warnings": [],
+                "state_message": "This cession workflow did not generate downstream files.",
+                "review_step_id": "files",
+                "review_label": self._workflow_review_label(run["agent_key"]),
+            }
+
+        if not downstream_files.get("pushed"):
+            self._handle_files(cession_file)
+            cession_file = self._get_cession_file_or_error(cession_file.file_id)
+            downstream_files = self._build_downstream_files_payload(cession_file)
+
+        pushed = bool(downstream_files.get("pushed"))
+        return {
+            "confidence_score": 0.97 if pushed else 0.82,
+            "requires_hitl": not pushed,
+            "output_summary": f'{len(downstream_files.get("items") or [])} downstream file(s) were generated for release.',
+            "key_outputs": [
+                {"label": "Files generated", "value": len(downstream_files.get("items") or [])},
+                {"label": "SFTP release", "value": "Published" if pushed else "Pending"},
+            ],
+            "warnings": [] if pushed else ["Downstream files are generated but have not been released yet."],
+            "state_message": (
+                "Downstream files were generated and released automatically."
+                if pushed
+                else "Downstream files still require manual release approval."
+            ),
+            "review_step_id": "files",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+        }
+
+    def _worklist_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        worklist = self._build_worklist_payload(cession_file)
+        items = worklist.get("items") or []
+        if not items:
+            return {
+                "applicable": False,
+                "confidence_score": 0.99,
+                "output_summary": "No downstream worklist routing was required for this workflow.",
+                "key_outputs": [{"label": "Worklist tasks", "value": 0}],
+                "warnings": [],
+                "state_message": "No downstream worklist tasks were created.",
+                "review_step_id": "worklist",
+                "review_label": self._workflow_review_label(run["agent_key"]),
+            }
+
+        return {
+            "confidence_score": 0.91,
+            "output_summary": f'{len(items)} downstream worklist task(s) were routed automatically.',
+            "key_outputs": [
+                {"label": "Tasks created", "value": len(items)},
+                {"label": "Primary owner", "value": items[0].get("team") or "Claims Ops"},
+            ],
+            "warnings": [],
+            "state_message": "Downstream worklist routing completed automatically.",
+            "review_step_id": "worklist",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+            "review_url": items[0].get("target_url"),
+        }
+
+    def _audit_agent_execution(self, cession_file: CessionFile, run: dict[str, Any]) -> dict[str, Any]:
+        now = datetime.now(UTC)
+        if cession_file.stage != "approved":
+            cession_file.stage = "approved"
+            cession_file.updated_at = now
+            self.repository.update_cession_file(cession_file)
+            self._append_stage_history(cession_file.file_id, "approved")
+
+        audit_payload = self._build_audit_payload(self._get_cession_file_or_error(cession_file.file_id))
+        return {
+            "confidence_score": 0.99 if len(audit_payload.get("items") or []) >= 5 else 0.9,
+            "output_summary": "Workflow audit trail was finalized for this cession file.",
+            "key_outputs": [
+                {"label": "Audit events", "value": len(audit_payload.get("items") or [])},
+                {"label": "Completed at", "value": self._to_iso(now)},
+            ],
+            "warnings": [],
+            "state_message": "Workflow audit was finalized and the cession workflow is complete.",
+            "review_step_id": "audit",
+            "review_label": self._workflow_review_label(run["agent_key"]),
+        }
+
+    def _workflow_ready_to_resume(self, cession_file: CessionFile, agent_key: str, run: dict[str, Any]) -> bool:
+        threshold = self._to_float(run.get("confidence_threshold")) or 0.9
+        if agent_key == "resolution":
+            return sum(self._count_unresolved_by_severity(cession_file).values()) == 0
+        if agent_key == "sanction_screening":
+            screening_summary = self._build_cession_file_screening_summary(cession_file)
+            return screening_summary is not None and self._screening_workflow_status(screening_summary) == "auto_cleared"
+        if agent_key == "mapping":
+            stored = self._get_override(cession_file.file_id)
+            confidence_score = self._average_confidence(
+                [
+                    self._build_detection_payload(cession_file).get("file_type_confidence"),
+                    self._build_detection_payload(cession_file).get("cedent_confidence"),
+                    self._build_contract_mapping_payload(cession_file).get("confidence"),
+                ],
+                default=0.9,
+            )
+            return confidence_score >= threshold or bool(stored.get("manual_file_type") or stored.get("manual_contract_id"))
+        return False
+
+    def _next_pending_agent_key(self, agent_runs: dict[str, dict[str, Any]]) -> str | None:
+        for agent_key in WORKFLOW_AGENT_SEQUENCE:
+            status = str(agent_runs.get(agent_key, {}).get("status") or "").strip().lower()
+            if status in {"awaiting_approval", "failed", "running", "pending"}:
+                return agent_key
+        return None
+
+    def _workflow_completion_message(self, cession_file: CessionFile) -> str:
+        detection = self._build_detection_payload(cession_file)
+        summary = self._build_summary_payload(cession_file)
+        return (
+            f'Cession workflow completed for {detection["cedent"]} · {summary["period"]}. '
+            f'{summary["records_processed"]} record(s) were processed successfully.'
+        )
+
+    def _manually_clear_screening_hold(self, cession_file: CessionFile, notes: str | None, timestamp: datetime) -> None:
+        event = self.repository.get_screening_event_for_cession_file(cession_file.id)
+        if event is None:
+            return
+        event.result = "cleared"
+        event.reviewed_by = "Claims Ops"
+        event.reviewed_at = timestamp
+        event.review_outcome = "manual_override"
+        event.review_notes = notes or "Claims Ops manually released the sanctions screening hold."
+        event.updated_at = timestamp
+        self.repository.update_screening_event(event)
+        self._sync_cession_file_screening_worklist_item(cession_file, self._build_cession_file_screening_summary(cession_file))
+
+    def _build_workflow_payload(
+        self,
+        cession_file: CessionFile,
+        *,
+        detection: dict[str, Any],
+        mapping: dict[str, Any],
+        validation: dict[str, Any],
+        summary: dict[str, Any],
+        downstream_files: dict[str, Any],
+        worklist: dict[str, Any],
+        audit: dict[str, Any],
+    ) -> dict[str, Any]:
+        self._ensure_agentic_workflow_state(cession_file)
+        stored = self._get_override(cession_file.file_id)
+        agent_runs = self._normalize_agent_runs(stored.get("agent_runs"))
+        workflow_state = deepcopy(stored.get("workflow_state") or {})
+        current_agent_key = workflow_state.get("current_agent_key")
+        current_step_id = workflow_state.get("current_step_id") or self._workflow_step_id_for_agent(current_agent_key)
+        screening_summary = self._build_cession_file_screening_summary(cession_file)
+
+        stepper = [
+            {
+                "stage": "upload",
+                "label": "Upload",
+                "status": "completed",
+                "timestamp": self._to_iso(cession_file.received_at),
+            }
+        ]
+        for definition in WORKFLOW_AGENT_DEFINITIONS:
+            run = agent_runs[definition["key"]]
+            stepper.append(
+                {
+                    "stage": definition["step_id"],
+                    "label": definition["step_label"],
+                    "status": run["status"],
+                    "timestamp": run.get("completed_at") or run.get("updated_at") or run.get("started_at") or "",
+                }
+            )
+
+        return {
+            "status": workflow_state.get("status") or "running",
+            "current_agent_key": current_agent_key,
+            "current_step_id": current_step_id,
+            "started_at": workflow_state.get("started_at"),
+            "updated_at": workflow_state.get("updated_at"),
+            "completed_at": workflow_state.get("completed_at"),
+            "paused_reason": workflow_state.get("paused_reason"),
+            "final_message": workflow_state.get("final_message"),
+            "pct_complete": self._workflow_pct_complete(agent_runs),
+            "stepper": stepper,
+            "agents": [
+                self._workflow_agent_payload(
+                    cession_file,
+                    agent_runs[definition["key"]],
+                    screening_summary=screening_summary,
+                )
+                for definition in WORKFLOW_AGENT_DEFINITIONS
+            ],
+            "results": self._build_workflow_final_summary(
+                cession_file,
+                detection=detection,
+                mapping=mapping,
+                validation=validation,
+                summary=summary,
+                downstream_files=downstream_files,
+                worklist=worklist,
+                audit=audit,
+                screening_summary=screening_summary,
+                workflow_state=workflow_state,
+            ),
+        }
+
+    def _workflow_agent_payload(
+        self,
+        cession_file: CessionFile,
+        run: dict[str, Any],
+        *,
+        screening_summary: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        review_url = run.get("review_url")
+        if not review_url and run["agent_key"] == "sanction_screening" and screening_summary:
+            screening_ref = str(screening_summary.get("screening_ref") or "").strip()
+            review_url = f"/compliance/sanctions/{screening_ref}" if screening_ref else "/compliance/sanctions"
+        return {
+            "key": run["agent_key"],
+            "agent_name": run["agent_name"],
+            "description": run["description"],
+            "step_id": run["step_id"],
+            "step_label": run["step_label"],
+            "status": run["status"],
+            "enabled": run["enabled"],
+            "attempts": run["attempts"],
+            "confidence_score": run["confidence_score"],
+            "confidence_threshold": run["confidence_threshold"],
+            "hitl_behavior": run["hitl_behavior"],
+            "escalation_rule": run["escalation_rule"],
+            "retry_limit": run["retry_limit"],
+            "fallback_mode": run["fallback_mode"],
+            "execution_time_ms": run["execution_time_ms"],
+            "started_at": run["started_at"],
+            "completed_at": run["completed_at"],
+            "updated_at": run["updated_at"],
+            "warnings": run["warnings"],
+            "key_outputs": run["key_outputs"],
+            "output_summary": run["output_summary"],
+            "state_message": run["state_message"],
+            "hitl_required": run["hitl_required"],
+            "awaiting_approval": run["awaiting_approval"],
+            "review_step_id": run["review_step_id"],
+            "review_label": run["review_label"],
+            "review_url": review_url,
+            "approval_endpoint": f"/claims/cession-files/{cession_file.file_id}/workflow/agents/{run['agent_key']}/approve",
+            "error_message": run["error_message"],
+        }
+
+    def _build_workflow_final_summary(
+        self,
+        cession_file: CessionFile,
+        *,
+        detection: dict[str, Any],
+        mapping: dict[str, Any],
+        validation: dict[str, Any],
+        summary: dict[str, Any],
+        downstream_files: dict[str, Any],
+        worklist: dict[str, Any],
+        audit: dict[str, Any],
+        screening_summary: dict[str, Any] | None,
+        workflow_state: dict[str, Any],
+    ) -> dict[str, Any]:
+        screening_outcome = screening_summary.get("status") if screening_summary else "Not required"
+        settlement_reconciliation = summary.get("settlement_reconciliation") or {}
+        if screening_summary and self._screening_workflow_status(screening_summary) != "auto_cleared":
+            settlement_readiness = "Compliance Hold"
+        elif settlement_reconciliation.get("decision") == "review":
+            settlement_readiness = "Reconciliation Review Required"
+        elif workflow_state.get("status") == "completed":
+            settlement_readiness = "Ready"
+        else:
+            settlement_readiness = "In Progress"
+
+        return {
+            "title": "Workflow Overview",
+            "status": workflow_state.get("status") or "running",
+            "success": workflow_state.get("status") == "completed",
+            "message": workflow_state.get("final_message") or workflow_state.get("paused_reason") or "Workflow is still running.",
+            "detected_cedent": detection["cedent"],
+            "cedent_id": detection["cedent_id"],
+            "contract_id": mapping["contract_id"],
+            "reporting_period": summary["period"],
+            "processed_records_count": summary["records_processed"],
+            "anomalies_detected": validation["critical_errors"] + validation["warnings"] + validation["informational"],
+            "anomalies_resolved": summary["exceptions_resolved"],
+            "sanctions_screening_outcome": screening_outcome,
+            "generated_files": [item.get("filename") for item in (downstream_files.get("items") or []) if item.get("filename")],
+            "generated_files_count": len(downstream_files.get("items") or []),
+            "worklist_items_count": len(worklist.get("items") or []),
+            "settlement_readiness_status": settlement_readiness,
+            "completion_timestamp": workflow_state.get("completed_at"),
+            "audit_events_count": len(audit.get("items") or []),
+            "settlement_id": (summary.get("settlement_impact") or {}).get("settlement_id_created"),
+            "insight": summary.get("insight"),
+        }
+
+    def _workflow_pct_complete(self, agent_runs: dict[str, dict[str, Any]]) -> int:
+        completed_steps = 1 + sum(
+            1
+            for agent_key in WORKFLOW_AGENT_SEQUENCE
+            if agent_runs.get(agent_key, {}).get("status") in {"completed", "skipped"}
+        )
+        total_steps = len(WORKFLOW_STEP_SEQUENCE)
+        return int(round((completed_steps / total_steps) * 100))
 
     def _build_stage_history(self, cession_file: CessionFile) -> list[dict[str, Any]]:
         stored = self._get_override(cession_file.file_id)
@@ -5504,45 +6908,40 @@ class ClaimsService:
         return parsed or datetime.min.replace(tzinfo=UTC)
 
     def _read_settlement_override_store(self) -> dict[str, Any]:
-        if not SETTLEMENT_OVERRIDES_FILE.exists():
-            return {}
-        # Accept editor-saved UTF-8 JSON with or without a BOM.
-        with SETTLEMENT_OVERRIDES_FILE.open("r", encoding="utf-8-sig") as handle:
-            payload = json.load(handle)
-        return payload if isinstance(payload, dict) else {}
+        return self._read_json_store(SETTLEMENT_OVERRIDES_FILE, "claims settlement overrides", SETTLEMENT_OVERRIDES_LOCK)
 
     def _write_settlement_override_store(self, store: dict[str, Any]) -> None:
-        SETTLEMENT_OVERRIDES_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with SETTLEMENT_OVERRIDES_FILE.open("w", encoding="utf-8") as handle:
-            json.dump(store, handle, indent=2)
+        self._write_json_store(SETTLEMENT_OVERRIDES_FILE, store, SETTLEMENT_OVERRIDES_LOCK)
 
     def _store_settlement_override(self, settlement_id: str, patch: dict[str, Any]) -> None:
-        store = self._read_settlement_override_store()
-        current = deepcopy(store.get(settlement_id, {}))
-        current.update(patch)
-        store[settlement_id] = current
-        self._write_settlement_override_store(store)
+        with SETTLEMENT_OVERRIDES_LOCK:
+            store = self._read_json_store_locked(SETTLEMENT_OVERRIDES_FILE, "claims settlement overrides")
+            current = deepcopy(store.get(settlement_id, {}))
+            current.update(patch)
+            store[settlement_id] = current
+            self._write_json_store_locked(SETTLEMENT_OVERRIDES_FILE, store)
 
     def _append_settlement_audit_event(self, settlement_id: str, event: dict[str, Any]) -> None:
-        store = self._read_settlement_override_store()
-        current = deepcopy(store.get(settlement_id, {}))
         base_settlement = next(
             (item for item in self._load_settlement_seed_rows() if item["settlement_id"] == settlement_id),
             {"settlement_id": settlement_id, "period_end": date.today().isoformat()},
         )
-        audit_trail = list(current.get("audit_trail") or self._default_settlement_audit(base_settlement))
-        audit_trail.append(
-            {
-                "timestamp": event.get("timestamp", self._to_iso(datetime.now(UTC))),
-                "actor": event["actor"],
-                "type": event["type"],
-                "action": event["action"],
-                "detail": event["detail"],
-            }
-        )
-        current["audit_trail"] = audit_trail
-        store[settlement_id] = current
-        self._write_settlement_override_store(store)
+        with SETTLEMENT_OVERRIDES_LOCK:
+            store = self._read_json_store_locked(SETTLEMENT_OVERRIDES_FILE, "claims settlement overrides")
+            current = deepcopy(store.get(settlement_id, {}))
+            audit_trail = list(current.get("audit_trail") or self._default_settlement_audit(base_settlement))
+            audit_trail.append(
+                {
+                    "timestamp": event.get("timestamp", self._to_iso(datetime.now(UTC))),
+                    "actor": event["actor"],
+                    "type": event["type"],
+                    "action": event["action"],
+                    "detail": event["detail"],
+                }
+            )
+            current["audit_trail"] = audit_trail
+            store[settlement_id] = current
+            self._write_json_store_locked(SETTLEMENT_OVERRIDES_FILE, store)
         self._persist_claims_audit_event(
             module="settlement",
             entity_id=settlement_id,
@@ -5878,24 +7277,127 @@ class ClaimsService:
         return deepcopy(store.get(file_id, {}))
 
     def _store_override(self, file_id: str, patch: dict[str, Any]) -> None:
-        store = self._read_override_store()
-        current = deepcopy(store.get(file_id, {}))
-        current.update(patch)
-        store[file_id] = current
-        self._write_override_store(store)
+        with PIPELINE_OVERRIDES_LOCK:
+            store = self._read_json_store_locked(PIPELINE_OVERRIDES_FILE, "claims cession pipeline overrides")
+            current = deepcopy(store.get(file_id, {}))
+            current.update(patch)
+            store[file_id] = current
+            self._write_json_store_locked(PIPELINE_OVERRIDES_FILE, store)
 
     def _read_override_store(self) -> dict[str, Any]:
-        if not PIPELINE_OVERRIDES_FILE.exists():
-            return {}
-        # Accept editor-saved UTF-8 JSON with or without a BOM.
-        with PIPELINE_OVERRIDES_FILE.open("r", encoding="utf-8-sig") as handle:
-            payload = json.load(handle)
-        return payload if isinstance(payload, dict) else {}
+        return self._read_json_store(PIPELINE_OVERRIDES_FILE, "claims cession pipeline overrides", PIPELINE_OVERRIDES_LOCK)
 
     def _write_override_store(self, store: dict[str, Any]) -> None:
-        PIPELINE_OVERRIDES_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with PIPELINE_OVERRIDES_FILE.open("w", encoding="utf-8") as handle:
-            json.dump(store, handle, indent=2)
+        self._write_json_store(PIPELINE_OVERRIDES_FILE, store, PIPELINE_OVERRIDES_LOCK)
+
+    def _read_json_store(self, file_path: Path, store_name: str, lock: Any) -> dict[str, Any]:
+        with lock:
+            return self._read_json_store_locked(file_path, store_name)
+
+    def _read_json_store_locked(self, file_path: Path, store_name: str) -> dict[str, Any]:
+        if not file_path.exists():
+            return {}
+        # Accept editor-saved UTF-8 JSON with or without a BOM.
+        raw_text = file_path.read_text(encoding="utf-8-sig")
+        if not raw_text.strip():
+            logger.debug("%s store was empty path=%s", store_name, file_path)
+            return {}
+        try:
+            payload = json.loads(raw_text)
+        except json.JSONDecodeError as exc:
+            return self._recover_json_store_locked(file_path, raw_text, store_name, exc)
+        if not isinstance(payload, dict):
+            logger.error("%s store payload must be a JSON object path=%s payload_type=%s", store_name, file_path, type(payload).__name__)
+            return {}
+        return payload
+
+    def _recover_json_store_locked(
+        self,
+        file_path: Path,
+        raw_text: str,
+        store_name: str,
+        exc: json.JSONDecodeError,
+    ) -> dict[str, Any]:
+        stripped = raw_text.lstrip()
+        if not stripped:
+            logger.error(
+                "Failed to decode %s store because the file only contained whitespace path=%s line=%s column=%s char=%s",
+                store_name,
+                file_path,
+                exc.lineno,
+                exc.colno,
+                exc.pos,
+            )
+            return {}
+        decoder = json.JSONDecoder()
+        try:
+            payload, end = decoder.raw_decode(stripped)
+        except json.JSONDecodeError:
+            logger.error(
+                "Unable to recover corrupted %s store path=%s error=%s line=%s column=%s char=%s",
+                store_name,
+                file_path,
+                exc.msg,
+                exc.lineno,
+                exc.colno,
+                exc.pos,
+            )
+            return {}
+        if not isinstance(payload, dict):
+            logger.error(
+                "Recovered %s store payload was not a JSON object path=%s payload_type=%s",
+                store_name,
+                file_path,
+                type(payload).__name__,
+            )
+            return {}
+        trailing_content = stripped[end:].strip()
+        if trailing_content:
+            logger.error(
+                "Recovered corrupted %s store with trailing content path=%s trailing_chars=%s line=%s column=%s char=%s",
+                store_name,
+                file_path,
+                len(trailing_content),
+                exc.lineno,
+                exc.colno,
+                exc.pos,
+            )
+            try:
+                self._write_json_store_locked(file_path, payload)
+            except OSError as repair_error:
+                logger.error("Failed to rewrite recovered %s store path=%s error=%s", store_name, file_path, repair_error)
+            else:
+                logger.info("Repaired %s store after removing trailing content path=%s", store_name, file_path)
+        else:
+            logger.error(
+                "Recovered %s store after JSON decode failure path=%s line=%s column=%s char=%s",
+                store_name,
+                file_path,
+                exc.lineno,
+                exc.colno,
+                exc.pos,
+            )
+        return payload
+
+    def _write_json_store(self, file_path: Path, store: dict[str, Any], lock: Any) -> None:
+        with lock:
+            self._write_json_store_locked(file_path, store)
+
+    def _write_json_store_locked(self, file_path: Path, store: dict[str, Any]) -> None:
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = file_path.with_name(f"{file_path.name}.{uuid.uuid4().hex}.tmp")
+        try:
+            with temp_path.open("w", encoding="utf-8") as handle:
+                json.dump(store, handle, indent=2)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temp_path, file_path)
+        finally:
+            if temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except OSError:
+                    logger.debug("Temporary JSON store cleanup failed path=%s", temp_path, exc_info=True)
 
     def _to_iso(self, value: datetime | None) -> str:
         if value is None:

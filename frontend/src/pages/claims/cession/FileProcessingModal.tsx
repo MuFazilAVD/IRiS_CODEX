@@ -1,6 +1,36 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, ChevronRight, Download, Eye, FileUp, RefreshCw, Send, Sparkles, Upload, X } from 'lucide-react'
+import {
+  ArrowsClockwise,
+  ArrowClockwise,
+  CaretDown,
+  CaretRight,
+  ChartBar,
+  CheckCircle,
+  Cpu,
+  FastForwardCircle,
+  FileText,
+  Files as FilesIcon,
+  Flag,
+  Handshake,
+  ListChecks,
+  MagnifyingGlass,
+  PauseCircle,
+  Path,
+  ProhibitInset,
+  Receipt,
+  ShieldCheck,
+  Sparkle as SparkleIcon,
+  Target,
+  Timer,
+  TreeStructure,
+  TrendUp,
+  UploadSimple,
+  UserFocus,
+  WarningCircle,
+  WarningDiamond,
+} from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 
 import { api } from '../../../api/client'
@@ -14,6 +44,7 @@ import type {
   ClaimsExceptionItem,
   ClaimsPipelineStageResponse,
   ClaimsUploadResponse,
+  ClaimsWorkflowPayload,
   ClaimsWorklistScreeningSummary,
   ClaimsWorklistTask,
   ContractListItem,
@@ -21,6 +52,7 @@ import type {
 
 type ClaimsStep =
   | 'upload'
+  | 'workflow'
   | 'detect-map'
   | 'validate'
   | 'exceptions'
@@ -76,17 +108,32 @@ interface CessionFileProcessingWorkflowProps extends FileProcessingModalProps {
   onFileCreated?: (fileId: string) => void
 }
 
-const BASE_PIPELINE_STEPS: Array<{ id: ClaimsStep; label: string }> = [
-  { id: 'upload', label: 'Upload' },
-  { id: 'detect-map', label: 'Detect & Map' },
-  { id: 'validate', label: 'Anomalies' },
-  { id: 'exceptions', label: 'Resolutions' },
-  { id: 'clauses', label: 'Clauses' },
-  { id: 'process', label: 'Process' },
-  { id: 'summary', label: 'Summary' },
-  { id: 'files', label: 'Files' },
-  { id: 'worklist', label: 'Worklist' },
-  { id: 'audit', label: 'Audit' },
+type StepDefinition = {
+  id: ClaimsStep
+  label: string
+  icon: React.ElementType
+}
+
+type StepStatusEntry = {
+  status: string
+  label: string
+  timestamp: string
+  message?: string | null
+}
+
+const BASE_PIPELINE_STEPS: StepDefinition[] = [
+  { id: 'upload', label: 'Upload', icon: UploadSimple },
+  { id: 'workflow', label: 'Workflow', icon: TreeStructure },
+  { id: 'detect-map', label: 'Detect & Map', icon: MagnifyingGlass },
+  { id: 'validate', label: 'Anomalies', icon: WarningCircle },
+  { id: 'exceptions', label: 'Resolutions', icon: Handshake },
+  { id: 'clauses', label: 'Clauses', icon: FileText },
+  { id: 'process', label: 'Process', icon: Cpu },
+  { id: 'summary', label: 'Summary', icon: ChartBar },
+  { id: 'screening', label: 'Sanction Screening', icon: ShieldCheck },
+  { id: 'files', label: 'Files', icon: FilesIcon },
+  { id: 'worklist', label: 'Worklist', icon: ListChecks },
+  { id: 'audit', label: 'Audit', icon: Receipt },
 ]
 
 const FILE_TYPE_OPTIONS = [
@@ -108,10 +155,9 @@ export function CessionFileProcessingWorkflow({
   onRefresh,
   presentation = 'page',
   backLabel = 'Back to Cession Files',
-  onFileCreated,
 }: CessionFileProcessingWorkflowProps) {
   const [activeFileId, setActiveFileId] = useState<string | null>(fileId ?? null)
-  const [selectedStep, setSelectedStep] = useState<ClaimsStep>(startInUpload ? 'upload' : 'detect-map')
+  const [selectedStep, setSelectedStep] = useState<ClaimsStep>(fileId && !startInUpload ? 'workflow' : 'upload')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadMode, setUploadMode] = useState<UploadMode>('auto')
   const [manualUploadFileType, setManualUploadFileType] = useState('Fixed Leg')
@@ -133,6 +179,11 @@ export function CessionFileProcessingWorkflow({
     queryKey: ['claims-cession-file-detail', activeFileId],
     queryFn: async () => (await api.get<ClaimsCessionDetailPayload>(`/claims/cession-files/${activeFileId}`)).data,
     enabled: Boolean(activeFileId),
+    refetchInterval: (query) => {
+      const nextDetail = query.state.data as ClaimsCessionDetailPayload | undefined
+      const status = nextDetail?.workflow?.status
+      return activeFileId && status && status !== 'completed' ? 3000 : false
+    },
   })
 
   const testcaseQuery = useQuery({
@@ -143,9 +194,11 @@ export function CessionFileProcessingWorkflow({
 
   useEffect(() => {
     setActiveFileId(fileId ?? null)
-    if (startInUpload && !fileId) {
+    if (!fileId) {
       setSelectedStep('upload')
+      return
     }
+    setSelectedStep(startInUpload ? 'upload' : 'workflow')
   }, [fileId, startInUpload])
 
   useEffect(() => {
@@ -156,7 +209,7 @@ export function CessionFileProcessingWorkflow({
     const detail = detailQuery.data
     if (initializedFileId.current !== detail.file_id) {
       initializedFileId.current = detail.file_id
-      setSelectedStep(resolveVisibleStep(detail))
+      setSelectedStep(detail.workflow && !startInUpload ? 'workflow' : resolveVisibleStep(detail))
       setDetectFileType(pendingManualType ?? detail.detection.file_type)
       setDetectCedentId(detail.detection.cedent_id ?? '')
       setMappedContractId(detail.contract_mapping.contract_id)
@@ -171,13 +224,16 @@ export function CessionFileProcessingWorkflow({
   }, [detailQuery.data, exceptionActions, pendingManualType])
 
   const detail = detailQuery.data
+  const workflow = detail?.workflow
   const currentStep = activeFileId ? selectedStep : 'upload'
+  const currentStepAgent = workflow ? getWorkflowAgentForStep(workflow, currentStep) : null
+  const workflowPausedAgent = workflow?.agents.find((agent) => agent.status === 'awaiting_approval' || agent.status === 'failed') ?? null
   const screeningTask = detail ? getScreeningTask(detail) : null
   const worklistItems = detail ? detail.worklist.items.filter((item) => item.wl_id !== screeningTask?.wl_id) : []
-  const pipelineSteps = buildPipelineSteps(detail)
+  const pipelineSteps = buildPipelineSteps()
 
   useEffect(() => {
-    if (!activeFileId || !detail || currentStep !== 'validate' || detail.stage !== 'clauses' || autoValidating) {
+    if (workflow || !activeFileId || !detail || currentStep !== 'validate' || detail.stage !== 'clauses' || autoValidating) {
       return
     }
 
@@ -212,10 +268,11 @@ export function CessionFileProcessingWorkflow({
     return () => {
       cancelled = true
     }
-  }, [activeFileId, autoValidating, currentStep, detail, detailQuery])
+  }, [activeFileId, autoValidating, currentStep, detail, detailQuery, workflow])
   const actualCurrentStep = detail ? resolveVisibleStep(detail) : currentStep
   const visualCurrentStep = resolveVisualCurrentStep(actualCurrentStep, currentStep, pipelineSteps)
   const completedSteps = buildCompletedSteps(detail, pipelineSteps, visualCurrentStep)
+  const stepStatusMap = buildStepStatusMap(detail, pipelineSteps, visualCurrentStep)
 
   const visibleContracts = contractOptions.filter((item) => !detectCedentId || item.cedent_id === detectCedentId)
   useEffect(() => {
@@ -229,13 +286,59 @@ export function CessionFileProcessingWorkflow({
   const pendingResolutionCount = detail ? countPendingResolutionActions(detail.exceptions.items, exceptionActions) : 0
   const invalidOverrideCount = detail ? countInvalidOverrideActions(detail.exceptions.items, exceptionActions) : 0
   const validationReady = currentStep !== 'validate' || (!autoValidating && detail?.stage !== 'clauses')
-  const canContinue =
-    !busy &&
-    !autoValidating &&
-    (currentStep !== 'upload' || Boolean(selectedFile)) &&
-    validationReady &&
-    (currentStep !== 'exceptions' ||
-      ((detail?.exceptions.items.length ?? 0) !== 0 && pendingResolutionCount === 0 && invalidOverrideCount === 0))
+  const canContinue = workflow
+    ? !busy &&
+      (currentStep === 'upload'
+        ? Boolean(selectedFile)
+        : currentStep === 'workflow'
+          ? Boolean(workflowPausedAgent) || workflow.status === 'completed'
+        : currentStep === 'detect-map'
+          ? true
+          : currentStep === 'exceptions'
+            ? (detail?.exceptions.items.length ?? 0) !== 0 && pendingResolutionCount === 0 && invalidOverrideCount === 0
+            : Boolean(currentStepAgent && ['awaiting_approval', 'failed'].includes(currentStepAgent.status)))
+    : !busy &&
+      !autoValidating &&
+      (currentStep !== 'upload' || Boolean(selectedFile)) &&
+      validationReady &&
+      (currentStep !== 'exceptions' ||
+        ((detail?.exceptions.items.length ?? 0) !== 0 && pendingResolutionCount === 0 && invalidOverrideCount === 0))
+  const primaryActionLabel = workflow
+    ? currentStep === 'upload'
+      ? 'Continue'
+      : currentStep === 'workflow'
+        ? workflowPausedAgent
+          ? workflowPausedAgent.review_label
+          : workflow.status === 'completed'
+            ? 'Finish'
+            : 'Workflow Running'
+      : currentStep === 'detect-map'
+        ? 'Save & Resume'
+      : currentStep === 'exceptions'
+          ? 'Apply Resolutions'
+          : currentStepAgent && ['awaiting_approval', 'failed'].includes(currentStepAgent.status)
+            ? 'Approve & Resume'
+            : currentStep === 'audit'
+              ? 'Finish'
+              : 'Continue'
+    : currentStep === 'audit'
+      ? 'Finish'
+      : 'Continue'
+
+  function openWorkflowStep(step: ClaimsStep) {
+    setSelectedStep(step)
+  }
+
+  async function approveWorkflowAgent(agentKey: string, notes: string) {
+    if (!activeFileId) {
+      return
+    }
+    await api.post(`/claims/cession-files/${activeFileId}/workflow/agents/${agentKey}/approve`, {
+      notes,
+    })
+    await Promise.all([detailQuery.refetch(), Promise.resolve(onRefresh())])
+    openWorkflowStep('workflow')
+  }
 
   async function handleContinue() {
     setNotice(null)
@@ -248,6 +351,75 @@ export function CessionFileProcessingWorkflow({
       }
 
       if (!activeFileId) {
+        return
+      }
+
+      if (workflow) {
+        if (currentStep === 'workflow') {
+          if (workflowPausedAgent) {
+            openWorkflowStep(normalizeWorkflowStepId(workflowPausedAgent.review_step_id))
+            return
+          }
+          if (workflow.status === 'completed') {
+            await Promise.resolve(onRefresh())
+            onClose()
+          }
+          return
+        }
+
+        if (currentStep === 'detect-map') {
+          const contractOverrideId = visibleContracts.some((item) => item.contract_id === mappedContractId) ? mappedContractId : null
+          await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/detect`, {
+            override_file_type: detectFileType || null,
+            override_cedent_id: detectCedentId || null,
+          })
+          await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/map-contract`, {
+            override_contract_id: contractOverrideId,
+          })
+          if (currentStepAgent && ['awaiting_approval', 'failed'].includes(currentStepAgent.status)) {
+            await approveWorkflowAgent('mapping', 'Detection and contract mapping were reviewed and approved.')
+          } else {
+            await Promise.all([detailQuery.refetch(), Promise.resolve(onRefresh())])
+            openWorkflowStep('workflow')
+          }
+          return
+        }
+
+        if (currentStep === 'exceptions') {
+          if (pendingResolutionCount > 0) {
+            setNotice({
+              tone: 'error',
+              message: 'Choose an action for every resolution item before continuing.',
+            })
+            return
+          }
+          if (invalidOverrideCount > 0) {
+            setNotice({
+              tone: 'error',
+              message: 'Enter a manual override value for every item marked Override before continuing.',
+            })
+            return
+          }
+          const payload = buildExceptionResolutionPayload(detail?.exceptions.items ?? [], exceptionActions)
+          await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/process-exceptions`, {
+            exception_resolutions: payload,
+          })
+          const refreshed = await detailQuery.refetch()
+          setExceptionActions(buildExceptionState(refreshed.data?.exceptions.items ?? []))
+          await Promise.resolve(onRefresh())
+          openWorkflowStep('workflow')
+          return
+        }
+
+        if (currentStepAgent && ['awaiting_approval', 'failed'].includes(currentStepAgent.status)) {
+          await approveWorkflowAgent(
+            currentStepAgent.key,
+            `${currentStepAgent.agent_name} was reviewed in the cession workflow screen and approved to continue.`,
+          )
+          return
+        }
+
+        openWorkflowStep('workflow')
         return
       }
 
@@ -365,12 +537,11 @@ export function CessionFileProcessingWorkflow({
     setActiveFileId(data.file_id)
     initializedFileId.current = null
     setPendingManualType(uploadMode === 'manual' ? manualUploadFileType : null)
-    setSelectedStep('detect-map')
-    onFileCreated?.(data.file_id)
+    setSelectedStep('workflow')
     await Promise.resolve(onRefresh())
     setNotice({
       tone: 'success',
-      message: `${data.file_id} uploaded and moved into the detection stage.`,
+      message: `${data.file_id} uploaded and the autonomous workflow started immediately.`,
     })
   }
 
@@ -446,7 +617,11 @@ export function CessionFileProcessingWorkflow({
     try {
       await api.post<ClaimsPipelineStageResponse>(`/claims/cession-files/${activeFileId}/pipeline/files`, {})
       await Promise.all([detailQuery.refetch(), Promise.resolve(onRefresh())])
-      setSelectedStep('worklist')
+      if (workflow) {
+        openWorkflowStep('workflow')
+      } else {
+        setSelectedStep('worklist')
+      }
       setNotice({
         tone: 'success',
         message: 'Downstream files pushed to SFTP and released to Reports.',
@@ -536,35 +711,15 @@ export function CessionFileProcessingWorkflow({
 
         <section className="overflow-hidden rounded-lg border border-[#D7E1E8] bg-white shadow-sm">
           <div className="overflow-x-auto border-t border-[#E5EBF0] bg-white px-4 py-3 md:px-6">
-            <div className="flex min-w-max items-center gap-2">
-              {pipelineSteps.map((step, index) => {
-                const isCurrent = currentStep === step.id
-                const isComplete = completedSteps.has(step.id)
-                return (
-                  <div key={step.id} className="flex items-center gap-2">
-                    <button
-                      className={`rounded-full px-3.5 py-2 text-[12px] font-semibold transition ${
-                        isCurrent
-                          ? 'bg-iris-navy text-white'
-                          : isComplete
-                            ? 'bg-[#E8F8F5] text-[#117A65]'
-                            : 'bg-[#F4F7FA] text-iris-text-secondary hover:bg-[#EAF1F6]'
-                      }`}
-                      onClick={() => {
-                        if (activeFileId) {
-                          setSelectedStep(step.id)
-                        }
-                      }}
-                      type="button"
-                    >
-                      {isComplete ? '✓ ' : ''}
-                      {step.label}
-                    </button>
-                    {index < pipelineSteps.length - 1 ? <span className="text-[#AAB7C4]">→</span> : null}
-                  </div>
-                )
-              })}
-            </div>
+            <PipelineStepper
+              activeFileId={activeFileId}
+              actualCurrentStep={actualCurrentStep}
+              completedSteps={completedSteps}
+              currentStep={currentStep}
+              stepStatusMap={stepStatusMap}
+              steps={pipelineSteps}
+              onOpenStep={openWorkflowStep}
+            />
           </div>
 
           <div className="min-h-[620px] bg-[#FAFBFC] px-4 py-5 md:px-6">
@@ -603,6 +758,15 @@ export function CessionFileProcessingWorkflow({
               />
             ) : null}
 
+            {detail && workflow && currentStep === 'workflow' ? (
+              <WorkflowOrchestrationStep
+                busy={busy}
+                detail={detail}
+                onApproveAgent={(agentKey) => void approveWorkflowAgent(agentKey, 'Workflow review approved from the workflow step.')}
+                onOpenAgent={(step) => openWorkflowStep(step)}
+              />
+            ) : null}
+
             {detail && currentStep === 'validate' ? <ValidateStep detail={detail} /> : null}
 
             {detail && currentStep === 'exceptions' ? (
@@ -616,9 +780,7 @@ export function CessionFileProcessingWorkflow({
             {detail && currentStep === 'clauses' ? <ClausesStep detail={detail} /> : null}
             {detail && currentStep === 'process' ? <ProcessStep detail={detail} /> : null}
 
-            {detail && currentStep === 'summary' ? (
-              <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} />
-            ) : null}
+            {detail && currentStep === 'summary' ? <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} /> : null}
 
             {screeningTask && currentStep === 'screening' ? <ScreeningStep item={screeningTask} /> : null}
 
@@ -644,19 +806,25 @@ export function CessionFileProcessingWorkflow({
             </button>
 
             <div className="flex items-center gap-2">
-              {currentStep === 'summary' ? (
+              {workflow && currentStep !== 'upload' && currentStep !== 'workflow' ? (
+                <button className="btn-secondary" disabled={busy} onClick={() => openWorkflowStep('workflow')} type="button">
+                  <RefreshCw className="h-4 w-4" />
+                  Back to Workflow
+                </button>
+              ) : null}
+              {!workflow && currentStep === 'summary' ? (
                 <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('process')} type="button">
                   <RefreshCw className="h-4 w-4" />
                   Back to Process
                 </button>
               ) : null}
-              {currentStep === 'screening' ? (
+              {!workflow && currentStep === 'screening' ? (
                 <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('summary')} type="button">
                   <RefreshCw className="h-4 w-4" />
                   Back to Summary
                 </button>
               ) : null}
-              {currentStep === 'files' ? (
+              {!workflow && currentStep === 'files' ? (
                 <button
                   className="btn-secondary"
                   disabled={busy}
@@ -669,7 +837,7 @@ export function CessionFileProcessingWorkflow({
               ) : null}
 
               <button className="btn-primary" disabled={!canContinue} onClick={() => void handleContinue()} type="button">
-                {busy ? 'Working...' : currentStep === 'audit' ? 'Finish' : 'Continue'}
+                {busy ? 'Working...' : primaryActionLabel}
               </button>
             </div>
           </div>
@@ -709,35 +877,15 @@ export function CessionFileProcessingWorkflow({
             </div>
 
             <div className="mt-5 overflow-x-auto">
-              <div className="flex min-w-max items-center gap-2">
-                {pipelineSteps.map((step, index) => {
-                  const isCurrent = currentStep === step.id
-                  const isComplete = completedSteps.has(step.id)
-                  return (
-                    <div key={step.id} className="flex items-center gap-2">
-                      <button
-                        className={`rounded-full px-3.5 py-2 text-[12px] font-semibold transition ${
-                          isCurrent
-                            ? 'bg-iris-navy text-white'
-                            : isComplete
-                              ? 'bg-[#E8F8F5] text-[#117A65]'
-                              : 'bg-[#F4F7FA] text-iris-text-secondary hover:bg-[#EAF1F6]'
-                        }`}
-                        onClick={() => {
-                          if (activeFileId) {
-                            setSelectedStep(step.id)
-                          }
-                        }}
-                        type="button"
-                      >
-                        {isComplete ? '✓ ' : ''}
-                        {step.label}
-                      </button>
-                      {index < pipelineSteps.length - 1 ? <span className="text-[#AAB7C4]">→</span> : null}
-                    </div>
-                  )
-                })}
-              </div>
+              <PipelineStepper
+                activeFileId={activeFileId}
+                actualCurrentStep={actualCurrentStep}
+                completedSteps={completedSteps}
+                currentStep={currentStep}
+                stepStatusMap={stepStatusMap}
+                steps={pipelineSteps}
+                onOpenStep={openWorkflowStep}
+              />
             </div>
           </div>
 
@@ -781,6 +929,15 @@ export function CessionFileProcessingWorkflow({
               />
             ) : null}
 
+            {detail && workflow && currentStep === 'workflow' ? (
+              <WorkflowOrchestrationStep
+                busy={busy}
+                detail={detail}
+                onApproveAgent={(agentKey) => void approveWorkflowAgent(agentKey, 'Workflow review approved from the workflow step.')}
+                onOpenAgent={(step) => openWorkflowStep(step)}
+              />
+            ) : null}
+
             {detail && currentStep === 'validate' ? <ValidateStep detail={detail} /> : null}
 
             {detail && currentStep === 'exceptions' ? (
@@ -794,9 +951,7 @@ export function CessionFileProcessingWorkflow({
             {detail && currentStep === 'clauses' ? <ClausesStep detail={detail} /> : null}
             {detail && currentStep === 'process' ? <ProcessStep detail={detail} /> : null}
 
-            {detail && currentStep === 'summary' ? (
-              <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} />
-            ) : null}
+            {detail && currentStep === 'summary' ? <SummaryStep busy={busy} detail={detail} onApprove={() => void handleApprove()} /> : null}
 
             {screeningTask && currentStep === 'screening' ? <ScreeningStep item={screeningTask} /> : null}
 
@@ -822,19 +977,25 @@ export function CessionFileProcessingWorkflow({
             </button>
 
             <div className="flex items-center gap-2">
-              {currentStep === 'summary' ? (
+              {workflow && currentStep !== 'upload' && currentStep !== 'workflow' ? (
+                <button className="btn-secondary" disabled={busy} onClick={() => openWorkflowStep('workflow')} type="button">
+                  <RefreshCw className="h-4 w-4" />
+                  Back to Workflow
+                </button>
+              ) : null}
+              {!workflow && currentStep === 'summary' ? (
                 <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('process')} type="button">
                   <RefreshCw className="h-4 w-4" />
                   Back to Process
                 </button>
               ) : null}
-              {currentStep === 'screening' ? (
+              {!workflow && currentStep === 'screening' ? (
                 <button className="btn-secondary" disabled={busy} onClick={() => setSelectedStep('summary')} type="button">
                   <RefreshCw className="h-4 w-4" />
                   Back to Summary
                 </button>
               ) : null}
-              {currentStep === 'files' ? (
+              {!workflow && currentStep === 'files' ? (
                 <button
                   className="btn-secondary"
                   disabled={busy}
@@ -847,7 +1008,7 @@ export function CessionFileProcessingWorkflow({
               ) : null}
 
               <button className="btn-primary" disabled={!canContinue} onClick={() => void handleContinue()} type="button">
-                {busy ? 'Working...' : currentStep === 'audit' ? 'Finish' : 'Continue'}
+                {busy ? 'Working...' : primaryActionLabel}
               </button>
             </div>
           </div>
@@ -974,13 +1135,13 @@ function UploadStep({
       <div className="grid gap-4 xl:grid-cols-2">
         <UploadOptionCard
           active={uploadMode === 'auto'}
-          subtitle="Primary route from the screenshot. IRiS will classify the file type and cedant in the next step."
+          subtitle="IRiS will classify the file type and cedant in the next step."
           title="AI Auto-Detect"
           onSelect={() => onUploadModeChange('auto')}
         />
         <UploadOptionCard
           active={uploadMode === 'manual'}
-          subtitle="Manual path from the screenshot. Pick the file type now and IRiS will carry it into detection."
+          subtitle="Pick the file type now and IRiS will carry it into detection."
           title="Manual File Type"
           onSelect={() => onUploadModeChange('manual')}
         >
@@ -1474,6 +1635,219 @@ function ProcessStep({ detail }: { detail: ClaimsCessionDetailPayload }) {
   )
 }
 
+function WorkflowOrchestrationStep({
+  busy,
+  detail,
+  onApproveAgent,
+  onOpenAgent,
+}: {
+  busy: boolean
+  detail: ClaimsCessionDetailPayload
+  onApproveAgent: (agentKey: string) => void
+  onOpenAgent: (step: ClaimsStep) => void
+}) {
+  const workflow = detail.workflow
+  const pausedAgent = workflow.agents.find((agent) => agent.status === 'awaiting_approval' || agent.status === 'failed') ?? null
+  const currentAgent = workflow.agents.find((agent) => agent.key === workflow.current_agent_key) ?? null
+  const workflowSummary = workflow.results
+  const screeningSummary = getScreeningTask(detail)?.screening_summary ?? null
+  const defaultExpandedAgent = pausedAgent?.key ?? currentAgent?.key ?? workflow.agents[0]?.key ?? null
+  const [expandedAgents, setExpandedAgents] = useState<Record<string, boolean>>(() =>
+    defaultExpandedAgent ? { [defaultExpandedAgent]: true } : {},
+  )
+
+  useEffect(() => {
+    if (defaultExpandedAgent) {
+      setExpandedAgents((current) => (current[defaultExpandedAgent] ? current : { ...current, [defaultExpandedAgent]: true }))
+    }
+  }, [defaultExpandedAgent])
+
+  const contextPills = [
+    { icon: UserFocus, label: 'Cedent', value: workflowSummary.detected_cedent || detail.cedent },
+    { icon: FileText, label: 'Contract', value: workflowSummary.contract_id ?? detail.contract_id ?? 'Pending mapping' },
+    { icon: ChartBar, label: 'Period', value: workflowSummary.reporting_period },
+    { icon: FilesIcon, label: 'File type', value: detail.file_type },
+    { icon: TrendUp, label: 'Records', value: formatCount(detail.records) },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_360px]">
+        <div
+          className={`rounded-[24px] border px-5 py-5 shadow-sm ${
+            workflowSummary.success
+              ? 'border-[#C7EED8] bg-[#F0FFF6]'
+              : workflow.status === 'awaiting_approval' || workflow.status === 'failed'
+                ? 'border-[#F4D8A6] bg-[#FFF9EF]'
+                : 'border-[#D6E4F0] bg-[#F7FBFF]'
+          }`}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-iris-text-primary">
+              <TreeStructure className="h-4 w-4" weight="duotone" />
+              Workflow Orchestration
+            </span>
+            <span className={workflowStatusBadgeClass(workflow.status)}>
+              {formatWorkflowStatusLabel(workflow.status)} · {workflow.pct_complete}%
+            </span>
+          </div>
+          <h2 className="mt-4 text-[22px] font-bold leading-tight text-iris-text-primary">{workflowSummary.message}</h2>
+          <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">
+            {pausedAgent
+              ? `${pausedAgent.agent_name} is paused for review. Open the related pipeline step or approve from the accordion below to resume orchestration.`
+              : currentAgent
+                ? `${currentAgent.agent_name} is executing now. The stepper and agent stack below will continue to update in place.`
+                : 'All workflow agents finished successfully and the cession processing run is complete.'}
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {contextPills.map((item) => (
+              <WorkflowContextPill key={item.label} icon={item.icon} label={item.label} value={item.value} />
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-[18px] border border-[#B8E2E0] bg-white/75 px-4 py-3">
+            <div className="flex items-center gap-2 text-[12px] font-semibold text-[#117A65]">
+              <SparkleIcon className="h-4 w-4" weight="fill" />
+              Workflow Insight
+            </div>
+            <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">{workflowSummary.insight}</p>
+          </div>
+
+          {pausedAgent ? (
+            <div className="mt-4 rounded-[18px] border border-[#F4D8A6] bg-white/75 px-4 py-3 text-[13px] text-[#8A6120]">
+              {pausedAgent.state_message ?? `${pausedAgent.agent_name} requires review before the workflow can continue.`}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-[24px] border border-[#D9E3EA] bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-[15px] font-semibold text-iris-text-primary">
+            <Path className="h-4 w-4" weight="duotone" />
+            Live Orchestration Monitor
+          </div>
+          <div className="mt-4 space-y-3 text-[13px] text-iris-text-secondary">
+            <MonitorRow label="Current Agent" value={currentAgent?.agent_name ?? 'Workflow complete'} />
+            <MonitorRow label="Pause State" value={pausedAgent ? `${pausedAgent.agent_name} awaiting review` : 'No active pauses'} />
+            <MonitorRow label="Completion" value={`${workflow.pct_complete}%`} />
+            <MonitorRow label="Started" value={workflow.started_at ? formatRelativeDate(workflow.started_at) : 'Just now'} />
+            <MonitorRow label="Last Update" value={workflow.updated_at ? formatRelativeDate(workflow.updated_at) : 'Just now'} />
+            <MonitorRow label="Completed" value={workflowSummary.completion_timestamp ? formatRelativeDate(workflowSummary.completion_timestamp) : 'In progress'} />
+          </div>
+
+          <div className="mt-5 rounded-[18px] border border-[#E5EBF0] bg-[#FAFBFC] px-4 py-4">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">Workflow Outcome</p>
+            <p className="mt-2 text-[14px] font-semibold text-iris-text-primary">
+              {workflowSummary.settlement_id ? `${workflowSummary.settlement_id} prepared for ${workflowSummary.reporting_period}` : `${workflowSummary.reporting_period} workflow in progress`}
+            </p>
+            <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">
+              Screening outcome: {workflowSummary.sanctions_screening_outcome}. Worklist tasks created: {formatCount(workflowSummary.worklist_items_count)}. Audit events captured: {formatCount(workflowSummary.audit_events_count)}.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {workflow.agents.map((agent) => {
+          const expanded = Boolean(expandedAgents[agent.key])
+          const stepDefinition = BASE_PIPELINE_STEPS.find((step) => step.id === normalizeWorkflowStepId(agent.step_id))
+          const StepIcon = stepDefinition?.icon ?? TreeStructure
+          const skipMeta = agent.status === 'skipped' ? skippedStateMeta(agent) : null
+          const SkipIcon = skipMeta?.icon
+          const outcomeMeta = agentOutcomeMeta(agent)
+          const showApprove = agent.awaiting_approval && agent.key !== 'resolution'
+          return (
+            <article key={agent.key} className="overflow-hidden rounded-[24px] border border-[#D9E3EA] bg-white shadow-sm">
+              <button
+                className="w-full px-5 py-5 text-left transition hover:bg-[#FBFCFD]"
+                onClick={() =>
+                  setExpandedAgents((current) => ({
+                    ...current,
+                    [agent.key]: !current[agent.key],
+                  }))
+                }
+                type="button"
+              >
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#DCE6ED] bg-[#F8FAFC] text-[#205375]">
+                        <StepIcon className="h-5 w-5" weight="duotone" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-iris-text-muted">{agent.step_label}</p>
+                          {skipMeta && SkipIcon ? (
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold ${skipMeta.className}`}>
+                              <SkipIcon className="h-3.5 w-3.5" weight="fill" />
+                              {skipMeta.label}
+                            </span>
+                          ) : null}
+                        </div>
+                        <h3 className="mt-2 truncate text-[18px] font-bold text-iris-text-primary">{agent.agent_name}</h3>
+                        <p className="mt-1 text-[13px] leading-6 text-iris-text-secondary">
+                          {agent.state_message ?? agent.description}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={workflowStatusBadgeClass(agent.status)}>{formatWorkflowStatusLabel(agent.status)}</span>
+                      {expanded ? <CaretDown className="h-4 w-4 text-iris-text-secondary" weight="bold" /> : <CaretRight className="h-4 w-4 text-iris-text-secondary" weight="bold" />}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <AgentMetricChip icon={TrendUp} value={agent.confidence_score !== null ? formatConfidence(agent.confidence_score) : 'Confidence —'} />
+                    <AgentMetricChip icon={Target} value={`Threshold ${Math.round(agent.confidence_threshold * 100)}%`} />
+                    <AgentMetricChip icon={Timer} value={formatExecutionTime(agent.execution_time_ms)} />
+                    <AgentMetricChip icon={ArrowClockwise} value={`${Math.max(agent.attempts - 1, 0)} retry${Math.max(agent.attempts - 1, 0) === 1 ? '' : 'ies'}`} />
+                    <AgentMetricChip
+                      icon={agent.hitl_required ? PauseCircle : CheckCircle}
+                      tone={agent.hitl_required ? 'warning' : 'positive'}
+                      value={agent.hitl_required ? 'HITL required' : 'No HITL pause'}
+                    />
+                    <AgentMetricChip icon={outcomeMeta.icon} tone={outcomeMeta.tone} value={outcomeMeta.label} />
+                  </div>
+                </div>
+              </button>
+
+              {expanded ? (
+                <div className="border-t border-[#E8EEF3] px-5 py-5">
+                  <WorkflowAgentOutput agent={agent} detail={detail} screeningSummary={screeningSummary} />
+
+                  {agent.warnings.length ? (
+                    <div className="mt-4 rounded-[18px] border border-[#F4D8A6] bg-[#FFF9EF] px-4 py-4 text-[13px] text-[#8A6120]">
+                      {agent.warnings.map((warning) => (
+                        <p key={`${agent.key}-${warning}`}>{warning}</p>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button className="btn-secondary" onClick={() => onOpenAgent(normalizeWorkflowStepId(agent.review_step_id))} type="button">
+                      {agent.review_label}
+                    </button>
+                    {agent.review_url ? (
+                      <Link className="btn-secondary" to={agent.review_url}>
+                        Open Detail
+                      </Link>
+                    ) : null}
+                    {showApprove ? (
+                      <button className="btn-primary" disabled={busy} onClick={() => onApproveAgent(agent.key)} type="button">
+                        Approve & Resume
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+            </article>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function SummaryStep({
   busy,
   detail,
@@ -1487,7 +1861,7 @@ function SummaryStep({
 
   return (
     <div className="space-y-5">
-      <SectionHeading title="Processing Summary" subtitle="Business impact, resolutions, IRiS insights" />
+      <SectionHeading title="Processing Summary" subtitle="Business impact, resolutions, and IRiS insights" />
       {!isSettlementFile ? (
         <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <KpiCard accent="neutral" title="Liability Impact" value={signedCompactCurrency(detail.summary.liability_impact ?? 0, detail.summary.settlement_impact?.currency ?? 'EUR')} />
@@ -1967,6 +2341,496 @@ function SectionHeading({ title, subtitle }: { title: string; subtitle: string }
   )
 }
 
+function PipelineStepper({
+  activeFileId,
+  actualCurrentStep,
+  completedSteps,
+  currentStep,
+  stepStatusMap,
+  steps,
+  onOpenStep,
+}: {
+  activeFileId: string | null
+  actualCurrentStep: ClaimsStep
+  completedSteps: Set<ClaimsStep>
+  currentStep: ClaimsStep
+  stepStatusMap: Partial<Record<ClaimsStep, StepStatusEntry>>
+  steps: StepDefinition[]
+  onOpenStep: (step: ClaimsStep) => void
+}) {
+  return (
+    <div className="flex min-w-max items-center gap-0">
+      {steps.map((step, index) => {
+        const stepState = stepStatusMap[step.id]
+        const stepStatus = stepState?.status ?? (completedSteps.has(step.id) ? 'completed' : 'pending')
+        const nextStatus =
+          index < steps.length - 1
+            ? stepStatusMap[steps[index + 1].id]?.status ?? (completedSteps.has(steps[index + 1].id) ? 'completed' : 'pending')
+            : null
+        const StepIcon = step.icon
+        const StatusIcon = resolveStepperStateIcon(stepStatus, stepState?.message)
+        const statusMeta = stepStatus === 'skipped' ? skippedStateMetaFromMessage(stepState?.message) : null
+
+        return (
+          <Fragment key={step.id}>
+            <button
+              className={workflowStepperButtonClass(stepStatus, currentStep === step.id, actualCurrentStep === step.id)}
+              disabled={!activeFileId}
+              onClick={() => activeFileId && onOpenStep(step.id)}
+              type="button"
+            >
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/80">
+                <StepIcon className="h-4 w-4" weight={stepStatus === 'running' ? 'fill' : 'duotone'} />
+              </span>
+              <span>{step.label}</span>
+              {StatusIcon ? (
+                <span
+                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${
+                    stepStatus === 'completed'
+                      ? 'bg-[#D8F4E4] text-[#1E8449]'
+                      : stepStatus === 'awaiting_approval'
+                        ? 'bg-[#FDECC8] text-[#9A6A14]'
+                        : stepStatus === 'failed'
+                          ? 'bg-[#FAD9D7] text-[#B33C31]'
+                          : stepStatus === 'skipped'
+                            ? 'bg-[#EEF2F6] text-[#627282]'
+                            : 'bg-white/20 text-current'
+                  }`}
+                  title={statusMeta?.label ?? formatWorkflowStatusLabel(stepStatus)}
+                >
+                  <StatusIcon className={stepStatus === 'running' ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} weight="fill" />
+                </span>
+              ) : null}
+            </button>
+            {nextStatus ? <div className={workflowConnectorClass(stepStatus, nextStatus)} /> : null}
+          </Fragment>
+        )
+      })}
+    </div>
+  )
+}
+
+function WorkflowContextPill({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string
+}) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/85 bg-white/80 px-3 py-2 text-[12px] text-iris-text-primary shadow-sm">
+      <Icon className="h-4 w-4 text-[#205375]" weight="duotone" />
+      <span className="font-semibold text-iris-text-secondary">{label}</span>
+      <span className="font-semibold text-iris-text-primary">{value}</span>
+    </div>
+  )
+}
+
+function AgentMetricChip({
+  icon: Icon,
+  tone = 'neutral',
+  value,
+}: {
+  icon: React.ElementType
+  tone?: 'neutral' | 'positive' | 'warning' | 'negative'
+  value: string
+}) {
+  const toneClass =
+    tone === 'positive'
+      ? 'border-[#CDEBD9] bg-[#F0FFF6] text-[#1E8449]'
+      : tone === 'warning'
+        ? 'border-[#F4D8A6] bg-[#FFF9EF] text-[#8A6120]'
+        : tone === 'negative'
+          ? 'border-[#F3C7C5] bg-[#FEF1F0] text-[#B33C31]'
+          : 'border-[#DCE6ED] bg-[#F8FAFC] text-iris-text-primary'
+
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[12px] font-semibold ${toneClass}`}>
+      <Icon className="h-4 w-4" weight="fill" />
+      {value}
+    </span>
+  )
+}
+
+function WorkflowDetailTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] border border-[#E5EBF0] bg-[#FAFBFC] px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{label}</p>
+      <p className="mt-2 text-[14px] font-semibold text-iris-text-primary">{value}</p>
+    </div>
+  )
+}
+
+function WorkflowEmptyOutput({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-[18px] border border-dashed border-[#CAD5DF] bg-[#FAFBFC] px-4 py-5 text-[13px] text-iris-text-secondary">
+      {children}
+    </div>
+  )
+}
+
+function WorkflowAgentOutput({
+  agent,
+  detail,
+  screeningSummary,
+}: {
+  agent: ClaimsWorkflowPayload['agents'][number]
+  detail: ClaimsCessionDetailPayload
+  screeningSummary: ClaimsWorklistScreeningSummary | null
+}) {
+  const reviewWorklistItems = detail.worklist.items.filter((item) => !item.screening_summary)
+  const hasExecuted = hasWorkflowAgentExecuted(agent)
+
+  if (!hasExecuted && agent.status === 'running') {
+    return <WorkflowEmptyOutput>{agent.agent_name} is executing now. Live output will populate here as soon as the agent publishes it.</WorkflowEmptyOutput>
+  }
+
+  if (!hasExecuted && agent.status === 'pending') {
+    return <WorkflowEmptyOutput>{agent.agent_name} has not started yet. The orchestration engine will populate this row when the workflow reaches this step.</WorkflowEmptyOutput>
+  }
+
+  if (agent.key === 'mapping') {
+    return (
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="rounded-[20px] border border-[#D9E3EA] bg-[#FAFBFC] p-4">
+          <p className="text-[14px] font-semibold text-iris-text-primary">Detection</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <WorkflowDetailTile label="File Type" value={`${detail.detection.file_type} · ${formatConfidence(detail.detection.file_type_confidence)}`} />
+            <WorkflowDetailTile label="Cedent" value={`${detail.detection.cedent} · ${formatConfidence(detail.detection.cedent_confidence)}`} />
+          </div>
+          <div className="mt-3 rounded-[16px] border border-[#D9E3EA] bg-white px-4 py-3 text-[13px] leading-6 text-iris-text-secondary">
+            {detail.detection.iris_reasoning}
+          </div>
+        </div>
+        <div className="rounded-[20px] border border-[#D9E3EA] bg-[#FAFBFC] p-4">
+          <p className="text-[14px] font-semibold text-iris-text-primary">Contract & Treaty Mapping</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <WorkflowDetailTile label="Contract" value={`${detail.contract_mapping.contract_id} (${detail.contract_mapping.version})`} />
+            <WorkflowDetailTile label="Period" value={detail.contract_mapping.period} />
+            <WorkflowDetailTile label="Lives Covered" value={formatCount(detail.contract_mapping.lives_covered)} />
+            <WorkflowDetailTile label="Expected Fixed Leg" value={formatCurrency(detail.contract_mapping.expected_fixed_leg, detail.contract_mapping.currency)} />
+          </div>
+          <div className="mt-3 rounded-[16px] border border-[#D9E3EA] bg-white px-4 py-3 text-[13px] leading-6 text-iris-text-secondary">
+            {detail.contract_mapping.matching_basis}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (agent.key === 'anomaly_detection') {
+    const issues = detail.validation.issues
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-4">
+          <WorkflowDetailTile label="Records" value={formatCount(detail.validation.records)} />
+          <WorkflowDetailTile label="Critical" value={formatCount(detail.validation.critical_errors)} />
+          <WorkflowDetailTile label="Warnings" value={formatCount(detail.validation.warnings)} />
+          <WorkflowDetailTile label="Informational" value={formatCount(detail.validation.informational)} />
+        </div>
+        {issues.length ? (
+          <div className="overflow-x-auto rounded-[20px] border border-[#D9E3EA] bg-white">
+            <table className="min-w-full text-[13px]">
+              <thead className="bg-[#F7F9FB]">
+                <tr>
+                  {['Severity', 'Row', 'Field', 'Issue', 'Suggestion'].map((label) => (
+                    <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {issues.map((issue) => (
+                  <tr key={`${issue.row}-${issue.field}-${issue.issue}`} className="border-t border-[#EEF2F5]">
+                    <td className="px-4 py-3">
+                      <SeverityPill severity={issue.severity} />
+                    </td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{issue.row}</td>
+                    <td className="px-4 py-3 font-medium text-iris-text-primary">{issue.field}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{issue.issue}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">
+                      {issue.ai_suggestion ? `${issue.ai_suggestion} · ${formatConfidence(issue.ai_confidence)}` : 'No AI suggestion'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <WorkflowEmptyOutput>No anomaly findings were raised for this upload.</WorkflowEmptyOutput>
+        )}
+      </div>
+    )
+  }
+
+  if (agent.key === 'resolution') {
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <WorkflowDetailTile label="Unresolved" value={formatCount(detail.exceptions.unresolved)} />
+          <WorkflowDetailTile label="Resolved" value={formatCount(detail.summary.exceptions_resolved)} />
+          <WorkflowDetailTile label="Manual Overrides" value={formatCount(detail.summary.exceptions_overridden)} />
+        </div>
+        {detail.exceptions.items.length ? (
+          <div className="overflow-x-auto rounded-[20px] border border-[#D9E3EA] bg-white">
+            <table className="min-w-full text-[13px]">
+              <thead className="bg-[#F7F9FB]">
+                <tr>
+                  {['Severity', 'Row', 'Field', 'Current', 'AI Suggestion', 'Resolution'].map((label) => (
+                    <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {detail.exceptions.items.map((item) => (
+                  <tr key={item.exception_id} className="border-t border-[#EEF2F5]">
+                    <td className="px-4 py-3">
+                      <SeverityPill severity={item.severity} />
+                    </td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{item.row}</td>
+                    <td className="px-4 py-3 font-medium text-iris-text-primary">{item.field}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">{item.current_value ?? '—'}</td>
+                    <td className="px-4 py-3 text-iris-text-secondary">
+                      {item.ai_suggestion ? `${item.ai_suggestion} · ${formatConfidence(item.ai_confidence)}` : 'Manual review'}
+                    </td>
+                    <td className="px-4 py-3 text-iris-text-primary">{formatExceptionResolutionLabel(item.resolution)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <WorkflowEmptyOutput>No anomaly resolutions were required for this workflow.</WorkflowEmptyOutput>
+        )}
+      </div>
+    )
+  }
+
+  if (agent.key === 'clause_validation') {
+    return (
+      <div className="overflow-x-auto rounded-[20px] border border-[#D9E3EA] bg-white">
+        <table className="min-w-full text-[13px]">
+          <thead className="bg-[#F7F9FB]">
+            <tr>
+              {['Ref', 'Clause', 'Category', 'Description', 'State'].map((label) => (
+                <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {detail.clauses.clauses_checked.map((clause) => (
+              <tr key={clause.clause_id} className="border-t border-[#EEF2F5]">
+                <td className="px-4 py-3 font-medium text-iris-text-primary">{clause.clause_id}</td>
+                <td className="px-4 py-3 text-iris-text-primary">{clause.clause_title}</td>
+                <td className="px-4 py-3 text-iris-text-secondary">{clause.category}</td>
+                <td className="px-4 py-3 text-iris-text-secondary">{clause.description}</td>
+                <td className="px-4 py-3 text-iris-text-primary">{titleCase(clause.status)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  if (agent.key === 'processing') {
+    if (detail.summary.file_type === 'Settlement' && detail.summary.settlement_reconciliation && hasExecuted) {
+      return <SettlementReconciliationPanel reconciliation={detail.summary.settlement_reconciliation} />
+    }
+
+    const populationChanges = detail.summary.population_changes
+      ? Object.entries(detail.summary.population_changes).map(([key, value]) => ({
+          label: humanizeWorkflowField(key),
+          value: formatCount(value),
+        }))
+      : []
+
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {detail.summary.liability_impact !== null ? (
+            <WorkflowDetailTile
+              label="Liability Impact"
+              value={signedCompactCurrency(detail.summary.liability_impact, detail.summary.settlement_impact?.currency ?? detail.contract_mapping.currency)}
+            />
+          ) : null}
+          {detail.summary.fixed_leg_recomputed !== null ? (
+            <WorkflowDetailTile
+              label="Fixed Leg Recomputed"
+              value={formatCurrency(detail.summary.fixed_leg_recomputed, detail.summary.settlement_impact?.currency ?? detail.contract_mapping.currency)}
+            />
+          ) : null}
+          {detail.summary.net_settlement_amount !== null ? (
+            <WorkflowDetailTile
+              label="Net Settlement"
+              value={formatCurrency(detail.summary.net_settlement_amount, detail.summary.settlement_impact?.currency ?? detail.contract_mapping.currency)}
+            />
+          ) : null}
+          <WorkflowDetailTile label="Worklist Items" value={formatCount(detail.summary.worklist_items_created)} />
+        </div>
+        {populationChanges.length ? (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {populationChanges.map((item) => (
+              <WorkflowDetailTile key={item.label} label={item.label} value={item.value} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (agent.key === 'results') {
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <WorkflowDetailTile label="Readiness" value={workflowReadinessLabel(detail.workflow.results.settlement_readiness_status)} />
+          <WorkflowDetailTile label="Anomalies" value={formatCount(detail.workflow.results.anomalies_detected)} />
+          <WorkflowDetailTile label="Files" value={formatCount(detail.workflow.results.generated_files_count)} />
+          <WorkflowDetailTile label="Audit Events" value={formatCount(detail.workflow.results.audit_events_count)} />
+        </div>
+        <div className="rounded-[20px] border border-[#D9E3EA] bg-[#FAFBFC] px-4 py-4 text-[13px] leading-6 text-iris-text-secondary">
+          {detail.workflow.results.message}
+        </div>
+      </div>
+    )
+  }
+
+  if (agent.key === 'sanction_screening') {
+    if (!screeningSummary) {
+      return <WorkflowEmptyOutput>No sanctions screening case was required for this workflow.</WorkflowEmptyOutput>
+    }
+
+    const sourceCards = buildScreeningSourceCards(screeningSummary)
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {sourceCards.map((item) => (
+            <div key={item.name} className="rounded-[18px] border border-[#D9E3EA] bg-[#FAFBFC] px-4 py-4">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{item.name}</p>
+              <p className="mt-2 text-[15px] font-semibold text-iris-text-primary">{item.result}</p>
+              <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">{item.detail}</p>
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="rounded-[20px] border border-[#D9E3EA] bg-white px-4 py-4">
+            <p className="text-[14px] font-semibold text-iris-text-primary">Raw Findings</p>
+            <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">{screeningSummary.raw_findings_summary}</p>
+          </div>
+          <div className="rounded-[20px] border border-[#D9E3EA] bg-white px-4 py-4">
+            <p className="text-[14px] font-semibold text-iris-text-primary">IRiS Analysis</p>
+            <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">{screeningSummary.iris_findings_summary}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (agent.key === 'file_generation') {
+    return detail.downstream_files.items.length ? (
+      <div className="grid gap-3">
+        {detail.downstream_files.items.map((item) => (
+          <div key={item.artifact_id} className="rounded-[18px] border border-[#D9E3EA] bg-[#FAFBFC] px-4 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-[14px] font-semibold text-iris-text-primary">{item.report_type}</p>
+                <p className="mt-1 font-mono text-[12px] text-iris-text-secondary">{item.filename}</p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-iris-text-secondary">
+                {item.published ? 'Released' : 'Ready to Push'}
+              </span>
+            </div>
+            <p className="mt-2 text-[13px] text-iris-text-secondary">
+              {item.period} · {item.format.toUpperCase()} · generated {formatRelativeDate(item.generated_at)}
+            </p>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <WorkflowEmptyOutput>No downstream files were generated for this workflow.</WorkflowEmptyOutput>
+    )
+  }
+
+  if (agent.key === 'worklist') {
+    return reviewWorklistItems.length ? (
+      <div className="overflow-x-auto rounded-[20px] border border-[#D9E3EA] bg-white">
+        <table className="min-w-full text-[13px]">
+          <thead className="bg-[#F7F9FB]">
+            <tr>
+              {['Task', 'Team', 'Assigned', 'Priority', 'SLA'].map((label) => (
+                <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {reviewWorklistItems.map((item) => (
+              <tr key={item.wl_id} className="border-t border-[#EEF2F5]">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-iris-text-primary">{item.task}</p>
+                  <p className="mt-1 font-mono text-[12px] text-iris-text-secondary">{item.wl_id}</p>
+                </td>
+                <td className="px-4 py-3 text-iris-text-secondary">{titleCase(item.team)}</td>
+                <td className="px-4 py-3 text-iris-text-secondary">{item.assigned_person ?? 'Unassigned'}</td>
+                <td className="px-4 py-3 text-iris-text-primary">{titleCase(item.priority)}</td>
+                <td className="px-4 py-3 text-iris-text-secondary">{item.sla}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <WorkflowEmptyOutput>No downstream worklist routing was required for this workflow.</WorkflowEmptyOutput>
+    )
+  }
+
+  if (agent.key === 'audit') {
+    return (
+      <div className="overflow-x-auto rounded-[20px] border border-[#D9E3EA] bg-white">
+        <table className="min-w-full text-[13px]">
+          <thead className="bg-[#F7F9FB]">
+            <tr>
+              {['Timestamp', 'Actor', 'Action', 'Detail'].map((label) => (
+                <th key={label} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {detail.audit.items.slice(0, 6).map((item) => (
+              <tr key={`${item.timestamp}-${item.action}`} className="border-t border-[#EEF2F5]">
+                <td className="px-4 py-3 text-iris-text-secondary">{formatRelativeDate(item.timestamp)}</td>
+                <td className="px-4 py-3 font-medium text-iris-text-primary">{item.actor}</td>
+                <td className="px-4 py-3 text-iris-text-primary">{item.action}</td>
+                <td className="px-4 py-3 text-iris-text-secondary">{item.detail}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  return agent.key_outputs.length ? (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {agent.key_outputs.map((item) => (
+        <WorkflowDetailTile key={`${agent.key}-${item.label}`} label={item.label} value={item.value === null ? '—' : String(item.value)} />
+      ))}
+    </div>
+  ) : (
+    <WorkflowEmptyOutput>{agent.output_summary ?? agent.state_message ?? 'No workflow output is available yet for this agent.'}</WorkflowEmptyOutput>
+  )
+}
+
 function UploadOptionCard({
   active,
   children,
@@ -2056,19 +2920,44 @@ function MetricLine({ label, value }: { label: string; value: React.ReactNode })
   )
 }
 
+function MonitorRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[#EEF2F5] pb-3 last:border-b-0 last:pb-0">
+      <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{label}</span>
+      <span className="text-right text-[13px] font-medium text-iris-text-primary">{value}</span>
+    </div>
+  )
+}
+
 function KpiCard({
   accent,
   title,
   value,
 }: {
-  accent: 'neutral' | 'teal'
+  accent: 'neutral' | 'teal' | 'blue' | 'warning'
   title: string
   value: string
 }) {
+  const borderClass =
+    accent === 'teal'
+      ? 'border-[#8FD7D2]'
+      : accent === 'blue'
+        ? 'border-[#D3E4F2]'
+        : accent === 'warning'
+          ? 'border-[#F4D8A6]'
+          : 'border-[#D9E3EA]'
+  const valueClass =
+    accent === 'teal'
+      ? 'text-[#117A65]'
+      : accent === 'blue'
+        ? 'text-[#155A82]'
+        : accent === 'warning'
+          ? 'text-[#8A6120]'
+          : 'text-iris-text-primary'
   return (
-    <div className={`rounded-[22px] border bg-white px-5 py-5 shadow-sm ${accent === 'teal' ? 'border-[#8FD7D2]' : 'border-[#D9E3EA]'}`}>
+    <div className={`rounded-[22px] border bg-white px-5 py-5 shadow-sm ${borderClass}`}>
       <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-iris-text-secondary">{title}</p>
-      <p className={`mt-3 text-[30px] font-bold ${accent === 'teal' ? 'text-[#117A65]' : 'text-iris-text-primary'}`}>{value}</p>
+      <p className={`mt-3 text-[30px] font-bold ${valueClass}`}>{value}</p>
     </div>
   )
 }
@@ -2252,7 +3141,7 @@ function parseCsvLine(line: string) {
 function resolveVisualCurrentStep(
   actualCurrentStep: ClaimsStep,
   currentStep: ClaimsStep,
-  pipelineSteps: Array<{ id: ClaimsStep; label: string }>,
+  pipelineSteps: StepDefinition[],
 ) {
   const postProcessSteps = pipelineSteps
     .map((step) => step.id)
@@ -2265,19 +3154,29 @@ function resolveVisualCurrentStep(
   return actualCurrentStep
 }
 
-function buildPipelineSteps(detail: ClaimsCessionDetailPayload | undefined) {
-  const steps = [...BASE_PIPELINE_STEPS]
-  if (getScreeningTask(detail)) {
-    steps.splice(7, 0, { id: 'screening' as ClaimsStep, label: 'Sanction Screening' })
-  }
-  return steps
+function buildPipelineSteps() {
+  return [...BASE_PIPELINE_STEPS]
 }
 
 function buildCompletedSteps(
   detail: ClaimsCessionDetailPayload | undefined,
-  pipelineSteps: Array<{ id: ClaimsStep; label: string }>,
+  pipelineSteps: StepDefinition[],
   visualCurrentStep: ClaimsStep,
 ) {
+  if (detail?.workflow) {
+    const completedSteps = new Set<ClaimsStep>()
+    for (const item of detail.workflow.stepper) {
+      const normalizedStep = normalizeWorkflowStepId(item.stage)
+      if (item.status === 'completed' || item.status === 'skipped') {
+        completedSteps.add(normalizedStep)
+      }
+    }
+    if (detail.workflow.status === 'completed') {
+      completedSteps.add('workflow')
+    }
+    return completedSteps
+  }
+
   const completedSteps = new Set<ClaimsStep>()
   const currentIndex = pipelineSteps.findIndex((step) => step.id === visualCurrentStep)
   const hasDownstreamFiles = Boolean(detail?.downstream_files.items.length)
@@ -2304,6 +3203,57 @@ function buildCompletedSteps(
   return completedSteps
 }
 
+function buildStepStatusMap(
+  detail: ClaimsCessionDetailPayload | undefined,
+  pipelineSteps: StepDefinition[],
+  visualCurrentStep: ClaimsStep,
+) {
+  if (detail?.workflow) {
+    const agentMap = Object.fromEntries(
+      detail.workflow.agents.map((agent) => [normalizeWorkflowStepId(agent.step_id), agent]),
+    ) as Partial<Record<ClaimsStep, ClaimsWorkflowPayload['agents'][number]>>
+
+    return {
+      ...(Object.fromEntries(
+        detail.workflow.stepper.map((item) => {
+          const normalizedStep = normalizeWorkflowStepId(item.stage)
+          return [
+            normalizedStep,
+            {
+              status: item.status,
+              label: item.label,
+              timestamp: item.timestamp,
+              message: agentMap[normalizedStep]?.state_message ?? null,
+            },
+          ]
+        }),
+      ) as Partial<Record<ClaimsStep, StepStatusEntry>>),
+      workflow: {
+        status: detail.workflow.status === 'running' ? 'monitoring' : detail.workflow.status,
+        label: 'Workflow',
+        timestamp: detail.workflow.updated_at ?? detail.workflow.started_at ?? '',
+        message: detail.workflow.paused_reason ?? detail.workflow.final_message ?? detail.workflow.results.message,
+      },
+    }
+  }
+
+  return Object.fromEntries(
+    pipelineSteps.map((step, index) => {
+      const currentIndex = pipelineSteps.findIndex((item) => item.id === visualCurrentStep)
+      const status = index < currentIndex ? 'completed' : step.id === visualCurrentStep ? 'running' : 'pending'
+      return [
+        step.id,
+        {
+          status,
+          label: step.label,
+          timestamp: '',
+          message: null,
+        },
+      ]
+    }),
+  ) as Partial<Record<ClaimsStep, StepStatusEntry>>
+}
+
 function getScreeningTask(detail: ClaimsCessionDetailPayload | undefined) {
   return detail?.worklist.items.find((item) => Boolean(item.screening_summary)) ?? null
 }
@@ -2311,6 +3261,10 @@ function getScreeningTask(detail: ClaimsCessionDetailPayload | undefined) {
 function resolveVisibleStep(detail: ClaimsCessionDetailPayload | undefined): ClaimsStep {
   if (!detail) {
     return 'upload'
+  }
+
+  if (detail.workflow?.current_step_id) {
+    return normalizeWorkflowStepId(detail.workflow.current_step_id)
   }
 
   const backendStep = detail.current_step as BackendClaimsStep
@@ -2349,6 +3303,236 @@ function resolveVisibleStep(detail: ClaimsCessionDetailPayload | undefined): Cla
   return 'upload'
 }
 
+function normalizeWorkflowStepId(stepId: string): ClaimsStep {
+  if (stepId === 'workflow') {
+    return 'workflow'
+  }
+  if (stepId === 'detect' || stepId === 'map-contract') {
+    return 'detect-map'
+  }
+  if (stepId === 'screening') {
+    return 'screening'
+  }
+  return (stepId as ClaimsStep) || 'upload'
+}
+
+function workflowAgentKeyForStep(step: ClaimsStep): string | null {
+  if (step === 'workflow') {
+    return null
+  }
+  if (step === 'detect-map') {
+    return 'mapping'
+  }
+  if (step === 'validate') {
+    return 'anomaly_detection'
+  }
+  if (step === 'exceptions') {
+    return 'resolution'
+  }
+  if (step === 'clauses') {
+    return 'clause_validation'
+  }
+  if (step === 'process') {
+    return 'processing'
+  }
+  if (step === 'summary') {
+    return 'results'
+  }
+  if (step === 'screening') {
+    return 'sanction_screening'
+  }
+  if (step === 'files') {
+    return 'file_generation'
+  }
+  if (step === 'worklist') {
+    return 'worklist'
+  }
+  if (step === 'audit') {
+    return 'audit'
+  }
+  return null
+}
+
+function getWorkflowAgentForStep(workflow: ClaimsWorkflowPayload, step: ClaimsStep) {
+  const agentKey = workflowAgentKeyForStep(step)
+  return workflow.agents.find((agent) => agent.key === agentKey) ?? null
+}
+
+function workflowStepperButtonClass(status: string, isSelected: boolean, isRunning: boolean) {
+  const baseClass = 'inline-flex items-center gap-2 rounded-full border px-3 py-2.5 text-[12px] font-semibold whitespace-nowrap transition disabled:cursor-default disabled:opacity-70'
+  const toneClass =
+    status === 'completed'
+      ? 'border-[#C7EED8] bg-[#E8F8F5] text-[#117A65]'
+      : status === 'monitoring'
+        ? 'border-[#C8DCEB] bg-white text-[#205375] hover:bg-[#F7FBFF]'
+      : status === 'awaiting_approval'
+        ? 'border-[#F4D8A6] bg-[#FEF5E7] text-[#B9770E]'
+        : status === 'failed'
+          ? 'border-[#F3C7C5] bg-[#FDEDEC] text-[#922B21]'
+          : status === 'skipped'
+            ? 'border-dashed border-[#CAD5DF] bg-[#F8FAFC] text-iris-text-secondary hover:bg-[#F1F5F8]'
+            : isRunning || status === 'running'
+              ? 'border-iris-navy bg-iris-navy text-white'
+              : 'border-[#D9E3EA] bg-[#F4F7FA] text-iris-text-secondary hover:bg-[#EAF1F6]'
+  const focusClass = isSelected ? ' ring-2 ring-[#B9D3E6] ring-offset-2' : ''
+  return `${baseClass} ${toneClass}${focusClass}`
+}
+
+function workflowConnectorClass(currentStatus: string, nextStatus: string) {
+  const baseClass = 'mx-2 h-0 w-6 border-t'
+  const toneClass =
+    currentStatus === 'failed' || nextStatus === 'failed'
+      ? 'border-[#F3C7C5]'
+      : currentStatus === 'awaiting_approval' || nextStatus === 'awaiting_approval'
+        ? 'border-[#F4D8A6]'
+        : currentStatus === 'skipped' || nextStatus === 'skipped'
+          ? 'border-dashed border-[#CAD5DF]'
+          : currentStatus === 'completed' || currentStatus === 'monitoring' || currentStatus === 'running'
+            ? 'border-[#B9DCCD]'
+            : 'border-[#D9E3EA]'
+  return `${baseClass} ${toneClass}`
+}
+
+function resolveStepperStateIcon(status: string, message?: string | null) {
+  if (status === 'completed') {
+    return CheckCircle
+  }
+  if (status === 'awaiting_approval') {
+    return PauseCircle
+  }
+  if (status === 'failed') {
+    return WarningDiamond
+  }
+  if (status === 'skipped') {
+    return skippedStateMetaFromMessage(message).icon
+  }
+  if (status === 'running' || status === 'monitoring') {
+    return ArrowsClockwise
+  }
+  return null
+}
+
+function workflowStatusBadgeClass(status: string) {
+  const baseClass = 'rounded-full border px-3 py-1.5 text-[12px] font-semibold'
+  const toneClass =
+    status === 'completed'
+      ? 'border-[#C7EED8] bg-[#F0FFF6] text-[#1E8449]'
+      : status === 'monitoring'
+        ? 'border-[#C8DCEB] bg-[#F7FBFF] text-[#155A82]'
+      : status === 'awaiting_approval'
+        ? 'border-[#F4D8A6] bg-[#FFF9EF] text-[#8A6120]'
+        : status === 'failed'
+          ? 'border-[#F5C6CB] bg-[#FDEDEC] text-[#922B21]'
+          : status === 'skipped'
+            ? 'border-[#D7E2EA] bg-[#F8FAFC] text-iris-text-secondary'
+            : status === 'running'
+              ? 'border-[#D3E4F2] bg-[#F7FBFF] text-[#155A82]'
+              : 'border-[#D7E2EA] bg-[#F8FAFC] text-iris-text-secondary'
+  return `${baseClass} ${toneClass}`
+}
+
+function formatWorkflowStatusLabel(status: string) {
+  if (status === 'monitoring') {
+    return 'Monitoring'
+  }
+  if (status === 'awaiting_approval') {
+    return 'Awaiting Approval'
+  }
+  if (status === 'running') {
+    return 'Running'
+  }
+  if (status === 'completed') {
+    return 'Completed'
+  }
+  if (status === 'skipped') {
+    return 'Skipped'
+  }
+  if (status === 'failed') {
+    return 'Failed'
+  }
+  return titleCase(status)
+}
+
+function formatExecutionTime(value: number | null) {
+  if (!value && value !== 0) {
+    return 'Time —'
+  }
+  if (value < 1000) {
+    return `${value} ms`
+  }
+  return `${(value / 1000).toFixed(1)} s`
+}
+
+function hasWorkflowAgentExecuted(agent: ClaimsWorkflowPayload['agents'][number]) {
+  return ['completed', 'awaiting_approval', 'failed', 'skipped'].includes(agent.status)
+}
+
+function skippedStateMeta(agent: ClaimsWorkflowPayload['agents'][number]) {
+  return skippedStateMetaFromMessage(`${agent.state_message ?? ''} ${agent.output_summary ?? ''}`)
+}
+
+function skippedStateMetaFromMessage(message?: string | null) {
+  const normalized = `${message ?? ''}`.toLowerCase()
+  if (normalized.includes('disabled') || normalized.includes('bypass')) {
+    return {
+      label: 'Bypassed',
+      icon: ProhibitInset,
+      className: 'border-[#D7E2EA] bg-[#F8FAFC] text-[#5F6F7E]',
+    }
+  }
+  if (normalized.includes('auto-cleared') || normalized.includes('auto-applied') || normalized.includes('auto-resolved')) {
+    return {
+      label: 'Auto-Resolved',
+      icon: FastForwardCircle,
+      className: 'border-[#CDEBD9] bg-[#F0FFF6] text-[#1E8449]',
+    }
+  }
+  if (normalized.includes('fallback') || normalized.includes('condition')) {
+    return {
+      label: 'Conditional Skip',
+      icon: Path,
+      className: 'border-[#E2E8EF] bg-[#F8FAFC] text-[#627282]',
+    }
+  }
+  return {
+    label: 'Not Required',
+    icon: Path,
+    className: 'border-[#E2E8EF] bg-[#F8FAFC] text-[#627282]',
+  }
+}
+
+function agentOutcomeMeta(agent: ClaimsWorkflowPayload['agents'][number]) {
+  if (agent.status === 'completed') {
+    return { icon: CheckCircle, label: 'Completed', tone: 'positive' as const }
+  }
+  if (agent.status === 'awaiting_approval') {
+    return { icon: PauseCircle, label: 'Review queued', tone: 'warning' as const }
+  }
+  if (agent.status === 'failed') {
+    return { icon: WarningDiamond, label: 'Escalated', tone: 'negative' as const }
+  }
+  if (agent.status === 'skipped') {
+    const meta = skippedStateMeta(agent)
+    return { icon: meta.icon, label: meta.label, tone: 'neutral' as const }
+  }
+  if (agent.status === 'running') {
+    return { icon: ArrowsClockwise, label: 'Running', tone: 'neutral' as const }
+  }
+  return { icon: Flag, label: 'Queued', tone: 'neutral' as const }
+}
+
+function humanizeWorkflowField(value: string) {
+  return value
+    .replaceAll('_', ' ')
+    .split(' ')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function workflowReadinessLabel(value: string) {
+  return value || 'In Progress'
+}
+
 function titleCase(value: string) {
   return value
     .replaceAll('_', ' ')
@@ -2362,6 +3546,19 @@ function formatWorklistTaskStatus(value: string) {
     return 'Not Started'
   }
   return titleCase(value)
+}
+
+function formatExceptionResolutionLabel(value: string) {
+  if (value === 'accepted') {
+    return 'Accepted'
+  }
+  if (value === 'overridden') {
+    return 'Overridden'
+  }
+  if (value === 'rejected') {
+    return 'Manual Review'
+  }
+  return 'Pending'
 }
 
 function formatSettlementDecision(value: string) {

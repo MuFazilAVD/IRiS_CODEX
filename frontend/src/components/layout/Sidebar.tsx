@@ -80,6 +80,7 @@ const sections: NavSection[] = [
     items: [
       { label: 'Users & Roles', to: '/admin/users', icon: Users },
       { label: 'Reference Library', to: '/admin/library', icon: BookOpen },
+      { label: 'Workflow Agents', to: '/admin/workflow-agents', icon: Shield },
     ],
   },
 ]
