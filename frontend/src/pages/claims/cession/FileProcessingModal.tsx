@@ -32,6 +32,7 @@ import {
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 
+import { ShineBorder } from '@/components/ui/shine-border'
 import { api } from '../../../api/client'
 import { formatCurrency, formatRelativeDate } from '../../../utils/formatters'
 import type {
@@ -154,6 +155,7 @@ export function CessionFileProcessingWorkflow({
   onRefresh,
   presentation = 'page',
   backLabel = 'Back to Cession Files',
+  onFileCreated,
 }: CessionFileProcessingWorkflowProps) {
   const [activeFileId, setActiveFileId] = useState<string | null>(fileId ?? null)
   const [selectedStep, setSelectedStep] = useState<ClaimsStep>(fileId && !startInUpload ? 'workflow' : 'upload')
@@ -208,7 +210,7 @@ export function CessionFileProcessingWorkflow({
     const detail = detailQuery.data
     if (initializedFileId.current !== detail.file_id) {
       initializedFileId.current = detail.file_id
-      setSelectedStep(detail.workflow && !startInUpload ? 'workflow' : resolveVisibleStep(detail))
+      setSelectedStep(detail.workflow ? 'workflow' : resolveVisibleStep(detail))
       setDetectFileType(pendingManualType ?? detail.detection.file_type)
       setDetectCedentId(detail.detection.cedent_id ?? '')
       setMappedContractId(detail.contract_mapping.contract_id)
@@ -537,6 +539,7 @@ export function CessionFileProcessingWorkflow({
     initializedFileId.current = null
     setPendingManualType(uploadMode === 'manual' ? manualUploadFileType : null)
     setSelectedStep('workflow')
+    onFileCreated?.(data.file_id)
     await Promise.resolve(onRefresh())
     setNotice({
       tone: 'success',
@@ -1654,6 +1657,8 @@ function WorkflowOrchestrationStep({
   const [expandedAgents, setExpandedAgents] = useState<Record<string, boolean>>(() =>
     defaultExpandedAgent ? { [defaultExpandedAgent]: true } : {},
   )
+  const agentCardRefs = useRef<Record<string, HTMLElement | null>>({})
+  const previousPausedAgentKey = useRef<string | null>(null)
 
   useEffect(() => {
     if (defaultExpandedAgent) {
@@ -1661,8 +1666,33 @@ function WorkflowOrchestrationStep({
     }
   }, [defaultExpandedAgent])
 
+  useEffect(() => {
+    const priorPausedAgentKey = previousPausedAgentKey.current
+
+    if (pausedAgent?.key) {
+      if (priorPausedAgentKey !== pausedAgent.key) {
+        setExpandedAgents((current) => (current[pausedAgent.key] ? current : { ...current, [pausedAgent.key]: true }))
+        agentCardRefs.current[pausedAgent.key]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      previousPausedAgentKey.current = pausedAgent.key
+      return
+    }
+
+    if (priorPausedAgentKey && currentAgent?.key && currentAgent.status === 'running' && currentAgent.key !== priorPausedAgentKey) {
+      setExpandedAgents((current) => (current[currentAgent.key] ? current : { ...current, [currentAgent.key]: true }))
+      agentCardRefs.current[currentAgent.key]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    previousPausedAgentKey.current = null
+  }, [currentAgent?.key, currentAgent?.status, pausedAgent?.key])
+
   const workflowInsight = buildWorkflowInsight(detail, pausedAgent, currentAgent, screeningSummary)
   const startedTimestamp = resolveWorkflowStartedTimestamp(workflow)
+
+  function openAndScrollToAgent(agentKey: string) {
+    setExpandedAgents((current) => (current[agentKey] ? current : { ...current, [agentKey]: true }))
+    agentCardRefs.current[agentKey]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <div className="space-y-4">
@@ -1682,9 +1712,22 @@ function WorkflowOrchestrationStep({
               <TreeStructure className="h-4 w-4" weight="duotone" />
               Workflow Orchestration
             </span>
-            <span className={workflowStatusBadgeClass(workflow.status)}>
-              {formatWorkflowStatusLabel(workflow.status)} · {workflow.pct_complete}%
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={workflowStatusBadgeClass(workflow.status)}>
+                {workflow.status === 'awaiting_approval' ? <PauseCircle className="mr-1.5 inline-flex h-3.5 w-3.5" weight="fill" /> : null}
+                {formatWorkflowStatusLabel(workflow.status)} · {workflow.pct_complete}%
+              </span>
+              {workflow.status === 'awaiting_approval' && pausedAgent ? (
+                <button
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#F4D8A6] bg-white/85 text-[#8A6120] transition hover:bg-[#FFF6E6]"
+                  onClick={() => openAndScrollToAgent(pausedAgent.key)}
+                  title={`Jump to ${pausedAgent.agent_name}`}
+                  type="button"
+                >
+                  <CaretDown className="h-4 w-4" weight="bold" />
+                </button>
+              ) : null}
+            </div>
           </div>
           <h2 className="mt-4 text-[22px] font-bold leading-tight text-iris-text-primary">{workflowSummary.message}</h2>
           <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">
@@ -1713,6 +1756,7 @@ function WorkflowOrchestrationStep({
               {pausedAgent.state_message ?? `${pausedAgent.agent_name} requires review before the workflow can continue.`}
             </div>
           ) : null}
+
         </div>
 
         <div className="flex h-full flex-col justify-center border-t border-white/75 px-5 py-5 xl:border-l xl:border-t-0">
@@ -1740,10 +1784,22 @@ function WorkflowOrchestrationStep({
           const SkipIcon = skipMeta?.icon
           const outcomeMeta = agentOutcomeMeta(agent)
           const showApprove = agent.awaiting_approval && agent.key !== 'resolution'
-          return (
-            <article key={agent.key} className="overflow-hidden rounded-[24px] border border-[#D9E3EA] bg-white shadow-sm">
+          const isRunningAgent = agent.status === 'running'
+          const isFocusedAgent = agent.key === pausedAgent?.key || agent.key === currentAgent?.key
+          const accentBarClass = workflowAgentAccentBarClass(agent.status)
+          const headerHoverClass =
+            agent.status === 'running'
+              ? 'hover:bg-[#EEF6FB]'
+              : agent.status === 'awaiting_approval'
+                ? 'hover:bg-[#FFFAF0]'
+                : agent.status === 'failed'
+                  ? 'hover:bg-[#FFF4F3]'
+                  : 'hover:bg-[#FBFCFD]'
+          const card = (
+            <article className={workflowAgentCardClass(agent.status, isFocusedAgent)}>
+              {accentBarClass ? <div className={`h-1 w-full ${accentBarClass}`} /> : null}
               <button
-                className="w-full px-5 py-5 text-left transition hover:bg-[#FBFCFD]"
+                className={`w-full px-5 py-5 text-left transition ${headerHoverClass}`}
                 onClick={() =>
                   setExpandedAgents((current) => ({
                     ...current,
@@ -1761,6 +1817,12 @@ function WorkflowOrchestrationStep({
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-iris-text-muted">{agent.step_label}</p>
+                          {isRunningAgent ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C8DCEB] bg-[#EFF7FD] px-2 py-1 text-[11px] font-semibold text-[#155A82]">
+                              <ArrowsClockwise className="h-3.5 w-3.5 animate-spin" weight="bold" />
+                              Running now
+                            </span>
+                          ) : null}
                           {skipMeta && SkipIcon ? (
                             <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold ${skipMeta.className}`}>
                               <SkipIcon className="h-3.5 w-3.5" weight="fill" />
@@ -1825,6 +1887,30 @@ function WorkflowOrchestrationStep({
                 </div>
               ) : null}
             </article>
+          )
+
+          return (
+            <div
+              key={agent.key}
+              ref={(node) => {
+                agentCardRefs.current[agent.key] = node
+              }}
+              className="scroll-mt-28"
+            >
+              {isRunningAgent ? (
+                <ShineBorder
+                  borderRadius={24}
+                  borderWidth={2}
+                  className="bg-transparent"
+                  color={['#1A6B9A', '#00BCD4', '#3498DB']}
+                  duration={8}
+                >
+                  {card}
+                </ShineBorder>
+              ) : (
+                card
+              )}
+            </div>
           )
         })}
       </div>
@@ -2450,7 +2536,7 @@ function WorkflowAgentOutput({
   const hasExecuted = hasWorkflowAgentExecuted(agent)
 
   if (!hasExecuted && agent.status === 'running') {
-    return <WorkflowEmptyOutput>{agent.agent_name} is executing now. Live output will populate here as soon as the agent publishes it.</WorkflowEmptyOutput>
+    return <WorkflowEmptyOutput>{agent.agent_name} is executing now. Live output will populate here as soon as the agent publishes the next workflow update.</WorkflowEmptyOutput>
   }
 
   if (!hasExecuted && agent.status === 'pending') {
@@ -3389,12 +3475,39 @@ function workflowStatusBadgeClass(status: string) {
         ? 'border-[#F4D8A6] bg-[#FFF9EF] text-[#8A6120]'
         : status === 'failed'
           ? 'border-[#F5C6CB] bg-[#FDEDEC] text-[#922B21]'
-          : status === 'skipped'
-            ? 'border-[#D7E2EA] bg-[#F8FAFC] text-iris-text-secondary'
-            : status === 'running'
-              ? 'border-[#D3E4F2] bg-[#F7FBFF] text-[#155A82]'
-              : 'border-[#D7E2EA] bg-[#F8FAFC] text-iris-text-secondary'
+      : status === 'skipped'
+        ? 'border-[#D7E2EA] bg-[#F8FAFC] text-iris-text-secondary'
+        : status === 'running'
+          ? 'border-[#B8D3E6] bg-[#EFF7FD] text-[#155A82]'
+          : 'border-[#D7E2EA] bg-[#F8FAFC] text-iris-text-secondary'
   return `${baseClass} ${toneClass}`
+}
+
+function workflowAgentCardClass(status: string, isFocused: boolean) {
+  const baseClass = 'scroll-mt-28 overflow-hidden rounded-[24px] border bg-white shadow-sm transition-all'
+  const toneClass =
+    status === 'running'
+      ? 'border-[#98C3DE] bg-[#F7FBFF] shadow-[0_18px_36px_rgba(32,83,117,0.12)]'
+      : status === 'awaiting_approval'
+        ? 'border-[#F4D8A6] bg-[#FFFDF7] shadow-[0_14px_30px_rgba(185,119,14,0.08)]'
+        : status === 'failed'
+          ? 'border-[#F3C7C5] bg-[#FFF7F6] shadow-[0_14px_30px_rgba(179,60,49,0.08)]'
+          : 'border-[#D9E3EA]'
+  const focusClass = isFocused ? ' ring-1 ring-[#D7E6F2]' : ''
+  return `${baseClass} ${toneClass}${focusClass}`
+}
+
+function workflowAgentAccentBarClass(status: string) {
+  if (status === 'running') {
+    return 'bg-gradient-to-r from-[#155A82] via-[#3E8FB0] to-[#8FD7D2]'
+  }
+  if (status === 'awaiting_approval') {
+    return 'bg-gradient-to-r from-[#B9770E] via-[#D9A441] to-[#F4D8A6]'
+  }
+  if (status === 'failed') {
+    return 'bg-gradient-to-r from-[#922B21] via-[#C0392B] to-[#F3C7C5]'
+  }
+  return ''
 }
 
 function formatWorkflowStatusLabel(status: string) {

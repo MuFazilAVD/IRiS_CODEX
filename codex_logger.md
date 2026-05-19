@@ -142,6 +142,83 @@ create vence, install reqs, acgivate and run app
 ### Status
 ✅ Completed
 
+## [2026-05-19 09:50:41 UTC]
+
+### Prompt
+In the cession file processing page, now when we upload a file, it starts the processing workflow and it opens the stepper section which requires Human Review. 
+I need the default view to be the workflow stepper page and in the background the workflow process continues.
+
+### Context Used
+- Files referred:
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/db/SCHEMA.md
+  - docs/api/CLAIMS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/claims/cession/CessionFileProcessingPage.tsx
+  - frontend/src/pages/claims/cession/CessionFilesPage.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/tsconfig.app.json
+
+### Actions Taken
+- Traced the routed cession upload flow and identified that new uploads launched from `/claims/cession-files/new` were not using the file-specific route handoff after upload.
+- Updated the cession workflow component to use the provided `onFileCreated` callback so new uploads immediately transition to `/claims/cession-files/:fileId`.
+- Changed the post-detail initialization logic so any file with workflow orchestration data defaults to the `Workflow` monitor view instead of auto-jumping into the first human-review sub-step.
+- Added the minimal TypeScript compatibility setting required by the current toolchain so frontend build verification could complete successfully.
+- Updated the claims tracker note to reflect the corrected post-upload workflow landing behavior.
+- Ran `npm run build` in `frontend` and confirmed the production build passes.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- frontend/tsconfig.app.json
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Frontend build verification was initially blocked by an existing TypeScript 6 deprecation error on `baseUrl`; `ignoreDeprecations: "6.0"` was added in `frontend/tsconfig.app.json` as the narrowest safe compatibility fix.
+- The repository contains unrelated modified and untracked files in other areas; they were left untouched.
+- `npm run build` still emits the existing Vite chunk-size warning, but the build completes successfully.
+
+### Status
+✅ Completed
+
+## [2026-05-19 08:48:11 UTC]
+
+### Prompt
+There are a few tweaks in this section:
+1) Remove the agent navigation section inside the workflow orchestration card
+2) When i mentioned i need to navigate to the corresponding agent when the workflow is stuck asking for HITL was to show a small icon near the Awaiting approval icon at the top. Not an explicit section.
+3) Right now, the running agent has three loaders inside the card. Only one loader is necessary.
+4) After approving the manual review/HITL, the ruuning loader is misssing. Fix it
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Removed the explicit agent navigation block from the workflow orchestration card.
+- Replaced it with a compact paused-state jump icon beside the top `Awaiting Approval` workflow status so users can scroll directly to the blocked agent card.
+- Reduced the running-agent treatment to a single visible loader in the agent header and removed the extra duplicate running spinners from the card body.
+- Kept the auto-focus behavior so the workflow still scrolls to newly paused agents and to the resumed running agent after HITL approval.
+- Verified the frontend build with `npm run build`.
+- Updated the tracker note to reflect the refined orchestration behavior.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- This was a refinement of the already-implemented orchestration UI rather than a new feature build.
+- Unrelated pre-existing workspace changes and generated settlement artifacts were left untouched.
+- The frontend build still reports the existing Vite chunk-size warning, but the build passes successfully.
+
+### Status
+✅ Completed
+
 ## [2026-05-19T07:58:33.9314474+00:00]
 
 ### Prompt
