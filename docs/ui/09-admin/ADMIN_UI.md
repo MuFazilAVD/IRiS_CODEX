@@ -3,6 +3,7 @@
 ## Routes
 - `/admin/users` → Users & Roles
 - `/admin/library` → Reference Data Library
+- `/admin/workflow-agents` → Workflow Agents
 
 **Auth:** `admin`, `super_admin`
 
@@ -287,3 +288,40 @@ Notes:       [______________]
 ```
 
 On upload: validates format, creates new versioned record. Existing locked contracts are NOT affected. New/editable contracts can be updated to reference the new version.
+
+---
+
+# WORKFLOW AGENTS PAGE
+
+**Route:** `/admin/workflow-agents`
+
+## Layout
+
+```
+Home › Administration › Workflow Agents
+
+Workflow Agents                                         [Refresh]
+Configure agent enablement, confidence thresholds, HITL behavior, escalation, retries, and fallbacks for the cession workflow.
+
+[Agent cards in a 2-column grid]
+```
+
+Each agent card shows:
+- step label and agent name
+- enabled checkbox
+- confidence threshold
+- `Always stop for HITL` switch
+- HITL behavior
+- retry limit
+- fallback mode
+- escalation rule
+- save action
+
+### HITL Override Switch
+
+The `Always stop for HITL` control is a dedicated on/off switch with a raised skeuomorphic treatment.
+
+- `Off` → agent pauses only when confidence falls below threshold or the workflow logic explicitly requires human review
+- `On` → agent pauses for HITL on every run, irrespective of the configured threshold
+
+The existing `HITL Behavior` dropdown still controls the pause type (`Pause for approval` vs `Pause for correction`) when the workflow stops.

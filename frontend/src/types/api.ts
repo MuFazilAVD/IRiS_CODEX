@@ -1208,6 +1208,7 @@ export interface ClaimsWorkflowAgent {
   attempts: number
   confidence_score: number | null
   confidence_threshold: number
+  always_pause_for_hitl: boolean
   hitl_behavior: string
   escalation_rule: string
   retry_limit: number
@@ -2299,6 +2300,7 @@ export interface AdminWorkflowAgentRecord {
   description: string
   enabled: boolean
   confidence_threshold: number
+  always_pause_for_hitl: boolean
   hitl_behavior: string
   escalation_rule: string
   retry_limit: number

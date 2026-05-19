@@ -27,7 +27,6 @@ import {
   TreeStructure,
   TrendUp,
   UploadSimple,
-  UserFocus,
   WarningCircle,
   WarningDiamond,
 } from '@phosphor-icons/react'
@@ -1662,26 +1661,22 @@ function WorkflowOrchestrationStep({
     }
   }, [defaultExpandedAgent])
 
-  const contextPills = [
-    { icon: UserFocus, label: 'Cedent', value: workflowSummary.detected_cedent || detail.cedent },
-    { icon: FileText, label: 'Contract', value: workflowSummary.contract_id ?? detail.contract_id ?? 'Pending mapping' },
-    { icon: ChartBar, label: 'Period', value: workflowSummary.reporting_period },
-    { icon: FilesIcon, label: 'File type', value: detail.file_type },
-    { icon: TrendUp, label: 'Records', value: formatCount(detail.records) },
-  ]
+  const workflowInsight = buildWorkflowInsight(detail, pausedAgent, currentAgent, screeningSummary)
+  const startedTimestamp = resolveWorkflowStartedTimestamp(workflow)
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_360px]">
-        <div
-          className={`rounded-[24px] border px-5 py-5 shadow-sm ${
-            workflowSummary.success
-              ? 'border-[#C7EED8] bg-[#F0FFF6]'
-              : workflow.status === 'awaiting_approval' || workflow.status === 'failed'
-                ? 'border-[#F4D8A6] bg-[#FFF9EF]'
-                : 'border-[#D6E4F0] bg-[#F7FBFF]'
-          }`}
-        >
+      <div
+        className={`overflow-hidden rounded-[24px] border shadow-sm ${
+          workflowSummary.success
+            ? 'border-[#C7EED8] bg-[#F0FFF6]'
+            : workflow.status === 'awaiting_approval' || workflow.status === 'failed'
+              ? 'border-[#F4D8A6] bg-[#FFF9EF]'
+              : 'border-[#D6E4F0] bg-[#F7FBFF]'
+        }`}
+      >
+        <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_330px]">
+          <div className="px-5 py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-iris-text-primary">
               <TreeStructure className="h-4 w-4" weight="duotone" />
@@ -1700,10 +1695,9 @@ function WorkflowOrchestrationStep({
                 : 'All workflow agents finished successfully and the cession processing run is complete.'}
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {contextPills.map((item) => (
-              <WorkflowContextPill key={item.label} icon={item.icon} label={item.label} value={item.value} />
-            ))}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <WorkflowDetailTile label="Contract" value={workflowSummary.contract_id ?? detail.contract_id ?? 'Pending mapping'} />
+            <WorkflowDetailTile label="Workflow Period" value={workflowSummary.reporting_period || detail.contract_mapping.period || 'Pending period'} />
           </div>
 
           <div className="mt-4 rounded-[18px] border border-[#B8E2E0] bg-white/75 px-4 py-3">
@@ -1711,7 +1705,7 @@ function WorkflowOrchestrationStep({
               <SparkleIcon className="h-4 w-4" weight="fill" />
               Workflow Insight
             </div>
-            <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">{workflowSummary.insight}</p>
+            <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">{workflowInsight}</p>
           </div>
 
           {pausedAgent ? (
@@ -1721,7 +1715,7 @@ function WorkflowOrchestrationStep({
           ) : null}
         </div>
 
-        <div className="rounded-[24px] border border-[#D9E3EA] bg-white p-5 shadow-sm">
+        <div className="flex h-full flex-col justify-center border-t border-white/75 px-5 py-5 xl:border-l xl:border-t-0">
           <div className="flex items-center gap-2 text-[15px] font-semibold text-iris-text-primary">
             <Path className="h-4 w-4" weight="duotone" />
             Live Orchestration Monitor
@@ -1729,22 +1723,12 @@ function WorkflowOrchestrationStep({
           <div className="mt-4 space-y-3 text-[13px] text-iris-text-secondary">
             <MonitorRow label="Current Agent" value={currentAgent?.agent_name ?? 'Workflow complete'} />
             <MonitorRow label="Pause State" value={pausedAgent ? `${pausedAgent.agent_name} awaiting review` : 'No active pauses'} />
-            <MonitorRow label="Completion" value={`${workflow.pct_complete}%`} />
-            <MonitorRow label="Started" value={workflow.started_at ? formatRelativeDate(workflow.started_at) : 'Just now'} />
-            <MonitorRow label="Last Update" value={workflow.updated_at ? formatRelativeDate(workflow.updated_at) : 'Just now'} />
+            <MonitorRow label="Started" value={startedTimestamp ? formatRelativeDate(startedTimestamp) : '—'} />
             <MonitorRow label="Completed" value={workflowSummary.completion_timestamp ? formatRelativeDate(workflowSummary.completion_timestamp) : 'In progress'} />
           </div>
 
-          <div className="mt-5 rounded-[18px] border border-[#E5EBF0] bg-[#FAFBFC] px-4 py-4">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">Workflow Outcome</p>
-            <p className="mt-2 text-[14px] font-semibold text-iris-text-primary">
-              {workflowSummary.settlement_id ? `${workflowSummary.settlement_id} prepared for ${workflowSummary.reporting_period}` : `${workflowSummary.reporting_period} workflow in progress`}
-            </p>
-            <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">
-              Screening outcome: {workflowSummary.sanctions_screening_outcome}. Worklist tasks created: {formatCount(workflowSummary.worklist_items_count)}. Audit events captured: {formatCount(workflowSummary.audit_events_count)}.
-            </p>
-          </div>
         </div>
+      </div>
       </div>
 
       <div className="space-y-3">
@@ -2406,24 +2390,6 @@ function PipelineStepper({
           </Fragment>
         )
       })}
-    </div>
-  )
-}
-
-function WorkflowContextPill({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ElementType
-  label: string
-  value: string
-}) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-white/85 bg-white/80 px-3 py-2 text-[12px] text-iris-text-primary shadow-sm">
-      <Icon className="h-4 w-4 text-[#205375]" weight="duotone" />
-      <span className="font-semibold text-iris-text-secondary">{label}</span>
-      <span className="font-semibold text-iris-text-primary">{value}</span>
     </div>
   )
 }
@@ -3465,6 +3431,153 @@ function formatExecutionTime(value: number | null) {
 
 function hasWorkflowAgentExecuted(agent: ClaimsWorkflowPayload['agents'][number]) {
   return ['completed', 'awaiting_approval', 'failed', 'skipped'].includes(agent.status)
+}
+
+function hasWorkflowAgentStarted(agent: ClaimsWorkflowPayload['agents'][number]) {
+  return agent.status !== 'pending'
+}
+
+function buildWorkflowInsight(
+  detail: ClaimsCessionDetailPayload,
+  pausedAgent: ClaimsWorkflowPayload['agents'][number] | null,
+  currentAgent: ClaimsWorkflowPayload['agents'][number] | null,
+  screeningSummary: ClaimsWorklistScreeningSummary | null,
+) {
+  const workflow = detail.workflow
+  const workflowSummary = workflow.results
+
+  if (workflow.status === 'completed' && workflowSummary.insight) {
+    return workflowSummary.insight
+  }
+
+  const focusAgent =
+    pausedAgent ??
+    currentAgent ??
+    [...workflow.agents].reverse().find((agent) => hasWorkflowAgentStarted(agent)) ??
+    null
+
+  if (!focusAgent) {
+    return 'recommendation: upload confirmed; IRiS is preparing the first workflow checks.'
+  }
+
+  if (focusAgent.status === 'running') {
+    return workflowInFlightInsight(focusAgent)
+  }
+
+  if (focusAgent.status === 'failed') {
+    return focusAgent.error_message ?? focusAgent.state_message ?? 'recommendation: workflow escalation is required before processing can continue.'
+  }
+
+  return workflowAgentInsight(focusAgent, detail, screeningSummary) ?? workflowSummary.insight
+}
+
+function resolveWorkflowStartedTimestamp(workflow: ClaimsWorkflowPayload) {
+  if (workflow.started_at) {
+    return workflow.started_at
+  }
+
+  const candidateTimestamps = workflow.agents
+    .flatMap((agent) => [agent.started_at, agent.completed_at, agent.updated_at])
+    .concat(
+      workflow.stepper
+        .filter((item) => item.stage !== 'upload')
+        .map((item) => item.timestamp),
+    )
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())
+
+  return candidateTimestamps[0] ?? null
+}
+
+function workflowInFlightInsight(agent: ClaimsWorkflowPayload['agents'][number]) {
+  switch (agent.key) {
+    case 'mapping':
+      return 'recommendation: IRiS is classifying the upload and mapping the treaty context.'
+    case 'anomaly_detection':
+      return 'recommendation: IRiS is validating the uploaded rows and compiling anomaly findings.'
+    case 'resolution':
+      return 'recommendation: IRiS is applying high-confidence anomaly fixes and routing the remaining items for review.'
+    case 'clause_validation':
+      return 'recommendation: IRiS is checking the mapped file against the applicable contract clauses.'
+    case 'processing':
+      return 'recommendation: IRiS is executing the downstream processing logic and comparing the uploaded values with IRiS.'
+    case 'results':
+      return 'recommendation: IRiS is compiling the workflow summary and business impact.'
+    case 'sanction_screening':
+      return 'recommendation: IRiS is evaluating sanctions sources and release readiness.'
+    case 'file_generation':
+      return 'recommendation: IRiS is generating downstream settlement artifacts.'
+    case 'worklist':
+      return 'recommendation: IRiS is routing downstream tasks to the owning teams.'
+    case 'audit':
+      return 'recommendation: IRiS is finalizing the workflow audit trail.'
+    default:
+      return 'recommendation: workflow orchestration is in progress.'
+  }
+}
+
+function workflowAgentInsight(
+  agent: ClaimsWorkflowPayload['agents'][number],
+  detail: ClaimsCessionDetailPayload,
+  screeningSummary: ClaimsWorklistScreeningSummary | null,
+) {
+  switch (agent.key) {
+    case 'mapping':
+      return `recommendation: mapping confirmed ${detail.detection.cedent} to ${
+        detail.contract_mapping.contract_id || 'the target contract'
+      } for ${detail.contract_mapping.period}.`
+    case 'anomaly_detection':
+      if (!detail.validation.critical_errors && !detail.validation.warnings && !detail.validation.informational) {
+        return 'recommendation: no anomalies detected; continue to the next agent.'
+      }
+      return `recommendation: review ${formatCount(detail.validation.critical_errors)} critical, ${formatCount(
+        detail.validation.warnings,
+      )} warning and ${formatCount(detail.validation.informational)} informational finding(s) before processing continues.`
+    case 'resolution':
+      if (detail.exceptions.unresolved > 0) {
+        return `recommendation: approve or override the remaining ${formatCount(detail.exceptions.unresolved)} anomaly resolution(s) before orchestration resumes.`
+      }
+      return 'recommendation: all anomaly resolutions were applied automatically; continue to clause validation.'
+    case 'clause_validation':
+      if (detail.clauses.flagged_count > 0) {
+        return `recommendation: review ${formatCount(detail.clauses.flagged_count)} flagged clause control(s) before execution.`
+      }
+      return 'recommendation: clause validation passed; continue to processing.'
+    case 'processing': {
+      const reconciliation = detail.summary.settlement_reconciliation
+      if (reconciliation?.decision === 'review') {
+        return 'recommendation: review the settlement reconciliation outcome before release.'
+      }
+      if (detail.summary.file_type === 'Settlement' && reconciliation?.decision === 'accept') {
+        return 'recommendation: processing verified the uploaded fixed, floating and net values against IRiS.'
+      }
+      return 'recommendation: processing completed and the mapped cession data is ready for summary compilation.'
+    }
+    case 'results':
+      return 'recommendation: workflow summary and business impact are ready for downstream review.'
+    case 'sanction_screening':
+      if (!screeningSummary) {
+        return 'recommendation: no sanctions screening case was required for this workflow.'
+      }
+      if (screeningSummary.workflow_status === 'auto_cleared') {
+        return 'recommendation: sanctions screening auto-cleared; continue to file generation.'
+      }
+      return 'recommendation: compliance review is required before the workflow can continue.'
+    case 'file_generation':
+      if (detail.downstream_files.items.length > 0) {
+        return `recommendation: review ${formatCount(detail.downstream_files.items.length)} generated downstream file(s) before release.`
+      }
+      return 'recommendation: no downstream files were required for this workflow.'
+    case 'worklist':
+      if (detail.worklist.items.length > 0) {
+        return `recommendation: ${formatCount(detail.worklist.items.length)} worklist task(s) were created and routed to the owning teams.`
+      }
+      return 'recommendation: no downstream worklist tasks were required for this run.'
+    case 'audit':
+      return `recommendation: ${formatCount(detail.audit.items.length)} audit event(s) captured; workflow history is ready for review.`
+    default:
+      return agent.state_message ?? agent.output_summary ?? null
+  }
 }
 
 function skippedStateMeta(agent: ClaimsWorkflowPayload['agents'][number]) {

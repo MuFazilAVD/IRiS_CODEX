@@ -135,6 +135,7 @@ def default_workflow_agent_configs() -> list[dict[str, Any]]:
             "description": definition["description"],
             "enabled": True,
             "confidence_threshold": float(definition["default_threshold"]),
+            "always_pause_for_hitl": False,
             "hitl_behavior": "pause_for_approval",
             "escalation_rule": definition["default_escalation_rule"],
             "retry_limit": int(definition["default_retry_limit"]),
@@ -158,6 +159,7 @@ def merge_workflow_agent_configs(raw_items: Any) -> list[dict[str, Any]]:
             candidate = merged[key]
             candidate["enabled"] = bool(item.get("enabled", candidate["enabled"]))
             candidate["confidence_threshold"] = clamp_threshold(item.get("confidence_threshold", candidate["confidence_threshold"]))
+            candidate["always_pause_for_hitl"] = bool(item.get("always_pause_for_hitl", candidate["always_pause_for_hitl"]))
             hitl_behavior = str(item.get("hitl_behavior") or candidate["hitl_behavior"]).strip()
             candidate["hitl_behavior"] = hitl_behavior if hitl_behavior in VALID_HITL_BEHAVIORS else candidate["hitl_behavior"]
             escalation_rule = str(item.get("escalation_rule") or "").strip()

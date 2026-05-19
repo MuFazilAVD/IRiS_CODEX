@@ -155,6 +155,8 @@ class AdminService:
             updated["enabled"] = bool(payload["enabled"])
         if payload.get("confidence_threshold") is not None:
             updated["confidence_threshold"] = clamp_threshold(payload["confidence_threshold"])
+        if payload.get("always_pause_for_hitl") is not None:
+            updated["always_pause_for_hitl"] = bool(payload["always_pause_for_hitl"])
         if payload.get("hitl_behavior") is not None:
             hitl_behavior = str(payload["hitl_behavior"]).strip()
             if hitl_behavior not in VALID_HITL_BEHAVIORS:

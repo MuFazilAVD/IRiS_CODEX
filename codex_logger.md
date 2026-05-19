@@ -142,6 +142,240 @@ create vence, install reqs, acgivate and run app
 ### Status
 ✅ Completed
 
+## [2026-05-19T07:58:33.9314474+00:00]
+
+### Prompt
+The value of "Started" key seems missing. Fix it
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/DESIGN.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - backend/app/services/claims_service.py
+
+### Actions Taken
+- Traced the missing `Started` value to runs where `workflow.started_at` is empty even though agent-level timestamps are present.
+- Added a frontend fallback that derives the workflow start time from the earliest available agent or step timestamp when the top-level workflow start is missing.
+- Kept the existing monitor behavior for `Completed`, which remains `In progress` until a real completion timestamp exists.
+- Verified with `npm run build` in `frontend`.
+- Updated the claims tracker note to document the `Started` timestamp fallback behavior.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The frontend build still reports the existing Vite chunk-size warning, but the production build completes successfully.
+
+### Status
+✅ Completed
+
+## [2026-05-19T07:52:53.2990989+00:00]
+
+### Prompt
+Under the Live Orchestration monitor, right now there are started, last update and completed key. Remove the "last update" key and keep the value of "started" as the timstamp of when we started the process, not "Just Now". The value of "Completed" will stay "In progress" till the process is completed.
+Make necessary changes to the alignment of the card so as to remove the unwanted white spaces that occur when the data is removed.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/DESIGN.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/utils/formatters.ts
+
+### Actions Taken
+- Removed the `Last Update` row from the Live Orchestration Monitor.
+- Changed the `Started` fallback so the card no longer shows `Just now`; it now uses the workflow start timestamp when available and otherwise shows `—`.
+- Kept `Completed` on `In progress` until a real completion timestamp exists.
+- Adjusted the right-side monitor column to use centered vertical layout so the reduced content no longer leaves awkward whitespace after the section removals.
+- Verified with `npm run build` in `frontend`.
+- Updated the claims tracker note to reflect the revised monitor behavior and alignment.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The frontend build still reports the existing Vite chunk-size warning, but the production build completes successfully.
+
+### Status
+✅ Completed
+
+## [2026-05-19T07:34:57.5642907+00:00]
+
+### Prompt
+A few changes required in the Cession file processing UI:
+1) There are a lot of repeated information in this view. For eg, completed percentage, the cedent name, file type, etc. Remove the duplicates and keep these details single time.
+2) Club both the left and right cards into a single card.
+3) Just like how the insights under the "workflow orchestration" changes dynamically, the insights under the "Workflow insights" should also change according to the agents that has run till the moment and once all the agents are done, it should change again to how it is currently which is "ecommendation: approve settlement; uploaded fixed, floating and net values exactly match IRiS."
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/DESIGN.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/types/api.ts
+  - backend/app/services/claims_service.py
+  - backend/app/workflow_agents.py
+  - frontend/package.json
+
+### Actions Taken
+- Merged the orchestration overview and live monitor into a single shared card in the cession workflow page.
+- Removed repeated metadata from that view by dropping the duplicate completion row and the repeated cedent/file-type/record context pills, while keeping contract and workflow period visible once.
+- Added a frontend-derived live `Workflow Insight` message that changes with the currently running or paused agent and falls back to the existing final recommendation once the workflow is completed.
+- Verified the frontend build with `npm run build`.
+- Updated the claims tracker note to record the orchestration-card and live-insight behavior change.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- No API or schema changes were required because the live workflow insight is derived from the existing agent payload already returned by the claims detail endpoint.
+- `npm run build` still reports the pre-existing Vite chunk-size warning, but the build completes successfully.
+
+### Status
+✅ Completed
+
+## [2026-05-19T07:00:29.1258653+00:00]
+
+### Prompt
+Redesign the HITL override section to be extremely minimal and aligned with the existing enterprise UI system. Remove all unnecessary elements such as status pills, extra captions, highlighted containers, or decorative emphasis. Replace the current label with a more professional alternative such as “Enable Human Review” and keep only this label paired with a compact modern toggle switch aligned horizontally on the right. The switch should match the scale, border radius, spacing, colors, and interaction patterns of the existing UI controls and toggles used elsewhere in the application. Use a subtle OFF state with a light neutral track and a clean ON state using the application’s primary accent color without glow effects, oversized shadows, or strong gradients. Maintain balanced padding, clear alignment, and a lightweight appearance so the control feels integrated naturally into the agent card instead of visually dominating it.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/DESIGN.md
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+
+### Actions Taken
+- Simplified the HITL override field into a minimal single-row enterprise control with a new `Enable Human Review` label and a compact right-aligned toggle.
+- Removed the prior extra status pill, supporting caption, tinted emphasis treatment, and decorative skeuomorphic weight from the control.
+- Tuned the toggle dimensions, border radius, neutral OFF track, accent-colored ON track, and lightweight shadow treatment to align with the existing form-control scale.
+- Preserved the underlying ON/OFF behavior, accessibility role, focus-visible state, and card-level spacing.
+- Updated the tracker note to reflect the minimal enterprise-style HITL override presentation.
+- Ran `npm run build` in `frontend` to verify the page still compiles successfully.
+
+### Files Modified
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repository still contains unrelated pre-existing modified backend state, docs, and local DB files from earlier workflow-agent changes; they were left untouched during this UI-only refinement.
+- `npm run build` continues to report the existing Vite chunk-size warning, but the production build completes successfully.
+
+### Status
+✅ Completed
+
+## [2026-05-19T06:50:13.6702575+00:00]
+
+### Prompt
+Redesign the HITL (Human-in-the-Loop) override control inside the agent cards to feel visually consistent with the rest of the governance UI while improving clarity, hierarchy, and usability. Keep the overall footprint, spacing system, typography scale, border radius, and visual language aligned with the existing cards, dropdowns, toggles, and form controls already used throughout the application. The current HITL section feels visually heavy and disconnected because of the oversized highlighted container and inconsistent toggle styling, so refine it into a cleaner, more compact control that blends naturally into the card layout without drawing disproportionate attention. Preserve the existing functionality and information architecture, including the HITL label, status indication, supporting description, and ON/OFF behavior, but redesign the interaction to feel more polished and enterprise-grade. Ensure the toggle size, padding, label alignment, shadows, borders, and hover/focus states match the established design system and do not exceed the scale of adjacent UI elements like checkboxes, dropdowns, and status pills. The enabled state should remain clearly distinguishable but use a subtler treatment that relies on controlled contrast, accent color consistency, and refined state styling instead of large glowing backgrounds. Optimize the layout for readability, balanced whitespace, and fast scannability within dense operational dashboards while maintaining accessibility, responsiveness, and visual consistency across all agent cards.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/DESIGN.md
+  - frontend/src/index.css
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+
+### Actions Taken
+- Reviewed the existing HITL override control against the shared form-control patterns and design-system spacing/typography tokens.
+- Redesigned the `SkeuomorphicSwitch` container into a denser governance-style field with the same footprint class and information architecture but a lighter visual weight.
+- Reduced the emphasis of the enabled state by replacing the large highlighted/glowing panel treatment with subtler border, tint, and shadow adjustments.
+- Scaled the toggle track and knob down to align more closely with adjacent checkboxes, pills, and dropdown controls while keeping the ON/OFF state explicit.
+- Tightened label alignment and badge hierarchy so the title, status chip, supporting description, and switch scan cleanly inside dense operational cards.
+- Preserved the existing ON/OFF behavior, supporting description, accessibility role, and focus-visible treatment.
+- Ran `npm run build` in `frontend` to verify the updated UI compiles cleanly.
+- Updated the tracker note to reflect the visual refinement of the HITL override control.
+
+### Files Modified
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repository already had unrelated modified files in backend config/state, docs, and the local demo database from the prior HITL override implementation session; they were left untouched while this pass focused only on the UI refinement.
+- `npm run build` still reports the existing Vite chunk-size warning, but the production build completes successfully.
+
+### Status
+✅ Completed
+
+## [2026-05-19T06:36:22.2587962+00:00]
+
+### Prompt
+In the agent configuration section, i need an extra functionality:
+I should be able to configure whether the agent should stop for HITL irrespective of the threshold. Add a switch to make the HITL on and off in skeuomorphic design.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/ui/09-admin/ADMIN_UI.md
+  - docs/api/ADMIN.md
+  - docs/api/API_ADDITIONS.md
+  - backend/app/workflow_agents.py
+  - backend/app/services/admin_service.py
+  - backend/app/services/claims_service.py
+  - backend/app/schemas/admin.py
+  - backend/app/mock_data/admin_state.json
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Added a new `always_pause_for_hitl` workflow-agent configuration field to the backend defaults, merge logic, admin update schema, and admin service save path.
+- Applied the new override inside the claims workflow executor so enabled agents can be forced into `awaiting_approval` even when confidence is above threshold.
+- Extended the workflow-agent API payloads and frontend TypeScript models with the new field.
+- Added a raised skeuomorphic `Always stop for HITL` switch to each admin workflow-agent card and included the new mode in the card summary chips.
+- Updated the admin UI/API documentation and the tracker note to reflect the new HITL override behavior.
+- Verified with `npm run build` in `frontend`.
+- Verified with `venv\Scripts\python -m py_compile backend\app\workflow_agents.py backend\app\schemas\admin.py backend\app\services\admin_service.py backend\app\services\claims_service.py`.
+- Verified the config merge path with an inline Python check that confirmed every workflow-agent record now includes `always_pause_for_hitl`.
+
+### Files Modified
+- backend/app/workflow_agents.py
+- backend/app/schemas/admin.py
+- backend/app/services/admin_service.py
+- backend/app/services/claims_service.py
+- backend/app/mock_data/admin_state.json
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- frontend/src/types/api.ts
+- docs/ui/09-admin/ADMIN_UI.md
+- docs/api/ADMIN.md
+- docs/api/API_ADDITIONS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The original admin docs did not yet describe the workflow-agents page in detail, so the UI and API specs were updated in the same session to keep the new HITL override requirement documented instead of leaving it as implicit behavior.
+- Reading the workflow-agent config through the live merge path auto-hydrated `backend/app/mock_data/admin_state.json` with the new field, and that explicit seed-state update was kept.
+
+### Status
+✅ Completed
+
 ## [2026-05-18T11:42:47.8796186Z]
 
 ### Prompt

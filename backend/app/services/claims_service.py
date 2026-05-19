@@ -4801,6 +4801,7 @@ class ClaimsService:
                 "sequence": index,
                 "enabled": bool(config.get("enabled", True)),
                 "confidence_threshold": self._to_float(config.get("confidence_threshold")) or float(definition["default_threshold"]),
+                "always_pause_for_hitl": bool(config.get("always_pause_for_hitl", False)),
                 "hitl_behavior": str(config.get("hitl_behavior") or "pause_for_approval"),
                 "escalation_rule": str(config.get("escalation_rule") or definition["default_escalation_rule"]),
                 "retry_limit": int(config.get("retry_limit", definition["default_retry_limit"])),
@@ -5244,6 +5245,7 @@ class ClaimsService:
             confidence_score = self._to_float(result.get("confidence_score"))
             threshold = self._to_float(run.get("confidence_threshold")) or 0.9
             enabled = bool(run.get("enabled", True))
+            always_pause_for_hitl = bool(run.get("always_pause_for_hitl", False))
             applicable = bool(result.get("applicable", True))
             requires_hitl = bool(result.get("requires_hitl", False))
 
@@ -5253,6 +5255,12 @@ class ClaimsService:
                     "Agent disabled by Administration. Workflow advanced using the configured fallback."
                     if not enabled
                     else "This workflow step was not required for the current file."
+                )
+            elif always_pause_for_hitl:
+                final_status = "awaiting_approval"
+                requires_hitl = True
+                state_message = result.get("state_message") or (
+                    f'Administrative HITL override is enabled for {run["agent_name"]}. Manual review is required before the workflow can continue.'
                 )
             elif confidence_score is not None and confidence_score < threshold:
                 final_status = "awaiting_approval"
@@ -5922,6 +5930,7 @@ class ClaimsService:
             "attempts": run["attempts"],
             "confidence_score": run["confidence_score"],
             "confidence_threshold": run["confidence_threshold"],
+            "always_pause_for_hitl": run["always_pause_for_hitl"],
             "hitl_behavior": run["hitl_behavior"],
             "escalation_rule": run["escalation_rule"],
             "retry_limit": run["retry_limit"],

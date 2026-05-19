@@ -445,6 +445,29 @@ Returns the approval thresholds table (hardcoded for POC).
 
 ---
 
+### GET `/workflow-agents`
+Returns the cession workflow-agent configuration register, including the `always_pause_for_hitl` override used to force manual review irrespective of threshold.
+
+### PATCH `/workflow-agents/{agent_key}`
+Updates one workflow-agent configuration record.
+
+**Request:**
+```json
+{
+  "enabled": true,
+  "confidence_threshold": 0.99,
+  "always_pause_for_hitl": true,
+  "hitl_behavior": "pause_for_approval",
+  "escalation_rule": "Claims Ops review required before downstream automation continues.",
+  "retry_limit": 1,
+  "fallback_mode": "manual_review"
+}
+```
+
+When `always_pause_for_hitl=true`, the workflow agent pauses for HITL on every run regardless of confidence score.
+
+---
+
 # PIPELINE API — UPDATED (New V2 Format)
 ## Base URL: `/iris/api/v1/operations`
 

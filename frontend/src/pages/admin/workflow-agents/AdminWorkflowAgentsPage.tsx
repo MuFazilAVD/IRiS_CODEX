@@ -45,6 +45,7 @@ export function AdminWorkflowAgentsPage() {
       await api.patch(`/admin/workflow-agents/${agent.key}`, {
         enabled: draft.enabled,
         confidence_threshold: Number(draft.confidence_threshold),
+        always_pause_for_hitl: draft.always_pause_for_hitl,
         hitl_behavior: draft.hitl_behavior,
         escalation_rule: draft.escalation_rule,
         retry_limit: Number(draft.retry_limit),
@@ -140,6 +141,14 @@ export function AdminWorkflowAgentsPage() {
                       />
                     </Field>
 
+                    <Field className="md:col-span-2" label="HITL Override">
+                      <SkeuomorphicSwitch
+                        checked={draft.always_pause_for_hitl}
+                        onChange={(checked) => updateDraft(agent, { always_pause_for_hitl: checked })}
+                        title="Enable Human Review"
+                      />
+                    </Field>
+
                     <Field label="HITL Behavior">
                       <select
                         className="field-input"
@@ -190,6 +199,7 @@ export function AdminWorkflowAgentsPage() {
                     <div className="flex flex-wrap gap-2 text-[12px] text-iris-text-secondary">
                       <span className="rounded-full bg-white px-3 py-1.5">Step: {agent.step_id}</span>
                       <span className="rounded-full bg-white px-3 py-1.5">Threshold: {draft.confidence_threshold.toFixed(2)}</span>
+                      <span className="rounded-full bg-white px-3 py-1.5">HITL: {draft.always_pause_for_hitl ? 'Always On' : 'Threshold Based'}</span>
                       <span className="rounded-full bg-white px-3 py-1.5">Fallback: {titleCase(draft.fallback_mode)}</span>
                     </div>
                     <button className="btn-primary" disabled={!dirty || savingKey === agent.key} onClick={() => void handleSave(agent)} type="button">
@@ -207,12 +217,54 @@ export function AdminWorkflowAgentsPage() {
   )
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
-    <label className="block">
+    <div className={className ? `block ${className}` : 'block'}>
       <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{label}</p>
       {children}
-    </label>
+    </div>
+  )
+}
+
+function SkeuomorphicSwitch({
+  checked,
+  onChange,
+  title,
+}: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  title: string
+}) {
+  return (
+    <button
+      aria-checked={checked}
+      className="w-full rounded-xl border border-[#D7E2EA] bg-white px-4 py-3 text-left shadow-[0_1px_0_rgba(13,27,42,0.05)] transition hover:border-[#C5D4DF] hover:bg-[#FCFDFE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(26,107,154,0.18)]"
+      onClick={() => onChange(!checked)}
+      role="switch"
+      type="button"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <span className="min-w-0 flex-1 pr-2 text-[13px] font-semibold text-iris-text-primary">{title}</span>
+        <div className="flex shrink-0 items-center">
+          <span
+            aria-hidden="true"
+            className={`relative inline-flex h-[22px] w-[38px] rounded-full border p-[2px] transition ${
+              checked
+                ? 'border-[#1A6B9A] bg-[#1A6B9A]'
+                : 'border-[#D6E0E8] bg-[#E8EEF3]'
+            }`}
+          >
+            <span
+              className={`h-[14px] w-[14px] rounded-full bg-white shadow-[0_1px_2px_rgba(13,27,42,0.14)] transition-transform ${
+                checked
+                  ? 'translate-x-[16px]'
+                  : 'translate-x-0'
+              }`}
+            />
+          </span>
+        </div>
+      </div>
+    </button>
   )
 }
 
