@@ -4834,6 +4834,24 @@ class ClaimsService:
             key = definition["key"]
             candidate = stored_map.get(key) if isinstance(stored_map.get(key), dict) else {}
             run = normalized[key]
+            run["enabled"] = bool(candidate.get("enabled", run["enabled"]))
+            stored_threshold = self._to_float(candidate.get("confidence_threshold"))
+            if stored_threshold is not None:
+                run["confidence_threshold"] = stored_threshold
+            run["always_pause_for_hitl"] = bool(candidate.get("always_pause_for_hitl", run["always_pause_for_hitl"]))
+            hitl_behavior = str(candidate.get("hitl_behavior") or "").strip()
+            if hitl_behavior:
+                run["hitl_behavior"] = hitl_behavior
+            escalation_rule = str(candidate.get("escalation_rule") or "").strip()
+            if escalation_rule:
+                run["escalation_rule"] = escalation_rule
+            try:
+                run["retry_limit"] = max(0, int(candidate.get("retry_limit", run["retry_limit"])))
+            except (TypeError, ValueError):
+                pass
+            fallback_mode = str(candidate.get("fallback_mode") or "").strip()
+            if fallback_mode:
+                run["fallback_mode"] = fallback_mode
             run["status"] = str(candidate.get("status") or run["status"])
             run["confidence_score"] = self._to_float(candidate.get("confidence_score"))
             run["execution_time_ms"] = int(candidate["execution_time_ms"]) if str(candidate.get("execution_time_ms") or "").isdigit() else candidate.get("execution_time_ms")
@@ -4854,6 +4872,67 @@ class ClaimsService:
             run["manual_review_note"] = candidate.get("manual_review_note")
         return normalized
 
+    def _mark_bootstrap_agent_outcome(
+        self,
+        run: dict[str, Any],
+        timestamp: datetime,
+        *,
+        confidence_score: float,
+        note: str,
+        requires_hitl: bool = False,
+    ) -> None:
+        iso_timestamp = self._to_iso(timestamp)
+        rounded_confidence = round(confidence_score, 2)
+        threshold = self._to_float(run.get("confidence_threshold")) or 0.9
+        enabled = bool(run.get("enabled", True))
+        always_pause_for_hitl = bool(run.get("always_pause_for_hitl", False))
+
+        status = "completed"
+        state_message = note
+        hitl_required = False
+        completed_at = iso_timestamp
+
+        if not enabled:
+            status = "skipped"
+            state_message = "Agent disabled by Administration. Workflow advanced using the configured fallback."
+            completed_at = iso_timestamp
+        elif always_pause_for_hitl:
+            status = "awaiting_approval"
+            hitl_required = True
+            completed_at = None
+            state_message = (
+                f'Administrative HITL override is enabled for {run["agent_name"]}. '
+                "Manual review is required before the workflow can continue."
+            )
+        elif rounded_confidence < threshold:
+            status = "awaiting_approval"
+            hitl_required = True
+            completed_at = None
+            state_message = (
+                f'{run["agent_name"]} confidence {int(rounded_confidence * 100)}% '
+                "is below the configured threshold."
+            )
+        elif requires_hitl:
+            status = "awaiting_approval"
+            hitl_required = True
+            completed_at = None
+            state_message = "Manual review is required before the workflow can continue."
+
+        run.update(
+            {
+                "status": status,
+                "confidence_score": rounded_confidence,
+                "started_at": run.get("started_at") or iso_timestamp,
+                "completed_at": completed_at,
+                "updated_at": iso_timestamp,
+                "output_summary": run.get("output_summary") or note,
+                "state_message": state_message,
+                "hitl_required": hitl_required,
+                "awaiting_approval": status == "awaiting_approval",
+                "error_message": None,
+            }
+        )
+
     def _mark_bootstrap_agent_completed(
         self,
         run: dict[str, Any],
@@ -4862,20 +4941,11 @@ class ClaimsService:
         confidence_score: float,
         note: str,
     ) -> None:
-        iso_timestamp = self._to_iso(timestamp)
-        run.update(
-            {
-                "status": "completed",
-                "confidence_score": round(confidence_score, 2),
-                "started_at": run.get("started_at") or iso_timestamp,
-                "completed_at": iso_timestamp,
-                "updated_at": iso_timestamp,
-                "output_summary": run.get("output_summary") or note,
-                "state_message": note,
-                "hitl_required": False,
-                "awaiting_approval": False,
-                "error_message": None,
-            }
+        self._mark_bootstrap_agent_outcome(
+            run,
+            timestamp,
+            confidence_score=confidence_score,
+            note=note,
         )
 
     def _mark_bootstrap_agent_skipped(self, run: dict[str, Any], timestamp: datetime, *, note: str) -> None:
@@ -4894,6 +4964,54 @@ class ClaimsService:
             }
         )
 
+    def _was_run_manually_reviewed(self, run: dict[str, Any]) -> bool:
+        if run.get("manual_review_note"):
+            return True
+        state_message = str(run.get("state_message") or "").strip().lower()
+        return state_message.startswith("manually approved and released") or state_message.startswith(
+            "manual review completed and workflow resumed"
+        )
+
+    def _restore_missing_threshold_pause(self, agent_runs: dict[str, dict[str, Any]]) -> str | None:
+        for agent_key in WORKFLOW_AGENT_SEQUENCE:
+            run = agent_runs.get(agent_key) or {}
+            if str(run.get("status") or "").strip().lower() != "completed":
+                continue
+            if self._was_run_manually_reviewed(run):
+                continue
+
+            confidence_score = self._to_float(run.get("confidence_score"))
+            threshold = self._to_float(run.get("confidence_threshold")) or 0.9
+            always_pause_for_hitl = bool(run.get("always_pause_for_hitl", False))
+
+            if always_pause_for_hitl:
+                state_message = (
+                    f'Administrative HITL override is enabled for {run["agent_name"]}. '
+                    "Manual review is required before the workflow can continue."
+                )
+            elif confidence_score is not None and confidence_score < threshold:
+                state_message = (
+                    f'{run["agent_name"]} confidence {int(confidence_score * 100)}% '
+                    "is below the configured threshold."
+                )
+            else:
+                continue
+
+            run.update(
+                {
+                    "status": "awaiting_approval",
+                    "completed_at": None,
+                    "updated_at": self._to_iso(datetime.now(UTC)),
+                    "hitl_required": True,
+                    "awaiting_approval": True,
+                    "state_message": state_message,
+                    "error_message": None,
+                }
+            )
+            agent_runs[agent_key] = run
+            return agent_key
+        return None
+
     def _ensure_agentic_workflow_state(self, cession_file: CessionFile) -> None:
         stored = self._get_override(cession_file.file_id)
         agent_runs = self._normalize_agent_runs(stored.get("agent_runs"))
@@ -4910,8 +5028,11 @@ class ClaimsService:
             )
             return
 
+        reopened_agent_key = self._restore_missing_threshold_pause(agent_runs)
         current_agent_key = workflow_state.get("current_agent_key")
-        if current_agent_key not in agent_runs or agent_runs.get(current_agent_key, {}).get("status") in {"completed", "skipped"}:
+        if reopened_agent_key is not None:
+            current_agent_key = reopened_agent_key
+        elif current_agent_key not in agent_runs or agent_runs.get(current_agent_key, {}).get("status") in {"completed", "skipped"}:
             current_agent_key = self._next_pending_agent_key(agent_runs)
 
         if current_agent_key is None:

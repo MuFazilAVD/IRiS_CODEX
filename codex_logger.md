@@ -142,6 +142,43 @@ create vence, install reqs, acgivate and run app
 ### Status
 ✅ Completed
 
+## [2026-05-19T11:25:15.0481505+00:00]
+
+### Prompt
+The threshold of compliance was 92 and the confidence was 90, sill there wa sno hitl pause, just investigate this issue and solve if any solution in necessary
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/api/ADMIN.md
+  - docs/api/API_ADDITIONS.md
+  - docs/ui/09-admin/ADMIN_UI.md
+  - backend/app/services/claims_service.py
+  - backend/app/workflow_agents.py
+  - backend/app/mock_data/admin_state.json
+  - backend/app/mock_data/cession_pipeline_overrides.json
+
+### Actions Taken
+- Investigated the cession workflow HITL pause rules against the admin/API specs and confirmed the intended behavior is to pause whenever confidence falls below the saved agent threshold.
+- Traced the runtime path in `claims_service.py` and found two gaps: normalized workflow-agent runs were not preserving their stored threshold/HITL snapshot, and bootstrap reconstruction was marking prior agents completed without reapplying threshold pause logic.
+- Added backend fixes so stored workflow-agent config fields are preserved on reload, bootstrap reconstruction uses the same threshold/HITL pause checks as live execution, and legacy auto-completed runs reopen as `awaiting_approval` when they should still be paused.
+- Ran `python -m py_compile backend/app/services/claims_service.py`.
+- Ran a targeted override-store validation script that identified only two remaining legacy auto-completed workflows that will now reopen at the correct paused agent instead of silently showing as complete.
+- Updated the tracker note to record the workflow-threshold reconstruction fix.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Existing override data already contained historically reconstructed workflow runs with completed agents below the currently saved threshold; the fix preserves future snapshots and reopens those legacy auto-completed runs on load, but it cannot recover any older threshold values that were already overwritten in stored mock data before this patch.
+
+### Status
+✅ Completed
+
 ## [2026-05-19 09:50:41 UTC]
 
 ### Prompt
