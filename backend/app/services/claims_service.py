@@ -44,7 +44,11 @@ from app.services.settlement_report_files import (
     publish_settlement_report_artifacts,
     read_settlement_report_artifact_file,
 )
-from app.workflow_agents import WORKFLOW_AGENT_DEFINITIONS, load_workflow_agent_configs_from_admin_state
+from app.workflow_agents import (
+    WORKFLOW_AGENT_DEFINITIONS,
+    is_system_workflow_record,
+    load_workflow_agent_configs_from_admin_state,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -1069,6 +1073,8 @@ class ClaimsService:
             cession_file.file_id,
             {"active_step": "process" if sum(pending.values()) == 0 else "exceptions"},
         )
+        if sum(pending.values()) == 0:
+            self._complete_resolution_agent_review(cession_file, now)
         self._append_stage_log(cession_file.file_id, "exceptions", "complete" if sum(pending.values()) == 0 else "in_progress")
         if sum(pending.values()) == 0:
             self._append_stage_history(cession_file.file_id, "exceptions")
@@ -4581,9 +4587,55 @@ class ClaimsService:
     def _count_unresolved_by_severity(self, cession_file: CessionFile) -> dict[str, int]:
         counts = {"critical": 0, "warning": 0, "info": 0}
         for item in self.repository.list_file_exceptions(cession_file.id):
-            if item.resolution not in {"accepted", "overridden"}:
+            if item.resolution not in {"accepted", "overridden", "rejected"}:
                 counts[item.severity] = counts.get(item.severity, 0) + 1
         return counts
+
+    def _complete_resolution_agent_review(self, cession_file: CessionFile, timestamp: datetime) -> None:
+        stored = self._get_override(cession_file.file_id)
+        agent_runs = self._normalize_agent_runs(stored.get("agent_runs"))
+        resolution_run = deepcopy(agent_runs.get("resolution") or {})
+        if not resolution_run or resolution_run.get("status") not in {"awaiting_approval", "failed"}:
+            return
+
+        logger.info("Completing resolution-agent review after anomaly actions were saved")
+        logger.debug("Resolution-agent review completion file_id=%s", cession_file.file_id)
+
+        resolution_run.update(
+            {
+                "status": "completed",
+                "completed_at": self._to_iso(timestamp),
+                "updated_at": self._to_iso(timestamp),
+                "hitl_required": False,
+                "awaiting_approval": False,
+                "error_message": None,
+                "manual_review_note": "Resolution actions were reviewed in the cession workflow and the run was resumed.",
+                "state_message": "All anomaly actions were reviewed and applied. Workflow resumed automatically.",
+            }
+        )
+        agent_runs["resolution"] = resolution_run
+
+        next_agent_key = self._next_pending_agent_key(agent_runs)
+        if next_agent_key and agent_runs[next_agent_key]["status"] == "pending":
+            agent_runs[next_agent_key]["status"] = "running"
+            agent_runs[next_agent_key]["started_at"] = agent_runs[next_agent_key].get("started_at") or self._to_iso(timestamp)
+            agent_runs[next_agent_key]["updated_at"] = self._to_iso(timestamp)
+
+        self._store_override(
+            cession_file.file_id,
+            {
+                "agent_runs": agent_runs,
+                "workflow_state": self._build_workflow_state_patch(
+                    base=stored.get("workflow_state") or {},
+                    status="completed" if next_agent_key is None else "running",
+                    current_agent_key=next_agent_key,
+                    paused_reason=None,
+                    updated_at=timestamp,
+                    completed_at=timestamp if next_agent_key is None else None,
+                    final_message=self._workflow_completion_message(cession_file) if next_agent_key is None else None,
+                ),
+            },
+        )
 
     def _serialize_issue(self, item: CessionFileException) -> dict[str, Any]:
         clause_reference = {
@@ -4794,6 +4846,7 @@ class ClaimsService:
             config = deepcopy(config_map.get(definition["key"]) or {})
             agent_runs[definition["key"]] = {
                 "agent_key": definition["key"],
+                "execution_type": definition["execution_type"],
                 "agent_name": definition["agent_name"],
                 "description": definition["description"],
                 "step_id": definition["step_id"],
@@ -4886,12 +4939,17 @@ class ClaimsService:
         threshold = self._to_float(run.get("confidence_threshold")) or 0.9
         enabled = bool(run.get("enabled", True))
         always_pause_for_hitl = bool(run.get("always_pause_for_hitl", False))
+        is_system_step = is_system_workflow_record(run)
 
         status = "completed"
         state_message = note
         hitl_required = False
         completed_at = iso_timestamp
 
+        if is_system_step:
+            enabled = True
+            always_pause_for_hitl = False
+            requires_hitl = False
         if not enabled:
             status = "skipped"
             state_message = "Agent disabled by Administration. Workflow advanced using the configured fallback."
@@ -4921,7 +4979,7 @@ class ClaimsService:
         run.update(
             {
                 "status": status,
-                "confidence_score": rounded_confidence,
+                "confidence_score": None if is_system_step else rounded_confidence,
                 "started_at": run.get("started_at") or iso_timestamp,
                 "completed_at": completed_at,
                 "updated_at": iso_timestamp,
@@ -4968,9 +5026,7 @@ class ClaimsService:
         if run.get("manual_review_note"):
             return True
         state_message = str(run.get("state_message") or "").strip().lower()
-        return state_message.startswith("manually approved and released") or state_message.startswith(
-            "manual review completed and workflow resumed"
-        )
+        return state_message.startswith("manually approved and released")
 
     def _restore_missing_threshold_pause(self, agent_runs: dict[str, dict[str, Any]]) -> str | None:
         for agent_key in WORKFLOW_AGENT_SEQUENCE:
@@ -4978,6 +5034,8 @@ class ClaimsService:
             if str(run.get("status") or "").strip().lower() != "completed":
                 continue
             if self._was_run_manually_reviewed(run):
+                continue
+            if is_system_workflow_record(run):
                 continue
 
             confidence_score = self._to_float(run.get("confidence_score"))
@@ -5007,6 +5065,13 @@ class ClaimsService:
                     "state_message": state_message,
                     "error_message": None,
                 }
+            )
+            logger.info(
+                "Reopened workflow agent pause because explicit HITL approval was missing agent_key=%s confidence_score=%s threshold=%s always_pause_for_hitl=%s",
+                agent_key,
+                confidence_score,
+                threshold,
+                always_pause_for_hitl,
             )
             agent_runs[agent_key] = run
             return agent_key
@@ -5294,6 +5359,8 @@ class ClaimsService:
                     "hitl_required": False,
                     "awaiting_approval": False,
                     "error_message": None,
+                    "manual_review_note": current_run.get("manual_review_note")
+                    or "Workflow resumed after review input was captured.",
                     "state_message": current_run.get("manual_review_note") or "Manual review completed and workflow resumed.",
                 }
             )
@@ -5369,6 +5436,13 @@ class ClaimsService:
             always_pause_for_hitl = bool(run.get("always_pause_for_hitl", False))
             applicable = bool(result.get("applicable", True))
             requires_hitl = bool(result.get("requires_hitl", False))
+            is_system_step = is_system_workflow_record(run)
+
+            if is_system_step:
+                enabled = True
+                always_pause_for_hitl = False
+                requires_hitl = False
+                confidence_score = None
 
             if not enabled or not applicable:
                 final_status = "skipped"
@@ -5459,11 +5533,15 @@ class ClaimsService:
                 cession_file.file_id,
                 {
                     "actor": run["agent_name"],
-                    "type": "AI Agent",
+                    "type": "System" if is_system_step else "AI Agent",
                     "action": f'{run["agent_name"]} {final_status.replace("_", " ")}',
                     "detail": (
-                        f'{run.get("output_summary") or run.get("state_message") or "No additional detail."} '
-                        f'Confidence: {int((confidence_score or 0) * 100)}% / threshold {int(threshold * 100)}%.'
+                        f'{run.get("output_summary") or run.get("state_message") or "No additional detail."}'
+                        if is_system_step
+                        else (
+                            f'{run.get("output_summary") or run.get("state_message") or "No additional detail."} '
+                            f'Confidence: {int((confidence_score or 0) * 100)}% / threshold {int(threshold * 100)}%.'
+                        )
                     ),
                     "timestamp": self._to_iso(completed_at),
                 },
@@ -5915,7 +5993,37 @@ class ClaimsService:
             return sum(self._count_unresolved_by_severity(cession_file).values()) == 0
         if agent_key == "sanction_screening":
             screening_summary = self._build_cession_file_screening_summary(cession_file)
-            return screening_summary is not None and self._screening_workflow_status(screening_summary) == "auto_cleared"
+            if screening_summary is None:
+                logger.debug("Sanction screening resume blocked because no screening summary is linked file_id=%s", cession_file.file_id)
+                return False
+            if bool(run.get("always_pause_for_hitl", False)):
+                logger.info(
+                    "Sanction screening remains paused because the administrative HITL override is enabled file_id=%s threshold=%s",
+                    cession_file.file_id,
+                    threshold,
+                )
+                return False
+            screening_confidence = self._to_float(run.get("confidence_score"))
+            if screening_confidence is None:
+                screening_confidence = round((screening_summary.get("confidence_pct") or 95) / 100, 2)
+            if screening_confidence < threshold:
+                logger.info(
+                    "Sanction screening remains paused because confidence is still below threshold file_id=%s confidence_score=%s threshold=%s",
+                    cession_file.file_id,
+                    screening_confidence,
+                    threshold,
+                )
+                return False
+            ready = self._screening_workflow_status(screening_summary) == "auto_cleared"
+            logger.debug(
+                "Sanction screening resume check file_id=%s ready=%s workflow_status=%s confidence_score=%s threshold=%s",
+                cession_file.file_id,
+                ready,
+                self._screening_workflow_status(screening_summary),
+                screening_confidence,
+                threshold,
+            )
+            return ready
         if agent_key == "mapping":
             stored = self._get_override(cession_file.file_id)
             confidence_score = self._average_confidence(
@@ -6042,6 +6150,7 @@ class ClaimsService:
             review_url = f"/compliance/sanctions/{screening_ref}" if screening_ref else "/compliance/sanctions"
         return {
             "key": run["agent_key"],
+            "execution_type": run["execution_type"],
             "agent_name": run["agent_name"],
             "description": run["description"],
             "step_id": run["step_id"],

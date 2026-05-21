@@ -30,6 +30,29 @@ From the full-page cession processing screenshot provided during implementation:
 - Quick-access entries in the upload step should instead mirror the current curated files under `backend/testcases`
 - This keeps the UI aligned with the latest backend testcase set without preserving stale screenshot-only sample names
 
+### Cession Upload Popup Correction
+
+- The queue-level `Upload File` popup should render as a narrower centered dialog instead of stretching nearly edge-to-edge like the routed processing shell
+- On that upload-only popup, keep only the modal header title `Upload Cession File`; the inner upload section should not repeat a second heading
+- The upload-only popup should not render the extra `Manual or SFTP-staged...` helper line, and its footer actions must remain visible after a file is selected
+- The routed workflow still retains the fuller processing shell and step context once the upload hands off into the file-specific page
+
+### Cession Orchestrator Stepper Correction
+
+- The `Orchestrator` step should not reuse the same phosphor icon treatment as generic `System` steps
+- The stepper should visually elevate the `Orchestrator` cell so it reads as the control point for the workflow rather than another peer step
+- The `Orchestrator` stepper icon should match the floating `IRiS Assist` launcher icon shown in the workflow screenshot/user-provided icon crop
+- The `Orchestrator` stepper background should use a blue-green-yellow gradient treatment instead of the flatter neutral system-step styling
+- The `Orchestrator` stepper should render an animated shining border only while the workflow is actively running, and stop that shine once the final workflow agent has completed
+- The running shine should hug only the `Orchestrator` chip itself; it should not expand into a wide empty container beside the step
+- The loader inside the `Orchestrator` chip should keep spinning for the full workflow runtime, pause during `Human Approval`, resume after approval, and stop only once the final agent finishes
+
+### Cession Orchestrator Summary Card Correction
+
+- In the routed cession-processing page, the orchestrator summary card should not repeat the contract tile, workflow period tile, orchestrator insight panel, or the inline approval notice when those details already appear elsewhere in the workflow
+- The `Live Orchestrator Monitor` block should be removed entirely from the summary card once the streamlined Orchestrator header treatment is applied
+- The `Orchestrator` navigation pill should remain anchored at the top-left of the summary card, while the workflow status pill and paused-review jump control stay grouped on the top-right
+
 ---
 
 ## SETTLEMENTS REGISTER VISUAL CORRECTIONS
@@ -673,3 +696,20 @@ From `Population_UploadCedentFile.png`:
 - Both dropdowns are populated from existing cedants and contracts instead of using a free-text handoff field
 - The modal includes a CSV file picker plus `Cancel` and `Upload` actions instead of a redirect-only stub
 - User change on 2026-05-07 widened the live uploader to accept Excel (`.xlsx`) files as well, so the implemented modal copy now references `Upload Pensioner File` / `CSV or Excel File` even though the screenshot labels say CSV
+
+---
+
+## WORKFLOW AUTOMATION CORRECTION
+
+From the workflow-automation and cession-orchestration screenshots plus user-provided corrections on 2026-05-21:
+
+- `File Generation` is treated as a `System`, not an `Agent`
+- Admin workflow controls are grouped into collapsible workflow cards rather than one flat cession-only stack
+- The workflow groups now use full-width stacked accordions rather than a three-card row layout
+- The admin screen shows only configurable agent cards; system cards are removed from that surface
+- Collapsed workflow cards show each workflow's agent names as pills
+- Expanded workflow accordions show their agent cards in a horizontally scrollable row, with three cards visible on wide screens
+- The live admin agent cards drop `Enabled`, `HITL Behaviour`, and `Fallback Mode`, and no longer show the top enabled pill
+- The cession orchestration page keeps agent summary chips, but system cards no longer show confidence, threshold, or HITL summary chips
+- Workflow-agent cards replace the old `Escalation Rule` textarea with a read-only `Escalation Team` label
+- Cession workflow team ownership is `Operations Team` for Detect & Map, Anomalies, and Resolutions, and `Compliance Team` for Sanction Screening

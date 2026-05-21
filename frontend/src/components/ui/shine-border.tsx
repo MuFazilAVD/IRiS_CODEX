@@ -12,6 +12,7 @@ interface ShineBorderProps {
   duration?: number
   color?: TColorProp
   className?: string
+  fitContent?: boolean
   children: ReactNode
 }
 
@@ -25,6 +26,7 @@ function ShineBorder({
   duration = 14,
   color = '#000000',
   className,
+  fitContent = false,
   children,
 }: ShineBorderProps) {
   const resolvedColor = Array.isArray(color) ? color.join(', ') : color
@@ -38,7 +40,11 @@ function ShineBorder({
           '--shine-pulse-duration': `${duration}s`,
         } as CSSProperties
       }
-      className={cn('relative h-full w-full overflow-hidden rounded-[var(--border-radius)] p-[var(--border-width)]', className)}
+      className={cn(
+        'relative overflow-hidden rounded-[var(--border-radius)] p-[var(--border-width)]',
+        fitContent ? 'inline-grid h-auto w-auto place-items-center' : 'block h-full w-full',
+        className,
+      )}
     >
       <div
         aria-hidden="true"
@@ -54,7 +60,14 @@ function ShineBorder({
         }
         className="pointer-events-none absolute inset-0 rounded-[var(--border-radius)] p-[var(--border-width)] will-change-[background-position] motion-safe:animate-shine-pulse"
       />
-      <div className="relative z-10 h-full w-full rounded-[calc(var(--border-radius)-var(--border-width))]">{children}</div>
+      <div
+        className={cn(
+          'relative z-10 rounded-[calc(var(--border-radius)-var(--border-width))]',
+          fitContent ? 'h-auto w-auto' : 'h-full w-full',
+        )}
+      >
+        {children}
+      </div>
     </div>
   )
 }

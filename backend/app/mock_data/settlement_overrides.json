@@ -1224,5 +1224,532 @@
         "detail": "decision=accept; mismatches=0"
       }
     ]
+  },
+  "SET-2026-Q1-044-048": {
+    "source": "CES-2026-048 (Maple_Leaf_Q1_2026.csv) \u00b7 baseline SET-2026-Q1-044",
+    "iris_recommendation": "accept",
+    "status": "pending_approval",
+    "last_updated": "2026-05-21T07:35:15.303196Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2026-Q1-044",
+      "decision": "accept",
+      "calculation_period": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "payment_date": "2026-04-12",
+      "currency": "CAD",
+      "expected_source": "contract details performance",
+      "mock_expected": false,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905,
+        "recomputed_net": 21905
+      },
+      "system": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905
+      },
+      "mismatches": [],
+      "incoming_row_count": 3
+    },
+    "baseline_settlement_id": "SET-2026-Q1-044",
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-26T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2026-Q1-044-048"
+      },
+      {
+        "timestamp": "2026-05-26T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-26T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-21T07:35:12.254045Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      },
+      {
+        "timestamp": "2026-05-21T07:35:15.303196Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      }
+    ]
+  },
+  "SET-2026-Q1-044-051": {
+    "source": "CES-2026-051 (Maple_Leaf_Q1_2026.csv) \u00b7 baseline SET-2026-Q1-044",
+    "iris_recommendation": "accept",
+    "status": "pending_approval",
+    "last_updated": "2026-05-21T09:17:44.898242Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2026-Q1-044",
+      "decision": "accept",
+      "calculation_period": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "payment_date": "2026-04-12",
+      "currency": "CAD",
+      "expected_source": "contract details performance",
+      "mock_expected": false,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905,
+        "recomputed_net": 21905
+      },
+      "system": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905
+      },
+      "mismatches": [],
+      "incoming_row_count": 3
+    },
+    "baseline_settlement_id": "SET-2026-Q1-044",
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-26T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2026-Q1-044-051"
+      },
+      {
+        "timestamp": "2026-05-26T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-26T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-21T09:17:44.898242Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      }
+    ]
+  },
+  "SET-2026-Q1-044-052": {
+    "source": "CES-2026-052 (Maple_Leaf_Q1_2026.csv) \u00b7 baseline SET-2026-Q1-044",
+    "iris_recommendation": "accept",
+    "status": "pending_approval",
+    "last_updated": "2026-05-21T09:24:17.412628Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2026-Q1-044",
+      "decision": "accept",
+      "calculation_period": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "payment_date": "2026-04-12",
+      "currency": "CAD",
+      "expected_source": "contract details performance",
+      "mock_expected": false,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905,
+        "recomputed_net": 21905
+      },
+      "system": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905
+      },
+      "mismatches": [],
+      "incoming_row_count": 3
+    },
+    "baseline_settlement_id": "SET-2026-Q1-044",
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-26T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2026-Q1-044-052"
+      },
+      {
+        "timestamp": "2026-05-26T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-26T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-21T09:24:17.412628Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      }
+    ]
+  },
+  "SET-2026-Q1-044-053": {
+    "source": "CES-2026-053 (Maple_Leaf_Q1_2026.csv) \u00b7 baseline SET-2026-Q1-044",
+    "iris_recommendation": "accept",
+    "status": "pending_approval",
+    "last_updated": "2026-05-21T10:07:11.232079Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2026-Q1-044",
+      "decision": "accept",
+      "calculation_period": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "payment_date": "2026-04-12",
+      "currency": "CAD",
+      "expected_source": "contract details performance",
+      "mock_expected": false,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905,
+        "recomputed_net": 21905
+      },
+      "system": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905
+      },
+      "mismatches": [],
+      "incoming_row_count": 3
+    },
+    "baseline_settlement_id": "SET-2026-Q1-044",
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-26T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2026-Q1-044-053"
+      },
+      {
+        "timestamp": "2026-05-26T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-26T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-21T10:07:11.232079Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      }
+    ]
+  },
+  "SET-2026-Q1-044-054": {
+    "source": "CES-2026-054 (Maple_Leaf_Q1_2026.csv) \u00b7 baseline SET-2026-Q1-044",
+    "iris_recommendation": "accept",
+    "status": "pending_approval",
+    "last_updated": "2026-05-21T10:09:28.744571Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2026-Q1-044",
+      "decision": "accept",
+      "calculation_period": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "payment_date": "2026-04-12",
+      "currency": "CAD",
+      "expected_source": "contract details performance",
+      "mock_expected": false,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905,
+        "recomputed_net": 21905
+      },
+      "system": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905
+      },
+      "mismatches": [],
+      "incoming_row_count": 3
+    },
+    "baseline_settlement_id": "SET-2026-Q1-044",
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-26T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2026-Q1-044-054"
+      },
+      {
+        "timestamp": "2026-05-26T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-26T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-21T10:09:28.744571Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      }
+    ]
+  },
+  "SET-2026-Q1-044-055": {
+    "source": "CES-2026-055 (Maple_Leaf_Q1_2026.csv) \u00b7 baseline SET-2026-Q1-044",
+    "iris_recommendation": "accept",
+    "status": "pending_approval",
+    "last_updated": "2026-05-21T10:13:48.533093Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2026-Q1-044",
+      "decision": "accept",
+      "calculation_period": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "payment_date": "2026-04-12",
+      "currency": "CAD",
+      "expected_source": "contract details performance",
+      "mock_expected": false,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905,
+        "recomputed_net": 21905
+      },
+      "system": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905
+      },
+      "mismatches": [],
+      "incoming_row_count": 3
+    },
+    "baseline_settlement_id": "SET-2026-Q1-044",
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-26T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2026-Q1-044-055"
+      },
+      {
+        "timestamp": "2026-05-26T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-26T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-21T10:13:48.533093Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      }
+    ]
+  },
+  "SET-2026-Q1-044-056": {
+    "source": "CES-2026-056 (Maple_Leaf_Q1_2026.csv) \u00b7 baseline SET-2026-Q1-044",
+    "iris_recommendation": "accept",
+    "status": "pending_approval",
+    "last_updated": "2026-05-21T10:46:34.890146Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2026-Q1-044",
+      "decision": "accept",
+      "calculation_period": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "payment_date": "2026-04-12",
+      "currency": "CAD",
+      "expected_source": "contract details performance",
+      "mock_expected": false,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905,
+        "recomputed_net": 21905
+      },
+      "system": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905
+      },
+      "mismatches": [],
+      "incoming_row_count": 3
+    },
+    "baseline_settlement_id": "SET-2026-Q1-044",
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-26T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2026-Q1-044-056"
+      },
+      {
+        "timestamp": "2026-05-26T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-26T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-21T10:46:34.890146Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      }
+    ]
+  },
+  "SET-2026-Q1-044-057": {
+    "source": "CES-2026-057 (Maple_Leaf_Q1_2026.csv) \u00b7 baseline SET-2026-Q1-044",
+    "iris_recommendation": "accept",
+    "status": "pending_approval",
+    "last_updated": "2026-05-21T10:48:34.554394Z",
+    "settlement_reconciliation": {
+      "settlement_id": "SET-2026-Q1-044",
+      "decision": "accept",
+      "calculation_period": "Q1 2026",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "payment_date": "2026-04-12",
+      "currency": "CAD",
+      "expected_source": "contract details performance",
+      "mock_expected": false,
+      "uploaded": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905,
+        "recomputed_net": 21905
+      },
+      "system": {
+        "fixed_leg": 4117500,
+        "floating_leg": 4142205,
+        "fee": 2800,
+        "interest_prior_period": 0,
+        "net_settlement_amount": 21905
+      },
+      "mismatches": [],
+      "incoming_row_count": 3
+    },
+    "baseline_settlement_id": "SET-2026-Q1-044",
+    "audit_trail": [
+      {
+        "timestamp": "2026-05-26T00:00:00Z",
+        "actor": "Settlement Engine",
+        "type": "System",
+        "action": "Settlement assembled",
+        "detail": "SET-2026-Q1-044-057"
+      },
+      {
+        "timestamp": "2026-05-26T03:00:00Z",
+        "actor": "Variance Review Agent",
+        "type": "AI Agent",
+        "action": "Variance analysis completed",
+        "detail": "confidence 87%"
+      },
+      {
+        "timestamp": "2026-05-26T06:00:00Z",
+        "actor": "Claims Ops",
+        "type": "Human",
+        "action": "Queued for settlement review",
+        "detail": ""
+      },
+      {
+        "timestamp": "2026-05-21T10:48:34.554394Z",
+        "actor": "Settlement Reconciliation Engine",
+        "type": "System",
+        "action": "Settlement file reconciled",
+        "detail": "decision=accept; mismatches=0"
+      }
+    ]
   }
 }

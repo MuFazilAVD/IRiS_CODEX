@@ -7,6 +7,7 @@ import { api } from '../../../api/client'
 import { Breadcrumbs } from '../../../components/common/Breadcrumbs'
 import { EmptyState, EmptyTableRow } from '../../../components/common/EmptyState'
 import { PageHeader } from '../../../components/common/PageHeader'
+import { FileProcessingModal } from './FileProcessingModal'
 import { formatRelativeDate } from '../../../utils/formatters'
 import type {
   ClaimsCessionQueueItem,
@@ -26,6 +27,7 @@ export function CessionFilesPage() {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [fileTypeFilter, setFileTypeFilter] = useState('all')
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
   const queueQuery = useQuery({
     queryKey: ['claims-cession-files', statusFilter, fileTypeFilter],
@@ -49,7 +51,7 @@ export function CessionFilesPage() {
       <Breadcrumbs items={[{ label: 'Home', to: '/dashboard' }, { label: 'Claims Ops' }, { label: 'Cession Files' }]} />
       <PageHeader
         action={
-          <button className="btn-primary" onClick={() => navigate('/claims/cession-files/new')} type="button">
+          <button className="btn-primary" onClick={() => setUploadModalOpen(true)} type="button">
             <Upload className="h-4 w-4" />
             Upload File
           </button>
@@ -154,6 +156,20 @@ export function CessionFilesPage() {
           title="Unable to load the cession file queue"
         />
       )}
+
+      {uploadModalOpen ? (
+        <FileProcessingModal
+          cedentOptions={[]}
+          contractOptions={[]}
+          modalVariant="upload-only"
+          onClose={() => setUploadModalOpen(false)}
+          onFileCreated={(nextFileId) => {
+            setUploadModalOpen(false)
+            navigate(`/claims/cession-files/${nextFileId}`)
+          }}
+          onRefresh={() => queueQuery.refetch()}
+        />
+      ) : null}
     </div>
   )
 }

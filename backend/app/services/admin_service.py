@@ -15,9 +15,11 @@ from app.repositories.admin_repository import AdminRepository
 from app.services.auth_service import AuthService
 from app.repositories.auth_repository import AuthRepository
 from app.workflow_agents import (
+    VALID_ESCALATION_TEAMS,
     VALID_FALLBACK_MODES,
     VALID_HITL_BEHAVIORS,
     clamp_threshold,
+    configurable_workflow_agent_configs,
     merge_workflow_agent_configs,
 )
 
@@ -137,7 +139,7 @@ class AdminService:
         if state.get("workflow_agents") != configs:
             state["workflow_agents"] = configs
             self.repository.save_state(state)
-        return {"items": configs}
+        return {"items": configurable_workflow_agent_configs(configs)}
 
     def update_workflow_agent(self, agent_key: str, payload: dict[str, Any], actor: User) -> dict[str, Any]:
         logger.info("Updating admin workflow-agent configuration")
@@ -149,6 +151,13 @@ class AdminService:
         if current is None:
             logger.error("Workflow-agent update failed because key=%s is unknown", agent_key)
             raise IrisAPIError(404, "Workflow agent not found", "The requested workflow agent does not exist")
+        if current.get("execution_type") != "agent":
+            logger.error("Workflow-agent update rejected because key=%s is a system step", agent_key)
+            raise IrisAPIError(
+                400,
+                "Workflow system not configurable",
+                "System-driven workflow steps advance automatically and cannot be configured from Administration.",
+            )
 
         updated = deepcopy(current)
         if payload.get("enabled") is not None:
@@ -163,6 +172,12 @@ class AdminService:
                 logger.error("Workflow-agent update rejected because hitl_behavior=%s is invalid", hitl_behavior)
                 raise IrisAPIError(400, "Invalid HITL behavior", "HITL behavior is not supported by the platform")
             updated["hitl_behavior"] = hitl_behavior
+        if payload.get("escalation_team") is not None:
+            escalation_team = str(payload["escalation_team"]).strip()
+            if escalation_team not in VALID_ESCALATION_TEAMS:
+                logger.error("Workflow-agent update rejected because escalation_team=%s is invalid", escalation_team)
+                raise IrisAPIError(400, "Invalid escalation team", "Escalation team is not supported by the platform")
+            updated["escalation_team"] = escalation_team
         if payload.get("escalation_rule") is not None:
             updated["escalation_rule"] = str(payload["escalation_rule"]).strip()
         if payload.get("retry_limit") is not None:

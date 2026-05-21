@@ -1199,6 +1199,7 @@ export interface ClaimsWorkflowKeyOutput {
 
 export interface ClaimsWorkflowAgent {
   key: string
+  execution_type: 'agent' | 'system'
   agent_name: string
   description: string
   step_id: string
@@ -2296,13 +2297,14 @@ export interface AdminWorkflowAgentRecord {
   key: string
   step_id: string
   step_label: string
+  execution_type: 'agent' | 'system'
   agent_name: string
   description: string
   enabled: boolean
   confidence_threshold: number
   always_pause_for_hitl: boolean
   hitl_behavior: string
-  escalation_rule: string
+  escalation_team: 'Operations Team' | 'Compliance Team'
   retry_limit: number
   fallback_mode: string
 }

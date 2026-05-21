@@ -301,7 +301,7 @@ On upload: validates format, creates new versioned record. Existing locked contr
 Home › Administration › Workflow Agents
 
 Workflow Agents                                         [Refresh]
-Configure agent enablement, confidence thresholds, HITL behavior, escalation, retries, and fallbacks for the cession workflow.
+Configure agent enablement, confidence thresholds, HITL behavior, escalation teams, retries, and fallbacks for the cession workflow.
 
 [Agent cards in a 2-column grid]
 ```
@@ -314,7 +314,7 @@ Each agent card shows:
 - HITL behavior
 - retry limit
 - fallback mode
-- escalation rule
+- escalation team
 - save action
 
 ### HITL Override Switch

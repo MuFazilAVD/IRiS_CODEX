@@ -47,7 +47,7 @@ Returns the cession workflow-agent configuration register.
       "confidence_threshold": 0.99,
       "always_pause_for_hitl": false,
       "hitl_behavior": "pause_for_approval",
-      "escalation_rule": "Claims Ops review required before downstream automation continues.",
+      "escalation_team": "Operations Team",
       "retry_limit": 1,
       "fallback_mode": "manual_review"
     }
@@ -65,7 +65,7 @@ Updates one workflow-agent configuration record.
   "confidence_threshold": 0.99,
   "always_pause_for_hitl": true,
   "hitl_behavior": "pause_for_approval",
-  "escalation_rule": "Claims Ops review required before downstream automation continues.",
+  "escalation_team": "Operations Team",
   "retry_limit": 1,
   "fallback_mode": "manual_review"
 }

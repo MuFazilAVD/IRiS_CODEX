@@ -142,6 +142,1152 @@ create vence, install reqs, acgivate and run app
 ### Status
 ✅ Completed
 
+## [2026-05-21 10:19:34 UTC]
+
+### Prompt
+Remove the Live Orchestrator Monitor section from the Orchestrator summary card .
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Removed the right-side `Live Orchestrator Monitor` section from the Orchestrator summary card and collapsed the summary card layout back to a single-column structure.
+- Deleted the now-unused `MonitorRow` helper from the cession workflow page component.
+- Updated the screenshot-correction note and tracker entry so the summary-card source of truth now reflects the monitor removal.
+- Verified the frontend with a successful production build.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 09:30:27 UTC]
+
+### Prompt
+This is how the workflow Agents page turned out to be. I need to make a few changes here:
+1) Change the alignment of these workflow cards into full width accordiums.
+2) Once we expand the accordium , it should also expand in full width manner with agents in a row with scroll ( three agents should be visible and if we want to view the next agents we should be able to scroll horizontally with in the accordium.)
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+
+### Actions Taken
+- Changed the workflow group layout from a three-card grid into stacked full-width accordions.
+- Kept the collapsed workflow header full width while preserving the agent-name pills inside the header content.
+- Changed the expanded workflow body into a horizontally scrollable agent rail.
+- Sized the expanded agent rail so three agent cards are visible at a time on wide screens, with horizontal scroll for additional cards.
+- Verified the frontend with `npm run build`.
+- Updated the tracker, screenshot correction log, and session log.
+
+### Files Modified
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- docs/trackers/TRACKER.md
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 09:21:11 UTC]
+
+### Prompt
+The loader inside the orchestration stepper should keep on running till all the agents are processed. Once the agent pauses for Human Approval, stop the loader inside the Orchestrator and once it is approved, start the loading again. It should show this behaviour until the last agent is done processing
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Reviewed the workflow stepper status mapping and confirmed the Orchestrator runtime state is represented as `monitoring` during active agent execution.
+- Updated the stepper status-icon animation logic so the Orchestrator loader spins during both `running` and `monitoring`, stops during `awaiting_approval`, resumes after approval, and stops on completion.
+- Recorded the revised loader lifecycle in the screenshot-corrections doc and tracker notes.
+- Verified the frontend with a successful production build.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 09:15:40 UTC]
+
+### Prompt
+This is how the orchestration stepper looks like now when it is running. I expected a border running around the stepper while the agents are running and the border stops running once the agents are done working.
+Use the below design to create the border:
+You are given a task to integrate an existing React component in the codebase
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/tailwind.config.js
+  - frontend/package.json
+  - frontend/src/components/ui/shine-border.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Reviewed the existing `ShineBorder` implementation, Tailwind animation config, and frontend dependencies against the requested border design.
+- Added a content-fit mode to `ShineBorder` so it can animate tightly around the Orchestrator chip without expanding into the rest of the horizontal stepper row.
+- Updated the Orchestrator running-state usage to use the content-fit shine border, a slightly stronger border width, and a faster pulse while keeping the shine disabled once the workflow completes.
+- Recorded the screenshot correction and tracker note for the chip-hugging running border behavior.
+- Verified the frontend with a successful production build.
+
+### Files Modified
+- frontend/src/components/ui/shine-border.tsx
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 09:09:14 UTC]
+
+### Prompt
+Change the icon of the Orchestrator to the icon in the attached image
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/components/common/IRiSChatbot.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Replaced the Orchestrator stepper icon with the same sparkle launcher icon shown in the attached `IRiS Assist` image.
+- Updated the screenshot-correction note and tracker entry so the icon source of truth now points to the floating assistant launcher icon instead of the drawer-header icon.
+- Verified the frontend with a successful production build.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 09:06:52 UTC]
+
+### Prompt
+In the cedent Processing workflow, i need to make few changes to the design of the Orchestrator stepper:
+1) Change the phosphor icon of the Orchestrator stepper to the icon as same as the chatbot
+2) Also change the background color of the orchestrator stepper to a gradient pattern with blue-green-yellow shades
+3) Also provide a shining border to the orchestrator while its running, once the workflow is completed and the final agent is processed then stop it
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/ui-screens/Chatbot.png
+  - frontend/src/components/common/IRiSChatbot.tsx
+  - frontend/src/components/ui/shine-border.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Replaced the Orchestrator stepper icon with the same chatbot icon treatment used by `IRiS Assist`.
+- Updated the Orchestrator stepper styling to a blue-green-yellow gradient treatment while preserving workflow state cues.
+- Wrapped the Orchestrator stepper in an animated shine border only during active workflow execution and allowed it to stop automatically after workflow completion.
+- Logged the visual correction in the screenshot-corrections doc and updated the tracker note for the cession orchestration polish.
+- Verified the frontend with a successful production build.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 07:49:12 UTC]
+
+### Prompt
+1) Make the File generator a systsem instead of Agent
+2) In the Workflow agents section, Now we have Cession worklow automation controls, make the below changes:
+2.1) Make this cession workflow card collapsbile
+2.2) Add two more cards like this, one is Cedant Workflow and third is Compliance workflow, make them completely dummy with 1-3 agents, they need not  to works, just let them be there, now the all collapsed view will show the agent names of per each workflow as pills, upon expanding one, it will show the current agent cards as it it
+2.3) We only need the card of agents here, remove the cards of systems since they need not to be configures, there wikll not be any confidence or threshold, they will automatically move to the next step
+2.4) We can remove the folowing config options since they are not doing anything worthy, HITL Behaviour, Fallback Mode, And Enabled (They are always enabled, no need to skip), so you can remove the enabled pill on top as well.
+2.5) Like this we can reduce the size and fit in 3 cards per row
+3) Now we need to make sure the corresponding changes are reflected in the Cession file processing orchestration page as well,
+3.1) For agents, just correct the spelling of retries
+3.2) For systems, we do not have confidence, threshold or anythng, remove all of them
+
+Like this make the entire system consistent
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/DESIGN.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - backend/app/workflow_agents.py
+  - backend/app/services/admin_service.py
+  - backend/app/services/claims_service.py
+  - backend/app/mock_data/admin_state.json
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+  - frontend/src/pages/claims/cession/CessionFileProcessingPage.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Reclassified `file_generation` from `Agent` to `System` in the workflow definitions and persisted admin mock state.
+- Restricted the admin workflow-agent API to configurable agent steps and blocked system-step updates from the admin service.
+- Updated claims workflow execution so system-driven steps ignore threshold/HITL admin gating, auto-advance, and emit `System` audit typing.
+- Rebuilt the admin workflow automation page into three collapsible workflow cards: live `Cession Workflow` plus dummy `Cedant Workflow` and `Compliance Workflow` stacks.
+- Removed system cards from the admin configuration surface and reduced live agent controls to confidence threshold, human-review override, escalation rule, and retry limit.
+- Updated the runtime cession orchestration cards so system steps no longer show confidence/threshold/HITL summary chips, and fixed the retry label to `retry`/`retries`.
+- Updated the tracker notes to reflect the workflow-control and orchestration consistency changes.
+- Logged the screenshot-backed workflow correction in `docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md`.
+- Verified the frontend with `npm run build` and verified backend syntax with `python -m compileall backend/app`.
+
+### Files Modified
+- backend/app/workflow_agents.py
+- backend/app/services/admin_service.py
+- backend/app/services/claims_service.py
+- backend/app/mock_data/admin_state.json
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- codex_logger.md
+
+### Issues / Deviations
+- The repository already contained unrelated in-progress changes in other files; they were left untouched.
+
+### Status
+✅ Completed
+
+## [2026-05-21 07:05:31]
+
+### Prompt
+The orchestrator pill should be on the left top corner of the orchestration summary card like it was before
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Restored the `Orchestrator` pill to the top-left corner of the orchestration summary card.
+- Kept the workflow status pill and paused-review jump control grouped on the top-right.
+- Updated the screenshot correction note and tracker entry to reflect the restored pill placement.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 06:58:33]
+
+### Prompt
+Further changes:
+1) Live orchestrator monitor on the right side part should align with the rest of the content on the left side of the card.
+2) Move the "awaiting approval" pill along with the navigation pill to the right top corner as well
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Reworked the orchestrator summary card so the top control pills occupy a shared top-right row across the full card width.
+- Aligned the right-side `Live Orchestrator Monitor` block with the left-side summary content instead of vertically centering it.
+- Updated the screenshot correction notes and tracker entry to capture the revised orchestrator-card alignment behavior.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21T10:28:03.0487777+00:00]
+
+### Prompt
+In the workflow agents section, remove the div corresponding to this heading:
+"Workflow Automation Controls
+
+Agent controls are grouped by workflow so the cession, cedant, and compliance stacks can be reviewed in one place."
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/09-admin/ADMIN_UI.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/ARCHITECTURE.md
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+
+### Actions Taken
+- Confirmed the admin workflow-agents route spec only requires the page header plus the workflow agent cards, not the extra intro block above the accordion stack.
+- Removed the `Workflow Automation Controls` header div from the workflow agents page while keeping the outer section shell and workflow accordions unchanged.
+- Updated the feature tracker note so the recorded repository state reflects the simplified workflow-agents presentation.
+
+### Files Modified
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+## [2026-05-05T00:00:00Z]
+
+### Prompt
+1)There is no continue button after selecting the file. Fix it.
+2) Remove the section "Manual or SFTP-staged. Choose AI auto-detection or pick file type explicitly." from the pop up
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Changed the upload-only popup shell to use a fixed dialog height with internal scrolling so the footer stays visible and the `Continue` button remains accessible after file selection.
+- Added `min-h-0` and non-shrinking header/footer behavior to the modal layout so content overflow stays in the body instead of pushing actions out of view.
+- Removed the extra upload-only helper sentence `Manual or SFTP-staged. Choose AI auto-detection or pick file type explicitly.` from the popup content.
+- Updated the screenshot correction notes and tracker entry to reflect the refined upload popup behavior.
+- Verified the frontend with a successful production build.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 06:46:47]
+
+### Prompt
+In the Cession File processing page, inside the orchestrator summary card (refer attached image) remove everything except the current step in the "Live orchestrator Monitor".
+Also remove the sections in the second image from the orchestrator summary card.
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Removed the contract, workflow period, orchestrator insight, and inline approval notice blocks from the routed orchestrator summary card.
+- Reduced `Live Orchestrator Monitor` to only the current-step row.
+- Logged the screenshot-backed UI correction and refreshed the tracker entry for orchestration visibility polish.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-21 06:08:24 UTC]
+
+### Prompt
+There are a few changes required in the cession file procesing:
+
+1) When clicking the "Upload File" button, the appearing popup is taking too much width , reduce the width of the popup. Also, the pop has two headings now(refer the attached image). Only keep the "Upload Cession File" as heading.
+
+2) The Phoshor icon of the Orchestrator right now is same as that of the System. Change the icon of the Orchestrator to another Appropirate phosphor icon.
+
+3) Also improve the design and style of the Orchestrator stepper to make it stand out from the rest of the steps.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/CessionFilesPage.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/index.css
+
+### Actions Taken
+- Narrowed the queue-level upload-only popup into a centered modal instead of the near full-width shell.
+- Removed the duplicate inner upload heading on the upload-only launch state so the modal keeps only `Upload Cession File` as the heading.
+- Swapped the Orchestrator stepper icon to a distinct phosphor icon and stopped it from reusing the generic system glyph in the top stepper.
+- Strengthened the Orchestrator stepper styling with a larger highlighted chip, upgraded icon tile, and elevated visual treatment so it reads as the workflow control point.
+- Logged the screenshot-driven popup and orchestrator corrections in the UI corrections doc.
+- Updated the claims tracker note to reflect the latest upload-popup and orchestrator-stepper behavior.
+- Validated the frontend with a successful production build.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- `npm run lint -- src/pages/claims/cession/FileProcessingModal.tsx` still reports pre-existing repository lint failures, including existing `react-hooks/set-state-in-effect` findings in this file and unrelated frontend files. The new UI patch was validated with `npm run build`, which completed successfully.
+
+### Status
+✅ Completed
+
+## [2026-05-20 09:31:34 UTC]
+
+### Prompt
+A few changes in the stepper items (in cession file processing):
+1) No need of individual phosphor icons in the cells anymore. 
+2) Instead of that show the icon of either agent or system accordingly.
+3) No need to write explicitly agent or system inside the stepper.
+4) But do not remove these individual icons from the accordiums
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/DESIGN.md
+  - docs/ARCHITECTURE.md
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Updated the routed cession workflow stepper to use execution-type icons (`agent` or `system`) in each step cell instead of the individual step phosphor icons.
+- Removed the explicit `Agent` / `System` text badge from the top stepper while preserving step labels and runtime status indicators.
+- Kept the accordion workflow stack unchanged so the detailed per-step icons and execution badges still appear there.
+- Verified the frontend with a successful `npm run build`.
+
+### Files Modified
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- `AGENTS.md` references root-level spec paths such as `build-plan/BUILD_PLAN.md` and `trackers/TRACKER.md`; the repo source-of-truth files live under `docs/`, so the `docs/...` equivalents were used.
+
+### Status
+✅ Completed
+
+## [2026-05-20T09:16:43Z]
+
+### Prompt
+You are an expert enterprise solution architect and technical visualization engineer.
+
+You have already analyzed this repository and generated an architecture diagram.
+
+Now REFACTOR the architecture into a SINGLE clean, professional, enterprise-grade architecture diagram.
+
+IMPORTANT:
+Do NOT create multiple diagrams.
+Do NOT create a giant repository inventory map.
+Do NOT overload the diagram with unnecessary implementation details.
+
+The final architecture should:
+- clearly explain the platform
+- visually tell the workflow story
+- highlight only the important systems
+- be presentation-quality
+- be easy to explain to stakeholders
+- look like a real enterprise solution architecture
+
+The attached architecture image is only a style reference.
+
+==================================================
+CRITICAL REQUIREMENT
+==================================================
+
+ONLY include:
+- important business workflows
+- core architectural components
+- major services/modules
+- critical AI/agent workflows
+- essential storage/runtime components
+- important governance/security concepts
+
+REMOVE:
+- tiny implementation details
+- verbose descriptions
+- unnecessary labels
+- repetitive text
+- internal repo-only details
+- low-level technical clutter
+- too many small boxes
+
+The current version is too dense and difficult to explain.
+
+==================================================
+MOST IMPORTANT REQUIREMENT
+==================================================
+
+The diagram MUST visually center around the actual cession processing workflow.
+
+The workflow should be the PRIMARY visual element of the architecture.
+
+The actual workflow is:
+
+1. File Upload
+2. Detection & Mapping — Agent
+3. Anomaly Detection — Agent
+4. Resolution Generation — Agent
+5. Clauses Retrieval — System
+6. Process Settlement — System
+7. Summary Generation — System
+8. Sanction Screening — Agent
+9. Downstream File Generation — Agent
+10. Worklist Generation — System
+11. Audit Trail Generation — System
+
+This is the REAL operational flow.
+
+Represent this workflow clearly using:
+- numbered stages
+- directional arrows
+- agent/system distinction
+- grouped workflow pipeline
+- clear visual progression
+
+IMPORTANT:
+- AGENT steps should visually look different from SYSTEM steps
+- Keep the workflow clean and minimal
+- Avoid long descriptions inside workflow boxes
+- Each stage should contain only:
+  - short title
+  - Agent or System tag
+
+==================================================
+ARCHITECTURE STRUCTURE
+==================================================
+
+The final architecture should contain ONLY these major sections:
+
+1. External Sources
+Examples:
+- Cedant files
+- Internal operations
+- Compliance teams
+- Downstream consumers
+
+2. Presentation Layer
+Examples:
+- React frontend
+- dashboards
+- worklists
+- human review workspace
+
+3. API & Orchestration Layer
+Examples:
+- FastAPI backend
+- orchestration services
+- workflow coordination
+- execution control
+
+4. AI / Agentic Layer
+Examples:
+- OpenAI
+- AI agents
+- reasoning workflows
+- anomaly detection
+- resolution generation
+- sanction screening
+
+IMPORTANT:
+Do NOT split this into too many tiny boxes.
+
+5. Core Workflow Pipeline
+THIS IS THE CENTERPIECE.
+
+Show:
+File Upload
+→ Detection
+→ Anomaly Detection
+→ Resolution
+→ Clauses Retrieval
+→ Settlement Processing
+→ Summary
+→ Sanction Screening
+→ Downstream Files
+→ Worklist
+→ Audit Trail
+
+6. Data & Storage Layer
+Examples:
+- relational DB
+- JSON storage
+- file artifacts
+- audit storage
+
+7. Governance / Compliance
+Examples:
+- auditability
+- approvals
+- RBAC
+- sanctions compliance
+- SLA monitoring
+
+8. Runtime / Infrastructure
+Examples:
+- background tasks
+- container runtime
+- deployment environment
+
+==================================================
+VISUAL DESIGN REQUIREMENTS
+==================================================
+
+The architecture MUST:
+- look modern
+- look enterprise-grade
+- be visually balanced
+- have strong hierarchy
+- be easy to read from a distance
+- have clean spacing
+- have large readable labels
+- use concise text only
+- use professional typography
+- use subtle enterprise colors
+- use rounded containers
+- use consistent iconography
+
+==================================================
+VERY IMPORTANT VISUAL RULES
+==================================================
+
+1. Workflow pipeline should dominate visually.
+2. Supporting layers should be secondary.
+3. Infrastructure should be tertiary.
+4. Keep text extremely concise.
+5. Avoid paragraph-style content completely.
+6. Merge related services into grouped domains.
+7. Use whitespace aggressively.
+8. Avoid clutter.
+9. Avoid too many arrows crossing each other.
+10. Prioritize explainability over completeness.
+
+==================================================
+OUTPUT FILES
+==================================================
+
+Save outputs to:
+
+/architecture/final-enterprise-architecture.png
+/architecture/final-enterprise-architecture.svg
+/architecture/final-enterprise-architecture.drawio
+
+Also generate:
+
+/architecture/architecture-summary.md
+
+Include:
+- concise architecture explanation
+- workflow explanation
+- AI agent responsibilities
+- system responsibilities
+- governance explanation
+- talking points for presentation
+
+==================================================
+FINAL QUALITY BAR
+==================================================
+
+The final output should look like:
+- a CTO presentation diagram
+- a consulting architecture deliverable
+- an enterprise platform overview
+- a polished product architecture
+
+NOT:
+- a repository dump
+- a developer whiteboard
+- a monitoring dashboard
+- an auto-generated dependency map
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/trackers/TRACKER.md
+  - architecture/final-architecture.svg
+  - architecture/final-architecture.drawio
+  - architecture/architecture-notes.md
+  - architecture/generate_architecture_assets.py
+  - backend/app/workflow_agents.py
+  - backend/app/services/claims_service.py
+  - backend/app/services/compliance_service.py
+  - backend/app/services/chatbot_service.py
+  - frontend/package.json
+  - backend/app/main.py
+  - backend/app/config.py
+  - backend/config.py
+
+### Actions Taken
+- Reviewed the previously generated architecture set and identified the clutter points that made it harder to present: overly detailed supporting boxes, long explanatory copy inside the diagram, and too much implementation-specific text density.
+- Designed a new single-diagram enterprise layout that keeps the cession processing workflow as the dominant visual element and compresses the rest of the platform into eight grouped enterprise sections.
+- Created a new dedicated generator at `architecture/generate_enterprise_architecture.py` to produce a clean simplified SVG, draw.io, and presentation summary from a single source instead of manually editing the old dense output.
+- Rebuilt the workflow as an 11-stage numbered pipeline with explicit `AGENT` vs `SYSTEM` visual distinction for the real implemented cession flow:
+  - File Upload
+  - Detection & Mapping
+  - Anomaly Detection
+  - Resolution Generation
+  - Clauses Retrieval
+  - Process Settlement
+  - Summary Generation
+  - Sanction Screening
+  - Downstream File Generation
+  - Worklist Generation
+  - Audit Trail Generation
+- Reduced the surrounding architecture to concise stakeholder-facing domains:
+  - External Sources
+  - Presentation Layer
+  - API & Orchestration Layer
+  - AI / Agentic Layer
+  - Data & Storage
+  - Governance / Compliance
+  - Runtime / Infrastructure
+- Generated `final-enterprise-architecture.svg`, `final-enterprise-architecture.drawio`, and `architecture-summary.md`, then rendered `final-enterprise-architecture.png` through headless Microsoft Edge.
+- Performed visual QA on the PNG, simplified the external-sources section further so it stayed secondary to the pipeline, and kept the supporting arrows and labels restrained.
+- Updated the tracker and appended this session log entry.
+
+### Files Modified
+- architecture/generate_enterprise_architecture.py
+- architecture/final-enterprise-architecture.svg
+- architecture/final-enterprise-architecture.drawio
+- architecture/final-enterprise-architecture.png
+- architecture/architecture-summary.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The prompt mentioned runtime/infrastructure examples such as container runtime, but the current repository does not define a real container/Kubernetes/IaC stack. The final diagram therefore shows only the runtime concepts that are actually supported by the implementation: app runtime, FastAPI `BackgroundTasks`, and frontend polling.
+- The simplified diagram intentionally omits low-level repo details and detailed storage filenames from the visual itself, but those details remain available in the earlier architecture collateral and the supporting markdown notes.
+
+### Status
+✅ Completed
+
+## [2026-05-20T08:49:00Z]
+
+### Prompt
+You are an expert enterprise solution architect and technical visualization engineer.
+
+Your task is to analyze this entire repository and generate a PROFESSIONAL architecture diagram for this application.
+
+IMPORTANT:
+- The diagram should NOT be generic.
+- It must accurately reflect the REAL architecture, workflows, services, modules, APIs, queues, storage, AI orchestration, and processing pipelines implemented in this repository.
+- Use the actual technologies, frameworks, folders, services, databases, and integrations used in the codebase.
+- The final output should look visually similar in quality and professionalism to the attached reference architecture image.
+- The architecture should be presentation-ready for enterprise stakeholders, engineering leadership, and business demonstrations.
+
+==================================================
+STEP 1 — ANALYZE THE REPOSITORY
+==================================================
+
+Thoroughly inspect:
+
+1. /docs directory
+   - Read ALL markdown files
+   - Extract:
+     - workflows
+     - processing pipelines
+     - service responsibilities
+     - AI/agent orchestration
+     - integrations
+     - event flows
+     - validation flows
+     - settlement workflows
+     - SLA monitoring flows
+     - compliance workflows
+     - reporting flows
+
+2. Tracker.md
+   - Identify:
+     - completed features
+     - implemented modules
+     - actual stack used
+     - architectural decisions
+     - queues/events/background jobs
+     - frontend/backend relationships
+     - monitoring/audit implementations
+
+3. Entire codebase
+   Detect automatically:
+   - frontend framework
+   - backend framework
+   - APIs
+   - databases
+   - ORM
+   - auth providers
+   - AI/LLM stack
+   - vector DB/search
+   - async queues
+   - websocket usage
+   - caching
+   - cloud services
+   - deployment stack
+   - workflow engines
+   - orchestration layers
+   - observability tooling
+   - file processing pipelines
+   - ETL/data ingestion flows
+   - storage layers
+   - notification systems
+
+==================================================
+STEP 2 — UNDERSTAND THE BUSINESS DOMAIN
+==================================================
+
+This platform is a Longevity Swap Reinsurance Platform.
+
+The architecture MUST visually represent:
+
+- Cedant / TPA file ingestion
+- Cession file processing
+- Validation pipelines
+- Adjudication workflows
+- Compliance screening
+- SLA monitoring
+- Floating leg calculations
+- Fixed leg schedule usage
+- Net settlement calculation
+- BEL updates
+- Experience analytics
+- Audit trails
+- Reporting
+- Workflow orchestration
+- AI-assisted operational review
+- Human-in-the-loop approvals
+- Exception handling
+- Multi-agent orchestration (if implemented)
+
+Use the business concepts from the documentation to enrich the architecture.
+
+==================================================
+STEP 3 — GENERATE THE ARCHITECTURE DIAGRAM
+==================================================
+
+Create:
+1. A polished enterprise architecture diagram
+2. Supporting editable source
+3. High-resolution export
+
+Required outputs:
+
+/architecture
+    /final-architecture.png
+    /final-architecture.svg
+    /final-architecture.drawio
+    /architecture-notes.md
+
+==================================================
+DIAGRAM STYLE REQUIREMENTS
+==================================================
+
+The diagram must be:
+- modern
+- enterprise-grade
+- visually balanced
+- easy to explain in presentations
+- technically accurate
+- cleanly layered
+- color coordinated
+- not overcrowded
+
+Use:
+- grouped architectural layers
+- professional spacing
+- subtle enterprise color palette
+- clear arrows and flow direction
+- modern rounded containers
+- technology icons where appropriate
+
+VISUAL LAYERS TO INCLUDE
+(if applicable based on actual implementation)
+
+1. External Actors / Data Sources
+   - Cedants
+   - TPAs
+   - Internal Ops
+   - Compliance Teams
+   - Actuarial Teams
+
+2. Presentation Layer
+   - React/Next.js frontend
+   - dashboards
+   - workflow management
+   - human review UI
+
+3. API Gateway / Backend Layer
+   - FastAPI/Node/etc
+   - REST APIs
+   - GraphQL
+   - auth middleware
+
+4. AI / Agentic Layer
+   - LangGraph
+   - LangChain
+   - LLM orchestration
+   - AI review agents
+   - reasoning pipelines
+   - RAG pipelines
+   - memory/context systems
+
+5. Business Workflow Layer
+   - file ingestion
+   - validation
+   - adjudication
+   - compliance screening
+   - SLA engine
+   - settlement engine
+   - calculation engine
+   - reporting engine
+   - notification engine
+
+6. Async/Event Layer
+   - queues
+   - Celery
+   - Kafka
+   - background workers
+   - cron jobs
+   - event-driven processing
+
+7. Data Layer
+   - PostgreSQL
+   - vector DB
+   - Redis
+   - blob/file storage
+   - analytics stores
+
+8. Observability & Governance
+   - logging
+   - audit trail
+   - monitoring
+   - tracing
+   - model governance
+   - compliance monitoring
+
+9. Infrastructure Layer
+   - Docker
+   - Kubernetes
+   - Azure/AWS/GCP
+   - CI/CD
+   - deployment pipelines
+
+==================================================
+STEP 4 — WORKFLOW EMPHASIS
+==================================================
+
+The MOST IMPORTANT requirement:
+
+The diagram must clearly show the END-TO-END FLOW.
+
+Specifically visualize:
+
+File Upload
+→ Validation
+→ Compliance Screening
+→ Adjudication
+→ Delta Detection
+→ Settlement Calculation
+→ BEL Update
+→ Reporting
+→ Audit Logging
+→ Human Approval
+→ Notifications
+
+Use directional arrows and numbered workflow indicators.
+
+==================================================
+STEP 5 — GENERATE SUPPORTING DOCUMENTATION
+==================================================
+
+Create architecture-notes.md containing:
+
+1. Architecture overview
+2. Layer explanations
+3. Workflow explanation
+4. Technology stack summary
+5. Key design decisions
+6. AI orchestration explanation
+7. Scalability considerations
+8. Security/compliance architecture
+9. Why this architecture suits longevity swap processing
+
+==================================================
+IMPORTANT QUALITY REQUIREMENTS
+==================================================
+
+DO NOT:
+- invent technologies not present in the repo
+- create generic cloud diagrams
+- overcrowd the diagram
+- use random buzzwords
+- produce simplistic boxes/arrows only
+
+DO:
+- infer real architecture from the implementation
+- prioritize explainability
+- emphasize workflows
+- show operational intelligence
+- show async/event-driven behavior
+- make it visually impressive
+- make it enterprise presentation quality
+
+==================================================
+FINAL DELIVERABLE
+==================================================
+
+Save ALL generated outputs inside:
+
+/architecture
+
+and print a summary of:
+- detected stack
+- generated components
+- workflow coverage
+- output file paths
+
+Attached reference image: `c:/Users/MuhammadFazil/Downloads/IMG_0655.jpg`
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/README.md
+  - docs/ARCHITECTURE.md
+  - docs/DESIGN.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/build_plans/BUILD_PLAN_ADDITIONS.md
+  - docs/trackers/TRACKER.md
+  - docs/trackers/TRACKER_ADDITIONS.md
+  - docs/db/SCHEMA.md
+  - docs/db/SCHEMA_ADDITIONS.md
+  - docs/api/AUTH.md
+  - docs/api/DASHBOARD.md
+  - docs/api/WORKLIST.md
+  - docs/api/UNDERWRITING.md
+  - docs/api/CLAIMS.md
+  - docs/api/COMPLIANCE.md
+  - docs/api/REPORTS.md
+  - docs/api/ADMIN.md
+  - docs/api/API_ADDITIONS.md
+  - docs/processing_rules/CESSION_FILE_PROCESSING_RULES.md
+  - docs/mock_data/MOCK_DATA.md
+  - docs/mock_data/MOCK_DATA_ADDITIONS.md
+  - docs/ui-screens/README.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/package.json
+  - frontend/src/App.tsx
+  - frontend/src/api/client.ts
+  - backend/requirements.txt
+  - backend/app/main.py
+  - backend/app/config.py
+  - backend/config.py
+  - backend/app/seed.py
+  - backend/app/workflow_agents.py
+  - backend/app/services/claims_service.py
+  - backend/app/services/compliance_service.py
+  - backend/app/services/chatbot_service.py
+  - backend/app/services/chatbot_sql_tool.py
+  - backend/app/services/operations_service.py
+  - backend/app/services/underwriting_service.py
+  - backend/app/services/admin_service.py
+  - backend/app/services/audit_service.py
+  - backend/app/repositories/chatbot_repository.py
+  - backend/app/models/*
+
+### Actions Taken
+- Read the full `docs/` markdown set, including API/UI/build-plan/schema/tracker/additions/reference files, and extracted the implemented workflows, business terminology, and mock-vs-real boundaries.
+- Inspected the frontend and backend codebase to identify the actual stack, module map, router/service/repository structure, DB models, AI integrations, workflow controls, storage layers, and runtime behavior.
+- Verified that the live implementation uses React 19 + TypeScript + Vite on the frontend and FastAPI + SQLAlchemy on the backend, with SQLite as the default runtime DB and PostgreSQL as an environment-configurable path.
+- Verified that the active AI paths are OpenAI-backed sanctions verification, low-confidence detect/map fallback, and the read-only chatbot SQL workflow, and confirmed that LangGraph, vector DB, Kafka, Redis, Celery, WebSockets, Docker, Kubernetes, and IaC manifests are not present in the repo.
+- Created a repo-local architecture asset generator under `architecture/generate_architecture_assets.py` so the SVG and draw.io files are derived from the same implementation-grounded architecture model.
+- Generated `final-architecture.svg`, `final-architecture.drawio`, and `architecture-notes.md`, then rendered `final-architecture.png` through headless Microsoft Edge for a presentation-ready high-resolution export.
+- Visually reviewed the generated PNG and refined the diagram styling so the layer titles, workflow flow, and connector hierarchy read more cleanly in a presentation context.
+- Updated the tracker to record the architecture collateral and appended this required session log entry.
+
+### Files Modified
+- architecture/generate_architecture_assets.py
+- architecture/final-architecture.svg
+- architecture/final-architecture.drawio
+- architecture/final-architecture.png
+- architecture/architecture-notes.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The higher-level docs still describe broader aspirational architecture elements such as PostgreSQL-first runtime and earlier Claude-oriented AI notes, but the current repository implementation defaults to SQLite and uses OpenAI for the active AI features. The generated architecture intentionally follows the implemented code rather than the older aspirational descriptions.
+- The user-supplied reference image was used as a quality and layout benchmark only. The delivered diagram does not copy its technology claims and instead excludes unimplemented items such as LangGraph, vector search, external queue infrastructure, and Kubernetes.
+
+### Status
+✅ Completed
+
 ## [2026-05-19T11:25:15.0481505+00:00]
 
 ### Prompt
@@ -7554,6 +8700,275 @@ continue this task and fix the errors in UI
 - This prompt continued an in-progress cession-workflow redesign already present in the workspace, so the implementation finalized and validated the existing refactor instead of rebuilding it from scratch.
 - The repository had unrelated pre-existing modified files and untracked artifacts; they were left untouched.
 - `npm run build` reports an existing Vite chunk-size warning for the main frontend bundle, but the build completes successfully.
+
+### Status
+✅ Completed
+## [2026-05-20 07:22:04 UTC]
+
+### Prompt
+In the Cession File Processing UI, make the following design and interaction updates:
+
+1. Upload File Flow Change
+
+* Currently, clicking the “Upload File” button directly navigates the user to the File Processing Pipeline page.
+* Instead, clicking the “Upload File” button should open a modal/popup containing the file upload section.
+* After the user selects a file and clicks “Continue”, the popup should close and the user should then be navigated to the File Processing Pipeline page.
+
+2. Remove Upload Step from Stepper
+
+* In the File Processing Pipeline page, remove the current “Upload” step from the stepper flow.
+* The first step in the stepper should now be “Orchestrator” (this replaces the current “Workflow” section).
+
+3. Orchestrator UI Differentiation
+
+* The “Orchestrator” section should visually stand out from the remaining process steps.
+* Display it inside a distinct rectangular container/card layout to indicate that it is a high-level summary section rather than a processing step.
+
+4. Stepper Connection Styling
+
+* Do not show a direct connecting line between the “Orchestrator” section and the “Detect & Map” step.
+* Instead, add slight spacing and use a subtle separator (such as a vertical pipe/divider or visual gap) to distinguish the Orchestrator from the actual processing pipeline.
+* The remaining process steps and their connecting lines should remain unchanged.
+
+5. Default Active Section
+
+* When the File Processing Pipeline page opens, the default active/open section should be the “Orchestrator” section.
+
+Goal:
+The UI should clearly communicate that:
+
+* “Orchestrator” is a workflow overview/summary page
+* The remaining sections are actual sequential processing steps
+* Users should visually understand this distinction immediately without confusion
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/DESIGN.md
+  - docs/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/claims/cession/CessionFilesPage.tsx
+  - frontend/src/pages/claims/cession/CessionFileProcessingPage.tsx
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Changed the Claims > Cession Files `Upload File` CTA to open an upload-only popup instead of routing directly to the pipeline page.
+- Reused the existing upload step inside the popup and navigated to the file-specific processing route only after upload `Continue`.
+- Removed the visible `Upload` step from the routed pipeline stepper and relabeled the first step as `Orchestrator`.
+- Gave the Orchestrator step a distinct rectangular card treatment and replaced the direct connector to `Detect & Map` with a divider gap.
+- Kept the default routed file-processing view focused on the Orchestrator section.
+- Updated the cession tracker notes to reflect the new upload entry flow and Orchestrator-first stepper behavior.
+- Verified the frontend with a successful `npm run build`.
+
+### Files Modified
+- frontend/src/pages/claims/cession/CessionFilesPage.tsx
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+
+## [2026-05-20 07:58:41 UTC]
+
+### Prompt
+Now we need to separate agentic processes from the systematic processes in the processing pipeline from the UI perspective:
+1) Detect&Map : Here we use LLM to identify the cedent and contract so this is an agent.
+2) Anomalies : This is also AGent.
+3) Resolution : Agent
+4) Clauses : It is just DB retrieval, so this is a System
+5) Process : System
+6) Summary : System
+7) Sanction Screening : Agent
+8) File generation : AGent
+9) Worklist : System
+10) Audit : System
+
+Tasks:
+1) Give all agents a phosphor icon that implicates that its an agent and for all process a different one.
+2) In the workflow page do not refer systems as agents.
+
+### Context Used
+- Files referred:
+  - AGENTS.md
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - backend/app/workflow_agents.py
+  - backend/app/services/claims_service.py
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+  - frontend/src/types/api.ts
+
+### Actions Taken
+- Added explicit workflow execution classification (`agent` vs `system`) to the cession workflow definitions and payloads.
+- Renamed system-driven workflow stages so the UI no longer surfaces them as agents (`Clause Retrieval System`, `Processing System`, `Summary System`, `Worklist System`, `Audit System`).
+- Updated the claims workflow stepper and orchestrator cards to show distinct phosphor badges for agents and systems.
+- Replaced user-facing workflow copy that generically referred to all runtime steps as agents with neutral workflow-step wording.
+- Updated the admin workflow automation screen so the same agent/system split is visible there as a consistency layer.
+- Verified the frontend with a successful production build and verified backend Python syntax with `py_compile`.
+- Updated the tracker notes for the workflow classification change.
+
+### Files Modified
+- backend/app/workflow_agents.py
+- backend/app/services/claims_service.py
+- frontend/src/types/api.ts
+- frontend/src/pages/claims/cession/FileProcessingModal.tsx
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+## [2026-05-21T10:58:00+00:00]
+
+### Prompt
+In the workflow agents section, replace the escalation rule section in the agent cards with Escalation team. Assign the corresponding team name as well with Compliance Team, Operations Team.
+For eg : In the Cession Workflow the first 3 agents should be assigned to Operations Teams and sanction screening agent should be assigned to compliance team.
+For the rest of the dummy workflows, assign the teams accordingly.
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/ui/09-admin/ADMIN_UI.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - docs/api/ADMIN.md
+  - docs/api/API_ADDITIONS.md
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+  - frontend/src/types/api.ts
+  - backend/app/workflow_agents.py
+  - backend/app/services/admin_service.py
+  - backend/app/schemas/admin.py
+  - backend/app/mock_data/admin_state.json
+
+### Actions Taken
+- Replaced the admin workflow-agent cards’ `Escalation Rule` control with an `Escalation Team` selector.
+- Added `escalation_team` to the admin workflow-agent config model, validation, and saved mock state while keeping the legacy escalation-rule data in place for claims workflow compatibility.
+- Assigned cession workflow ownership so Detect & Map, Anomalies, and Resolutions use `Operations Team`, while Sanction Screening uses `Compliance Team`.
+- Assigned the dummy Cedant workflow agents to `Operations Team` and the dummy Compliance workflow agents to `Compliance Team`.
+- Updated the related admin UI/API docs and the tracker note to reflect the new team-based field.
+
+### Files Modified
+- backend/app/workflow_agents.py
+- backend/app/services/admin_service.py
+- backend/app/schemas/admin.py
+- backend/app/mock_data/admin_state.json
+- frontend/src/types/api.ts
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- docs/api/ADMIN.md
+- docs/api/API_ADDITIONS.md
+- docs/ui/09-admin/ADMIN_UI.md
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- Kept the existing internal `escalation_rule` data in backend workflow records so the cession orchestration flow remains backward-compatible while the admin UI now shows only `Escalation Team`.
+
+### Status
+✅ Completed
+## [2026-05-21T11:06:00+00:00]
+
+### Prompt
+No need for dropdown just keep the corresponding team name only
+
+### Context Used
+- Files referred:
+  - docs/trackers/TRACKER.md
+  - docs/ui/09-admin/ADMIN_UI.md
+  - docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+  - frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+
+### Actions Taken
+- Replaced the editable `Escalation Team` dropdown in workflow-agent cards with a read-only team label.
+- Removed the now-unused escalation-team save payload from the admin page so only editable controls affect the dirty state and save action.
+- Updated the screenshot-correction note and tracker wording to reflect the read-only team-name presentation.
+- Rebuilt the frontend to verify the admin page still compiles successfully.
+
+### Files Modified
+- frontend/src/pages/admin/workflow-agents/AdminWorkflowAgentsPage.tsx
+- docs/ui/CORRECTIONS_FROM_SCREENSHOTS.md
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- None.
+
+### Status
+✅ Completed
+## [2026-05-21T10:44:52Z]
+
+### Prompt
+during the cession file processing, after clicking accept all resolutions button resolutions agent, the approval is not getting reflected int he workflow page. It still shows as Awaiting for approaval. Fix this issue such that once we apply all the resolutions and approve the same it should then move on to the next step in the workflow
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/db/SCHEMA.md
+  - docs/ui/00-global/LAYOUT.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/api/CLAIMS.md
+  - backend/app/routers/claims.py
+  - backend/app/services/claims_service.py
+  - frontend/src/pages/claims/cession/FileProcessingModal.tsx
+
+### Actions Taken
+- Traced the cession workflow resolution path and reproduced the stuck state from live demo data where all exception rows were already accepted but the workflow override still remained on `resolution -> awaiting_approval`.
+- Found two backend causes: reviewed resolution rows marked `rejected/manual` were still counted as unresolved in one code path, and resumed low-confidence agents were not being recorded as manually reviewed, so later workflow normalization reopened the same HITL pause.
+- Updated the claims service so saving a fully reviewed resolution batch completes the paused Resolution Agent immediately, records manual-review evidence on the agent run, and advances the workflow state to the next pending step.
+- Verified the fix against the existing demo file `CES-2026-056`, which now advances from the stuck Resolution Agent state into downstream processing on the next detail load instead of remaining on `Awaiting approval`.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- docs/trackers/TRACKER.md
+- codex_logger.md
+
+### Issues / Deviations
+- The AGENTS instructions reference `docs/ui/00-global/DESIGN.md`, but this repository currently stores the shared global UI spec in `docs/ui/00-global/LAYOUT.md`, so that file was used instead.
+
+### Status
+✅ Completed
+## [2026-05-21T10:21:45.1724396+00:00]
+
+### Prompt
+In the sanction screening agent, as you can see in the attached image, the threshold for HITL was 92% and the confidence score was 90%. But still the next agents kept on running without waiting for a human approval in the sanction screenig agent. There seems to be some bugs in the working of the threshold. Fix it
+
+### Context Used
+- Files referred:
+  - docs/build_plans/BUILD_PLAN.md
+  - docs/trackers/TRACKER.md
+  - docs/api/ADMIN.md
+  - docs/api/API_ADDITIONS.md
+  - docs/ui/05-claims/cession-files/CESSION_FILES.md
+  - docs/ARCHITECTURE.md
+  - backend/app/services/claims_service.py
+  - backend/app/workflow_agents.py
+  - backend/app/mock_data/admin_state.json
+  - backend/app/mock_data/cession_pipeline_overrides.json
+
+### Actions Taken
+- Traced the cession workflow HITL path and found that sanction-screening pauses were being auto-resumed on the next workflow tick whenever the linked sanctions case was already auto-cleared, even if the agent confidence was still below the saved threshold.
+- Tightened the resume gate so sanction screening only auto-resumes when the screening case is auto-cleared and the saved confidence floor has been met; administrative always-pause HITL still blocks until explicit approval.
+- Narrowed the legacy “manually reviewed” detection to explicit approvals only, allowing previously auto-resumed low-confidence runs to reopen as `awaiting_approval` on reload instead of being treated as approved.
+- Verified the fix against the live demo workflow state for `CES-2026-054`, where repeated reads now keep `sanction_screening` at `awaiting_approval` with confidence `0.90` against threshold `0.92`.
+
+### Files Modified
+- backend/app/services/claims_service.py
+- docs/trackers/TRACKER.md
+
+### Issues / Deviations
+- Existing override data already contains legacy workflow runs that were auto-resumed before this fix; those runs now reopen on the next load if they are still below threshold and do not show evidence of an explicit approval.
 
 ### Status
 ✅ Completed

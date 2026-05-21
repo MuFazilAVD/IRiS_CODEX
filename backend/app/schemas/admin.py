@@ -19,6 +19,7 @@ class AdminWorkflowAgentUpdateRequest(BaseModel):
     confidence_threshold: float | None = None
     always_pause_for_hitl: bool | None = None
     hitl_behavior: str | None = None
+    escalation_team: str | None = None
     escalation_rule: str | None = None
     retry_limit: int | None = None
     fallback_mode: str | None = None

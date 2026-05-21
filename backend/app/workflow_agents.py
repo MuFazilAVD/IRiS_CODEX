@@ -10,16 +10,27 @@ ADMIN_STATE_PATH = Path(__file__).resolve().parent / "mock_data" / "admin_state.
 
 VALID_HITL_BEHAVIORS = {"pause_for_approval", "pause_for_correction"}
 VALID_FALLBACK_MODES = {"manual_review", "skip_step", "deterministic_rule"}
+VALID_ESCALATION_TEAMS = {"Operations Team", "Compliance Team"}
+
+
+def is_agent_workflow_record(item: Any) -> bool:
+    return isinstance(item, dict) and str(item.get("execution_type") or "").strip().lower() == "agent"
+
+
+def is_system_workflow_record(item: Any) -> bool:
+    return isinstance(item, dict) and str(item.get("execution_type") or "").strip().lower() == "system"
 
 WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
     {
         "key": "mapping",
         "step_id": "detect-map",
         "step_label": "Detect & Map",
-        "agent_name": "Mapping Agent",
+        "execution_type": "agent",
+        "agent_name": "Detect & Map Agent",
         "description": "Detect the cession file type, identify the cedent, and map the treaty context.",
         "default_threshold": 0.88,
         "default_retry_limit": 1,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Claims Ops review required before downstream automation continues.",
         "default_fallback_mode": "manual_review",
     },
@@ -27,10 +38,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "anomaly_detection",
         "step_id": "validate",
         "step_label": "Anomalies",
+        "execution_type": "agent",
         "agent_name": "Anomaly Detection Agent",
         "description": "Validate the uploaded rows and identify anomalies, warnings, and informational findings.",
         "default_threshold": 0.84,
         "default_retry_limit": 1,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Claims Ops anomaly review required when confidence is below threshold.",
         "default_fallback_mode": "manual_review",
     },
@@ -38,10 +51,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "resolution",
         "step_id": "exceptions",
         "step_label": "Resolutions",
+        "execution_type": "agent",
         "agent_name": "Resolution Agent",
         "description": "Apply high-confidence anomaly resolutions automatically and route the rest to HITL review.",
         "default_threshold": 0.9,
         "default_retry_limit": 0,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Claims Ops approval required for low-confidence or unsupported resolutions.",
         "default_fallback_mode": "manual_review",
     },
@@ -49,10 +64,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "clause_validation",
         "step_id": "clauses",
         "step_label": "Clauses",
-        "agent_name": "Clause Validation Agent",
-        "description": "Verify the mapped file against contract clauses and rule controls.",
+        "execution_type": "system",
+        "agent_name": "Clause Retrieval System",
+        "description": "Retrieve the applicable contract clauses and deterministic rule controls for the mapped file.",
         "default_threshold": 0.86,
         "default_retry_limit": 1,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Clause review is required before execution when clause confidence is below threshold.",
         "default_fallback_mode": "manual_review",
     },
@@ -60,10 +77,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "processing",
         "step_id": "process",
         "step_label": "Process",
-        "agent_name": "Processing Agent",
+        "execution_type": "system",
+        "agent_name": "Processing System",
         "description": "Execute the downstream cession processing logic and prepare settlement or population outcomes.",
         "default_threshold": 0.87,
         "default_retry_limit": 1,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Processing results require review when confidence falls below the configured floor.",
         "default_fallback_mode": "manual_review",
     },
@@ -71,10 +90,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "results",
         "step_id": "summary",
         "step_label": "Summary",
-        "agent_name": "Workflow Summary Agent",
+        "execution_type": "system",
+        "agent_name": "Summary System",
         "description": "Compile the workflow summary, business impact, and completion narrative for the run.",
         "default_threshold": 0.8,
         "default_retry_limit": 0,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Summary review is required when derived completion insights fall below threshold.",
         "default_fallback_mode": "manual_review",
     },
@@ -82,10 +103,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "sanction_screening",
         "step_id": "screening",
         "step_label": "Sanction Screening",
+        "execution_type": "agent",
         "agent_name": "Sanction Screening Agent",
         "description": "Assess counterparties against sanctions sources and pause for HITL review when required.",
         "default_threshold": 0.92,
         "default_retry_limit": 0,
+        "default_escalation_team": "Compliance Team",
         "default_escalation_rule": "Escalate to compliance when sanctions screening remains below threshold.",
         "default_fallback_mode": "manual_review",
     },
@@ -93,10 +116,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "file_generation",
         "step_id": "files",
         "step_label": "Files",
-        "agent_name": "File Generation Agent",
+        "execution_type": "system",
+        "agent_name": "File Generation System",
         "description": "Generate downstream cession output files and package them for release.",
         "default_threshold": 0.85,
         "default_retry_limit": 1,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Claims Ops review is required when downstream file generation is incomplete.",
         "default_fallback_mode": "manual_review",
     },
@@ -104,10 +129,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "worklist",
         "step_id": "worklist",
         "step_label": "Worklist",
-        "agent_name": "Worklist Agent",
+        "execution_type": "system",
+        "agent_name": "Worklist System",
         "description": "Create and route all downstream worklist tasks created by the workflow.",
         "default_threshold": 0.82,
         "default_retry_limit": 1,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Operations review is required if workflow routing confidence is below threshold.",
         "default_fallback_mode": "manual_review",
     },
@@ -115,10 +142,12 @@ WORKFLOW_AGENT_DEFINITIONS: list[dict[str, Any]] = [
         "key": "audit",
         "step_id": "audit",
         "step_label": "Audit",
-        "agent_name": "Audit Agent",
+        "execution_type": "system",
+        "agent_name": "Audit System",
         "description": "Finalize the workflow audit trail, approvals, overrides, retries, and completion traceability.",
         "default_threshold": 0.95,
         "default_retry_limit": 0,
+        "default_escalation_team": "Operations Team",
         "default_escalation_rule": "Administrative review is required when audit completeness falls below threshold.",
         "default_fallback_mode": "manual_review",
     },
@@ -131,12 +160,14 @@ def default_workflow_agent_configs() -> list[dict[str, Any]]:
             "key": definition["key"],
             "step_id": definition["step_id"],
             "step_label": definition["step_label"],
+            "execution_type": definition["execution_type"],
             "agent_name": definition["agent_name"],
             "description": definition["description"],
             "enabled": True,
             "confidence_threshold": float(definition["default_threshold"]),
             "always_pause_for_hitl": False,
             "hitl_behavior": "pause_for_approval",
+            "escalation_team": definition["default_escalation_team"],
             "escalation_rule": definition["default_escalation_rule"],
             "retry_limit": int(definition["default_retry_limit"]),
             "fallback_mode": definition["default_fallback_mode"],
@@ -162,6 +193,9 @@ def merge_workflow_agent_configs(raw_items: Any) -> list[dict[str, Any]]:
             candidate["always_pause_for_hitl"] = bool(item.get("always_pause_for_hitl", candidate["always_pause_for_hitl"]))
             hitl_behavior = str(item.get("hitl_behavior") or candidate["hitl_behavior"]).strip()
             candidate["hitl_behavior"] = hitl_behavior if hitl_behavior in VALID_HITL_BEHAVIORS else candidate["hitl_behavior"]
+            escalation_team = str(item.get("escalation_team") or "").strip()
+            if escalation_team in VALID_ESCALATION_TEAMS:
+                candidate["escalation_team"] = escalation_team
             escalation_rule = str(item.get("escalation_rule") or "").strip()
             if escalation_rule:
                 candidate["escalation_rule"] = escalation_rule
@@ -181,6 +215,10 @@ def merge_workflow_agent_configs(raw_items: Any) -> list[dict[str, Any]]:
 
 def workflow_agent_config_map(raw_items: Any) -> dict[str, dict[str, Any]]:
     return {item["key"]: item for item in merge_workflow_agent_configs(raw_items)}
+
+
+def configurable_workflow_agent_configs(raw_items: Any) -> list[dict[str, Any]]:
+    return [item for item in merge_workflow_agent_configs(raw_items) if is_agent_workflow_record(item)]
 
 
 def load_workflow_agent_configs_from_admin_state() -> list[dict[str, Any]]:

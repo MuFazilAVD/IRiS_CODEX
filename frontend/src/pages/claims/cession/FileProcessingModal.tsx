@@ -13,6 +13,7 @@ import {
   FileText,
   Files as FilesIcon,
   Flag,
+  GearSix,
   Handshake,
   ListChecks,
   MagnifyingGlass,
@@ -20,13 +21,12 @@ import {
   Path,
   ProhibitInset,
   Receipt,
+  Robot,
   ShieldCheck,
-  Sparkle as SparkleIcon,
   Target,
   Timer,
   TreeStructure,
   TrendUp,
-  UploadSimple,
   WarningCircle,
   WarningDiamond,
 } from '@phosphor-icons/react'
@@ -79,6 +79,7 @@ type BackendClaimsStep =
 
 type UploadMode = 'auto' | 'manual'
 type ExceptionChoice = 'pending' | 'accept' | 'override' | 'manual'
+type WorkflowExecutionType = 'agent' | 'system'
 
 type ModalNotice = {
   tone: 'success' | 'error'
@@ -98,6 +99,8 @@ interface FileProcessingModalProps {
   startInUpload?: boolean
   cedentOptions: CedentListItem[]
   contractOptions: ContractListItem[]
+  modalVariant?: 'full' | 'upload-only'
+  onFileCreated?: (fileId: string) => void
   onClose: () => void
   onRefresh: () => Promise<unknown> | void
 }
@@ -105,13 +108,13 @@ interface FileProcessingModalProps {
 interface CessionFileProcessingWorkflowProps extends FileProcessingModalProps {
   presentation?: 'modal' | 'page'
   backLabel?: string
-  onFileCreated?: (fileId: string) => void
 }
 
 type StepDefinition = {
   id: ClaimsStep
   label: string
   icon: React.ElementType
+  executionType?: WorkflowExecutionType
 }
 
 type StepStatusEntry = {
@@ -122,18 +125,17 @@ type StepStatusEntry = {
 }
 
 const BASE_PIPELINE_STEPS: StepDefinition[] = [
-  { id: 'upload', label: 'Upload', icon: UploadSimple },
-  { id: 'workflow', label: 'Workflow', icon: TreeStructure },
-  { id: 'detect-map', label: 'Detect & Map', icon: MagnifyingGlass },
-  { id: 'validate', label: 'Anomalies', icon: WarningCircle },
-  { id: 'exceptions', label: 'Resolutions', icon: Handshake },
-  { id: 'clauses', label: 'Clauses', icon: FileText },
-  { id: 'process', label: 'Process', icon: Cpu },
-  { id: 'summary', label: 'Summary', icon: ChartBar },
-  { id: 'screening', label: 'Sanction Screening', icon: ShieldCheck },
-  { id: 'files', label: 'Files', icon: FilesIcon },
-  { id: 'worklist', label: 'Worklist', icon: ListChecks },
-  { id: 'audit', label: 'Audit', icon: Receipt },
+  { id: 'workflow', label: 'Orchestrator', icon: Sparkles, executionType: 'system' },
+  { id: 'detect-map', label: 'Detect & Map', icon: MagnifyingGlass, executionType: 'agent' },
+  { id: 'validate', label: 'Anomalies', icon: WarningCircle, executionType: 'agent' },
+  { id: 'exceptions', label: 'Resolutions', icon: Handshake, executionType: 'agent' },
+  { id: 'clauses', label: 'Clauses', icon: FileText, executionType: 'system' },
+  { id: 'process', label: 'Process', icon: Cpu, executionType: 'system' },
+  { id: 'summary', label: 'Summary', icon: ChartBar, executionType: 'system' },
+  { id: 'screening', label: 'Sanction Screening', icon: ShieldCheck, executionType: 'agent' },
+  { id: 'files', label: 'Files', icon: FilesIcon, executionType: 'agent' },
+  { id: 'worklist', label: 'Worklist', icon: ListChecks, executionType: 'system' },
+  { id: 'audit', label: 'Audit', icon: Receipt, executionType: 'system' },
 ]
 
 const FILE_TYPE_OPTIONS = [
@@ -146,11 +148,32 @@ const FILE_TYPE_OPTIONS = [
   'Fee Schedule',
 ]
 
+const EXECUTION_TYPE_META: Record<
+  WorkflowExecutionType,
+  {
+    icon: React.ElementType
+    label: string
+    className: string
+  }
+> = {
+  agent: {
+    icon: Robot,
+    label: 'Agent',
+    className: 'border-[#C8DCEB] bg-[#EFF7FD] text-[#155A82]',
+  },
+  system: {
+    icon: GearSix,
+    label: 'System',
+    className: 'border-[#D7E2EA] bg-[#F8FAFC] text-[#4E6475]',
+  },
+}
+
 export function CessionFileProcessingWorkflow({
   fileId,
   startInUpload = false,
   cedentOptions,
   contractOptions,
+  modalVariant = 'full',
   onClose,
   onRefresh,
   presentation = 'page',
@@ -312,7 +335,7 @@ export function CessionFileProcessingWorkflow({
           ? workflowPausedAgent.review_label
           : workflow.status === 'completed'
             ? 'Finish'
-            : 'Workflow Running'
+            : 'Orchestrator Running'
       : currentStep === 'detect-map'
         ? 'Save & Resume'
       : currentStep === 'exceptions'
@@ -685,6 +708,8 @@ export function CessionFileProcessingWorkflow({
   }
 
   const isPage = presentation === 'page'
+  const isUploadOnlyModalLaunch = presentation === 'modal' && modalVariant === 'upload-only' && !activeFileId
+  const showStepper = !(presentation === 'modal' && modalVariant === 'upload-only' && !activeFileId)
   const showBetaHeader = Boolean(detail && detail.file_type !== 'Settlement')
   const betaSuffix = showBetaHeader ? ' (beta)' : ''
   const pageTitle = activeFileId && detail ? `${detail.file_id} · ${detail.filename}${betaSuffix}` : 'New Cession File'
@@ -712,17 +737,19 @@ export function CessionFileProcessingWorkflow({
         </div>
 
         <section className="overflow-hidden rounded-lg border border-[#D7E1E8] bg-white shadow-sm">
-          <div className="overflow-x-auto border-t border-[#E5EBF0] bg-white px-4 py-3 md:px-6">
-            <PipelineStepper
-              activeFileId={activeFileId}
-              actualCurrentStep={actualCurrentStep}
-              completedSteps={completedSteps}
-              currentStep={currentStep}
-              stepStatusMap={stepStatusMap}
-              steps={pipelineSteps}
-              onOpenStep={openWorkflowStep}
-            />
-          </div>
+          {showStepper ? (
+            <div className="overflow-x-auto border-t border-[#E5EBF0] bg-white px-4 py-3 md:px-6">
+              <PipelineStepper
+                activeFileId={activeFileId}
+                actualCurrentStep={actualCurrentStep}
+                completedSteps={completedSteps}
+                currentStep={currentStep}
+                stepStatusMap={stepStatusMap}
+                steps={pipelineSteps}
+                onOpenStep={openWorkflowStep}
+              />
+            </div>
+          ) : null}
 
           <div className="min-h-[620px] bg-[#FAFBFC] px-4 py-5 md:px-6">
             {notice ? <NoticeBanner tone={notice.tone}>{notice.message}</NoticeBanner> : null}
@@ -811,7 +838,7 @@ export function CessionFileProcessingWorkflow({
               {workflow && currentStep !== 'upload' && currentStep !== 'workflow' ? (
                 <button className="btn-secondary" disabled={busy} onClick={() => openWorkflowStep('workflow')} type="button">
                   <RefreshCw className="h-4 w-4" />
-                  Back to Workflow
+                  Back to Orchestrator
                 </button>
               ) : null}
               {!workflow && currentStep === 'summary' ? (
@@ -848,25 +875,38 @@ export function CessionFileProcessingWorkflow({
     )
   }
 
-  const modalTitle = activeFileId ? `Cession File Processing${betaSuffix}` : 'New Cession File'
+  const modalTitle =
+    activeFileId ? `Cession File Processing${betaSuffix}` : modalVariant === 'upload-only' ? 'Upload Cession File' : 'New Cession File'
+  const modalHeaderSubtitle = detail
+    ? 'Upload + AI-assisted ingestion pipeline'
+    : modalVariant === 'upload-only'
+      ? 'Select a file here, then continue into the file processing pipeline.'
+      : 'Upload + AI-assisted ingestion pipeline'
   const fileSubtitle = detail
     ? `${detail.file_id} · ${detail.filename} · ${detail.cedent} · ${detail.file_type} · ${formatCount(detail.records)} records`
-    : 'Upload + AI-assisted ingestion pipeline'
+    : null
 
   return (
     <>
       <div className="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[1px]" onClick={onClose} />
-      <div className="cession-compact fixed inset-3 z-50 overflow-hidden rounded-[24px] border border-[#D8E2EA] bg-white shadow-[0_24px_70px_rgba(13,27,42,0.24)]">
-        <div className="flex h-full flex-col">
-          <div className="border-b border-[#E5EBF0] bg-[linear-gradient(180deg,#FBFCFD_0%,#F4F7FA_100%)] px-6 py-5">
+      <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6">
+        <div
+          className={`cession-compact overflow-hidden rounded-[24px] border border-[#D8E2EA] bg-white shadow-[0_24px_70px_rgba(13,27,42,0.24)] ${
+            isUploadOnlyModalLaunch
+              ? 'mt-2 flex h-[min(760px,calc(100vh-3.5rem))] w-full max-w-[1080px] flex-col'
+              : 'flex h-full w-full flex-col'
+          }`}
+        >
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="shrink-0 border-b border-[#E5EBF0] bg-[linear-gradient(180deg,#FBFCFD_0%,#F4F7FA_100%)] px-6 py-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-[24px] font-bold text-iris-text-primary">{modalTitle}</h2>
                   {detail ? <PipelineStageBadge stage={detail.stage} /> : null}
                 </div>
-                <p className="mt-2 text-[13px] text-iris-text-secondary">Upload + AI-assisted ingestion pipeline</p>
-                <p className="mt-1 text-[12px] text-iris-text-muted">{fileSubtitle}</p>
+                <p className="mt-2 text-[13px] text-iris-text-secondary">{modalHeaderSubtitle}</p>
+                {fileSubtitle ? <p className="mt-1 text-[12px] text-iris-text-muted">{fileSubtitle}</p> : null}
               </div>
 
               <button
@@ -878,20 +918,22 @@ export function CessionFileProcessingWorkflow({
               </button>
             </div>
 
-            <div className="mt-5 overflow-x-auto">
-              <PipelineStepper
-                activeFileId={activeFileId}
-                actualCurrentStep={actualCurrentStep}
-                completedSteps={completedSteps}
-                currentStep={currentStep}
-                stepStatusMap={stepStatusMap}
-                steps={pipelineSteps}
-                onOpenStep={openWorkflowStep}
-              />
-            </div>
+            {showStepper ? (
+              <div className="mt-5 overflow-x-auto">
+                <PipelineStepper
+                  activeFileId={activeFileId}
+                  actualCurrentStep={actualCurrentStep}
+                  completedSteps={completedSteps}
+                  currentStep={currentStep}
+                  stepStatusMap={stepStatusMap}
+                  steps={pipelineSteps}
+                  onOpenStep={openWorkflowStep}
+                />
+              </div>
+            ) : null}
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-[#FAFBFC] px-6 py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[#FAFBFC] px-6 py-5">
             {notice ? (
               <NoticeBanner tone={notice.tone}>{notice.message}</NoticeBanner>
             ) : null}
@@ -902,6 +944,7 @@ export function CessionFileProcessingWorkflow({
 
             {currentStep === 'upload' ? (
               <UploadStep
+                hideTitle={isUploadOnlyModalLaunch}
                 manualUploadFileType={manualUploadFileType}
                 selectedFile={selectedFile}
                 testcaseBusy={testcaseBusy}
@@ -973,7 +1016,7 @@ export function CessionFileProcessingWorkflow({
             {detail && currentStep === 'audit' ? <AuditStep items={detail.audit.items} subtitle={detail.audit.subtitle} title={detail.audit.title} /> : null}
           </div>
 
-          <div className="flex items-center justify-between border-t border-[#E5EBF0] bg-white px-6 py-4">
+          <div className="shrink-0 flex items-center justify-between border-t border-[#E5EBF0] bg-white px-6 py-4">
             <button className="btn-secondary" onClick={onClose} type="button">
               {currentStep === 'audit' ? 'Close' : 'Cancel'}
             </button>
@@ -982,7 +1025,7 @@ export function CessionFileProcessingWorkflow({
               {workflow && currentStep !== 'upload' && currentStep !== 'workflow' ? (
                 <button className="btn-secondary" disabled={busy} onClick={() => openWorkflowStep('workflow')} type="button">
                   <RefreshCw className="h-4 w-4" />
-                  Back to Workflow
+                  Back to Orchestrator
                 </button>
               ) : null}
               {!workflow && currentStep === 'summary' ? (
@@ -1016,6 +1059,7 @@ export function CessionFileProcessingWorkflow({
           </div>
         </div>
       </div>
+      </div>
     </>
   )
 }
@@ -1025,6 +1069,7 @@ export function FileProcessingModal(props: FileProcessingModalProps) {
 }
 
 function UploadStep({
+  hideTitle = false,
   manualUploadFileType,
   selectedFile,
   testcaseBusy,
@@ -1038,6 +1083,7 @@ function UploadStep({
   onDownloadTestcase,
   onUploadModeChange,
 }: {
+  hideTitle?: boolean
   manualUploadFileType: string
   selectedFile: File | null
   testcaseBusy: string | null
@@ -1053,7 +1099,7 @@ function UploadStep({
 }) {
   return (
     <div className="space-y-5">
-      <SectionHeading title="Upload Cedant File" subtitle="Manual or SFTP-staged. Choose AI auto-detection or pick file type explicitly." />
+      {hideTitle ? null : <SectionHeading title="Upload Cedant File" subtitle="Manual or SFTP-staged. Choose AI auto-detection or pick file type explicitly." />}
 
       <div className="rounded-[22px] border border-dashed border-[#AFC7D8] bg-white p-6 shadow-sm">
         <div className="flex flex-col items-center gap-3 text-center">
@@ -1628,8 +1674,8 @@ function ProcessStep({ detail }: { detail: ClaimsCessionDetailPayload }) {
       </div>
       <div className="rounded-[22px] border border-[#B8E2E0] bg-[#F4FBFB] px-5 py-4 text-[13px] text-iris-text-primary">
         <div className="mb-2 flex items-center gap-2 font-semibold text-[#117A65]">
-          <Sparkles className="h-4 w-4" />
-          IRiS AI
+          <GearSix className="h-4 w-4" />
+          IRiS Processing Note
         </div>
         <p>{detail.process.iris_note}</p>
       </div>
@@ -1686,9 +1732,6 @@ function WorkflowOrchestrationStep({
     previousPausedAgentKey.current = null
   }, [currentAgent?.key, currentAgent?.status, pausedAgent?.key])
 
-  const workflowInsight = buildWorkflowInsight(detail, pausedAgent, currentAgent, screeningSummary)
-  const startedTimestamp = resolveWorkflowStartedTimestamp(workflow)
-
   function openAndScrollToAgent(agentKey: string) {
     setExpandedAgents((current) => (current[agentKey] ? current : { ...current, [agentKey]: true }))
     agentCardRefs.current[agentKey]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -1705,14 +1748,14 @@ function WorkflowOrchestrationStep({
               : 'border-[#D6E4F0] bg-[#F7FBFF]'
         }`}
       >
-        <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_330px]">
-          <div className="px-5 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-iris-text-primary">
-              <TreeStructure className="h-4 w-4" weight="duotone" />
-              Workflow Orchestration
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
+        <div>
+          <div className="px-5 pt-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 text-[12px] font-semibold text-iris-text-primary">
+                <TreeStructure className="h-4 w-4" weight="duotone" />
+                Orchestrator
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
               <span className={workflowStatusBadgeClass(workflow.status)}>
                 {workflow.status === 'awaiting_approval' ? <PauseCircle className="mr-1.5 inline-flex h-3.5 w-3.5" weight="fill" /> : null}
                 {formatWorkflowStatusLabel(workflow.status)} · {workflow.pct_complete}%
@@ -1727,51 +1770,21 @@ function WorkflowOrchestrationStep({
                   <CaretDown className="h-4 w-4" weight="bold" />
                 </button>
               ) : null}
+              </div>
             </div>
           </div>
-          <h2 className="mt-4 text-[22px] font-bold leading-tight text-iris-text-primary">{workflowSummary.message}</h2>
+          <div className="px-5 pb-5 pt-4">
+          <h2 className=" text-[22px] font-bold leading-tight text-iris-text-primary">{workflowSummary.message}</h2>
           <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">
             {pausedAgent
-              ? `${pausedAgent.agent_name} is paused for review. Open the related pipeline step or approve from the accordion below to resume orchestration.`
+              ? `${pausedAgent.agent_name} is paused for review. Open the related pipeline step or approve from the workflow stack below to resume orchestration.`
               : currentAgent
-                ? `${currentAgent.agent_name} is executing now. The stepper and agent stack below will continue to update in place.`
-                : 'All workflow agents finished successfully and the cession processing run is complete.'}
+                ? `${currentAgent.agent_name} is executing now. The stepper and workflow stack below will continue to update in place.`
+                : 'All workflow steps finished successfully and the cession processing run is complete.'}
           </p>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <WorkflowDetailTile label="Contract" value={workflowSummary.contract_id ?? detail.contract_id ?? 'Pending mapping'} />
-            <WorkflowDetailTile label="Workflow Period" value={workflowSummary.reporting_period || detail.contract_mapping.period || 'Pending period'} />
-          </div>
-
-          <div className="mt-4 rounded-[18px] border border-[#B8E2E0] bg-white/75 px-4 py-3">
-            <div className="flex items-center gap-2 text-[12px] font-semibold text-[#117A65]">
-              <SparkleIcon className="h-4 w-4" weight="fill" />
-              Workflow Insight
-            </div>
-            <p className="mt-2 text-[13px] leading-6 text-iris-text-secondary">{workflowInsight}</p>
-          </div>
-
-          {pausedAgent ? (
-            <div className="mt-4 rounded-[18px] border border-[#F4D8A6] bg-white/75 px-4 py-3 text-[13px] text-[#8A6120]">
-              {pausedAgent.state_message ?? `${pausedAgent.agent_name} requires review before the workflow can continue.`}
-            </div>
-          ) : null}
-
         </div>
 
-        <div className="flex h-full flex-col justify-center border-t border-white/75 px-5 py-5 xl:border-l xl:border-t-0">
-          <div className="flex items-center gap-2 text-[15px] font-semibold text-iris-text-primary">
-            <Path className="h-4 w-4" weight="duotone" />
-            Live Orchestration Monitor
-          </div>
-          <div className="mt-4 space-y-3 text-[13px] text-iris-text-secondary">
-            <MonitorRow label="Current Agent" value={currentAgent?.agent_name ?? 'Workflow complete'} />
-            <MonitorRow label="Pause State" value={pausedAgent ? `${pausedAgent.agent_name} awaiting review` : 'No active pauses'} />
-            <MonitorRow label="Started" value={startedTimestamp ? formatRelativeDate(startedTimestamp) : '—'} />
-            <MonitorRow label="Completed" value={workflowSummary.completion_timestamp ? formatRelativeDate(workflowSummary.completion_timestamp) : 'In progress'} />
-          </div>
-
-        </div>
       </div>
       </div>
 
@@ -1786,6 +1799,7 @@ function WorkflowOrchestrationStep({
           const showApprove = agent.awaiting_approval && agent.key !== 'resolution'
           const isRunningAgent = agent.status === 'running'
           const isFocusedAgent = agent.key === pausedAgent?.key || agent.key === currentAgent?.key
+          const isSystemStep = agent.execution_type === 'system'
           const accentBarClass = workflowAgentAccentBarClass(agent.status)
           const headerHoverClass =
             agent.status === 'running'
@@ -1817,6 +1831,7 @@ function WorkflowOrchestrationStep({
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-iris-text-muted">{agent.step_label}</p>
+                          <ExecutionTypeBadge executionType={agent.execution_type} />
                           {isRunningAgent ? (
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C8DCEB] bg-[#EFF7FD] px-2 py-1 text-[11px] font-semibold text-[#155A82]">
                               <ArrowsClockwise className="h-3.5 w-3.5 animate-spin" weight="bold" />
@@ -1842,18 +1857,20 @@ function WorkflowOrchestrationStep({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  {isSystemStep ? null : (
+                    <div className="flex flex-wrap gap-2">
                     <AgentMetricChip icon={TrendUp} value={agent.confidence_score !== null ? formatConfidence(agent.confidence_score) : 'Confidence —'} />
                     <AgentMetricChip icon={Target} value={`Threshold ${Math.round(agent.confidence_threshold * 100)}%`} />
                     <AgentMetricChip icon={Timer} value={formatExecutionTime(agent.execution_time_ms)} />
-                    <AgentMetricChip icon={ArrowClockwise} value={`${Math.max(agent.attempts - 1, 0)} retry${Math.max(agent.attempts - 1, 0) === 1 ? '' : 'ies'}`} />
+                    <AgentMetricChip icon={ArrowClockwise} value={formatRetryCount(Math.max(agent.attempts - 1, 0))} />
                     <AgentMetricChip
                       icon={agent.hitl_required ? PauseCircle : CheckCircle}
                       tone={agent.hitl_required ? 'warning' : 'positive'}
                       value={agent.hitl_required ? 'HITL required' : 'No HITL pause'}
                     />
                     <AgentMetricChip icon={outcomeMeta.icon} tone={outcomeMeta.tone} value={outcomeMeta.label} />
-                  </div>
+                    </div>
+                  )}
                 </div>
               </button>
 
@@ -1949,8 +1966,8 @@ function SummaryStep({
 
       <div className="rounded-[22px] border border-[#B8E2E0] bg-[#F4FBFB] px-5 py-4 text-[13px] text-iris-text-primary">
         <div className="mb-2 flex items-center gap-2 font-semibold text-[#117A65]">
-          <Sparkles className="h-4 w-4" />
-          IRiS Insights
+          <GearSix className="h-4 w-4" />
+          Workflow Summary Note
         </div>
         <p>{detail.summary.insight}</p>
       </div>
@@ -2431,8 +2448,10 @@ function PipelineStepper({
   return (
     <div className="flex min-w-max items-center gap-0">
       {steps.map((step, index) => {
+        const isOrchestratorStep = step.id === 'workflow'
         const stepState = stepStatusMap[step.id]
         const stepStatus = stepState?.status ?? (completedSteps.has(step.id) ? 'completed' : 'pending')
+        const isOrchestratorRunning = isOrchestratorStep && (stepStatus === 'running' || stepStatus === 'monitoring')
         const nextStatus =
           index < steps.length - 1
             ? stepStatusMap[steps[index + 1].id]?.status ?? (completedSteps.has(steps[index + 1].id) ? 'completed' : 'pending')
@@ -2440,39 +2459,66 @@ function PipelineStepper({
         const StepIcon = step.icon
         const StatusIcon = resolveStepperStateIcon(stepStatus, stepState?.message)
         const statusMeta = stepStatus === 'skipped' ? skippedStateMetaFromMessage(stepState?.message) : null
+        const executionMeta = step.executionType ? EXECUTION_TYPE_META[step.executionType] : null
+        const StepperIcon = isOrchestratorStep ? StepIcon : executionMeta?.icon ?? StepIcon
+
+        const stepButton = (
+          <button
+            className={workflowStepperButtonClass(stepStatus, currentStep === step.id, actualCurrentStep === step.id, isOrchestratorStep)}
+            disabled={!activeFileId}
+            onClick={() => activeFileId && onOpenStep(step.id)}
+            type="button"
+          >
+            <span className={workflowStepperIconClass(stepStatus, isOrchestratorStep)}>
+              <StepperIcon className="h-4 w-4" weight="fill" />
+            </span>
+            <span>{step.label}</span>
+            {StatusIcon ? (
+              <span
+                className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${
+                  stepStatus === 'completed'
+                    ? 'bg-[#D8F4E4] text-[#1E8449]'
+                    : stepStatus === 'awaiting_approval'
+                      ? 'bg-[#FDECC8] text-[#9A6A14]'
+                      : stepStatus === 'failed'
+                        ? 'bg-[#FAD9D7] text-[#B33C31]'
+                        : stepStatus === 'skipped'
+                          ? 'bg-[#EEF2F6] text-[#627282]'
+                          : 'bg-white/20 text-current'
+                }`}
+                title={statusMeta?.label ?? formatWorkflowStatusLabel(stepStatus)}
+              >
+                <StatusIcon className={shouldAnimateStepperStatusIcon(stepStatus) ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} weight="fill" />
+              </span>
+            ) : null}
+          </button>
+        )
 
         return (
           <Fragment key={step.id}>
-            <button
-              className={workflowStepperButtonClass(stepStatus, currentStep === step.id, actualCurrentStep === step.id)}
-              disabled={!activeFileId}
-              onClick={() => activeFileId && onOpenStep(step.id)}
-              type="button"
-            >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/80">
-                <StepIcon className="h-4 w-4" weight={stepStatus === 'running' ? 'fill' : 'duotone'} />
-              </span>
-              <span>{step.label}</span>
-              {StatusIcon ? (
-                <span
-                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${
-                    stepStatus === 'completed'
-                      ? 'bg-[#D8F4E4] text-[#1E8449]'
-                      : stepStatus === 'awaiting_approval'
-                        ? 'bg-[#FDECC8] text-[#9A6A14]'
-                        : stepStatus === 'failed'
-                          ? 'bg-[#FAD9D7] text-[#B33C31]'
-                          : stepStatus === 'skipped'
-                            ? 'bg-[#EEF2F6] text-[#627282]'
-                            : 'bg-white/20 text-current'
-                  }`}
-                  title={statusMeta?.label ?? formatWorkflowStatusLabel(stepStatus)}
-                >
-                  <StatusIcon className={stepStatus === 'running' ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} weight="fill" />
-                </span>
-              ) : null}
-            </button>
-            {nextStatus ? <div className={workflowConnectorClass(stepStatus, nextStatus)} /> : null}
+            {isOrchestratorRunning ? (
+              <ShineBorder
+                borderRadius={20}
+                borderWidth={2.5}
+                className="bg-transparent"
+                color={['#1A6B9A', '#2BBE9C', '#F2D35E']}
+                duration={4}
+                fitContent
+              >
+                {stepButton}
+              </ShineBorder>
+            ) : (
+              stepButton
+            )}
+            {nextStatus ? (
+              isOrchestratorStep ? (
+                <div className="mx-3 flex h-10 items-center justify-center px-1">
+                  <div className="h-8 w-px rounded-full bg-[#D7E2EA]" />
+                </div>
+              ) : (
+                <div className={workflowConnectorClass(stepStatus, nextStatus)} />
+              )
+            ) : null}
           </Fragment>
         )
       })}
@@ -2502,6 +2548,18 @@ function AgentMetricChip({
     <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[12px] font-semibold ${toneClass}`}>
       <Icon className="h-4 w-4" weight="fill" />
       {value}
+    </span>
+  )
+}
+
+function ExecutionTypeBadge({ executionType }: { executionType: WorkflowExecutionType }) {
+  const meta = EXECUTION_TYPE_META[executionType]
+  const Icon = meta.icon
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] ${meta.className}`}>
+      <Icon className="h-3.5 w-3.5" weight="fill" />
+      {meta.label}
     </span>
   )
 }
@@ -2536,7 +2594,7 @@ function WorkflowAgentOutput({
   const hasExecuted = hasWorkflowAgentExecuted(agent)
 
   if (!hasExecuted && agent.status === 'running') {
-    return <WorkflowEmptyOutput>{agent.agent_name} is executing now. Live output will populate here as soon as the agent publishes the next workflow update.</WorkflowEmptyOutput>
+    return <WorkflowEmptyOutput>{agent.agent_name} is executing now. Live output will populate here as soon as this workflow step publishes the next update.</WorkflowEmptyOutput>
   }
 
   if (!hasExecuted && agent.status === 'pending') {
@@ -2879,7 +2937,7 @@ function WorkflowAgentOutput({
       ))}
     </div>
   ) : (
-    <WorkflowEmptyOutput>{agent.output_summary ?? agent.state_message ?? 'No workflow output is available yet for this agent.'}</WorkflowEmptyOutput>
+    <WorkflowEmptyOutput>{agent.output_summary ?? agent.state_message ?? 'No workflow output is available yet for this step.'}</WorkflowEmptyOutput>
   )
 }
 
@@ -2968,15 +3026,6 @@ function MetricLine({ label, value }: { label: string; value: React.ReactNode })
     <div className="rounded-xl bg-[#F8FAFC] px-3.5 py-3">
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{label}</p>
       <div className="mt-1.5 text-[14px] font-semibold text-iris-text-primary">{value}</div>
-    </div>
-  )
-}
-
-function MonitorRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-[#EEF2F5] pb-3 last:border-b-0 last:pb-0">
-      <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-iris-text-muted">{label}</span>
-      <span className="text-right text-[13px] font-medium text-iris-text-primary">{value}</span>
     </div>
   )
 }
@@ -3282,7 +3331,7 @@ function buildStepStatusMap(
       ) as Partial<Record<ClaimsStep, StepStatusEntry>>),
       workflow: {
         status: detail.workflow.status === 'running' ? 'monitoring' : detail.workflow.status,
-        label: 'Workflow',
+        label: 'Orchestrator',
         timestamp: detail.workflow.updated_at ?? detail.workflow.started_at ?? '',
         message: detail.workflow.paused_reason ?? detail.workflow.final_message ?? detail.workflow.results.message,
       },
@@ -3410,24 +3459,59 @@ function getWorkflowAgentForStep(workflow: ClaimsWorkflowPayload, step: ClaimsSt
   return workflow.agents.find((agent) => agent.key === agentKey) ?? null
 }
 
-function workflowStepperButtonClass(status: string, isSelected: boolean, isRunning: boolean) {
-  const baseClass = 'inline-flex items-center gap-2 rounded-full border px-3 py-2.5 text-[12px] font-semibold whitespace-nowrap transition disabled:cursor-default disabled:opacity-70'
+function workflowStepperButtonClass(status: string, isSelected: boolean, isRunning: boolean, isOrchestratorStep: boolean) {
+  const baseClass = isOrchestratorStep
+    ? 'inline-flex min-w-[220px] items-center justify-between gap-3 rounded-[20px] border px-4 py-3 text-[12px] font-semibold whitespace-nowrap transition disabled:cursor-default disabled:opacity-70'
+    : 'inline-flex items-center gap-2 rounded-full border px-3 py-2.5 text-[12px] font-semibold whitespace-nowrap transition disabled:cursor-default disabled:opacity-70'
   const toneClass =
-    status === 'completed'
-      ? 'border-[#C7EED8] bg-[#E8F8F5] text-[#117A65]'
-      : status === 'monitoring'
-        ? 'border-[#C8DCEB] bg-white text-[#205375] hover:bg-[#F7FBFF]'
-      : status === 'awaiting_approval'
-        ? 'border-[#F4D8A6] bg-[#FEF5E7] text-[#B9770E]'
-        : status === 'failed'
-          ? 'border-[#F3C7C5] bg-[#FDEDEC] text-[#922B21]'
-          : status === 'skipped'
-            ? 'border-dashed border-[#CAD5DF] bg-[#F8FAFC] text-iris-text-secondary hover:bg-[#F1F5F8]'
-            : isRunning || status === 'running'
-              ? 'border-iris-navy bg-iris-navy text-white'
-              : 'border-[#D9E3EA] bg-[#F4F7FA] text-iris-text-secondary hover:bg-[#EAF1F6]'
+    isOrchestratorStep
+      ? status === 'completed'
+        ? 'border-[#83C9AE] bg-[linear-gradient(135deg,#EBF8FF_0%,#D8F6E7_52%,#FFF2BE_100%)] text-[#0E6251] shadow-[0_14px_34px_rgba(20,122,101,0.14)]'
+        : status === 'monitoring'
+          ? 'border-[#68C3AC] bg-[linear-gradient(135deg,#D5F1FF_0%,#C8F5E0_50%,#FFED99_100%)] text-[#0C4F67] shadow-[0_20px_46px_rgba(26,107,154,0.22)] hover:brightness-[1.01]'
+        : status === 'awaiting_approval'
+            ? 'border-[#D8C163] bg-[linear-gradient(135deg,#E6F6FF_0%,#D8F6E8_48%,#FFF0B0_100%)] text-[#8A6120] shadow-[0_16px_36px_rgba(185,119,14,0.16)]'
+            : status === 'failed'
+              ? 'border-[#F3C7C5] bg-[linear-gradient(135deg,#FFF6F5_0%,#FDEDEC_100%)] text-[#922B21] shadow-[0_12px_30px_rgba(146,43,33,0.12)]'
+              : status === 'skipped'
+                ? 'border-dashed border-[#CAD5DF] bg-[#F8FAFC] text-iris-text-secondary hover:bg-[#F1F5F8]'
+                : isRunning || status === 'running'
+                  ? 'border-[#63C0AE] bg-[linear-gradient(135deg,#D0F0FF_0%,#C2F4DC_50%,#FFE98A_100%)] text-[#0B4B63] shadow-[0_22px_48px_rgba(26,107,154,0.24)]'
+                  : 'border-[#93CABA] bg-[linear-gradient(135deg,#EEF8FF_0%,#DDF5EA_52%,#FFF4C4_100%)] text-[#184861] shadow-[0_12px_28px_rgba(13,27,42,0.1)] hover:brightness-[1.01]'
+      : status === 'completed'
+        ? 'border-[#C7EED8] bg-[#E8F8F5] text-[#117A65]'
+        : status === 'monitoring'
+          ? 'border-[#C8DCEB] bg-white text-[#205375] hover:bg-[#F7FBFF]'
+          : status === 'awaiting_approval'
+            ? 'border-[#F4D8A6] bg-[#FEF5E7] text-[#B9770E]'
+            : status === 'failed'
+              ? 'border-[#F3C7C5] bg-[#FDEDEC] text-[#922B21]'
+              : status === 'skipped'
+                ? 'border-dashed border-[#CAD5DF] bg-[#F8FAFC] text-iris-text-secondary hover:bg-[#F1F5F8]'
+                : isRunning || status === 'running'
+                  ? 'border-iris-navy bg-iris-navy text-white'
+                  : 'border-[#D9E3EA] bg-[#F4F7FA] text-iris-text-secondary hover:bg-[#EAF1F6]'
   const focusClass = isSelected ? ' ring-2 ring-[#B9D3E6] ring-offset-2' : ''
   return `${baseClass} ${toneClass}${focusClass}`
+}
+
+function workflowStepperIconClass(status: string, isOrchestratorStep: boolean) {
+  if (isOrchestratorStep) {
+    const toneClass =
+      status === 'failed'
+        ? 'bg-[#FDEDEC] text-[#922B21] shadow-[inset_0_0_0_1px_rgba(243,199,197,0.95)]'
+        : status === 'awaiting_approval'
+          ? 'bg-[linear-gradient(135deg,rgba(255,255,255,0.92)_0%,rgba(255,247,219,0.98)_100%)] text-[#8A6120] shadow-[inset_0_0_0_1px_rgba(216,193,99,0.95)]'
+          : status === 'completed'
+            ? 'bg-[linear-gradient(135deg,rgba(255,255,255,0.94)_0%,rgba(242,255,248,0.98)_100%)] text-[#0E6251] shadow-[inset_0_0_0_1px_rgba(131,201,174,0.95)]'
+            : status === 'running' || status === 'monitoring'
+              ? 'bg-[linear-gradient(135deg,rgba(255,255,255,0.98)_0%,rgba(236,249,255,0.98)_46%,rgba(255,246,200,0.96)_100%)] text-[#0C5571] shadow-[0_10px_22px_rgba(26,107,154,0.2)]'
+              : 'bg-[linear-gradient(135deg,rgba(255,255,255,0.96)_0%,rgba(241,251,255,0.96)_44%,rgba(255,248,215,0.94)_100%)] text-[#184861] shadow-[0_8px_18px_rgba(13,27,42,0.08)]'
+
+    return `inline-flex h-9 w-9 items-center justify-center rounded-[14px] ${toneClass}`
+  }
+
+  return 'inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/80'
 }
 
 function workflowConnectorClass(currentStatus: string, nextStatus: string) {
@@ -3462,6 +3546,10 @@ function resolveStepperStateIcon(status: string, message?: string | null) {
     return ArrowsClockwise
   }
   return null
+}
+
+function shouldAnimateStepperStatusIcon(status: string) {
+  return status === 'running' || status === 'monitoring'
 }
 
 function workflowStatusBadgeClass(status: string) {
@@ -3542,155 +3630,12 @@ function formatExecutionTime(value: number | null) {
   return `${(value / 1000).toFixed(1)} s`
 }
 
+function formatRetryCount(value: number) {
+  return `${value} ${value === 1 ? 'retry' : 'retries'}`
+}
+
 function hasWorkflowAgentExecuted(agent: ClaimsWorkflowPayload['agents'][number]) {
   return ['completed', 'awaiting_approval', 'failed', 'skipped'].includes(agent.status)
-}
-
-function hasWorkflowAgentStarted(agent: ClaimsWorkflowPayload['agents'][number]) {
-  return agent.status !== 'pending'
-}
-
-function buildWorkflowInsight(
-  detail: ClaimsCessionDetailPayload,
-  pausedAgent: ClaimsWorkflowPayload['agents'][number] | null,
-  currentAgent: ClaimsWorkflowPayload['agents'][number] | null,
-  screeningSummary: ClaimsWorklistScreeningSummary | null,
-) {
-  const workflow = detail.workflow
-  const workflowSummary = workflow.results
-
-  if (workflow.status === 'completed' && workflowSummary.insight) {
-    return workflowSummary.insight
-  }
-
-  const focusAgent =
-    pausedAgent ??
-    currentAgent ??
-    [...workflow.agents].reverse().find((agent) => hasWorkflowAgentStarted(agent)) ??
-    null
-
-  if (!focusAgent) {
-    return 'recommendation: upload confirmed; IRiS is preparing the first workflow checks.'
-  }
-
-  if (focusAgent.status === 'running') {
-    return workflowInFlightInsight(focusAgent)
-  }
-
-  if (focusAgent.status === 'failed') {
-    return focusAgent.error_message ?? focusAgent.state_message ?? 'recommendation: workflow escalation is required before processing can continue.'
-  }
-
-  return workflowAgentInsight(focusAgent, detail, screeningSummary) ?? workflowSummary.insight
-}
-
-function resolveWorkflowStartedTimestamp(workflow: ClaimsWorkflowPayload) {
-  if (workflow.started_at) {
-    return workflow.started_at
-  }
-
-  const candidateTimestamps = workflow.agents
-    .flatMap((agent) => [agent.started_at, agent.completed_at, agent.updated_at])
-    .concat(
-      workflow.stepper
-        .filter((item) => item.stage !== 'upload')
-        .map((item) => item.timestamp),
-    )
-    .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())
-
-  return candidateTimestamps[0] ?? null
-}
-
-function workflowInFlightInsight(agent: ClaimsWorkflowPayload['agents'][number]) {
-  switch (agent.key) {
-    case 'mapping':
-      return 'recommendation: IRiS is classifying the upload and mapping the treaty context.'
-    case 'anomaly_detection':
-      return 'recommendation: IRiS is validating the uploaded rows and compiling anomaly findings.'
-    case 'resolution':
-      return 'recommendation: IRiS is applying high-confidence anomaly fixes and routing the remaining items for review.'
-    case 'clause_validation':
-      return 'recommendation: IRiS is checking the mapped file against the applicable contract clauses.'
-    case 'processing':
-      return 'recommendation: IRiS is executing the downstream processing logic and comparing the uploaded values with IRiS.'
-    case 'results':
-      return 'recommendation: IRiS is compiling the workflow summary and business impact.'
-    case 'sanction_screening':
-      return 'recommendation: IRiS is evaluating sanctions sources and release readiness.'
-    case 'file_generation':
-      return 'recommendation: IRiS is generating downstream settlement artifacts.'
-    case 'worklist':
-      return 'recommendation: IRiS is routing downstream tasks to the owning teams.'
-    case 'audit':
-      return 'recommendation: IRiS is finalizing the workflow audit trail.'
-    default:
-      return 'recommendation: workflow orchestration is in progress.'
-  }
-}
-
-function workflowAgentInsight(
-  agent: ClaimsWorkflowPayload['agents'][number],
-  detail: ClaimsCessionDetailPayload,
-  screeningSummary: ClaimsWorklistScreeningSummary | null,
-) {
-  switch (agent.key) {
-    case 'mapping':
-      return `recommendation: mapping confirmed ${detail.detection.cedent} to ${
-        detail.contract_mapping.contract_id || 'the target contract'
-      } for ${detail.contract_mapping.period}.`
-    case 'anomaly_detection':
-      if (!detail.validation.critical_errors && !detail.validation.warnings && !detail.validation.informational) {
-        return 'recommendation: no anomalies detected; continue to the next agent.'
-      }
-      return `recommendation: review ${formatCount(detail.validation.critical_errors)} critical, ${formatCount(
-        detail.validation.warnings,
-      )} warning and ${formatCount(detail.validation.informational)} informational finding(s) before processing continues.`
-    case 'resolution':
-      if (detail.exceptions.unresolved > 0) {
-        return `recommendation: approve or override the remaining ${formatCount(detail.exceptions.unresolved)} anomaly resolution(s) before orchestration resumes.`
-      }
-      return 'recommendation: all anomaly resolutions were applied automatically; continue to clause validation.'
-    case 'clause_validation':
-      if (detail.clauses.flagged_count > 0) {
-        return `recommendation: review ${formatCount(detail.clauses.flagged_count)} flagged clause control(s) before execution.`
-      }
-      return 'recommendation: clause validation passed; continue to processing.'
-    case 'processing': {
-      const reconciliation = detail.summary.settlement_reconciliation
-      if (reconciliation?.decision === 'review') {
-        return 'recommendation: review the settlement reconciliation outcome before release.'
-      }
-      if (detail.summary.file_type === 'Settlement' && reconciliation?.decision === 'accept') {
-        return 'recommendation: processing verified the uploaded fixed, floating and net values against IRiS.'
-      }
-      return 'recommendation: processing completed and the mapped cession data is ready for summary compilation.'
-    }
-    case 'results':
-      return 'recommendation: workflow summary and business impact are ready for downstream review.'
-    case 'sanction_screening':
-      if (!screeningSummary) {
-        return 'recommendation: no sanctions screening case was required for this workflow.'
-      }
-      if (screeningSummary.workflow_status === 'auto_cleared') {
-        return 'recommendation: sanctions screening auto-cleared; continue to file generation.'
-      }
-      return 'recommendation: compliance review is required before the workflow can continue.'
-    case 'file_generation':
-      if (detail.downstream_files.items.length > 0) {
-        return `recommendation: review ${formatCount(detail.downstream_files.items.length)} generated downstream file(s) before release.`
-      }
-      return 'recommendation: no downstream files were required for this workflow.'
-    case 'worklist':
-      if (detail.worklist.items.length > 0) {
-        return `recommendation: ${formatCount(detail.worklist.items.length)} worklist task(s) were created and routed to the owning teams.`
-      }
-      return 'recommendation: no downstream worklist tasks were required for this run.'
-    case 'audit':
-      return `recommendation: ${formatCount(detail.audit.items.length)} audit event(s) captured; workflow history is ready for review.`
-    default:
-      return agent.state_message ?? agent.output_summary ?? null
-  }
 }
 
 function skippedStateMeta(agent: ClaimsWorkflowPayload['agents'][number]) {
